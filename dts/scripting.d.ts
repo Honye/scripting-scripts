@@ -1,6 +1,6 @@
 /**
- * scripting v1.0.0
- * Copyright (c) 2024-present thomfang <tilfon@live.com>
+ * scripting v1.1.1
+ * Copyright (c) 2024-present Thom Fang <tilfon@live.com>
  * All rights reserved.
  */
 
@@ -8,7 +8,7 @@ type IdProps = {
     /**
      * Use a unique key for a widget.
      */
-    key?: string;
+    key?: string | number;
 };
 type InternalWidgetRender<P = {}> = (props: P) => RenderNode;
 type RenderNode = {
@@ -16,8 +16,7 @@ type RenderNode = {
     type?: string;
     id?: string;
     props?: any;
-    key?: string;
-};
+} & IdProps;
 type ComponentProps<T = {}> = T & IdProps & {
     children?: VirtualNode | string | number | boolean | undefined | null | Array<string | number | boolean | undefined | null | VirtualNode>;
 };
@@ -42,92 +41,8 @@ type Dispatch<A> = (action: A) => void;
 
 /**
  * An adaptive background view that provides a standard appearance based on the the widget’s environment.
- *
  */
 declare const AccessoryWidgetBackground: FunctionComponent<{}>;
-
-type AppIntent<T> = {
-    script: string;
-    name: string;
-    protocol: AppIntentProtocol;
-    params: T;
-};
-type AppIntentFactory<T> = (params: T) => AppIntent<T>;
-type AppIntentPerform<T> = (params: T) => Promise<void>;
-declare enum AppIntentProtocol {
-    AppIntent = 0,
-    /**
-     * An App Intent that plays, pauses, or otherwise modifies audio playback state when it executes.
-     */
-    AudioPlaybackIntent = 1,
-    /**
-     * An app intent that starts, stops or otherwise modifies audio recording state. (Available on iOS 18.0+)
-     *
-     * In iOS and iPadOS, When you adopt the AudioRecordingIntent protocol, you must start a Live Activity when you begin the audio recording and keep it active as long as you record audio. If you don’t start a Live Activity, the audio recording stops.
-     */
-    AudioRecordingIntent = 2,
-    /**
-     * An intent that starts, pauses, or otherwise modifies a Live Activity when it runs.
-     */
-    LiveActivityIntent = 3
-}
-/**
- * Use this interface to register a specified protocol AppIntent, and this AppIntent could be use for `Button` and `Toggle` controls in `Widget` or `LiveActivity`.
- */
-declare class AppIntentManager {
-    /**
-     * Register an AppIntent with specified protocol. Provides a unique `name` for the AppIntent, the `perform` function will be call when an action trigger by a control view.
-     * @returns An AppIntent factory function.
-     */
-    static register<T = undefined>(options: {
-        /**
-         * The name of the AppIntent.
-         */
-        name: string;
-        /**
-         * The protocol of AppIntent to implement.
-         */
-        protocol: AppIntentProtocol;
-        /**
-         * Performs the intent after resolving the provided parameters.
-         */
-        perform: AppIntentPerform<T>;
-    }): AppIntentFactory<T>;
-    private static perform;
-}
-
-type ButtonRole = 'destructive' | 'cancel';
-type ButtonProps = ({
-    title: string;
-    systemImage?: string;
-} | {
-    children: (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[] | VirtualNode;
-}) & {
-    /**
-     * A value that describes the purpose of a button.
-     */
-    role?: ButtonRole;
-} & ({
-    /**
-     * The AppIntent to execute. AppIntent is only available for `Widget` or `LiveActivity`.
-     */
-    intent: AppIntent<any>;
-} | {
-    /**
-     * The action to perform when the user triggers the button.
-     */
-    action: () => void;
-});
-/**
- * You create a button by providing an action and a label. The action is either a method or closure property that does something when a user clicks or taps the button. The label is a view that describes the button’s action — for example, by showing text, an icon, or both.
- *
- * @example
- * The label of a button can be any kind of view, such as a Text view for text-only labels:
- * ```tsx
- * <Button title="Sign in" action={handleSignIn} />
- * ```
- */
-declare const Button: FunctionComponent<ButtonProps>;
 
 /**
  * `useCallback` is a React Hook that lets you cache a function definition between re-renders.
@@ -178,6 +93,7 @@ type Context<T> = {
     readonly id: number;
     readonly Provider: Provider<T>;
     readonly Consumer: Consumer<T>;
+    debugLabel?: string;
 };
 /**
  * Create a data context.
@@ -553,7 +469,85 @@ declare function createElement<P = {}>(type: FunctionComponent<P>, props: Compon
 type CreateElementFunc = typeof createElement;
 declare global {
     const createElement: CreateElementFunc;
+    const Fragment: FunctionComponent<any>;
 }
+
+type AnimatedFramesProps = {
+    /**
+     * The animation duration, in seconds.
+     */
+    duration: DurationInSeconds;
+    /**
+     * The array of views to toggle as the frames of the animation. Each child will be displayed sequentially during the animation.
+     */
+    children: VirtualNode[];
+};
+/**
+ * A view allows you to display a frame animation in a widget by cycling through the provided child views as frames. The duration of the animation is customizable, and each frame corresponds to a view passed in as a child element.
+ * @example
+ * ```tsx
+ * <AnimatedFrames
+ *   duration={4}
+ * >
+ *   <Circle
+ *     fill="red"
+ *     frame={{
+ *       width: 20,
+ *       height: 20,
+ *     }}
+ *   />
+ *   <Circle
+ *     fill="red"
+ *     frame={{
+ *       width: 25,
+ *       height: 25,
+ *     }}
+ *   />
+ *   <Circle
+ *     fill="red"
+ *     frame={{
+ *       width: 30,
+ *       height: 30,
+ *     }}
+ *   />
+ *   <Circle
+ *     fill="red"
+ *     frame={{
+ *       width: 35,
+ *       height: 35,
+ *     }}
+ *   />
+ * </AnimatedFrames>
+ * ```
+ */
+declare const AnimatedFrames: FunctionComponent<AnimatedFramesProps>;
+
+type AnimatedGifProps = {
+    /**
+     * The file path of the GIF image.
+     */
+    path: string;
+    /**
+     * The animation duration in seconds. If not provided, the default duration of the GIF is used.
+     */
+    duration?: DurationInSeconds;
+};
+/**
+ * This views renders an animated GIF in a widget. You can provide a custom path to the GIF file, and optionally, a duration for the animation.
+ * @example
+ * ```tsx
+ * <AnimatedFrame
+ *   path={
+ *     Path.join(
+ *       Script.directory,
+ *       "test.gif"
+ *     )
+ *   }
+ *   duration={4}
+ * />
+ * ```
+ */
+declare const AnimatedGif: FunctionComponent<AnimatedGifProps>;
 
 /**
  * Hex string: `#FF0033` or `#333`
@@ -573,6 +567,10 @@ type ColorStringRGBA = `rgba(${number},${number},${number},${number})`;
  * Duration in milliseconds, one second is `1000`.
  */
 type DurationInMilliseconds = number;
+/**
+ * Constants that define how a view’s content fills the available space.
+ */
+type ContentMode = 'fit' | 'fill';
 /**
  * The horizontal or vertical dimension in a 2D coordinate system.
  */
@@ -711,9 +709,9 @@ type ButtonStyle = 'automatic' | 'bordered' | 'borderless' | 'borderedProminent'
  *  - `tabBarOnly`: (iOS 18.0+) A tab view style that displays a tab bar when possible.
  *  - `pageAlwaysDisplayIndex`: Always display an index view regardless of page count
  *  - `pageAutomaticDisplayIndex`: Displays an index view when there are more than one page
- *  - `plageNeverDisplayIndex`: Never display an index view
+ *  - `pageNeverDisplayIndex`: Never display an index view
  */
-type TabViewStyle = "automatic" | "page" | "sidebarAdaptable" | "tabBarOnly" | "pageAlwaysDisplayIndex" | "pageAutomaticDisplayIndex" | "plageNeverDisplayIndex";
+type TabViewStyle = "automatic" | "page" | "sidebarAdaptable" | "tabBarOnly" | "pageAlwaysDisplayIndex" | "pageAutomaticDisplayIndex" | "pageNeverDisplayIndex";
 /**
  * A rectangular shape with rounded corners with different values, aligned inside the frame of the view containing it.
  */
@@ -750,6 +748,17 @@ type ScrollScrollIndicatorVisibility = "automatic" | "visible" | "hidden" | "nev
  */
 type ScrollDismissesKeyboardMode = "automatic" | "immediately" | "interactively" | "never";
 /**
+ * A type that defines the scroll behavior of a scrollable view.
+ *  - `paging`: The scroll behavior that aligns scroll targets to container-based geometry.
+ *  - `viewAligned`: The scroll behavior that aligns scroll targets to view-based geometry.
+ *  - `viewAlignedLimitAutomatic`: By default, the behavior will be limited in compact horizontal size classes and will not be limited otherwise.
+ *  - `viewAlignedLimitAlways`: Always limit the amount of views that can be scrolled.
+ *  - `viewAlignedLimitNever`: Never limit the amount of views that can be scrolled.
+ *  - `viewAlignedLimitAlwaysByFew`: (iOS 18.0+) Limit the number of views that can be scrolled by a single interaction to a small number of views, rather than a single view at a time. The number of views is determined automatically.
+ *  - `viewAlignedLimitAlwaysByOne`: (iOS 18.0+) Limit the number of views that can be scrolled by a single interaction to a single view.
+ */
+type ScrollTargetBehavior = "paging" | "viewAligned" | "viewAlignedLimitAutomatic" | "viewAlignedLimitAlways" | "viewAlignedLimitNever" | "viewAlignedLimitAlwaysByFew" | "viewAlignedLimitAlwaysByOne";
+/**
  *  - `rect`: A rectangular shape with rounded corners with different values, aligned inside the frame of the view containing it.
  *  - `circle`: A circle centered on the frame of the view containing it. The circle’s radius equals half the length of the frame rectangle’s smallest edge.
  *  - `capsule`: A capsule shape aligned inside the frame of the view containing it. A capsule shape is equivalent to a rounded rectangle where the corner radius is chosen as half the length of the rectangle’s smallest edge.
@@ -779,7 +788,7 @@ type Shape = 'rect' | 'circle' | 'capsule' | 'ellipse' | 'buttonBorder' | 'conta
     cornerRadii: RectCornerRadii;
     style?: RoundedCornerStyle;
 };
-type Font = "largeTitle" | "title" | "headline" | "subheadline" | "body" | "callout" | "footnote" | "caption";
+type Font = "largeTitle" | "title" | "title2" | "title3" | "headline" | "subheadline" | "body" | "callout" | "footnote" | "caption" | "caption2";
 type FontWeight = "ultraLight" | "thin" | "light" | "regular" | "medium" | "semibold" | "bold" | "heavy" | "black";
 /**
  * A width to use for fonts that have multiple widths.
@@ -787,6 +796,13 @@ type FontWeight = "ultraLight" | "thin" | "light" | "regular" | "medium" | "semi
 type FontWidth = "compressed" | "condensed" | "expanded" | "standard";
 type FontDesign = 'default' | 'monospaced' | 'rounded' | 'serif';
 type TextAlignment = 'leading' | 'center' | 'trailing';
+/**
+ * The type of truncation to apply to a line of text when it’s too long to fit in the available space.
+ *  - `head`: Truncate at the beginning of the line.
+ *  - `middle`: Truncate in the middle of the line.
+ *  - `tail`: Truncate at the end of the line.
+ */
+type TruncationMode = "head" | "middle" | "tail";
 type KeyboardType = 'default' | 'numberPad' | 'phonePad' | 'namePhonePad' | 'URL' | 'decimalPad' | 'asciiCapable' | 'asciiCapableNumberPad' | 'emailAddress' | 'numbersAndPunctuation' | 'twitter' | 'webSearch';
 /**
  * The kind of autocapitalization behavior applied during text input.
@@ -888,6 +904,13 @@ type GradientStop = {
  */
 type PinnedScrollViews = 'sectionHeaders' | 'sectionFooters' | 'sectionHeadersAndFooters';
 type Gradient = GradientStop[] | Color[];
+/**
+ * A geometric angle whose value you access in either radians or degrees.
+ */
+type Angle = {
+    type: 'degrees' | 'radians';
+    value: number;
+};
 type LinearGradient = {
     colors: Color[];
     startPoint: KeywordPoint | Point;
@@ -917,7 +940,73 @@ type RadialGradient = {
     startRadius: number;
     endRadius: number;
 };
-type Material = 'regularMaterial' | 'thickMaterial' | 'thinMaterial' | 'ultraThickMaterial' | 'ultraThinMaterial';
+type AngularGradient = {
+    stops: GradientStop[];
+    center: KeywordPoint | Point;
+    startAngle: Angle;
+    endAngle: Angle;
+} | {
+    colors: Color[];
+    center: KeywordPoint | Point;
+    startAngle: Angle;
+    endAngle: Angle;
+} | {
+    gradient: Gradient;
+    center: KeywordPoint | Point;
+    startAngle: Angle;
+    endAngle: Angle;
+} | {
+    stops: GradientStop[];
+    center: KeywordPoint | Point;
+    angle: Angle;
+} | {
+    colors: Color[];
+    center: KeywordPoint | Point;
+    angle: Angle;
+} | {
+    gradient: Gradient;
+    center: KeywordPoint | Point;
+    angle: Angle;
+};
+/**
+ * (iOS 18.0+) A two-dimensional gradient defined by a 2D grid of positioned colors.
+ */
+type MeshGradient = {
+    /**
+     * The width of the mesh, i.e. the number of vertices per row.
+     */
+    width: number;
+    /**
+     * The height of the mesh, i.e. the number of vertices per column.
+     */
+    height: number;
+    /**
+     * The array of points, containing width x height elements.
+     */
+    points: Point[];
+    /**
+     * The array of colors, containing width x height elements.
+     */
+    colors: Color[];
+    /**
+     * The background color, this fills any points outside the defined vertex mesh. Defaults to "clear".
+     */
+    background?: Color;
+    /**
+     * Whether cubic (smooth) interpolation should be used for the colors in the mesh (rather than only for the shape of the mesh). Defaults to true.
+     */
+    smoothsColors?: boolean;
+};
+/**
+ * A background material type.
+ *  - `ultraThinMaterial`: A mostly translucent material.
+ *  - `thinMaterial`: A material that’s more translucent than opaque.
+ *  - `regularMaterial`: A material that’s somewhat translucent.
+ *  - `thickMaterial`: A material that’s more opaque than translucent.
+ *  - `ultraThickMaterial`: A mostly opaque material.
+ *  - `barMaterial`: A material matching the style of system toolbars.
+ */
+type Material = "barMaterial" | "regularMaterial" | "thinMaterial" | "thickMaterial" | 'ultraThickMaterial' | 'ultraThinMaterial';
 type ColorWithGradientOrOpacity = {
     color: Color;
     /**
@@ -945,15 +1034,27 @@ type ColorWithGradientOrOpacity = {
     gradient?: never;
     opacity?: never;
 };
-type ShapeStyle = Material | Color | Gradient | LinearGradient | RadialGradient | ColorWithGradientOrOpacity;
+type ShapeStyle = Material | Color | Gradient | LinearGradient | RadialGradient | AngularGradient | MeshGradient | ColorWithGradientOrOpacity;
 type StrokeStyle = {
-    color?: Color;
     lineWidth?: number;
     lineCap?: 'butt' | 'round' | 'square';
     lineJoin?: 'bevel' | 'miter' | 'round';
     mitterLimit?: number;
     dash?: number[];
     dashPhase?: number;
+};
+/**
+ * The DynamicShapeStyle type allows you to define two distinct styles for a shape—one for light mode and another for dark mode. The system automatically applies the appropriate style based on the current color scheme (light or dark) of the user’s device.
+ */
+type DynamicShapeStyle = {
+    /**
+     * The shape style to use in light mode.
+     */
+    light: ShapeStyle;
+    /**
+     * The shape style to use in dark mode.
+     */
+    dark: ShapeStyle;
 };
 type KeywordsColor = "accentColor" | "systemRed" | "systemGreen" | "systemBlue" | "systemOrange" | "systemYellow" | "systemPink" | "systemPurple" | "systemTeal" | "systemIndigo" | "systemBrown" | "systemMint" | "systemCyan" | "systemGray" | "systemGray2" | "systemGray3" | "systemGray4" | "systemGray5" | "systemGray6" | "tintColor" | "label" | "secondaryLabel" | "tertiaryLabel" | "quaternaryLabel" | "placeholderText" | "separator" | "opaqueSeparator" | "link" | "darkText" | "lightText" | "black" | "darkGray" | "lightGray" | "white" | "gray" | "red" | "green" | "blue" | "cyan" | "yellow" | "magenta" | "orange" | "purple" | "brown" | "clear" | "systemFill" | "secondarySystemFill" | "tertiarySystemFill" | "quaternarySystemFill" | "systemBackground" | "secondarySystemBackground" | "tertiarySystemBackground" | "systemGroupedBackground" | "secondarySystemGroupedBackground" | "tertiarySystemGroupedBackground";
 /**
@@ -1047,18 +1148,49 @@ type CommonViewProps = {
         idealHeight?: number | 'infinity';
     };
     /**
+     * Positions this view within an invisible frame with a size relative to the nearest container.
+     * @see https://developer.apple.com/documentation/swiftui/view/containerrelativeframe(_:alignment:)
+     * @see https://www.hackingwithswift.com/quick-start/swiftui/how-to-adjust-the-size-of-a-view-relative-to-its-container
+     */
+    containerRelativeFrame?: {
+        axes: AxisSet;
+        /**
+         * Defaults to `center`.
+         */
+        alignment?: Alignment;
+        count: never;
+        span: never;
+        spacing: never;
+    } | {
+        axes: AxisSet;
+        /**
+         * Defaults to `center`.
+         */
+        alignment?: Alignment;
+        /**
+         * How many parts the container's space should be split into.
+         */
+        count: number;
+        /**
+         * How many parts should be allocated to for each view.
+         * Defaults to 1.
+         */
+        span?: number;
+        spacing: number;
+    };
+    /**
      * Sets a view’s foreground elements to use a given style. You can also sets the primary, secondary, and tertiary levels of the foreground style.
      */
-    foregroundStyle?: ShapeStyle | {
-        primary: ShapeStyle;
-        secondary: ShapeStyle;
-        tertiary?: ShapeStyle;
+    foregroundStyle?: ShapeStyle | DynamicShapeStyle | {
+        primary: ShapeStyle | DynamicShapeStyle;
+        secondary: ShapeStyle | DynamicShapeStyle;
+        tertiary?: ShapeStyle | DynamicShapeStyle;
     };
     /**
      * Sets the view’s background to an insettable shape filled with a style. You can also layers the views that you specify behind this view.
      */
-    background?: ShapeStyle | {
-        style: ShapeStyle;
+    background?: ShapeStyle | DynamicShapeStyle | {
+        style: ShapeStyle | DynamicShapeStyle;
         shape: Shape;
     } | VirtualNode | {
         content: VirtualNode;
@@ -1079,16 +1211,16 @@ type CommonViewProps = {
      * Adds a border to this view with the specified style and width.
      */
     border?: {
-        style: ShapeStyle;
+        style: ShapeStyle | DynamicShapeStyle;
         /**
          * The thickness of the border. The default is 1 pixel.
          */
         width?: number;
-    };
+    } | ShapeStyle | DynamicShapeStyle;
     /**
      * Override the default accent color for this view with a given styling. Unlike an app’s accent color, which can be overridden by user preference, tint is always respected and should be used as a way to provide additional meaning to the control.
      */
-    tint?: ShapeStyle;
+    tint?: ShapeStyle | DynamicShapeStyle;
     /**
      * Sets the transparency of this view.
      */
@@ -1125,7 +1257,7 @@ type CommonViewProps = {
         /**
          * A flag that indicates whether this view fits or fills the parent context.
          */
-        contentMode: 'fit' | 'fill';
+        contentMode: ContentMode;
     };
     /**
      * Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.
@@ -1200,9 +1332,12 @@ type CommonViewProps = {
     /**
      * The resolved shape of the content to which this shape can apply.
      *
-     * For example, if this shape applies an effect to a button, the contentShape might represent the bounding shape of that button’s background. You typically size a dynamic shape relative to the bounding rectangle of the contentShape.
+     * For example, if this shape applies an effect to a button, the `contentShape` might represent the bounding shape of that button’s background. You typically size a dynamic shape relative to the bounding rectangle of the `contentShape`.
      */
-    contentShape?: Shape;
+    contentShape?: Shape | {
+        kind: ContentShapeKinds;
+        shape: Shape;
+    };
     /**
      * Inverts the colors in this view.
      */
@@ -1311,6 +1446,18 @@ type CommonViewProps = {
      */
     multilineTextAlignment?: TextAlignment;
     /**
+     * Sets the truncation mode for lines of text that are too long to fit in the available space.
+     */
+    truncationMode?: TruncationMode;
+    /**
+     * Sets whether text in this view can compress the space between characters when necessary to fit text in a line.
+     */
+    allowsTightening?: boolean;
+    /**
+     * Sets whether this view mirrors its contents horizontally when the layout direction is right-to-left.
+     */
+    flipsForRightToLeftLayoutDirection?: boolean;
+    /**
      * Sets the visibility of the x axis.
      */
     chartXAxis?: Visibility;
@@ -1388,7 +1535,7 @@ type CommonViewProps = {
      * For many charts, the default configuration works well. However, in this case, the colors that the framework assigns to each mark don’t match the shape colors that they represent.
      * You can customize the chart to override the default color scale by adding this property.
      */
-    chartForegroundStyleScale?: Record<string, ShapeStyle>;
+    chartForegroundStyleScale?: Record<string, ShapeStyle | DynamicShapeStyle>;
     /**
      * Configures the symbol style scale for charts.
      */
@@ -1410,20 +1557,24 @@ type CommonViewProps = {
     chartAngleSelection?: ChartSelection;
     /**
      * The length of the visible domain measured in data units. For categorical data, this should be the number of visible categories.
+     *
+     * When the `label` type of the chart marks is `Date`, this number should be fixed with your `unit`! See [Swift Charts' chartXVisibleDomain hangs or crashes](https://stackoverflow.com/questions/77236097/swift-charts-chartxvisibledomain-hangs-or-crashes)
      */
     chartXVisibleDomain?: number;
     /**
      * The length of the visible domain measured in data units. For categorical data, this should be the number of visible categories.
+     *
+     * When the `label` type of the chart marks is `Date`, this number should be fixed with your `unit`! See [Swift Charts' chartXVisibleDomain hangs or crashes](https://stackoverflow.com/questions/77236097/swift-charts-chartxvisibledomain-hangs-or-crashes)
      */
     chartYVisibleDomain?: number;
     /**
-     * Sets the initial scroll position along the x-axis if you provide a `string` or `number` value. Once the user scrolls the scroll view, the value provided to this modifier will have no effect. Specify an object with `value` and `onChange` will associate a binding to be updated when the chart scrolls along the x-axis.
+     * Sets the initial scroll position along the x-axis if you provide a `string`, `number` or `Date` value. Once the user scrolls the scroll view, the value provided to this modifier will have no effect. Specify an object with `value` and `onChange` will associate a binding to be updated when the chart scrolls along the x-axis.
      */
-    chartScrollPositionX?: number | string | ChartScrollPosition<string> | ChartScrollPosition<number>;
+    chartScrollPositionX?: number | string | Date | ChartScrollPosition<string> | ChartScrollPosition<number> | ChartScrollPosition<Date>;
     /**
-     * Sets the initial scroll position along the y-axis if you provide a `string` or `number` value. Once the user scrolls the scroll view, the value provided to this modifier will have no effect. Specify an object with `value` and `onChange` will associate a binding to be updated when the chart scrolls along the y-axis.
+     * Sets the initial scroll position along the y-axis if you provide a `string`, `number` or `Date` value. Once the user scrolls the scroll view, the value provided to this modifier will have no effect. Specify an object with `value` and `onChange` will associate a binding to be updated when the chart scrolls along the y-axis.
      */
-    chartScrollPositionY?: number | string | ChartScrollPosition<string> | ChartScrollPosition<number>;
+    chartScrollPositionY?: number | string | Date | ChartScrollPosition<string> | ChartScrollPosition<number> | ChartScrollPosition<Date>;
     /**
      * Adds an action to perform when the user submits a value to this view. If you specify a function as the action, the `triggers` defaults to `text`.
      */
@@ -1487,26 +1638,53 @@ type CommonViewProps = {
     };
     /**
      * A dragging motion that invokes an action as the drag-event sequence changes.
+     * @param onDragGesture.minDistance The minimum dragging distance for the gesture to succeed. Defaults to 10.
+     * @param onDragGesture.coordinateSpace The coordinate space of the dragging gesture’s location. Defaults to `locale`.
+     * @param onDragGesture.onChanged Adds an action to perform when the gesture’s value changes. The action to perform when this gesture’s value changes. The action closure’s parameter contains the gesture’s new value.
+     * @param onDragGesture.onEnded Adds an action to perform when the gesture ends. The action to perform when this gesture ends. The action closure’s parameter contains the final value of the gesture.
      */
     onDragGesture?: {
-        /**
-         * The minimum dragging distance for the gesture to succeed. Defaults to 10.
-         */
         minDistance?: number;
-        /**
-         * The coordinate space of the dragging gesture’s location. Defaults to `locale`.
-         */
         coordinateSpace?: 'local' | 'global';
-        /**
-         * Adds an action to perform when the gesture’s value changes.
-         * @param action The action to perform when this gesture’s value changes. The action closure’s parameter contains the gesture’s new value.
-         */
         onChanged?: (action: DragGestureDetails) => void;
-        /**
-         * Adds an action to perform when the gesture ends.
-         * @param action The action to perform when this gesture ends. The action closure’s parameter contains the final value of the gesture.
-         */
         onEnded?: (action: DragGestureDetails) => void;
+    };
+    /**
+     * Set the current view to receive files or pictures dragged from other apps.
+     * @param onDropContent.types The uniform type identifiers that describe the types of content this view can accept through drag and drop. If the drag-and-drop operation doesn’t contain any of the supported types, then this drop destination doesn’t activate and isTargeted doesn’t update.
+     * @param onDropContent.isTarget A binding object that updates when a drag and drop operation enters or exits the drop target area. The binding’s value is true when the cursor is inside the area, and false when the cursor is outside.
+     * @param onDropContent.onResult The callback function when the file content of the specified type is dropped in.
+     * @example
+     * ```tsx
+     * const [isTarget, setIsTarget] = useState(false)
+     *
+     * return <VStack
+     *   onDropContent={{
+     *     types: ["public.image"],
+     *     isTarget: {
+     *       value: isTarget,
+     *       onChanged: setIsTarget
+     *     },
+     *     onResult: (result) => {
+     *        console.log(`Receieved ${result.images.length} image(s)`)
+     *     }
+     *   }}
+     * >
+     * ...
+     * </VStack>
+     * ```
+     */
+    onDropContent?: {
+        types: UTType[];
+        isTarget: {
+            value: boolean;
+            onChanged: (value: boolean) => void;
+        };
+        onResult: (result: {
+            texts: string[];
+            images: UIImage[];
+            fileURLs: string[];
+        }) => void;
     };
     /**
      * Sets the unique tag value of this view.
@@ -1563,9 +1741,33 @@ type CommonViewProps = {
      */
     defaultScrollAnchor?: KeywordPoint | Point;
     /**
+     * Apply this modifier to layout containers like `LazyHStack` or `VStack` within a `ScrollView` that contain the main repeating content of your `ScrollView`.
+     */
+    scrollTargetlayout?: boolean;
+    /**
+     * Sets the scroll behavior of views scrollable in the provided axes.
+     */
+    scrollTargetBehavior?: ScrollTargetBehavior;
+    /**
+     * Specifies the visibility of the background for scrollable views within this view.
+     */
+    scrollContentBackground?: Visibility;
+    /**
      * A Boolean value that indicates whether to prevent nonprogrammatic dismissal of the containing view hierarchy when presented in a sheet or popover.
      */
     interactiveDismissDisabled?: boolean;
+    /**
+     * Adds the provided insets into the safe area of this view. Use this modifier when you would like to add a fixed amount of space to the safe area a view sees.
+     * When specify to true, will apply the default padding.
+     */
+    safeAreaPadding?: true | number | {
+        horizontal?: number | true;
+        vertical?: number | true;
+        leading?: number | true;
+        trailing?: number | true;
+        top?: number | true;
+        bottom?: number | true;
+    };
     /**
      * Shows the specified content beside the modified view.
      */
@@ -1606,7 +1808,7 @@ type CommonViewProps = {
             /**
              * Extra distance placed between the two views, or nil to use the default amount of spacing.
              */
-            sapcing?: number;
+            spacing?: number;
             /**
              * The view to display in the inset space of the modified view.
              */
@@ -1620,7 +1822,7 @@ type CommonViewProps = {
             /**
              * Extra distance placed between the two views, or nil to use the default amount of spacing.
              */
-            sapcing?: number;
+            spacing?: number;
             /**
              * The view to display in the inset space of the modified view.
              */
@@ -1663,8 +1865,8 @@ type CommonViewProps = {
     /**
      * Specifies the preferred shape style of the background of the tabbar
      */
-    toolbarBackground?: ShapeStyle | {
-        style: ShapeStyle;
+    toolbarBackground?: ShapeStyle | DynamicShapeStyle | {
+        style: ShapeStyle | DynamicShapeStyle;
         bars?: ToolbarPlacement[];
     };
     /**
@@ -1709,6 +1911,77 @@ type CommonViewProps = {
      * The URL to open in the containing app when the user clicks the widget. Widgets support one `widgetURL` modifier in their view hierarchy. If multiple views have widgetURL modifiers, the behavior is undefined. If you want to add URL for multiple views, use `Link` view to wrap them.
      */
     widgetURL?: string;
+    /**
+     * Adds the view and all of its subviews to the accented group.
+     *
+     * When the system renders the widget using the WidgetKit/WidgetRenderingMode/accented mode, it divides the widget’s view hierarchy into two groups: the accented group and the default group. It then applies a different color to each group.
+     *
+     * When applying the colors, the system treats the widget’s views as if they were template images. It ignores the view’s color — rendering the new colors based on the view’s alpha channel.
+     *
+     * To control your view’s appearance, add the `widgetAccentable` modifier to part of your view’s hierarchy. If the accentable parameter is true, the system adds that view and all of its subviews to the accent group. It puts all other views in the default group.
+     *
+     * @example
+     * ```tsx
+     * <VStack>
+     *   <Text
+     *     widgetAccentable
+     *     font="caption"
+     *   >MON</Text>
+     *   <Text
+     *     font="title"
+     *   >6</Text>
+     * </VStack>
+     * ```
+     */
+    widgetAccentable?: boolean;
+    /**
+     * This view modifier is used in widgets to set the background of views. When a widget is rendered in `accented` mode, the system displays all colors as white (or as the tinted color if `widgetAccentable` is applied to the view). By using this modifier, the background will be hidden in `accented` mode but will appear normally in all other modes.
+     */
+    widgetBackground?: ShapeStyle | DynamicShapeStyle | {
+        style: ShapeStyle | DynamicShapeStyle;
+        shape: Shape;
+    };
+    /**
+     * Defines the animation configuration for swinging the view along the X and/or Y axis. Each axis can have its own animation settings:
+     *
+     *  - x: The animation configuration for the horizontal axis.
+     *  - y: The animation configuration for the vertical axis.
+     *
+     * @example
+     * ```tsx
+     * <Circle
+     *   fill="systemRed"
+     *   frame={{width: 50, height: 50}}
+     *   swingAnimation={{
+     *     x: {
+     *       duration: 4,
+     *       distance: 250
+     *     },
+     *     y: {
+     *       duration: 2,
+     *       distance: 50
+     *     }
+     *   }}
+     * />
+     * ```
+     */
+    swingAnimation?: {
+        /**
+         * The horizontal axis animation.
+         */
+        x?: SwingAnimation;
+        /**
+         * The vertical axis animation.
+         */
+        y?: SwingAnimation;
+    };
+    /**
+     * Defines the rotation effect for simulating a clock hand. You can specify the anchor point (optional) and the period (e.g., "hourHand", "minuteHand", "secondHand"), or provide a custom duration for the rotation.
+     */
+    clockHandRotationEffect?: ClockHandRotationEffectPeriod | {
+        anchor: KeywordPoint | Point;
+        period: ClockHandRotationEffectPeriod;
+    };
     /**
      * Presents an alert with a message when a given condition is true using a string variable as a title.
      */
@@ -1850,9 +2123,16 @@ type CommonViewProps = {
         content: VirtualNode;
     };
     /**
+     * Masks this view using the alpha channel of the given view.
+     */
+    mask?: VirtualNode | {
+        alignment: Alignment;
+        content: VirtualNode;
+    };
+    /**
      * Presents a popover when the `isPresented` condition is true. Register multiple modals by specify an array of `ModalPresentation`.
      */
-    popover?: ModalPresentation | ModalPresentation[];
+    popover?: PopoverPresentation | PopoverPresentation[];
     /**
      * Presents a sheet when the `isPresented` that you provide is true. Register multiple modals by specify an array of `ModalPresentation`.
      */
@@ -1959,6 +2239,22 @@ type CommonViewProps = {
          * The prompt of the search field which provides users with guidance on what to search for.
          */
         prompt?: string;
+        /**
+         * The presented state of the search field. When the user taps the search field, the system sets this value to true and presents the search field.
+         * When the user taps the search field’s cancel button, the system sets this value to false and dismisses the search field.
+         */
+        presented?: {
+            /**
+             * A Boolean value that indicates whether the search field is presented.
+             */
+            value: boolean;
+            /**
+             * A callback when the `presented` value changed.
+             * You must update `presented.value` when the user make the search field dismissed.
+             * @param value A Boolean value that indicates whether the search field is presented.
+             */
+            onChanged: (value: boolean) => void;
+        };
     };
     /**
      * A view that produces content that populates a list of suggestions.
@@ -2041,6 +2337,10 @@ type CommonViewProps = {
      */
     symbolVariant?: SymbolVariants;
     /**
+     * Add a symbol effect to the view.
+     */
+    symbolEffect?: SymbolEffect;
+    /**
      * The adaptation to use in either a horizontally or vertically compact size class.
      * Some presentations adapt their appearance depending on the context. For example, a sheet presentation over a vertically-compact view uses a full-screen-cover appearance by default.
      */
@@ -2077,11 +2377,11 @@ type CommonViewProps = {
     /**
      * A background placement inside a NavigationStack. (iOS 18.0+)
      */
-    navigationContainerBackground?: ShapeStyle | VirtualNode;
+    navigationContainerBackground?: ShapeStyle | DynamicShapeStyle | VirtualNode;
     /**
      * A background placement inside a NavigationSplitView. (iOS 18.0+)
      */
-    navigationSplitViewContainerBackground?: ShapeStyle | VirtualNode;
+    navigationSplitViewContainerBackground?: ShapeStyle | DynamicShapeStyle | VirtualNode;
     /**
      * The color to use to tint the content. Use null to avoid overriding the inherited tint.
      */
@@ -2176,10 +2476,6 @@ type CommonViewProps = {
      */
     contentTransition?: ContentTransition;
     /**
-     * Add a symbol effect to the view.
-     */
-    symbolEffect?: SymbolEffect;
-    /**
      * Generates a badge for the view from an integer or a string value.
      */
     badge?: number | string;
@@ -2228,7 +2524,74 @@ type CommonViewProps = {
      * Hides the navigation bar back button for the view.
      */
     navigationBarBackButtonHidden?: boolean;
+    /**
+     * Adds a reason to apply a redaction to this view hierarchy.
+     */
+    redacted?: RedactedReason | null;
+    /**
+     * If true, removes any reason to apply a redaction to this view hierarchy.
+     */
+    unredacted?: boolean;
+    /**
+     * Provides a host for translation service. This should be applied to the root view of your current page.
+     *
+     * Why use a translation host?
+     *
+     * - If the source or target language aren’t installed, the framework asks the person for permission to download the languages.
+     * - If the source parameter is null and the framework can’t detect the source language from the content, the framework prompts the person to choose the source language.
+     *
+     * @example
+     * ```tsx
+     * function View() {
+     *   const translation = useMemo(() => new Translation(), [])
+     *   const [translated, setTranslated] = useState<{[key: string]: string}>({})
+     *   const texts = ["Hello", "Goodbye"]
+     *
+     *   useEffect(() => {
+     *     translation.translateBatch({
+     *       texts,
+     *       target: "fr",
+     *       source: "en"
+     *     }).then(result => {
+     *       const map: {[key: string]: string} = {}
+     *       result.forEach((item, index) => {
+     *         map[texts[index]] = item
+     *       })
+     *       setTranslated(map)
+     *     })
+     *   }, [])
+     *
+     *
+     *   return <VStack
+     *     translationHost={translation}
+     *   >
+     *    {texts.map(text => (
+     *       <Text key={text}>
+     *         {translated[text] || text}
+     *       </Text>
+     *     ))}
+     *   </VStack>
+     * }
+     * ```
+     */
+    translationHost?: Translation;
 };
+/**
+ * A kind for the content shape of a view.
+ * - `interaction`: The kind for hit-testing and accessibility.
+ * - `dragPreview`: The kind for drag and drop previews.
+ * - `contextMenuPreview`: The kind for context menu previews.
+ * - `hoverEffect`: The kind for hover effects.
+ * - `accessibility`: The kind for accessibility visuals and sorting.
+ */
+type ContentShapeKinds = "interaction" | "dragPreview" | "contextMenuPreview" | "hoverEffect" | "accessibility";
+/**
+ * The reasons to apply a redaction to data displayed on screen.
+ *  - `placeholder`: Displayed data should appear as generic placeholders.
+ *  - `invalidated`: Displayed data should appear as invalidated and pending a new update.
+ *  - `privacy`: Displayed data should be obscured to protect private information.
+ */
+type RedactedReason = "placeholder" | "invalidated" | "privacy";
 type ModalPresentation = {
     /**
      * A boolean value that determines whether to present the modal content.
@@ -2242,6 +2605,25 @@ type ModalPresentation = {
      * The modal content.
      */
     content: VirtualNode;
+};
+type PopoverPresentation = ModalPresentation & {
+    /**
+     * The edge of the attachmentAnchor that defines the location of the popover’s arrow. The default is `top`.
+     */
+    arrowEdge?: Edge;
+    /**
+     * If you want to display the content as popover presentation, you must use this property.
+     */
+    presentationCompactAdaptation?: PresentationAdaptation | {
+        /**
+         * The adaptation to use in a horizontally compact size class.
+         */
+        horizontal: PresentationAdaptation;
+        /**
+         * The adaptation to use in a vertically compact size class. In a size class that is both horizontally and vertically compact, system uses the verticalAdaptation value.
+         */
+        vertical: PresentationAdaptation;
+    };
 };
 type ChartScrollPosition<T> = {
     value: T;
@@ -2349,17 +2731,35 @@ type DatePickerStyle = 'automatic' | 'compact' | 'graphical' | 'wheel' | 'field'
  */
 type ShapeProps = {
     /**
+     * Trims this shape by a fractional amount based on its representation as a path.
+     */
+    trim?: {
+        /**
+         * The fraction of the way through drawing this shape where drawing starts.
+         */
+        from: number;
+        /**
+         * The fraction of the way through drawing this shape where drawing ends.
+         */
+        to: number;
+    };
+    /**
      * Fills this shape with a color or gradient.
      */
-    fill?: ShapeStyle;
+    fill?: ShapeStyle | DynamicShapeStyle;
     /**
      * The color or gradient with which to stroke this shape.
      */
-    stroke?: ShapeStyle;
-    /**
-     * The width of the stroke that outlines this shape.
-     */
-    strokeLineWidth?: number;
+    stroke?: ShapeStyle | DynamicShapeStyle | {
+        /**
+         * The color or gradient with which to stroke this shape.
+         */
+        shapeStyle: ShapeStyle | DynamicShapeStyle;
+        /**
+         * The style of the stroke.
+         */
+        strokeStyle: StrokeStyle;
+    };
 };
 /**
  * A type that represents a height where a sheet naturally rests.
@@ -2435,12 +2835,208 @@ type SensoryFeedback = 'start' | 'stop' | 'alignment' | 'decrease' | 'increase' 
  */
 type SearchFieldPlacement = 'automatic' | 'navigationBarDrawer' | 'sidebar' | 'toolbar' | 'navigationBarDrawerAlwaysDisplay' | 'navigationBarDrawerAutomaticDisplay';
 type SearchSuggestionsPlacementSet = 'content' | 'menu' | 'all';
+/**
+ * The various components of a calendar date.
+ *
+ * Specifying Years and Months
+ *
+ *  - `era`: Identifier for the era unit.
+ *  - `year`: Identifier for the year unit.
+ *  - `yearForWeekOfYear`: Identifier for the week-counting year unit.
+ *  - `quarter`: Identifier for the quarter of the calendar.
+ *  - `month`: Identifier for the month unit.
+ *
+ * Specifying Weeks and Days
+ *
+ *  - `weekOfYear`: Identifier for the week of the year unit.
+ *  - `weekOfMonth`: Identifier for the week of the month calendar unit.
+ *  - `weekday`: Identifier for the weekday unit.
+ *  - `weekdayOrdinal`: Identifier for the weekday ordinal unit.
+ *  - `day`: Identifier for the day unit.
+ *
+ * Specifying Hours, Minutes, and Seconds
+ *
+ *  - `hour`: Identifier for the hour unit.
+ *  - `minute`: Identifier for the minute unit.
+ *  - `second`: Identifier for the second unit.
+ *  - `nanosecond`: Identifier for the nanosecond unit.
+ *
+ * Specifying Calendars and Time Zones
+ *
+ *  - `calendar`: Identifier for the calendar unit.
+ *  - `timeZone`: Identifier for the time zone unit.
+ */
+type CalendarComponent = "era" | "year" | "month" | "day" | "hour" | "minute" | "second" | "weekday" | "weekdayOrdinal" | "quarter" | "weekOfMonth" | "weekOfYear" | "yearForWeekOfYear" | "nanosecond" | "calendar" | "timeZone";
+/**
+ * The SwingAnimation type defines the configuration for animating a view in a swinging motion along the X and Y axes.
+ */
+type SwingAnimation = {
+    /**
+     * The animation duration, in seconds.
+     */
+    duration: DurationInSeconds;
+    /**
+     * The distance the view swings along the given axis.
+     */
+    distance: number;
+};
+type ClockHandRotationEffectPeriod = DurationInSeconds | "hourHand" | "minuteHand" | "secondHand";
+/**
+ * An individual dimension representing a mark’s width or height.
+ *  - `automatic`: A dimension that determines its value automatically.
+ *  - Others:
+ *    - `inset`: A dimension that’s the step size minus the specified inset value on each side. `value`: The given inset value in screen coordinates.
+ *    - `fixed`: A constant dimension. `value`: The fixed width or height.
+ *    - `ratio`: A dimension that’s proportional to the scale step size, using the specified ratio. `value`: The given ratio, from 0 to 1.
+ */
+type MarkDimension = "automatic" | {
+    type: 'inset' | 'ratio' | 'fixed';
+    value: number;
+};
+
+type AnimatedImageProps = ({
+    /**
+     * An array of SFSymbol names and variable values to display as a sequence of animated images.
+     */
+    systemImages: (string | {
+        name: string;
+        variableValue: number;
+    })[];
+} | {
+    /**
+     * An array of UIImage objects to use as the animated frames.
+     */
+    images: UIImage[];
+}) & {
+    /**
+     * A flag indicating whether this view should fit or fill the parent context. Defaults to "fit".
+     */
+    contentMode?: ContentMode;
+    /**
+     * The animation duration, in seconds.
+     */
+    duration: DurationInSeconds;
+};
+/**
+ * The AnimatedImage component renders an animated image in a widget. You can display either SFSymbol images or UIImage objects. The animation duration and content mode (fit or fill) can be customized.
+ * @example
+ * ```tsx
+ * // SFSymbol
+ * <AnimatedImage
+ *   duration={6}
+ *   systemImages={[
+ *     {name: "chart.bar.fill", variableValue: 0},
+ *     {name: "chart.bar.fill", variableValue: 0.3},
+ *     {name: "chart.bar.fill", variableValue: 0.6},
+ *     {name: "chart.bar.fill", variableValue: 1},
+ *   ]}
+ *   contentMode="fit"
+ * />
+ *
+ * // UIImage
+ * const image1 = Path.join(Script.directory, "image1.png")
+ * const image2 = Path.join(Script.directory, "image2.png")
+ *
+ * <AnimatedImage
+ *   duration={4}
+ *   images={[
+ *     UIImage.fromFile(image1),
+ *     UIImage.fromFile(image2),
+ *   ]}
+ *   contentMode="fill"
+ * />
+ * ```
+ */
+declare const AnimatedImage: FunctionComponent<AnimatedImageProps>;
+
+type AppIntent<T> = {
+    script: string;
+    name: string;
+    protocol: AppIntentProtocol;
+    params: T;
+};
+type AppIntentFactory<T> = (params: T) => AppIntent<T>;
+type AppIntentPerform<T> = (params: T) => Promise<void>;
+declare enum AppIntentProtocol {
+    AppIntent = 0,
+    /**
+     * An App Intent that plays, pauses, or otherwise modifies audio playback state when it executes.
+     */
+    AudioPlaybackIntent = 1,
+    /**
+     * An app intent that starts, stops or otherwise modifies audio recording state. (Available on iOS 18.0+)
+     *
+     * In iOS and iPadOS, When you adopt the AudioRecordingIntent protocol, you must start a Live Activity when you begin the audio recording and keep it active as long as you record audio. If you don’t start a Live Activity, the audio recording stops.
+     */
+    AudioRecordingIntent = 2,
+    /**
+     * An intent that starts, pauses, or otherwise modifies a Live Activity when it runs.
+     */
+    LiveActivityIntent = 3
+}
+/**
+ * Use this interface to register a specified protocol AppIntent, and this AppIntent could be use for `Button` and `Toggle` controls in `Widget` or `LiveActivity`.
+ */
+declare class AppIntentManager {
+    /**
+     * Register an AppIntent with specified protocol. Provides a unique `name` for the AppIntent, the `perform` function will be call when an action trigger by a control view.
+     * @returns An AppIntent factory function.
+     */
+    static register<T = undefined>(options: {
+        /**
+         * The name of the AppIntent.
+         */
+        name: string;
+        /**
+         * The protocol of AppIntent to implement.
+         */
+        protocol: AppIntentProtocol;
+        /**
+         * Performs the intent after resolving the provided parameters.
+         */
+        perform: AppIntentPerform<T>;
+    }): AppIntentFactory<T>;
+    private static perform;
+}
+
+type ButtonRole = 'destructive' | 'cancel';
+type ButtonProps = ({
+    title: string;
+    systemImage?: string;
+} | {
+    children: (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[] | VirtualNode;
+}) & {
+    /**
+     * A value that describes the purpose of a button.
+     */
+    role?: ButtonRole;
+} & ({
+    /**
+     * The AppIntent to execute. AppIntent is only available for `Widget` or `LiveActivity`.
+     */
+    intent: AppIntent<any>;
+} | {
+    /**
+     * The action to perform when the user triggers the button.
+     */
+    action: () => void;
+});
+/**
+ * You create a button by providing an action and a label. The action is either a method or closure property that does something when a user clicks or taps the button. The label is a view that describes the button’s action — for example, by showing text, an icon, or both.
+ *
+ * @example
+ * The label of a button can be any kind of view, such as a Text view for text-only labels:
+ * ```tsx
+ * <Button title="Sign in" action={handleSignIn} />
+ * ```
+ */
+declare const Button: FunctionComponent<ButtonProps>;
 
 type ChartMarkProps = {
     /**
      * Sets the foreground style for the chart content.
      */
-    foregroundStyle?: ShapeStyle;
+    foregroundStyle?: ShapeStyle | DynamicShapeStyle;
     /**
      * Sets the opacity for the chart content.
      */
@@ -2550,6 +3146,79 @@ type ChartMarkProps = {
         yStart: number;
         yEnd: number;
     };
+    /**
+     * Represents data using a foreground style. Do not set it together with `foregroundStyle`.
+     */
+    foregroundStyleBy?: string | number | Date | {
+        /**
+         * The data value to encode using foreground style.
+         */
+        value: string | number | Date;
+        /**
+         * Defaults to "ForegroundStyleLabel".
+         */
+        label: string;
+    };
+    /**
+     * Represents data using line styles. Do not set it together with `lineStyle`.
+     */
+    lineStyleBy?: string | number | Date | {
+        /**
+         * The data value to encode using line style.
+         */
+        value: string | number | Date;
+        /**
+         * Defaults to "LineStyleLabel".
+         */
+        label: string;
+    };
+    /**
+     * Represents data using position.
+     */
+    positionBy?: string | number | Date | {
+        /**
+         * The data used for positioning marks.
+         */
+        value: string | number | Date;
+        /**
+         * Defaults to "PositionByLabel".
+         */
+        label?: string;
+        /**
+         * The axis to position marks along.
+         */
+        axis: Axis;
+        /**
+         * The span of the positioned marks. Use this to control the total amount space available to the marks.
+         */
+        span?: MarkDimension;
+    };
+    /**
+     * Represents data using different kinds of symbols. Do not set it together with `symbol`.
+     */
+    symbolBy?: string | number | Date | {
+        /**
+         * The data value.
+         */
+        value: string | number | Date;
+        /**
+         * Defaults to "SymbolLabel".
+         */
+        label: string;
+    };
+    /**
+     * Represents data using symbol sizes. Do not set it together with `symbolSize`.
+     */
+    symbolSizeBy?: string | number | Date | {
+        /**
+         * The data value.
+         */
+        value: string | number | Date;
+        /**
+         * Defaults to "SymbolSizeLabel".
+         */
+        label: string;
+    };
 };
 type BarChartProps = {
     /**
@@ -2557,27 +3226,65 @@ type BarChartProps = {
      */
     labelOnYAxis?: boolean;
     marks: Array<{
-        label: string;
+        label: string | Date;
         value: number;
+        unit?: CalendarComponent;
+        width?: MarkDimension;
+        height?: MarkDimension;
+        stacking?: ChartMarkStackingMethod;
     } & ChartMarkProps>;
 };
 declare const BarChart: FunctionComponent<BarChartProps>;
-declare const LineChart: FunctionComponent<BarChartProps>;
+declare const LineChart: FunctionComponent<{
+    /**
+     * If specify to true, display the labels on Y Axis, the bars will be displayed horizontally. Defaults to false.
+     */
+    labelOnYAxis?: boolean;
+    marks: Array<{
+        label: string | Date;
+        value: number;
+        unit?: CalendarComponent;
+    } & ChartMarkProps>;
+}>;
 declare const RectChart: FunctionComponent<BarChartProps>;
-declare const AreaChart: FunctionComponent<BarChartProps>;
-type CategoryChartProps = {
+declare const AreaChart: FunctionComponent<{
+    /**
+     * If specify to true, display the labels on Y Axis, the bars will be displayed horizontally. Defaults to false.
+     */
+    labelOnYAxis?: boolean;
+    marks: Array<{
+        label: string | Date;
+        value: number;
+        unit?: CalendarComponent;
+        stacking?: ChartMarkStackingMethod;
+    } & ChartMarkProps>;
+}>;
+declare const BarStackChart: FunctionComponent<{
     /**
      * If specify to true, display the labels on Y Axis, the bars will be displayed horizontally. Defaults to false.
      */
     labelOnYAxis?: boolean;
     marks: Array<{
         category: string;
-        label: string;
+        label: string | Date;
         value: number;
+        unit?: CalendarComponent;
+        width?: MarkDimension;
+        height?: MarkDimension;
     } & ChartMarkProps>;
-};
-declare const BarStackChart: FunctionComponent<CategoryChartProps>;
-declare const LineCategoryChart: FunctionComponent<CategoryChartProps>;
+}>;
+declare const LineCategoryChart: FunctionComponent<{
+    /**
+     * If specify to true, display the labels on Y Axis, the bars will be displayed horizontally. Defaults to false.
+     */
+    labelOnYAxis?: boolean;
+    marks: Array<{
+        category: string;
+        label: string | Date;
+        value: number;
+        unit?: CalendarComponent;
+    } & ChartMarkProps>;
+}>;
 declare const AreaStackChart: FunctionComponent<{
     /**
      * If specify to true, display the labels on Y Axis. Defaults to false.
@@ -2585,8 +3292,9 @@ declare const AreaStackChart: FunctionComponent<{
     labelOnYAxis?: boolean;
     marks: Array<{
         category: string;
-        label: string;
+        label: string | Date;
         value: number;
+        unit?: CalendarComponent;
         stacking?: ChartMarkStackingMethod;
     } & ChartMarkProps>;
 }>;
@@ -2596,9 +3304,11 @@ type BarGanttChartProps = {
      */
     labelOnYAxis?: boolean;
     marks: Array<{
-        label: string;
+        label: string | Date;
         start: number;
         end: number;
+        unit?: CalendarComponent;
+        size?: MarkDimension;
     } & ChartMarkProps>;
 };
 declare const BarGanttChart: FunctionComponent<BarGanttChartProps>;
@@ -2635,7 +3345,7 @@ declare const PointCategoryChart: FunctionComponent<{
         category: string;
     } & ChartMarkProps>;
     /**
-     * What type should use for representing data.
+     * What type should use for representing data. You can also use `foregroundStyleBy`, `symbolBy` or `symbolSize` for each mark instead.
      */
     representsDataUsing?: "foregroundStyle" | "symbol" | "symbolSize";
 }>;
@@ -2652,9 +3362,10 @@ declare const RuleChart: FunctionComponent<{
      */
     labelOnYAxis?: boolean;
     marks: Array<{
-        label: string;
+        label: string | Date;
         start: number;
         end: number;
+        unit?: CalendarComponent;
     } & ChartMarkProps>;
 }>;
 declare const RuleLineForValueChart: FunctionComponent<{
@@ -2672,7 +3383,8 @@ declare const RuleLineForLabelChart: FunctionComponent<{
      */
     labelOnYAxis?: boolean;
     marks: Array<{
-        label: string;
+        label: string | Date;
+        unit?: CalendarComponent;
     } & ChartMarkProps>;
 }>;
 declare const RectAreaChart: FunctionComponent<{
@@ -2700,17 +3412,11 @@ declare const DonutChart: FunctionComponent<{
          * The inner radius of the sector.
          * A ratio relative to the outer radius.
          */
-        innerRadius?: {
-            type: "inset" | "ratio" | "fixed";
-            value: number;
-        };
+        innerRadius?: MarkDimension;
         /**
          * The outer radius of the sector. A inset relative to the available plot area.
          */
-        outerRadius?: {
-            type: "inset" | "ratio" | "fixed";
-            value: number;
-        };
+        outerRadius?: MarkDimension;
         /**
          * A radius for the corners of the sector.
          */
@@ -2755,7 +3461,7 @@ type ColorPickerProps = ({
  */
 declare const ColorPicker: FunctionComponent<ColorPickerProps>;
 
-type ContentAvailableViewProps = ({
+type ContentAvailableViewWithTitleProps = {
     /**
      * A string used as the title.
      */
@@ -2768,7 +3474,11 @@ type ContentAvailableViewProps = ({
      * The content that describes the interface.
      */
     description?: string;
-} | {
+} & {
+    label?: never;
+    actions?: never;
+};
+type ContentAvailableViewWithLabelProps = {
     /**
      * The label that describes the view.
      */
@@ -2781,7 +3491,11 @@ type ContentAvailableViewProps = ({
      * The content of the interface actions.
      */
     actions?: (VirtualNode | null)[];
-});
+} & {
+    title?: never;
+    systemImage?: never;
+};
+type ContentAvailableViewProps = ContentAvailableViewWithTitleProps | ContentAvailableViewWithLabelProps;
 /**
  * An interface, consisting of a label and additional content, that you display when the content of your app is unavailable to users.
  *
@@ -3000,7 +3714,9 @@ declare const TimerIntervalLabel: FunctionComponent<TimerIntervalLabelProps>;
 type DatePickerComponents = 'hourAndMinute' | 'date' | 'hourMinuteAndSecond';
 type DatePickerProps = ({
     title: string;
+    children?: never;
 } | {
+    title?: never;
     children: (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[] | VirtualNode;
 }) & {
     /**
@@ -3072,6 +3788,51 @@ declare const Divider: FunctionComponent<{}>;
  *
  */
 declare const EditButton: FunctionComponent<{}>;
+
+type EditorProps = {
+    /**
+     * You can provide this value to override the value of `Script.name`. When the editor code is running, the default value of `Script.name` is `"Temporary Script"`.
+     */
+    scriptName?: string;
+    /**
+     * Whether to show the accessory view when the keyboard is visible. This is useful for showing buttons like "Move Left", "Move Right", "Delete", "Dissmiss Keyboard", etc. Defaults to `false`. It is recommended to set this to `true` when the editor is fully visible on the screen, such as when the editor is the only view in the screen.
+     */
+    showAccessoryView?: boolean;
+    /**
+     * The editor controller to access and set content, file extension, read only state, listen for content changes.
+     */
+    controller: EditorController;
+};
+/**
+ * Display an editor in the views.
+ * @example
+ * ```tsx
+ * function MyEditor() {
+ *   const controller = useMemo(() => {
+ *     return new EditorController({
+ *       content: `const text = "Hello, World!"`,
+ *       ext: "txt",
+ *       readOnly: false,
+ *     })
+ *   }, [])
+ *
+ *   useEffect(() => {
+ *     return () => {
+ *       // Dispose the controller when the component is unmounted
+ *        controller.dispose()
+ *     }
+ *   }, [controller])
+ *
+ *   return (
+ *     <Editor
+ *       controller={controller}
+ *       scriptName="My Script"
+ *     />
+ *   )
+ * }
+ * ```
+ */
+declare const Editor: FunctionComponent<EditorProps>;
 
 declare const EmptyView: FunctionComponent<{}>;
 
@@ -3321,9 +4082,26 @@ type HStackProps = {
  */
 declare const HStack: FunctionComponent<HStackProps>;
 
+/**
+ * Constants that indicate the rendering mode for an Image in when displayed in a widget in [accented](https://developer.apple.com/documentation/widgetkit/widgetrenderingmode/accented) mode.
+ *  - `accented`: Specifies that the Image should be included as part of the accented widget group.
+ *  - `accentedDesaturated`: Maps the luminance of the Image in to the alpha channel, replacing color channels with the color applied to the accent group.
+ *  - `desaturated`: Maps the luminance of the Image in to the alpha channel, replacing color channels with the color applied to the default group.
+ *  - `fullColor`: SSpecifies that the Image should be rendered at full color with no other color modifications. Only applies to iOS.
+ */
+type WidgetAccentedRenderingMode = 'accented' | 'desaturated' | 'accentedDesaturated' | 'fullColor';
 type ImageResizable = boolean | {
     capInsets?: EdgeInsets;
     resizingMode?: ImageResizingMode;
+};
+/**
+ * This type is used to define an object that dynamically applies an image source to an Image view based on a color scheme.
+ *  - `dark`: The image source for the dark color scheme mode.
+ *  - `light`: The image source for the light color scheme mode.
+ */
+type DynamicImageSource<T> = {
+    dark: T;
+    light: T;
 };
 type SystemImageProps = {
     /**
@@ -3333,42 +4111,39 @@ type SystemImageProps = {
      */
     systemName: string;
     /**
-     * Sets the mode by which view resizes an image to fit its space.
+     * An optional value between 0.0 and 1.0 that the rendered image can use to customize its appearance, if specified. If the symbol doesn’t support variable values, this parameter has no effect. Use the SF Symbols app to look up which symbols support variable values.
      */
-    resizable?: ImageResizable;
+    variableValue?: number;
 };
 type NetworkImageProps = {
     /**
      * Creates an image using a network image url.
      */
-    imageUrl: string;
+    imageUrl: string | DynamicImageSource<string>;
     /**
      * The view to show until the load operation completes successfully.
      */
     placeholder?: VirtualNode;
-    /**
-     * Sets the mode by which view resizes an image to fit its space.
-     */
-    resizable?: ImageResizable;
 };
 type FileImageProps = {
     /**
      * Creates an image using a local file path.
      */
-    filePath: string;
-    /**
-     * Sets the mode by which view resizes an image to fit its space.
-     */
-    resizable?: ImageResizable;
+    filePath: string | DynamicImageSource<string>;
 };
 type UIImageProps = {
-    image: UIImage;
+    image: UIImage | DynamicImageSource<UIImage>;
+};
+type ImageProps = (SystemImageProps | NetworkImageProps | FileImageProps | UIImageProps) & {
+    /**
+     * Specifies the how to render an Image when using the accented mode in Widget.
+     */
+    widgetAccentedRenderingMode?: WidgetAccentedRenderingMode;
     /**
      * Sets the mode by which view resizes an image to fit its space.
      */
     resizable?: ImageResizable;
 };
-type ImageProps = SystemImageProps | NetworkImageProps | FileImageProps | UIImageProps;
 /**
  * A view that displays an image.
  * You can create images from many sources:
@@ -3561,11 +4336,22 @@ type MarkdownProps = {
     /**
      * Specify the theme of the markdown view.
      */
-    theme?: 'github' | 'docC' | 'basic';
+    theme?: 'basic' | 'github' | 'docC';
+    /**
+     * Specify the theme for the highlighter. No theme is used by default.
+     */
+    highlighterTheme?: 'midnight' | 'presentation' | 'sundellsColors' | 'sunset' | 'wwdc17' | 'wwdc18';
+    /**
+     * Use the default highlighter theme, the system will switch to the corresponding theme according to the current colorScheme. If you set the `highlighterTheme`, this configuration will not take effect.
+     */
+    useDefaultHighlighterTheme?: boolean;
+    /**
+     * Whether the markdown view is scrollable, defaults to `true`.
+     */
+    scrollable?: boolean;
 };
 /**
  * Display a view by markdown text.
- *
  */
 declare const Markdown: FunctionComponent<MarkdownProps>;
 
@@ -3584,11 +4370,14 @@ type MenuProps = {
      * The name of the image resource to lookup.
      */
     systemImage?: string;
+    label?: never;
 } | {
     /**
      * A view describing the content of the menu.
      */
     label: VirtualNode;
+    title?: never;
+    systemImage?: never;
 });
 /**
  * A control for presenting a menu of actions.
@@ -3621,6 +4410,10 @@ type MultiPickerProps = {
      */
     onSelectionsChanged: (newSelection: number[]) => void;
 };
+/**
+ * Multiple column picker view.
+ * This component allows you to select multiple items from a set of options, where each column represents a different set of options.
+ */
 declare const MultiPicker: FunctionComponent<MultiPickerProps>;
 
 type NavigationLinkProps = {
@@ -3826,56 +4619,6 @@ type QRImageProps = {
  */
 declare const QRImage: FunctionComponent<QRImageProps>;
 
-type UnderlineStyle = "byWord" | "double" | "patternDash" | "patternDashDot" | "patternDashDotDot" | "patternDot" | "single" | "thick";
-type StyledTextProps = Pick<CommonViewProps, "font" | "fontDesign" | "fontWeight" | "italic" | "bold" | "baselineOffset" | "kerning" | "monospaced" | "monospacedDigit"> & {
-    underlineColor?: Color;
-    underlineStyle?: UnderlineStyle;
-    strokeColor?: Color;
-    strokeWidth?: number;
-    strikethroughColor?: Color;
-    strikethroughStyle?: UnderlineStyle;
-    foregroundColor?: Color;
-    backgroundColor?: Color;
-};
-type StyledText = StyledTextProps & {
-    /**
-     * The text content.
-     */
-    text: string;
-    onTapGesture?: () => void;
-    onLongPressGesture?: () => void;
-};
-type RichTextProps = StyledTextProps & {
-    /**
-     * Whether the view is selectable. Defaults to false.
-     */
-    isSelectable?: boolean;
-    /**
-     * The technique for aligning the text.
-     */
-    alignment?: "left" | "center" | "right" | "natural" | "justified";
-    children: null | string | StyledText | number | boolean | Array<string | StyledText | number | boolean | undefined | null>;
-};
-/**
- * A view that displays text uses multiple different styles.
- *
- * `RichText` is not available for `Widget` and `LiveActivity`.
- *
- * @example
- * ```tsx
- * // Displaying "Hello World!" text
- * <RichText>
- *   Hello {{
- *     text: "World!",
- *     font: "title",
- *     bold: true,
- *     foregroundColor: "red"
- *   }}
- * </RichText>
- * ```
- */
-declare const RichText: FunctionComponent<RichTextProps>;
-
 type ScrollViewProps = {
     /**
      * The scroll view’s scrollable axis. The default axis is the vertical axis.
@@ -3927,7 +4670,7 @@ type SectionProps = {
     /**
      * The section’s content.
      */
-    children: (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[] | VirtualNode | undefined;
+    children?: (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[] | VirtualNode | undefined;
 };
 /**
  * A container view that you can use to add hierarchy within certain views.
@@ -3960,7 +4703,6 @@ type SecureFieldProps = ({
  */
 declare const SecureField: FunctionComponent<SecureFieldProps>;
 
-type CommonShapeProps = ShapeProps;
 /**
  * A rectangular shape aligned inside the frame of the view containing it.
  *
@@ -3981,7 +4723,7 @@ declare const Ellipse: FunctionComponent<ShapeProps>;
  *
  */
 declare const Capsule: FunctionComponent<ShapeProps>;
-type RoundedRectangleProps = CommonShapeProps & ({
+type RoundedRectangleProps = ShapeProps & ({
     /**
      * The radius of the rounded corners.
      */
@@ -4005,7 +4747,7 @@ type RoundedRectangleProps = CommonShapeProps & ({
  *
  */
 declare const RoundedRectangle: FunctionComponent<RoundedRectangleProps>;
-type UnevenRoundedRectangleProps = CommonShapeProps & {
+type UnevenRoundedRectangleProps = ShapeProps & {
     topLeadingRadius: number;
     bottomLeadingRadius: number;
     bottomTrailingRadius: number;
@@ -4155,7 +4897,29 @@ declare const TabView: FunctionComponent<TabViewProps>;
 type TextProps = {
     children: null | string | number | boolean | Array<string | number | boolean | undefined | null>;
 } | {
+    /**
+     * Render as a markdown text.
+     */
     attributedString: string;
+} | {
+    /**
+     * Use to render as a rich text.
+     */
+    styledText: StyledText;
+};
+type UnderlineStyle = "byWord" | "double" | "patternDash" | "patternDashDot" | "patternDashDotDot" | "patternDot" | "single" | "thick";
+type StyledText = Pick<CommonViewProps, "font" | "fontDesign" | "fontWeight" | "italic" | "bold" | "baselineOffset" | "kerning" | "monospaced" | "monospacedDigit"> & {
+    underlineColor?: Color;
+    underlineStyle?: UnderlineStyle;
+    strokeColor?: Color;
+    strokeWidth?: number;
+    strikethroughColor?: Color;
+    strikethroughStyle?: UnderlineStyle;
+    foregroundColor?: Color;
+    backgroundColor?: Color;
+    content: string | (string | StyledText)[];
+    link?: string;
+    onTapGesture?: () => void;
 };
 /**
  * A view that displays one or more lines of read-only text.
@@ -4487,6 +5251,28 @@ declare class Base64 {
 }
 
 /**
+ * This function is just to make your code more readable.
+ *
+ * @example
+ * ```tsx
+ * <Text
+ *   foregroundStyle={
+ *     gradient("linear", {
+ *       colors: ["red", "orange"],
+ *       startPoint: "leading",
+ *       endPoint: "trailing"
+ *     })
+ *   }
+ * >Hello World!</Text>
+ * ```
+ */
+declare function gradient(gradient: Gradient): Gradient;
+declare function gradient(type: "linear", gradient: LinearGradient): LinearGradient;
+declare function gradient(type: "radial", gradient: RadialGradient): RadialGradient;
+declare function gradient(type: "angular", gradient: AngularGradient): AngularGradient;
+declare function gradient(type: "mesh", gradient: MeshGradient): MeshGradient;
+
+/**
  * @internal
  */
 type ScriptingDeviceInfo = {
@@ -4510,6 +5296,10 @@ type ScriptingDeviceInfo = {
  *
  */
 declare function useColorScheme(): ColorScheme;
+/**
+ * A hook to access the current keyboard visibility state. The hook provides a reactive way to track whether the keyboard is visible.
+ */
+declare function useKeyboardVisible(): boolean;
 
 type ScenePhase = 'active' | 'inactive' | 'background';
 declare class AppEventListenerManager<R> {
@@ -4530,11 +5320,7 @@ declare class AppEventListenerManager<R> {
 /**
  *
  */
-declare class AppEvents {
-    /**
-     * @internal
-     */
-    constructor();
+declare namespace AppEvents {
     /**
      * Observe scene phase changed.
      *
@@ -4545,7 +5331,7 @@ declare class AppEvents {
      * })
      * ```
      */
-    static scenePhase: AppEventListenerManager<ScenePhase>;
+    const scenePhase: AppEventListenerManager<ScenePhase>;
     /**
      * Observe color scheme changed.
      * @example
@@ -4555,70 +5341,7 @@ declare class AppEvents {
      * })
      * ```
      */
-    static colorScheme: AppEventListenerManager<ColorScheme>;
-}
-
-/**
- * Provides the information abouts the device, also some methods to use the capabilities of the device.
- *
- */
-declare class Device {
-    /**
-     * @internal
-     */
-    constructor();
-    /**
-     * Model of the device, e.g. "iPhone".
-     */
-    static get model(): string;
-    /**
-     * The current version of the operating system.
-     */
-    static get systemVersion(): string;
-    /**
-     * The name of the operating system running on the device.
-     */
-    static get systemName(): string;
-    static get isiPad(): boolean;
-    static get isiPhone(): boolean;
-    static get batteryState(): "full" | "charging" | "unplugged" | "unknown";
-    static get batteryLevel(): number;
-    static get isLandscape(): boolean;
-    static get isPortrait(): boolean;
-    static get isFlat(): boolean;
-    static get colorScheme(): ColorScheme;
-    /**
-     * The current locale used by the system, such as `"en_US"`.
-     */
-    static get systemLocale(): string;
-    /**
-     * User preferred locales, such as `["en_US", "zh_CN"]`.
-     */
-    static get systemLocales(): string[];
-    /**
-     * The current locale language tag, such as `"en-US"`
-     */
-    static get systemLanguageTag(): string;
-    /**
-     * The current locale language code, such as `"en"`
-     */
-    static get sysmtemLanguageCode(): string;
-    /**
-     * The current locale country code, such as `"US"`
-     */
-    static get systemCountryCode(): string | undefined;
-    /**
-     * The current locale script code, such as `"Hans"` of `"zh_CN_Hans"`
-     */
-    static get systemScriptCode(): string | undefined;
-    /**
-     * Enable or disable the wakelock.
-     */
-    static setWakeLockEnabled(enabled: boolean): void;
-    /**
-     * Retrieve the current wakelock status.
-     */
-    static isWakeLockEnabled(): Promise<boolean>;
+    const colorScheme: AppEventListenerManager<ColorScheme>;
 }
 
 /**
@@ -4665,9 +5388,6 @@ declare abstract class IntentValue<T extends string, V> {
 declare class IntentTextValue extends IntentValue<"text", string> {
     value: string;
     type: "text";
-    /**
-     * @internal
-     */
     constructor(value: string, type?: "text");
 }
 /**
@@ -4676,9 +5396,6 @@ declare class IntentTextValue extends IntentValue<"text", string> {
 declare class IntentAttributedTextValue extends IntentValue<"attributedText", string> {
     value: string;
     type: "attributedText";
-    /**
-     * @internal
-     */
     constructor(value: string, type?: "attributedText");
 }
 /**
@@ -4687,9 +5404,6 @@ declare class IntentAttributedTextValue extends IntentValue<"attributedText", st
 declare class IntentURLValue extends IntentValue<"url", string> {
     value: string;
     type: "url";
-    /**
-     * @internal
-     */
     constructor(value: string, type?: "url");
 }
 /**
@@ -4701,9 +5415,6 @@ declare class IntentJsonValue extends IntentValue<'json', Record<string, any> | 
      */
     value: Record<string, any> | any[];
     type: "json";
-    /**
-     * @internal
-     */
     constructor(
     /**
      * A javascript JSON object.
@@ -4719,9 +5430,6 @@ declare class IntentFileValue extends IntentValue<'file', string> {
      */
     value: string;
     type: "file";
-    /**
-     * @internal
-     */
     constructor(
     /**
      *  A file path pointing to a file stored in iCloud or App Group Documents folder.
@@ -4737,9 +5445,6 @@ declare class IntentFileURLValue extends IntentValue<'fileURL', string> {
      */
     value: string;
     type: "fileURL";
-    /**
-     * @internal
-     */
     constructor(
     /**
      *  A file path pointing to a file stored in iCloud or App Group Documents folder.
@@ -4752,30 +5457,26 @@ declare class IntentFileURLValue extends IntentValue<'fileURL', string> {
  * You can create a script with `intent.tsx` file to handle a user request, which you can run in the Scripting app, or as a Shortcuts action, or to handle share sheet input.
  *
  */
-declare class Intent {
-    /**
-     * @internal
-     */
-    constructor();
+declare namespace Intent {
     /**
      * The `intent.tsx` script can run by Shortcuts app, you can read this parameter when you has passed an input parameter.
      *
      * This parameter can be a JSON object, any text, or a file URL string, when you passing a file, the action will attemp to read the file as JSON or a text string. If the file cannot be read as JSON or a text string, the file URL string will be passed as the input parameter.
      * You can check `ShortcutParameter.type` to know the type of the value.
      */
-    static get shortcutParameter(): ShortcutParameter | undefined;
+    const shortcutParameter: ShortcutParameter | undefined;
     /**
      * The text string array passed from a share sheet or a shortcut action.
      *
      * If you have enabled `Text` as a intent input from the Intent Settings, when the system shares text, the script will be displayed in the share sheet and can be selected to run.
      */
-    static get textsParameter(): string[] | undefined;
+    const textsParameter: string[] | undefined;
     /**
      * The URL string array passed from a share sheet or a shortcut action.
      *
      * If you have enabled `URLs` as a intent input from the Intent Settings, when the system shares URLs, the script will be displayed in the share sheet and can be selected to run.
      */
-    static get urlsParameter(): string[] | undefined;
+    const urlsParameter: string[] | undefined;
     /**
      * The image file path string array passed from a share sheet or a shortcut action.
      *
@@ -4783,7 +5484,7 @@ declare class Intent {
      *
      * When large images are passed from a share sheet or a shortcut action, the system may terminate the process due to memory constraints. In this case you should use `Run Script in App` action in Shortcuts app or enable the `Run in App` option in `Intent Inputs` settings.
      */
-    static get imagesParameter(): UIImage[] | undefined;
+    const imagesParameter: UIImage[] | undefined;
     /**
      * The file path string array passed from a share sheet or a shortcut action.
      *
@@ -4791,36 +5492,36 @@ declare class Intent {
      *
      * When large files are passed from a share sheet or a shortcut action, the system may terminate the process due to memory constraints. In this case you should use `Run Script in App` action in Shortcuts app or enable the `Run in App` option in `Intent Settings`.
      */
-    static get fileURLsParameter(): string[] | undefined;
+    const fileURLsParameter: string[] | undefined;
     /**
      * Wrap a `text` value for intent result.
      * @param value A text string.
      */
-    static text(value: string | number | boolean): IntentTextValue;
+    function text(value: string | number | boolean): IntentTextValue;
     /**
      * Wrap a `attributedText` value for intent result.
      * @param value A text string.
      */
-    static attributedText(value: string): IntentAttributedTextValue;
+    function attributedText(value: string): IntentAttributedTextValue;
     /**
      * Wrap a `text` value for intent result.
      * @param value A text string.
      */
-    static url(value: string): IntentURLValue;
+    function url(value: string): IntentURLValue;
     /**
      * Wrap a `JSON` value for the intent result.
      */
-    static json(value: Record<string, any> | any[]): IntentJsonValue;
+    function json(value: Record<string, any> | any[]): IntentJsonValue;
     /**
      * Wrap a `file` value for intent result.
      * @param filePath  A file path pointing to a file stored in iCloud or App Group Documents folder.
      */
-    static file(filePath: string): IntentFileValue;
+    function file(filePath: string): IntentFileValue;
     /**
      * Wrap a `fileURL` value for intent result.
      * @param filePath A file path pointing to a file stored in iCloud or App Group Documents folder.
      */
-    static fileURL(filePath: string): IntentFileURLValue;
+    function fileURL(filePath: string): IntentFileURLValue;
 }
 
 type ImageRenderOptions = {
@@ -4837,32 +5538,24 @@ type ImageRenderOptions = {
  * The interface that creates images from views.
  *
  */
-declare class ImageRenderer {
-    /**
-     * @internal
-     */
-    constructor();
+declare namespace ImageRenderer {
     /**
      * Render view to an image.
      */
-    static toUIImage(element: VirtualNode, options?: ImageRenderOptions): Promise<UIImage>;
+    function toUIImage(element: VirtualNode, options?: ImageRenderOptions): Promise<UIImage>;
     /**
      * Render view to a PNG data.
      */
-    static toPNGData(element: VirtualNode, options?: ImageRenderOptions): Promise<Data>;
+    function toPNGData(element: VirtualNode, options?: ImageRenderOptions): Promise<Data>;
     /**
      * Render view to a JPEG data.
      */
-    static toJPEGData(element: VirtualNode, options?: ImageRenderOptions & {
+    function toJPEGData(element: VirtualNode, options?: ImageRenderOptions & {
         /**
          * A number value between 0.0 and 1.0, representing the compression level the JPEG encoder should use. A value of 1.0 specifies lossless compression, and a value of 0.0 specifies maximum compression. Defaults to 1.0.
          */
         compressionQuality?: number;
     }): Promise<Data>;
-    /**
-     * @internal
-     */
-    private static render;
 }
 
 /**
@@ -4992,7 +5685,7 @@ type LiveActivityEndOptions = LiveActivityOptions & {
      * - If `dismissTimeInterval > 0`, will tell the system removes a Live Activity that ended after the specified date(`Date.now() + dismissTimeInterval`) or after four
      * hours from the moment the Live Activity ended — whichever comes first.
      */
-    dismissTimeInterval?: DurationInMilliseconds;
+    dismissTimeInterval?: DurationInSeconds;
 };
 
 /**
@@ -5109,6 +5802,13 @@ declare class LiveActivity<T> {
 }
 
 /**
+ * Constants that indicate the importance and delivery timing of a notification.
+ *  - `active`: The system presents the notification immediately, lights up the screen, and can play a sound.
+ *  - `passive`: The system adds the notification to the notification list without lighting up the screen or playing a sound.
+ *  - `timeSensitive`: The system presents the notification immediately, lights up the screen, can play a sound, and breaks through system notification controls.
+ */
+type NotificationInterruptionLevel = "active" | "passive" | "timeSensitive";
+/**
  * A task your script performs in response to a notification that the system delivers.
  */
 type NotificationAction = {
@@ -5125,91 +5825,101 @@ type NotificationAction = {
      */
     destructive?: boolean;
 };
-type NotificationScheduleOptions = {
-    /**
-     * Use this property to specify the title of your notification alert.
-     */
-    title: string;
-    /**
-     * Use this property to specify additional context about the purpose of the notification. Subtitles offer additional context in cases where the title alone isn’t clear. Subtitles aren’t displayed in all cases.
-     */
-    subtitle?: string;
-    /**
-     * Use this property to specify the body of the notification alert.
-     */
-    body?: string;
-    /**
-     * The number that your app’s icon displays.
-     */
-    badge?: number;
-    /**
-     * If the value is true, when the system delivers the notification and would not play the system default sound. Defaults to true.
-     */
-    silent?: boolean;
-    /**
-     * Use this property to associate custom information with the notification. The contents of the dictionary aren’t seen by the user, but are accessible to your script.
-     */
-    userInfo?: Record<string, any>;
-    /**
-     * You may specify any value for the string, but assign the same thread identifier string to all notifications that you want to group together visually.
-     */
-    threadIdentifier?: string;
-    /**
-     * The trigger time that causes the system to deliver the notification. Specify null to deliver the notification right away.
-     */
-    triggerTime?: number;
-    /**
-     * Specify a type to reschedule the notification request each time the system delivers the notification with a given `triggerTime` value. If `triggerTime` is not null, specify this property to null to deliver the notification one time.
-     */
-    repeatsType?: 'hourly' | 'daily' | 'weekly' | 'monthly';
-    /**
-     * The actions to display when the system delivers notifications of this type.
-     */
-    actions?: NotificationAction[];
-    /**
-     * Specify true to run the `notification.tsx` file of the current script when user long press or drag down the notification.
-     */
-    customUI?: boolean;
-};
-type NotificationInfo = {
+interface NotificationRequest {
     /**
      * The unique identifier for this notification request.
      */
     identifier: string;
     /**
+     * The content associated with the notification.
+     */
+    content: {
+        /**
+         * The notification title.
+         */
+        title: string;
+        /**
+         * The notification subtitle.
+         */
+        subtitle: string;
+        /**
+         * The notification body.
+         */
+        body: string;
+        /**
+         * The custom data to associate with the notification.
+         */
+        userInfo: Record<string, any>;
+        /**
+         * The identifier that groups related notifications.
+         */
+        threadIdentifier: string;
+    };
+    /**
+     * The conditions that trigger the delivery of the notification.
+     */
+    trigger: CalendarNotificationTrigger | LocationNotificationTrigger | TimeIntervalNotificationTrigger | null;
+}
+interface NotificationInfo {
+    /**
+     * The delivery date of the notification.
+     */
+    date: Date;
+    /**
+     * The notification request that this notification is based on.
+     */
+    request: NotificationRequest;
+    /**
+     * The unique identifier for this notification request.
+     * @deprecated
+     * Use `request.identifier` instead.
+     */
+    identifier: string;
+    /**
      * The delivery timestamp of the notification.
+     * @deprecated
+     * Use `date.getTime()` instead.
      */
     deliveryTime: number;
     /**
      * The notification title.
+     * @deprecated
+     * Use `request.content.title` instead.
      */
     title: string;
     /**
      * The notification subtitle.
+     * @deprecated
+     * Use `request.content.subtitle` instead.
      */
     subtitle: string;
     /**
      * The notification body.
+     * @deprecated
+     * Use `request.content.body` instead.
      */
     body: string;
     /**
      * The custom data to associate with the notification.
+     * @deprecated
+     * Use `request.content.userInfo` instead.
      */
     userInfo: Record<string, any>;
     /**
      * The identifier that groups related notifications.
+     * @deprecated
+     * Use `request.content.threadIdentifier` instead.
      */
     threadIdentifier: string;
-};
+}
 /**
  * The interface for managing notification-related activities.
- *
  */
-declare class Notification {
+declare namespace Notification {
     /**
      * If the script is opened by tapping on a notification, you can access this property to get information about the notification.
      */
-    static get current(): NotificationInfo | undefined;
+    const current: NotificationInfo | null;
     /**
      * Schedules the delivery of a local notification.
      * When the user directly taps on the notification, the Scripting app will be opened and the script that invokes the notification will be run. You can access the notification information through `Notification.current` when the script starts.
@@ -5217,64 +5927,126 @@ declare class Notification {
      * When the user long presses or pulls down the notification, if you set `actions`, the action button will be displayed. After the user taps on an action button, the URL you provided will be redirected. You can provide the URL scheme of the Scripting app or an accessible https link.
      *
      * If `customUI` is set to true, long press or pull down the notification and the `notification.tsx` under the script will be run. You can use `Notification.present` to display the custom UI in this file, and provide interactive components such as buttons or input boxes for users to complete specific functions.
+     *
+     * @param options The options for scheduling the notification.
+     * @param options.title The title of the notification.
+     * @param options.subtitle The subtitle of the notification.
+     * @param options.body The body of the notification.
+     * @param options.badge The badge count for the app icon.
+     * @param options.silent If true, the notification will be delivered silently without sound. Defaults to false.
+     * @param options.interruptionLevel The importance and delivery timing of the notification.
+     * @param options.userInfo Custom information associated with the notification.
+     * @param options.threadIdentifier A string to group related notifications.
+     * @param options.trigger The trigger that determines when the system delivers the notification.
+     * @param options.triggerTime A timestamp in milliseconds that causes the system to deliver the notification. Specify null to deliver the notification right away. (Deprecated, use `trigger` instead)
+     * @param options.repeatsType Specify a type to reschedule the notification request each time the system delivers the notification with a given `triggerTime` value. If `triggerTime` is not null, specify this property to null to deliver the notification one time. (Deprecated, use `trigger` instead)
+     * @param options.actions The actions to display when the system delivers notifications of this type.
+     * @param options.customUI Specify true to run the `notification.tsx` file of the current script when user long press or drag down the notification.
+     * @param options.tapAction The action to perform when the user taps the notification. If not specified, the default behavior is to run the current script.
+     *  - `"none"`: Do nothing when the user taps the notification.
+     *  - `{ type: "runScript", scriptName: string }`: Run the specified script when the user taps the notification.
+     *  - `{ type: "openURL", url: string }`: Open the specified URL when the user taps the notification. You can provide a deeplink to open another app, or a https:// link to open system browser.
+     * @param options.avoidRunningCurrentScriptWhenTapped Specify true to avoid running the current script when user tap the notification. The default is false. (Deprecated, use `tapAction` instead, set `tapAction` to `"none"`)
+     * @returns A promise that resolves to true if the notification was successfully scheduled, or false otherwise.
      */
-    static schedule(options: NotificationScheduleOptions): Promise<boolean>;
+    function schedule(options: {
+        title: string;
+        subtitle?: string;
+        body?: string;
+        badge?: number;
+        silent?: boolean;
+        interruptionLevel?: NotificationInterruptionLevel;
+        userInfo?: Record<string, any>;
+        threadIdentifier?: string;
+        trigger?: CalendarNotificationTrigger | LocationNotificationTrigger | TimeIntervalNotificationTrigger | null;
+        /**
+         * The trigger time is a specified timestamp in milliseconds that causes the system to deliver the notification. Specify null to deliver the notification right away.
+         * @deprecated Use `trigger` instead.
+         */
+        triggerTime?: number;
+        /**
+         * Specify a type to reschedule the notification request each time the system delivers the notification with a given `triggerTime` value. If `triggerTime` is not null, specify this property to null to deliver the notification one time.
+         * @deprecated Use `trigger` instead.
+         */
+        repeatsType?: 'hourly' | 'daily' | 'weekly' | 'monthly';
+        actions?: NotificationAction[];
+        customUI?: boolean;
+        tapAction?: "none" | {
+            type: "runScript";
+            scriptName: string;
+        } | {
+            type: "openURL";
+            url: string;
+        };
+        /**
+         * Specify true to avoid running the current script when user tap the notification. The default is false.
+         * @deprecated Use `tapAction` instead, set `tapAction` to `"none"`.
+         */
+        avoidRunningCurrentScriptWhenTapped?: boolean;
+    }): Promise<boolean>;
     /**
-     * Fetches all of the current script's delivered notifications that are still present in Notification Center. If you want to handle the notifications delivered by your script, you can set the script name to the `userInfo`.
+     * Fetches all delivered notifications that are still present in Notification Center.
      */
-    static getAllDelivereds(): Promise<NotificationInfo[]>;
+    function getAllDelivereds(): Promise<NotificationInfo[]>;
     /**
-     * Fetches all of the current script's local notifications that are pending delivery. If you want to handle the notifications delivered by your script, you can set the script name to the `userInfo`.
+     * Fetches all local notifications that are pending delivery.
      */
-    static getAllPendings(): Promise<NotificationInfo[]>;
+    function getAllPendings(): Promise<NotificationRequest[]>;
     /**
-     * Removes all of the current script's delivered notifications from Notification Center.
+     * Removes all delivered notifications from Notification Center.
      */
-    static removeAllDelivereds(): Promise<void>;
+    function removeAllDelivereds(): Promise<void>;
+    /**
+     * Removes all pending local notifications.
+     */
+    function removeAllPendings(): Promise<void>;
+    /**
+     * Removes notifications from Notification Center that match the specified identifiers.
+     */
+    function removeDelivereds(identifiers: string[]): Promise<void>;
+    /**
+     * Removes local notifications that are pending and match the specified identifiers.
+     */
+    function removePendings(identifiers: string[]): Promise<void>;
+    /**
+     * Fetches all of the current script's delivered notifications that are still present in Notification Center.
+     */
+    function getAllDeliveredsOfCurrentScript(): Promise<NotificationInfo[]>;
+    /**
+     * Fetches all of the current script's local notifications that are pending delivery.
+     */
+    function getAllPendingsOfCurrentScript(): Promise<NotificationRequest[]>;
+    /**
+     * Removes all of the current script's notifications from Notification Center that match the specified identifiers.
+     */
+    function removeAllDeliveredsOfCurrentScript(): Promise<void>;
     /**
      * Removes all of the current script's pending local notifications.
      */
-    static removeAllPendings(): Promise<void>;
-    /**
-     * Removes the current script's  notifications from Notification Center that match the specified identifiers.
-     */
-    static removeDelivereds(identifiers: string[]): Promise<void>;
-    /**
-     * Removes the current script's local notifications that are pending and match the specified identifiers.
-     */
-    static removePendings(identifiers: string[]): Promise<void>;
+    function removeAllPendingsOfCurrentScript(): Promise<void>;
     /**
      * Updates the badge count for the Scripting app’s icon.
      */
-    static setBadgeCount(count: number): Promise<boolean>;
+    function setBadgeCount(count: number): Promise<boolean>;
     /**
      * Present a custom UI for rich notification. This method should only use in `notification.tsx` of the script.
      */
-    static present(node: VirtualNode): void;
+    function present(node: VirtualNode): void;
 }
 
-declare function IDProvider({ id, children }: {
-    id: string;
-    children: VirtualNode;
-}): JSX.Element;
 /**
  * Modal presentation styles available when presenting view controllers.
  */
 type ModalPresentationStyle = 'automatic' | 'currentContext' | 'formSheet' | 'fullScreen' | 'overCurrentContext' | 'overFullScreen' | 'popover' | 'pageSheet';
-type NavigationPresentOptions = {
-    element: VirtualNode;
-    modalPresentationStyle?: ModalPresentationStyle;
-};
-declare class Navigation {
-    /**
-     * @internal
-     */
-    constructor();
+declare namespace Navigation {
     /**
      * Presents a view controller modally. The promise will be fulfilled after the view controller dismissed.
      */
-    static present<T = any>(options: NavigationPresentOptions): Promise<T>;
-    static useDismiss(): (result?: any) => void;
+    function present<T = any>(options: VirtualNode | {
+        element: VirtualNode;
+        modalPresentationStyle?: ModalPresentationStyle;
+    }): Promise<T>;
+    function useDismiss(): (result?: any) => void;
 }
 
 /**
@@ -5283,13 +6055,9 @@ declare class Navigation {
  * See also:
  * * https://nodejs.org/docs/v10.3.0/api/path.html
  */
-declare class Path {
-    /**
-     * @internal
-     */
-    constructor();
-    static sep: string;
-    static delimiter: string;
+declare namespace Path {
+    const sep = "/";
+    const delimiter = ":";
     /**
      * The `Path.normalize()` method normalizes the given path, resolving '..' and '.' segments.
      * @example
@@ -5298,13 +6066,13 @@ declare class Path {
      * // Returns: '/foo/bar/baz/asdf'
      * ```
      */
-    static normalize(path: string): string;
+    function normalize(path: string): string;
     /**
      * The `Path.isAbsolute()` method determines if path is an absolute path.
      *
      * If the given path is a zero-length string, false will be returned.
      */
-    static isAbsolute(path: string): boolean;
+    function isAbsolute(path: string): boolean;
     /**
      * The `Path.join()` method joins all given path segments together using the platform
      * specific separator as a delimiter, then normalizes the resulting path.
@@ -5312,7 +6080,7 @@ declare class Path {
      * Zero-length path segments are ignored. If the joined path string is a zero-length
      * string then '.' will be returned, representing the current working directory.
      */
-    static join(...args: string[]): string;
+    function join(...args: string[]): string;
     /**
      * The path.dirname() method returns the directory name of a path.
      * @example
@@ -5321,23 +6089,23 @@ declare class Path {
      * // Returns: '/foo/bar/baz/asdf'
      * ```
      */
-    static dirname(path: string): string;
+    function dirname(path: string): string;
     /**
      * The `Path.basename()` methods returns the last portion of a path, similar to the Unix basename command.
      * Trailing directory separators are ignored, see `Path.sep`.
      */
-    static basename(path: string, ext?: string): string;
+    function basename(path: string, ext?: string): string;
     /**
      * The `Path.extname()` method returns the extension of the path, from the last occurrence
      * of the . (period) character to end of string in the last portion of the path.
      * If there is no . in the last portion of the path, or if the first character of
      * the basename of path (see `Path.basename()`) is ., then an empty string is returned.
      */
-    static extname(path: string): string;
+    function extname(path: string): string;
     /**
      * The `Path.parse()` method returns an object whose properties represent significant elements of the path.
      */
-    static parse(path: string): {
+    function parse(path: string): {
         root: string;
         dir: string;
         base: string;
@@ -5355,7 +6123,7 @@ declare class FormData {
     private formData;
     append(name: string, value: string): void;
     append(name: string, value: Data, mimeType: string, filename?: string): void;
-    get(name: string): string | Data;
+    get(name: string): string | Data | null;
     getAll(name: string): any[];
     has(name: string): boolean;
     delete(name: string): void;
@@ -5363,7 +6131,16 @@ declare class FormData {
     set(name: string, value: Data, filename?: string): void;
     forEach(callback: (value: any, name: string, parent: FormData) => void): void;
     entries(): [string, any][];
+    toJson(): Record<string, any>;
 }
+/**
+ * Converts a FormData object to a JSON object.
+ * Each key in the FormData is mapped to its corresponding value, which can be a string, Data, or an object containing a Data instance with optional filename and mimeType.
+ * @param formData The FormData object to convert.
+ * @returns A JSON object representation of the FormData.
+ * @deprecated
+ * This function is deprecated. Use `FormData.toJson()` method instead.
+ */
 declare function formDataToJson(formData: FormData): Record<string, any>;
 
 type HeadersInit = [string, string][] | Record<string, string> | Headers;
@@ -5393,6 +6170,10 @@ type ResponseInit = {
     status?: number;
     statusText?: string;
     headers?: HeadersInit;
+    url?: string;
+    mimeType?: string;
+    expectedContentLength?: number;
+    textEncodingName?: string;
 };
 /**
  * This Fetch API interface represents the response to a request.
@@ -5404,15 +6185,20 @@ declare class Response {
     private _statusText;
     private _headers;
     private _ok;
-    readonly body: ReadableStream<Uint8Array>;
+    private _url?;
+    private _mimeType?;
+    private _expectedContentLength?;
+    private _textEncodingName?;
+    readonly body: ReadableStream<Data>;
     /**
      * @internal
      */
-    constructor(body: ReadableStream<Uint8Array>, init?: ResponseInit);
+    constructor(body: ReadableStream<Data>, init?: ResponseInit);
     get bodyUsed(): boolean;
     json(): Promise<any>;
     text(): Promise<string>;
     private _concatenate;
+    data(): Promise<Data>;
     bytes(): Promise<Uint8Array>;
     arrayBuffer(): Promise<ArrayBuffer>;
     formData(): Promise<FormData>;
@@ -5432,8 +6218,93 @@ declare class Response {
      * Whether response is ok.
      */
     get ok(): boolean;
+    /**
+     * Get response URL.
+     */
+    get url(): string;
+    /**
+     * Get response mime type.
+     */
+    get mimeType(): string | undefined;
+    /**
+     * Get response expected content length.
+     */
+    get expectedContentLength(): number | undefined;
+    /**
+     * Get response text encoding name.
+     */
+    get textEncodingName(): string | undefined;
 }
 
+/** Error thrown when an operation is aborted */
+declare class AbortError extends Error {
+    name: string;
+    constructor(message?: string);
+}
+/** Event representing an abort, analogous to the browser's AbortEvent */
+declare class AbortEvent {
+    readonly type = "abort";
+    readonly target: AbortSignal;
+    constructor(signal: AbortSignal);
+}
+/** Listener callback invoked when an AbortEvent is dispatched */
+type AbortEventListener = (event: AbortEvent) => void;
+/**
+ * Allows communicating with and aborting DOM requests (e.g., fetch).
+ */
+declare class AbortSignal {
+    private _aborted;
+    private _reason?;
+    private listeners;
+    /** Optional callback for the 'abort' event */
+    onabort: AbortEventListener | null;
+    /** Indicates whether the signal has been aborted */
+    get aborted(): boolean;
+    /** The reason why the signal was aborted */
+    get reason(): any;
+    /**
+     * Internal method to trigger the abort state and notify listeners
+     * @internal
+     */
+    _dispatchAbort(reason?: any): void;
+    /** Throws an AbortError if the signal has already been aborted */
+    throwIfAborted(): void;
+    /** Adds a listener for the 'abort' event */
+    addEventListener(type: 'abort', listener: AbortEventListener): void;
+    /** Removes a previously added 'abort' event listener */
+    removeEventListener(type: 'abort', listener: AbortEventListener): void;
+    /**
+     * Creates a signal that is already aborted with an optional reason
+     */
+    static abort(reason?: any): AbortSignal;
+    /**
+     * Returns a signal that will abort after the given delay (in milliseconds)
+     */
+    static timeout(delay: number): AbortSignal;
+    /**
+     * Returns a signal that will abort when any of the provided signals abort
+     */
+    static any(signals: AbortSignal[]): AbortSignal;
+}
+/**
+ * Controller object that allows aborting one or more DOM requests
+ */
+declare class AbortController {
+    /** The AbortSignal object associated with this controller */
+    readonly signal: AbortSignal;
+    constructor();
+    /**
+     * Aborts the associated signal, setting the reason if provided
+     * @param reason - Optional reason for abort, defaults to an AbortError
+     */
+    abort(reason?: any): void;
+}
+
+type CancelEventListener = (reason?: any) => void;
+declare class CancelError extends Error {
+    name: string;
+    constructor(message?: string);
+}
 /**
  * Controls cancellation of requests.
  *
@@ -5443,6 +6314,8 @@ declare class Response {
 declare class CancelToken {
     readonly token: string;
     private _isCancelled;
+    private listeners;
+    oncancel: CancelEventListener | null;
     /**
      * Whether the token is cancelled.
      */
@@ -5450,7 +6323,9 @@ declare class CancelToken {
     /**
      * Cancel the request.
      */
-    cancel(): void;
+    cancel(reason?: any): void;
+    addEventListener(type: 'cancel', listener: CancelEventListener): void;
+    removeEventListener(type: 'cancel', listener: CancelEventListener): void;
 }
 type CancelTokenHook = {
     /**
@@ -5500,16 +6375,21 @@ type RequestInit = {
     headers?: HeadersInit;
     body?: Data | FormData | string | ArrayBuffer;
     /**
-     * Request timeout in milliseconds.
+     * A function that is called when a redirect response is received. The function receives the new Request as an argument and should return a Promise that resolves to a boolean indicating whether to allow the redirect. If the function is not provided, all redirects will be allowed by default.
      */
-    connectTimeout?: DurationInMilliseconds;
+    shouldAllowRedirect?: (newRequest: Request) => Promise<boolean>;
     /**
-     * Response timeout in milliseconds.
+     * Request timeout in seconds.
      */
-    receiveTimeout?: DurationInMilliseconds;
+    timeout?: DurationInSeconds;
     /**
-     * `CancelToken` instance, you can call the `cancel` method at the
-     * appropriate time to cancel the request.
+     * If this option is set, the request can be canceled by calling abort() on the corresponding AbortController.
+     */
+    signal?: AbortSignal;
+    /**
+     * `CancelToken` instance, you can call the `cancel` method at the appropriate time to cancel the request.
+     * @deprecated
+     * Use `signal` instead.
      */
     cancelToken?: CancelToken;
     /**
@@ -5526,16 +6406,21 @@ declare class Request {
     headers: Headers;
     body?: Data | FormData | string | ArrayBuffer;
     /**
-     * Request timeout in milliseconds.
+     * A function that is called when a redirect response is received. The function receives the new Request as an argument and should return a Promise that resolves to a boolean indicating whether to allow the redirect. If the function is not provided, all redirects will be allowed by default.
      */
-    connectTimeout?: DurationInMilliseconds;
+    shouldAllowRedirect?: (newRequest: Request) => Promise<boolean>;
     /**
-     * Response timeout in milliseconds.
+     * Request timeout in seconds.
      */
-    receiveTimeout?: DurationInMilliseconds;
+    timeout?: DurationInSeconds;
     /**
-     * `CancelToken` instance, you can call the `cancel` method at the
-     * appropriate time to cancel the request.
+     * If this option is set, the request can be canceled by calling abort() on the corresponding AbortController.
+     */
+    signal?: AbortSignal;
+    /**
+     * `CancelToken` instance, you can call the `cancel` method at the appropriate time to cancel the request.
+     * @deprecated
+     * Use `signal` instead.
      */
     cancelToken?: CancelToken;
     /**
@@ -5556,10 +6441,6 @@ declare class Request {
  * badly-formed request URL or a network error. A fetch() promise does not reject if
  * the server responds with HTTP status codes that indicate errors (404, 504, etc.).
  * Instead, a then() handler must check the Response.ok and/or Response.status properties.
- *
- *
- *
- *
  */
 declare function fetch(url: string, init?: RequestInit): Promise<Response>;
 declare function fetch(request: Request): Promise<Response>;
@@ -5568,41 +6449,97 @@ declare function fetch(request: Request): Promise<Response>;
  * Access information about the script, and provides convenient methods to control the scripts.
  *
  */
-declare class Script {
+declare namespace Script {
     /**
-     * @internal
+     * The environment in which the script is running.
+     *  - `"index"`: The script is running in the main app, "index.tsx" is the entry point.
+     *  - `"widget"`: The script is running in a widget, "widget.tsx" is the entry point.
+     *  - `"notification"`: The script is running in the rich notification extension, "notification.tsx" is the entry point.
+     *  - `"intent"`: The script is running in an intent handler, "intent.tsx" is the entry point.
+     *  - `"app_intents"`: The script is running in the app intents extension, "app_intents.tsx" is the entry point.
+     *  - `"assistant_tool"`: The script is running for the Assistant Tool, "assistant_tool.tsx" is the entry point.
      */
-    constructor();
+    const env: "index" | "widget" | "intent" | "app_intents" | "notification" | "assistant_tool";
     /**
      * Name of the current script.
      */
-    static get name(): string;
+    const name: string;
+    /**
+     * Metadata of the current script.
+     *
+     * - `icon`: The icon of the script, it can be a SFSymbol name.
+     * - `color`: The color of the script, it can be a hex color string like `#FF0000` or a CSS color name like `red`.
+     * - `localizedName`: The localized name of the script in the current system language.
+     * - `localizedNames`: The localized names of the script in different languages, the key is the language code, the value is the localized name.
+     * - `description`: The description of the script in English.
+     * - `localizedDescription`: The localized description of the script in the current system language.
+     * - `localizedDescriptions`: The localized descriptions of the script in different languages, the key is the language code, the value is the localized description.
+     * - `version`: The version of the script.
+     * - `author`: The author information of the script.
+     *    - `name`: The name of the author.
+     *    - `email`: The email of the author.
+     *    - `homepage`: The homepage of the author.
+     * - `contributors`: The contributors information of the script, it is an array of objects with the same structure as `author`.
+     * - `remoteResource`: The remote resource information of the script.
+     *    - `url`: The URL of the remote resource, it can be a zip file or a git repository.
+     *    - `autoUpdateInterval`: The interval for auto-updating the remote resource, in seconds. If not specified, the remote resource will not be auto-updated.
+     */
+    const metadata: {
+        icon: string;
+        color: string;
+        localizedName: string;
+        localizedNames?: Record<string, string>;
+        description?: string;
+        localizedDescription: string;
+        localizedDescriptions?: Record<string, string>;
+        version: string;
+        author?: {
+            name: string;
+            email: string;
+            homepage?: string;
+        };
+        contributors?: {
+            name: string;
+            email: string;
+            homepage?: string;
+        }[];
+        remoteResource?: {
+            url: string;
+            autoUpdateInterval?: number | null;
+        };
+    };
     /**
      * The directory path of the current script.
      */
-    static get directory(): string;
+    const directory: string;
     /**
-     * If a widget has set the `Parameter` field, and the current script is opened and run
+     * If a widget on home screen has set the `Parameter` field, and the current script is opened and run
      * after clicking the widget, you can access the configuration from this property.
      */
-    static get widgetParameter(): string;
+    const widgetParameter: string;
     /**
      * If the current script is opened and run by the `run URL scheme`(
      * like `"scripting://run/{script_name}?a=1&b=2"`).
      */
-    static get queryParameters(): Record<string, string>;
+    const queryParameters: Record<string, string>;
+    /**
+     * Creates a URL scheme for opening the Scripting's documentation page.
+     * @param title The title of the documentation page, if not specified, it will open the documentation homepage.
+     * @returns `"scripting://doc?title=Quick%20Start"`
+     */
+    function createDocumentationURLScheme(title?: string): string;
     /**
      * Creates a URL scheme for opening a specified script.
      *
      * @param scriptName
      * @returns `"scripting://open/example_script"`
      */
-    static createOpenURLScheme(scriptName: string): string;
+    function createOpenURLScheme(scriptName: string): string;
     /**
      * Creates a URL scheme for running a specified script.
      *
-     * @param scriptName
-     * @param queryParameters
+     * @param scriptName The name of script to run
+     * @param queryParameters The parameters passed to the script, you can access by `Script.queryParameters`.
      * @returns `"scripting://run/example_script?a=1&b=2"`
      * @example
      *  - Script A: widget.tsx
@@ -5631,7 +6568,75 @@ declare class Script {
      * // output: {"param1": 1, "param2": 2}
      * ```
      */
-    static createRunURLScheme(scriptName: string, queryParameters?: Record<string, string>): string;
+    function createRunURLScheme(scriptName: string, queryParameters?: Record<string, string>): string;
+    /**
+     * Create a URL scheme for running a specified script in single mode. Only one instance of the script can be run at the same time.
+     *
+     * @param scriptName The name of script to run
+     * @param queryParameters The parameters passed to the script, you can access by `Script.queryParameters`.
+     * @returns `"scripting://run_single/example_script?a=1&b=2"`
+     * @example
+     *  - Script A: widget.tsx
+     * ```tsx
+     * async function MyWidget() {
+     *   const url = Script.createRunSingleURLScheme("Script A", {
+     *     param1: 1,
+     *     param2: 2,
+     *   })
+     *   return (
+     *     <Text
+     *       widgetURL={url}
+     *     >
+     *        Run Script A
+     *      </Text>
+     *   )
+     * }
+     * ```
+     *
+     *  - Script A: index.tsx
+     * ```tsx
+     * import { Script } from 'scripting'
+     * console.log(
+     *   JSON.stringify(Script.queryParameters)
+     * )
+     * // output: {"param1": 1, "param2": 2}
+     * ```
+     */
+    function createRunSingleURLScheme(scriptName: string, queryParameters?: Record<string, string>): string;
+    /**
+     * Creates a URL scheme for the OAuth callback URL. This string used to register the OAuth callback URL in the OAuth provider's settings.
+     * @param uniqueID A unique identifier for the OAuth callback URL, it can be any string that uniquely identifies the OAuth flow.
+     * @returns `"scripting://oauth_callback/{uniqueID}"`
+     * @example
+     * ```ts
+     * const githubOAuthCallbackURL = Script.createOAuthCallbackURLScheme("github")
+     * const githubOAuth = new OAuth2({
+     *   // ...
+     * })
+     * githubOAuth.authorize({
+     *   callbackURL: githubOAuthCallbackURL,
+     *   // ...
+     * }).then((credential) => {
+     *   // ...
+     * })
+     * ```
+     */
+    function createOAuthCallbackURLScheme(uniqueID: string): string;
+    /**
+     * Creates a URL scheme for importing scripts from the specified URLs.
+     *
+     * @param urls An array of URLs to import scripts from.
+     * @returns `"scripting://import_scripts?urls=[...]"`
+     * @example
+     * ```ts
+     * const urlScheme = Script.createImportScriptsURLScheme([
+     *   "https://github.com/schl3ck/scripting-app-lib",
+     *   "https://example.com/my-script.zip",
+     * ])
+     * console.log(urlScheme) // "scripting://import_scripts?urls=[...]"
+     * ```
+     */
+    function createImportScriptsURLScheme(urls: string[]): string;
     /**
      * Run a script of Scripting.
      *
@@ -5642,6 +6647,7 @@ declare class Script {
      * @param options
      * @param options.name Name of the script
      * @param options.queryParameters Params passed to the script, you can access by `Script.queryParameters`.
+     * @param options.singleMode If `true`, only one instance of the script can be run at the same time, so other script instances will be terminated. Defaults to `false`.
      * @returns The result returned by the script, if the script passes result to `Script.exit(result)`
      *
      * @example
@@ -5665,9 +6671,10 @@ declare class Script {
      * run()
      * ```
      */
-    static run<T>(options: {
+    function run<T>(options: {
         name: string;
         queryParameters?: Record<string, string>;
+        singleMode?: boolean;
     }): Promise<T | null>;
     /**
      * Exit current script.
@@ -5676,7 +6683,7 @@ declare class Script {
      *  - When a script is run by a shortcut action or share sheet, it can return an `IntentValue` as a processing result.
      * @param result The result to deliver back to the initiator.
      */
-    static exit(result?: any | IntentTextValue | IntentJsonValue | IntentFileURLValue | IntentFileValue | IntentURLValue | IntentAttributedTextValue): void;
+    function exit(result?: any | IntentTextValue | IntentJsonValue | IntentFileURLValue | IntentFileValue | IntentURLValue | IntentAttributedTextValue): void;
 }
 
 /**
@@ -5696,29 +6703,38 @@ type WidgetDisplaySize = {
     height: number;
 };
 /**
- * Widget builder for preview or rendering.
+ * A type that indicates the earliest date widget reload.
+ *  - `never`: A policy that specifies that the app prompts WidgetKit when a new timeline is available.
+ *  - `atEnd`: A policy that specifies that WidgetKit requests a new timeline after the last date in a timeline passes.
+ *  - `after`: A policy that specifies a future date for WidgetKit to request a new timeline.
  */
+type WidgetReloadPolicy = {
+    policy: "never" | "atEnd";
+} | {
+    policy: "after";
+    date: Date;
+};
 /**
  * This interface provides some operations for Widget.
- *
- *
  */
-declare class Widget {
-    /**
-     * @internal
-     */
-    constructor();
+declare namespace Widget {
     /**
      * The user-configured family of the widget.
      */
-    static get family(): WidgetFamily;
+    const family: WidgetFamily;
     /**
      * The size, in points, of the widget.
      */
-    static get displaySize(): WidgetDisplaySize;
+    const displaySize: WidgetDisplaySize;
+    /**
+     * If a widget on home screen has set the `Parameter` field, and the current script is opened and run
+     * after clicking the widget, you can access the configuration from this property.
+     */
+    const parameter: string;
     /**
      * Present the widget UI.
      * @param element UI for rendering widget content.
+     * @param reloadPolicy The policy that determines the earliest date and time WidgetKit requests a new timeline from a timeline provider. Defaults to `atEnd`.
      * @example
      * ```tsx
      * function WidgetView() {
@@ -5736,15 +6752,56 @@ declare class Widget {
      *   </VStack>
      * }
      *
-     * Widget.present(<WidgetView />)
+     * Widget.present(<WidgetView />, {
+     *   // reload 5 minutes later
+     *   policy: "after",
+     *   date: new Date(Date.now() + 1000 * 60 * 5)
+     * })
      * ```
      */
-    static present(element: VirtualNode): void;
+    function present(element: VirtualNode, reloadPolicy?: WidgetReloadPolicy): void;
+    /**
+     * Previews the widget with the specified parameters. This method allows you to preview how the widget will look with different parameters. You should only call this method in the `index.tsx` context, it's not available in other environments like `widget.tsx` or `intent.tsx`.
+     * @param options The options for previewing the widget.
+     * @param options.family The family of the widget to preview. Defaults to `systemSmall`.
+     * @param options.parameters The parameters for the widget preview.
+     * @param options.parameters.options A record of parameter names and their values. The values should be JSON strings that can be parsed into objects.
+     * @param options.parameters.default The name of the default parameter to use in the preview.
+     * @returns A promise that resolves when the preview is dismissed. It will throw an error if the parameters are not set correctly.
+     * @example
+     * ```tsx
+     * const options = {
+     *   "Param 1": JSON.stringify({
+     *     "color": "red"
+     *    }),
+     *   "Param 2":  JSON.stringify({
+     *     "color": "blue"
+     *   }),
+     * }
+     * await Widget.preview({
+     *   family: "systemSmall",
+     *   parameters: {
+     *     options,
+     *     default: "Param 1"
+     *   }
+     * })
+     * console.log("Widget preview dismissed")
+     * ```
+     */
+    function preview<K extends string>(options?: {
+        family?: WidgetFamily;
+        parameters?: {
+            options: Record<K, string>;
+            default: K;
+        };
+    }): Promise<void>;
     /**
      * Reloads the timelines for all configured widgets.
      */
-    static reloadAll(): void;
+    function reloadAll(): void;
 }
+
+declare const Device: typeof globalThis.Device;
 
 declare global {
     namespace JSX {
@@ -5758,4 +6815,4 @@ declare global {
     }
 }
 
-export { AccessoryWidgetBackground, type Alignment, type AnnotationOverflowResolution, type AnnotationOverflowResolutionStrategy, type AnnotationPosition, AppEventListenerManager, AppEvents, type AppIntent, type AppIntentFactory, AppIntentManager, type AppIntentPerform, AppIntentProtocol, AreaChart, AreaStackChart, type Axis, type AxisSet, type BadgeProminence, Bar1DChart, BarChart, type BarChartProps, BarGanttChart, type BarGanttChartProps, BarStackChart, Base64, Button, type ButtonBorderShape, type ButtonProps, type ButtonRole, type ButtonStyle, CancelToken, type CancelTokenHook, Capsule, type CategoryChartProps, Chart, type ChartAxisScaleType, type ChartInterpolationMethod, type ChartMarkProps, type ChartMarkStackingMethod, type ChartScrollPosition, type ChartSelection, type ChartSymbolShape, Circle, type ClosedRange, type Color, ColorPicker, type ColorPickerProps, type ColorScheme, type ColorStringHex, type ColorStringRGBA, type ColorWithGradientOrOpacity, type CommonShapeProps, type CommonViewProps, type ComponentCallback, type ComponentEffect, type ComponentEffectEvent, type ComponentMemo, type ComponentProps, type Consumer, type ConsumerProps, type ContentAvailableViewProps, type ContentMarginPlacement, type ContentTransition, ContentUnavailableView, type Context, ControlGroup, type ControlGroupProps, type ControlGroupStyle, type ControlSize, DateIntervalLabel, type DateIntervalLabelProps, DateLabel, type DateLabelProps, DatePicker, type DatePickerComponents, type DatePickerProps, type DatePickerStyle, DateRangeLabel, type DateRangeLabelProps, Device, DisclosureGroup, type DisclosureGroupProps, type DiscreteSymbolEffect, type Dispatch, Divider, DonutChart, type DragGestureDetails, type DurationInMilliseconds, type Edge, type EdgeInsets, type EdgeSet, EditButton, type EffectDestructor, type EffectSetup, Ellipse, EmptyView, type FileImageProps, type Font, type FontDesign, type FontWeight, type FontWidth, ForEach, type ForEachProps, Form, FormData, type FormProps, type FormStyle, type FunctionComponent, Gauge, type GaugeProps, type GaugeStyle, type Gradient, type GradientStop, Grid, type GridItem, type GridProps, GridRow, type GridRowProps, type GridSize, Group, GroupBox, type GroupBoxProps, type GroupProps, HStack, type HStackProps, Headers, type HeadersInit, HeatMapChart, type HorizontalAlignment, type HorizontalEdgeSet, IDProvider, type IdProps, Image, type ImageProps, type ImageRenderOptions, ImageRenderer, type ImageResizable, type ImageResizingMode, type ImageScale, Intent, IntentAttributedTextValue, IntentFileURLValue, IntentFileValue, IntentJsonValue, IntentTextValue, IntentURLValue, IntentValue, type InternalWidgetRender, type KeyboardType, type KeywordPoint, type KeywordsColor, Label, type LabelProps, type LabelStyle, LazyHGrid, type LazyHGridProps, LazyHStack, type LazyHStackProps, LazyVGrid, type LazyVGridProps, LazyVStack, type LazyVStackProps, LineCategoryChart, LineChart, type LineStylePattern, type LinearGradient, Link, type LinkProps, List, type ListProps, type ListSectionSpacing, type ListStyle, LiveActivity, type LiveActivityActivitiesEnabledListener, type LiveActivityActivityUpdateListener, type LiveActivityDetail, type LiveActivityEndOptions, type LiveActivityOptions, type LiveActivityState, type LiveActivityUI, type LiveActivityUIBuilder, type LiveActivityUpdateOptions, Markdown, type MarkdownProps, type Material, Menu, type MenuProps, type MenuStyle, type ModalPresentation, type ModalPresentationStyle, MultiPicker, type MultiPickerProps, type MutableRefObject, Navigation, type NavigationBarTitleDisplayMode, NavigationLink, type NavigationLinkProps, type NavigationPresentOptions, NavigationSplitView, type NavigationSplitViewColumn, type NavigationSplitViewProps, type NavigationSplitViewStyle, type NavigationSplitViewVisibility, NavigationStack, type NavigationStackProps, type NetworkImageProps, type NormalProgressViewProps, Notification, type NotificationAction, type NotificationInfo, type NotificationScheduleOptions, Path, Picker, type PickerProps, type PickerStyle, type PickerValue, PieChart, type PinnedScrollViews, type Point, Point1DChart, PointCategoryChart, PointChart, type PresentationAdaptation, type PresentationBackgroundInteraction, type PresentationContentInteraction, type PresentationDetent, ProgressView, type ProgressViewProps, type ProgressViewStyle, type Prominence, type Provider, type ProviderProps, QRImage, type QRImageProps, type RadialGradient, RangeAreaChart, ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader, RectAreaChart, RectChart, type RectCornerRadii, Rectangle, type Reducer, type ReducerAction, type ReducerState, type RefObject, type RenderNode, Request, type RequestInit, Response, type ResponseInit, RichText, type RichTextProps, type RoundedCornerStyle, RoundedRectangle, type RoundedRectangleProps, RuleChart, RuleLineForLabelChart, RuleLineForValueChart, type SafeAreaRegions, type ScenePhase, Script, type ScriptingDeviceInfo, type ScrollDismissesKeyboardMode, type ScrollScrollIndicatorVisibility, ScrollView, type ScrollViewProps, type SearchFieldPlacement, type SearchSuggestionsPlacementSet, Section, type SectionProps, SecureField, type SecureFieldProps, type SensoryFeedback, type SetStateAction, type Shape, type ShapeProps, type ShapeStyle, type ShortcutFileURLParameter, type ShortcutJsonParameter, type ShortcutParameter, type ShortcutTextParameter, type Size, Slider, type SliderProps, type SliderWithRangeValueLabelProps, Spacer, type StateInitializer, Stepper, type StepperProps, type StrokeStyle, type StyledText, type StyledTextProps, type SubmitTriggers, type SymbolEffect, type SymbolRenderingMode, type SymbolVariants, type SystemImageProps, TabView, type TabViewProps, type TabViewStyle, Text, type TextAlignment, TextField, type TextFieldProps, type TextFieldStyle, type TextInputAutocapitalization, type TextProps, TimerIntervalLabel, type TimerIntervalLabelProps, type TimerIntervalProgressViewProps, Toggle, type ToggleProps, type ToggleStyle, type ToolBarProps, type ToolbarItemPlacement, type ToolbarPlacement, type ToolbarTitleDisplayMode, type UIImageProps, type UnderlineStyle, type UnderlyingSource, UnevenRoundedRectangle, type UnevenRoundedRectangleProps, VStack, type VStackProps, type VerticalAlignment, type VerticalEdgeSet, VideoPlayer, type VideoPlayerProps, type VirtualNode, type Visibility, WebView, type WebViewProps, Widget, type WidgetDisplaySize, type WidgetFamily, ZStack, type ZStackProps, createContext, fetch, formDataToJson, useCallback, useCancelToken, useColorScheme, useContext, useEffect, useEffectEvent, useMemo, useReducer, useRef, useSelector, useState };
+export { AbortController, AbortError, AbortEvent, type AbortEventListener, AbortSignal, AccessoryWidgetBackground, type Alignment, type Angle, type AngularGradient, AnimatedFrames, type AnimatedFramesProps, AnimatedGif, type AnimatedGifProps, AnimatedImage, type AnimatedImageProps, type AnnotationOverflowResolution, type AnnotationOverflowResolutionStrategy, type AnnotationPosition, AppEventListenerManager, AppEvents, type AppIntent, type AppIntentFactory, AppIntentManager, type AppIntentPerform, AppIntentProtocol, AreaChart, AreaStackChart, type Axis, type AxisSet, type BadgeProminence, Bar1DChart, BarChart, type BarChartProps, BarGanttChart, type BarGanttChartProps, BarStackChart, Base64, Button, type ButtonBorderShape, type ButtonProps, type ButtonRole, type ButtonStyle, type CalendarComponent, CancelError, type CancelEventListener, CancelToken, type CancelTokenHook, Capsule, Chart, type ChartAxisScaleType, type ChartInterpolationMethod, type ChartMarkProps, type ChartMarkStackingMethod, type ChartScrollPosition, type ChartSelection, type ChartSymbolShape, Circle, type ClockHandRotationEffectPeriod, type ClosedRange, type Color, ColorPicker, type ColorPickerProps, type ColorScheme, type ColorStringHex, type ColorStringRGBA, type ColorWithGradientOrOpacity, type CommonViewProps, type ComponentCallback, type ComponentEffect, type ComponentEffectEvent, type ComponentMemo, type ComponentProps, type Consumer, type ConsumerProps, type ContentAvailableViewProps, type ContentAvailableViewWithLabelProps, type ContentAvailableViewWithTitleProps, type ContentMarginPlacement, type ContentMode, type ContentShapeKinds, type ContentTransition, ContentUnavailableView, type Context, ControlGroup, type ControlGroupProps, type ControlGroupStyle, type ControlSize, DateIntervalLabel, type DateIntervalLabelProps, DateLabel, type DateLabelProps, DatePicker, type DatePickerComponents, type DatePickerProps, type DatePickerStyle, DateRangeLabel, type DateRangeLabelProps, Device, DisclosureGroup, type DisclosureGroupProps, type DiscreteSymbolEffect, type Dispatch, Divider, DonutChart, type DragGestureDetails, type DurationInMilliseconds, type DynamicImageSource, type DynamicShapeStyle, type Edge, type EdgeInsets, type EdgeSet, EditButton, Editor, type EditorProps, type EffectDestructor, type EffectSetup, Ellipse, EmptyView, type FileImageProps, type Font, type FontDesign, type FontWeight, type FontWidth, ForEach, type ForEachProps, Form, FormData, type FormProps, type FormStyle, type FunctionComponent, Gauge, type GaugeProps, type GaugeStyle, type Gradient, type GradientStop, Grid, type GridItem, type GridProps, GridRow, type GridRowProps, type GridSize, Group, GroupBox, type GroupBoxProps, type GroupProps, HStack, type HStackProps, Headers, type HeadersInit, HeatMapChart, type HorizontalAlignment, type HorizontalEdgeSet, type IdProps, Image, type ImageProps, type ImageRenderOptions, ImageRenderer, type ImageResizable, type ImageResizingMode, type ImageScale, Intent, IntentAttributedTextValue, IntentFileURLValue, IntentFileValue, IntentJsonValue, IntentTextValue, IntentURLValue, IntentValue, type InternalWidgetRender, type KeyboardType, type KeywordPoint, type KeywordsColor, Label, type LabelProps, type LabelStyle, LazyHGrid, type LazyHGridProps, LazyHStack, type LazyHStackProps, LazyVGrid, type LazyVGridProps, LazyVStack, type LazyVStackProps, LineCategoryChart, LineChart, type LineStylePattern, type LinearGradient, Link, type LinkProps, List, type ListProps, type ListSectionSpacing, type ListStyle, LiveActivity, type LiveActivityActivitiesEnabledListener, type LiveActivityActivityUpdateListener, type LiveActivityDetail, type LiveActivityEndOptions, type LiveActivityOptions, type LiveActivityState, type LiveActivityUI, type LiveActivityUIBuilder, type LiveActivityUpdateOptions, type MarkDimension, Markdown, type MarkdownProps, type Material, Menu, type MenuProps, type MenuStyle, type MeshGradient, type ModalPresentation, type ModalPresentationStyle, MultiPicker, type MultiPickerProps, type MutableRefObject, Navigation, type NavigationBarTitleDisplayMode, NavigationLink, type NavigationLinkProps, NavigationSplitView, type NavigationSplitViewColumn, type NavigationSplitViewProps, type NavigationSplitViewStyle, type NavigationSplitViewVisibility, NavigationStack, type NavigationStackProps, type NetworkImageProps, type NormalProgressViewProps, Notification, type NotificationAction, type NotificationInfo, type NotificationInterruptionLevel, type NotificationRequest, Path, Picker, type PickerProps, type PickerStyle, type PickerValue, PieChart, type PinnedScrollViews, type Point, Point1DChart, PointCategoryChart, PointChart, type PopoverPresentation, type PresentationAdaptation, type PresentationBackgroundInteraction, type PresentationContentInteraction, type PresentationDetent, ProgressView, type ProgressViewProps, type ProgressViewStyle, type Prominence, type Provider, type ProviderProps, QRImage, type QRImageProps, type RadialGradient, RangeAreaChart, ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader, RectAreaChart, RectChart, type RectCornerRadii, Rectangle, type RedactedReason, type Reducer, type ReducerAction, type ReducerState, type RefObject, type RenderNode, Request, type RequestInit, Response, type ResponseInit, type RoundedCornerStyle, RoundedRectangle, type RoundedRectangleProps, RuleChart, RuleLineForLabelChart, RuleLineForValueChart, type SafeAreaRegions, type ScenePhase, Script, type ScriptingDeviceInfo, type ScrollDismissesKeyboardMode, type ScrollScrollIndicatorVisibility, type ScrollTargetBehavior, ScrollView, type ScrollViewProps, type SearchFieldPlacement, type SearchSuggestionsPlacementSet, Section, type SectionProps, SecureField, type SecureFieldProps, type SensoryFeedback, type SetStateAction, type Shape, type ShapeProps, type ShapeStyle, type ShortcutFileURLParameter, type ShortcutJsonParameter, type ShortcutParameter, type ShortcutTextParameter, type Size, Slider, type SliderProps, type SliderWithRangeValueLabelProps, Spacer, type StateInitializer, Stepper, type StepperProps, type StrokeStyle, type StyledText, type SubmitTriggers, type SwingAnimation, type SymbolEffect, type SymbolRenderingMode, type SymbolVariants, type SystemImageProps, TabView, type TabViewProps, type TabViewStyle, Text, type TextAlignment, TextField, type TextFieldProps, type TextFieldStyle, type TextInputAutocapitalization, type TextProps, TimerIntervalLabel, type TimerIntervalLabelProps, type TimerIntervalProgressViewProps, Toggle, type ToggleProps, type ToggleStyle, type ToolBarProps, type ToolbarItemPlacement, type ToolbarPlacement, type ToolbarTitleDisplayMode, type TruncationMode, type UIImageProps, type UnderlineStyle, type UnderlyingSource, UnevenRoundedRectangle, type UnevenRoundedRectangleProps, VStack, type VStackProps, type VerticalAlignment, type VerticalEdgeSet, VideoPlayer, type VideoPlayerProps, type VirtualNode, type Visibility, WebView, type WebViewProps, Widget, type WidgetAccentedRenderingMode, type WidgetDisplaySize, type WidgetFamily, type WidgetReloadPolicy, ZStack, type ZStackProps, createContext, fetch, formDataToJson, gradient, useCallback, useCancelToken, useColorScheme, useContext, useEffect, useEffectEvent, useKeyboardVisible, useMemo, useReducer, useRef, useSelector, useState };

@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "rootDir": "./",
     "target": "ESNext",
     "lib": [
       "esnext"
@@ -16,6 +15,7 @@
     "skipLibCheck": true,
     "jsx": "react",
     "jsxFactory": "createElement",
+    "jsxFragmentFactory": "Fragment",
     "paths": {
       "scripting": [
         "./dts/scripting.d.ts"
@@ -23,9 +23,7 @@
     }
   },
   "include": [
-    "documentation",
-    "Daily Money",
-    "To-Do List",
     "./dts/global.d.ts",
-  ],
+    "scripts"
+  ]
 }

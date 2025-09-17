@@ -1,0 +1,18 @@
+{
+  "localizedNames" : null,
+  "icon" : "puzzlepiece.fill",
+  "version" : "1.0.0",
+  "localizedDescriptions" : null,
+  "runInApp" : false,
+  "contributors" : [
+
+  ],
+  "name" : "Transparent Background",
+  "color" : "rgba(128, 138, 148,1)",
+  "author" : "Jackie (github.com/Honye)",
+  "remoteResource" : null,
+  "intentInputTypes" : [
+
+  ],
+  "description" : null
+}
