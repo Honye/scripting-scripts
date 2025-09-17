@@ -20,7 +20,7 @@ async function chooseImage() {
 export default function ScreenshotSelect({
   image,
   onSelect
-}: { 
+}: {
   image?: UIImage
   onSelect?: (image: UIImage) => void
 }) {
@@ -64,54 +64,56 @@ export default function ScreenshotSelect({
   }
 
   return (
-    <Button
-      background={
+    <VStack
+      overlay={
         <RoundedRectangle
           stroke={{
             shapeStyle: '#414141',
-            strokeStyle: { lineWidth: isiOSAppOnMac ? 10 : 20 }
+            strokeStyle: { lineWidth: isiOSAppOnMac ? 8 : 10 }
           }}
           cornerRadius={24}
         />
       }
-      action={onTap}
-      overlay={ loading ? {
-        alignment: 'center',
-        content: (
-          <VStack>
-            <ProgressView />
-            <Text
-              fontWeight='medium'
-              foregroundStyle='label'
-              shadow={{ color: 'secondarySystemBackground', radius: 2 }}
-            >Loading</Text>
-          </VStack>
-        )
-      } : undefined}
     >
-      {image
-        ? (
-          <Image
-            resizable
-            scaleToFill
-            frame={{ width, height }}
-            image={image}
-            clipShape={{ type: 'rect', cornerRadius: 24 }}
-          />
-        )
-        : (
-          <VStack frame={{ width, height }} >
+      <Button
+        padding={isiOSAppOnMac ? 3 : 4}
+        action={onTap}
+        overlay={ loading ? {
+          alignment: 'center',
+          content: (
+            <VStack>
+              <ProgressView />
+              <Text
+                fontWeight='medium'
+                foregroundStyle='label'
+                shadow={{ color: 'secondarySystemBackground', radius: 2 }}
+              >Loading</Text>
+            </VStack>
+          )
+        } : undefined}
+      >
+        {image
+          ? (
             <Image
-              systemName='plus'
-              font={30}
-              padding={6}
-              background={<RoundedRectangle fill='gray' cornerRadius={4} />}
-              foregroundStyle='darkGray'
+              resizable
+              scaleToFill
+              frame={{ width, height }}
+              image={image}
             />
-            <Text font='caption' foregroundStyle='gray'>Select Screenshot</Text>
-          </VStack>
-        )
-      }
-    </Button>
+          )
+          : (
+            <VStack frame={{ width, height }} >
+              <Image
+                systemName='plus'
+                font={30}
+                padding={6}
+                foregroundStyle='darkGray'
+              />
+              <Text font='caption' foregroundStyle='gray'>Select Screenshot</Text>
+            </VStack>
+          )
+        }
+      </Button>
+    </VStack>
   )
 }
