@@ -7,15 +7,15 @@ import {
   NavigationStack,
   Path,
   Picker,
-  RoundedRectangle, Script, TabView, Text, useColorScheme, useEffect, useState,
+  RoundedRectangle, Script, Spacer, TabView, Text, useColorScheme, useEffect, useState,
   VStack,
-  Widget,
-  type DynamicImageSource
+  Widget
 } from 'scripting'
 import ScreenshotSelect from './components/ScreenshotSelect'
 import { getBackground, sliceWallpaper } from './utils/slice'
 import { darkDir, lightDir } from "./utils/common"
 import { getAllWidgets, type WidgetJSON } from './utils/widget'
+import Mockup from './components/Mockup'
 
 function View() {
   const colorScheme = useColorScheme()
@@ -63,6 +63,7 @@ function View() {
   return (
     <NavigationStack>
       <VStack
+        spacing={24}
         toolbar={{
           topBarTrailing: [
             <Menu
@@ -102,59 +103,73 @@ function View() {
             onSelect={setImage}
           />
         </HStack>
-        {/* <Button
-          title='弹出'
+        <Button
+          systemImage='questionmark.circle'
+          title='Help'
           action={showTutorial}
-          popover={{
+          sheet={{
             isPresented: isPresented,
             onChanged: setIsPresented,
-            arrowEdge: 'top',
             content: <Tutorial onConfirm={() => setIsPresented(false)} />,
           }}
-        /> */}
+        />
       </VStack>
     </NavigationStack>
   )
 }
 
 function Tutorial({ onConfirm }: { onConfirm: () => void }) {
+  const screenshot = UIImage.fromFile(
+    Path.join(Script.directory, 'assets/screenshot.jpeg')
+  )
+  const imgSelect = UIImage.fromFile(
+    Path.join(Script.directory, 'assets/select.png')
+  )
   return (
     <VStack>
-      <TabView tabViewStyle='pageAlwaysDisplayIndex'>
-        <Text>Tutorial</Text>
-        <Text>Hello</Text>
+      <TabView
+        tabViewStyle='pageAlwaysDisplayIndex'
+      >
+        <VStack padding={32} spacing={30}>
+          <Text
+            font='title2'
+            fontWeight='medium'
+          >Capture Blank Home Screen</Text>
+          <Text
+            multilineTextAlignment='center'
+            foregroundStyle='gray'
+          >Capture a blank home screen without any icons, it must be a screenshot of the current device, wallpapers is not allowed~</Text>
+          {screenshot && <Mockup screenshot={screenshot} />}
+        </VStack>
+        <VStack padding={32} spacing={30}>
+          <Text
+            font='title2'
+            fontWeight='medium'
+          >Select Screenshot</Text>
+          <Text
+            multilineTextAlignment='center'
+            foregroundStyle='gray'
+          >If the phone is in light mode, upload a screenshot in light mode. If the phone is in dark mode, upload a screenshot in dark mode</Text>
+          {imgSelect && <Mockup screenshot={imgSelect} />}
+        </VStack>
       </TabView>
       <Button action={onConfirm}>
         <Text
           padding
           background={
-            <RoundedRectangle fill="blue" cornerRadius={4} />
+            <RoundedRectangle
+              frame={{ width: 120, height: 44 }}
+              fill='accentColor'
+              cornerRadius={22}
+            />
           }
-        >BUTTON</Text>
+          fontWeight='medium'
+          foregroundStyle='white'
+        >Got it</Text>
       </Button>
-      <Button
-        background="blue"
-        buttonBorderShape='capsule'
-        padding={10}
-        title='Got it'
-        action={onConfirm}
-      />
+      <Spacer minLength={32} />
     </VStack>
   )
-}
-
-function runAsModule(): UIImage | DynamicImageSource<UIImage> | null {
-  const { family, position } = Script.queryParameters
-  const dir = Path.join(Script.directory, `wallpapers`)
-  const lightImage = UIImage.fromFile(Path.join(dir, `light/${family}-${position}.jpg`))
-  const darkImage = UIImage.fromFile(Path.join(dir, `dark/${family}-${position}.jpg`))
-  if (lightImage && darkImage) {
-    return ({
-      light: lightImage,
-      dark: darkImage
-    })
-  }
-  return (Device.colorScheme === 'dark' ? darkImage : lightImage) || lightImage || darkImage
 }
 
 ;(async function() {
