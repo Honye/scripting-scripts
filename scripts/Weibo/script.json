@@ -1,1 +1,25 @@
-{"name":"Weibo","intentInputTypes":[],"color":"systemRed","runInApp":false,"icon":"note.text"}
+{
+  "localizedDescriptions" : null,
+  "author" : {
+    "name": "Jackie",
+    "email": "Honye@github.com",
+    "homepage": "https://t.me/iiMarkr"
+  },
+  "description" : null,
+  "color" : "rgba(238, 92, 98,1)",
+  "intentInputTypes" : [
+    "URLs",
+    "Images",
+    "FileURLs",
+    "Text"
+  ],
+  "runInApp" : false,
+  "version" : "1.0.0",
+  "localizedNames" : null,
+  "name" : "Weibo",
+  "icon" : "tornado",
+  "remoteResource" : null,
+  "contributors" : [
+
+  ]
+}
