@@ -1,0 +1,70 @@
+.m-wpbtn-lbox {
+  background-color: var(--m-card-background);
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --m-base-background: #141416;
+    --m-card-background: #1c1c1e;
+    --m-title-text: #d1d1d3;
+    --m-content-text: #c6c5c6;
+    --m-border-color: #2e2e30;
+  }
+  .lite-topbar {
+    background-color: var(--m-card-background);
+    border-color: var(--m-border-color);
+  }
+  .lite-page-top .m-font,
+  .lite-page-top .nav-main {
+    color: var(--m-title-text);
+  }
+  /** 搜索栏 */
+  .ntop-nav {
+    background: black !important;
+  }
+  /** 搜索框 */
+  .nt-sbox {
+    background-color: #2a2a2c !important;
+  }
+  .nt-search input {
+    color: #c6c5c6 !important;
+  }
+  .m-container-max .card.m-panel,
+  .m-container-max footer.m-ctrl-box {
+    border: none;
+  }
+  .m-ctrl-box .m-line-gradient {
+    display: none;
+  }
+  /** 详情转发、评论、赞切换栏*/
+  .lite-page-tab,
+  /** 评论列表 */
+  .lite-page-list {
+    background-color: var(--m-card-background);
+  }
+  .lite-page-tab {
+    box-shadow: 0 1px 0 0 var(--m-border-color);
+  }
+  .lite-line {
+    border-color: var(--m-border-color);
+  }
+  .lite-page-list .m-text-box h4 {
+    color: var(--m-content-text);
+  }
+  .lite-page-editor {
+    background-color: var(--m-card-background);
+  }
+
+  /* Action Sheet */
+  .m-wpbtn-list {
+    background-color: #2f2f31;
+  }
+  .m-wpbtn-list li {
+    border-color: #373739;
+  }
+  .m-wpbtn-list li a {
+    color: var(--m-content-text);
+  }
+}

@@ -1,4 +1,4 @@
-import { Intent, Navigation, Script, Text, VStack } from "scripting"
+import { Intent, Navigation, Script, Text, VStack } from 'scripting'
 
 const params = {
   texts: Intent.textsParameter,

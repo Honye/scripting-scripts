@@ -3,18 +3,17 @@ import {
   NavigationStack, Button, List, useCallback, useEffect, useState,
   NavigationLink,
   Image
-} from "scripting"
-import { fetchHotSearch, Weibo } from "./apis/weibo"
-import HotSearch from "./components/HotSearch"
+} from 'scripting'
+import { fetchHotSearch, Weibo } from './apis/weibo'
+import HotSearch from './components/HotSearch'
 import Settings from './pages/Settings'
-import Search from "./pages/Search"
+import Search from './pages/Search'
 
 function View() {
   const dismiss = Navigation.useDismiss()
   const [searches, setSearches] = useState<Weibo.HotSearchItem[]>([])
   const setSearchesAsync = useCallback(async () => {
     const data = await fetchHotSearch()
-    console.log(data)
     setSearches(data)
   }, [])
 
@@ -27,10 +26,6 @@ function View() {
     })
     const url = `https://m.weibo.cn/search?containerid=${encodeURIComponent('100103type=1&t=10&q=' + query.keyword)}`
     return url
-  }
-
-  const onItemTap = (item: Weibo.HotSearchItem) => {
-    Safari.present(getItemURL(item), false)
   }
 
   useEffect(() => {

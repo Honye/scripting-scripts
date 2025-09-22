@@ -1,4 +1,4 @@
-import { useReducer } from "scripting"
+import { useReducer } from 'scripting'
 
 export const enum Client {
   /** 网页版 */

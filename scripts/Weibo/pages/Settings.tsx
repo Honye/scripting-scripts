@@ -8,7 +8,6 @@ export default function Settings() {
   const onClientChanged = (value: string) => {
     setSettings({ client: value as Client })
   }
-  const fn = () => {}
 
   return (
     <List

@@ -1,4 +1,4 @@
-import { AppIntentManager, AppIntentProtocol, Widget } from "scripting"
+import { AppIntentManager, AppIntentProtocol, Widget } from 'scripting'
 
 // Register an AppIntent with parameters
 export const ToggleIntentWithParams = AppIntentManager.register({
@@ -15,7 +15,6 @@ export const IntentOpenSearch = AppIntentManager.register({
   name: 'IntentOpenSearch',
   protocol: AppIntentProtocol.AppIntent,
   perform: async (item: any) => {
-    console.log('== Hello')
     Widget.reloadAll()
     const [, queryString] = item.scheme.split('?')
     const query: Record<string, string> = {}
