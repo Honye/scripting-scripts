@@ -1,4 +1,4 @@
-import { Button, fetch, Group, HStack, Image, List, Navigation, NavigationStack, ProgressView, RoundedRectangle, Script, Text, useState, VStack } from 'scripting'
+import { Button, fetch, ForEach, Image, List, Navigation, NavigationStack, Script, useState } from 'scripting'
 import { Subscription, WidgetJSON } from './types'
 import { download } from './files'
 import SubscriptionView from './components/Subscription'
@@ -88,6 +88,14 @@ function App() {
     await saveSubscription(url).catch((err) => console.error(err))
   }
 
+  const onMove = (indices: number[], newOffset: number) => {
+    const movingItems = indices.map(index => subscriptions[index])
+    const newList = subscriptions.filter((_, index) => !indices.includes(index))
+    newList.splice(newOffset, 0, ...movingItems)
+    Storage.set('subscriptions', newList)
+    setSubscriptions(newList)
+  }
+
   return (
     <NavigationStack>
       <List
@@ -99,15 +107,19 @@ function App() {
           ]
         }}
       >
-        {subscriptions.map((item) => (
-          <SubscriptionView
-            key={item.url}
-            data={item}
-            loading={item.loading}
-            onUpdate={() => saveSubscription(item.url)}
-            onRemove={() => removeSubscription(item)}
-          />
-        ))}
+        <ForEach
+          count={subscriptions.length}
+          itemBuilder={(index) =>
+            <SubscriptionView
+              key={subscriptions[index].url}
+              data={subscriptions[index]}
+              loading={subscriptions[index].loading}
+              onUpdate={() => saveSubscription(subscriptions[index].url)}
+              onRemove={() => removeSubscription(subscriptions[index])}
+            />
+          }
+          onMove={onMove}
+        />
       </List>
     </NavigationStack>
   )
