@@ -1,0 +1,22 @@
+{
+  "runInApp" : false,
+  "author" : {
+    "homepage" : "https://t.me/iiMarkr",
+    "name" : "Jackie",
+    "email" : "Honye@github.com"
+  },
+  "localizedDescriptions" : null,
+  "description" : null,
+  "contributors" : [
+
+  ],
+  "version" : "1.0.0",
+  "remoteResource" : null,
+  "intentInputTypes" : [
+
+  ],
+  "localizedNames" : null,
+  "icon" : "chevron.left.slash.chevron.right",
+  "name" : "GitHub Scriptings",
+  "color" : "rgba(124, 76, 179,1)"
+}
