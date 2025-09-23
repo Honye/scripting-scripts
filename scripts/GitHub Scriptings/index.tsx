@@ -1,6 +1,7 @@
 import { Button, fetch, Group, HStack, Image, List, Navigation, NavigationStack, ProgressView, RoundedRectangle, Script, Text, useState, VStack } from 'scripting'
 import { Subscription, WidgetJSON } from './types'
 import { download } from './files'
+import SubscriptionView from './components/Subscription'
 
 interface SubscriptionItem extends Subscription {
   loading?: boolean
@@ -64,7 +65,12 @@ function App() {
     }
     Storage.set('subscriptions', subscriptions)
     setSubscriptions(subscriptions)
-    await download(`${owner}/${repo}`, branch, path, data.name)
+    await download(
+      `${owner}/${repo}`,
+      branch,
+      decodeURIComponent(path),
+      data.name
+    )
     subscription.loading = false
     updateSubscription(subscription)
   }
@@ -94,56 +100,13 @@ function App() {
         }}
       >
         {subscriptions.map((item) => (
-          <HStack
+          <SubscriptionView
             key={item.url}
-            contextMenu={{
-              menuItems: <Group>
-                <Button
-                  systemImage='arrow.trianglehead.clockwise.rotate.90'
-                  title='Update'
-                  action={() => saveSubscription(item.url)}
-                />
-                <Button
-                  systemImage='trash'
-                  title='Delete'
-                  role='destructive'
-                  foregroundStyle='systemRed'
-                  action={() => removeSubscription(item)}
-                />
-              </Group>
-            }}
-            trailingSwipeActions={{
-              actions: [
-                <Button
-                  title='Delete'
-                  role='destructive'
-                  action={() => removeSubscription(item)}
-                />,
-                <Button
-                  title='Update'
-                  action={() => saveSubscription(item.url)}
-                />
-              ]
-            }}
-          >
-            <Image
-              frame={{ width: 40, height: 40 }}
-              systemName={item.icon}
-              foregroundStyle='white'
-              font={20}
-              background={
-                <RoundedRectangle fill={item.color} cornerRadius={8} />
-              }
-            />
-            <VStack alignment='leading'>
-              <HStack>
-                <Text>{item.name}</Text>
-                <Text font='callout' foregroundStyle='secondaryLabel'>v{item.version}</Text>
-              </HStack>
-              <Text font='footnote' foregroundStyle='secondaryLabel'>{item.repo}</Text>
-            </VStack>
-            { item.loading ? <ProgressView /> : null }
-          </HStack>
+            data={item}
+            loading={item.loading}
+            onUpdate={() => saveSubscription(item.url)}
+            onRemove={() => removeSubscription(item)}
+          />
         ))}
       </List>
     </NavigationStack>

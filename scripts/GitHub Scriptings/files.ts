@@ -7,7 +7,7 @@ import { downloadFile, getFileTree } from './apis/github'
  * @param name script name
  */
 export async function download(repo: string, branch: string, path: string, name: string) {
-  console.log('Start downloading...')
+  console.log(`Start download ${repo} on branch ${branch} with ${path}`)
   const folder = path.replace(/script\.json$/, '')
   // To locate the folder more accurately, we first get the root tree sha of the branch
   const branchUrl = `https://api.github.com/repos/${repo}/branches/${branch}`
