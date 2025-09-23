@@ -14,22 +14,22 @@ export default function SubscriptionView({
 }) {
   return (
     <HStack
-      contextMenu={{
-        menuItems: <Group>
-          <Button
-            systemImage='arrow.trianglehead.clockwise.rotate.90'
-            title='Update'
-            action={onUpdate}
-          />
-          <Button
-            systemImage='trash'
-            title='Delete'
-            role='destructive'
-            foregroundStyle='systemRed'
-            action={onRemove}
-          />
-        </Group>
-      }}
+      // contextMenu={{
+      //   menuItems: <Group>
+      //     <Button
+      //       systemImage='arrow.trianglehead.clockwise.rotate.90'
+      //       title='Update'
+      //       action={onUpdate}
+      //     />
+      //     <Button
+      //       systemImage='trash'
+      //       title='Delete'
+      //       role='destructive'
+      //       foregroundStyle='systemRed'
+      //       action={onRemove}
+      //     />
+      //   </Group>
+      // }}
       trailingSwipeActions={{
         actions: [
           <Button
