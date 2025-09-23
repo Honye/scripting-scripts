@@ -9,7 +9,11 @@
   ],
   "name" : "Transparent Background",
   "color" : "rgba(128, 138, 148,1)",
-  "author" : "Jackie (github.com/Honye)",
+  "author" : {
+    "homepage" : "https://t.me/iiMarkr",
+    "name" : "Jackie",
+    "email" : "Honye@github.com"
+  },
   "remoteResource" : null,
   "intentInputTypes" : [
 
