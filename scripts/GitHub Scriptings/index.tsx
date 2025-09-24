@@ -90,12 +90,11 @@ function App() {
     await saveSubscription(url).catch((err) => console.error(err))
   }
 
-  const onMove = (indices: number[], newOffset: number) => {
-    const movingItems = indices.map(index => subscriptions[index])
-    const newList = subscriptions.filter((_, index) => !indices.includes(index))
-    newList.splice(newOffset, 0, ...movingItems)
-    Storage.set('subscriptions', newList)
-    setSubscriptions(newList)
+  const move = (index: number, offset: number) => {
+    const [item] = subscriptions.splice(index, 1)
+    subscriptions.splice(index + offset, 0, item)
+    Storage.set('subscriptions', subscriptions)
+    setSubscriptions([...subscriptions])
   }
 
   return (
@@ -109,20 +108,17 @@ function App() {
           ]
         }}
       >
-        <ForEach
-          key={foreachKey}
-          count={subscriptions.length}
-          itemBuilder={(index) =>
-            <SubscriptionView
-              key={subscriptions[index].url}
-              data={subscriptions[index]}
-              loading={subscriptions[index].loading}
-              onUpdate={() => saveSubscription(subscriptions[index].url)}
-              onRemove={() => removeSubscription(subscriptions[index])}
-            />
-          }
-          onMove={onMove}
-        />
+        {subscriptions.map((item, index) => (
+          <SubscriptionView
+            key={item.url}
+            data={item}
+            loading={item.loading}
+            onUpdate={() => saveSubscription(item.url)}
+            onRemove={() => removeSubscription(item)}
+            onMoveUp={() => move(index, -1)}
+            onMoveDown={() => move(index, 1)}
+          />
+        ))}
       </List>
     </NavigationStack>
   )

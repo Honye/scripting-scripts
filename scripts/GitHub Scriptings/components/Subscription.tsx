@@ -1,35 +1,54 @@
-import { Button, Group, HStack, Image, ProgressView, RoundedRectangle, Text, VStack } from 'scripting'
+import { Button, ColorStringRGBA, Group, HStack, Image, ProgressView, RoundedRectangle, Script, Text, VStack } from 'scripting'
 import { Subscription } from '../types'
 
 export default function SubscriptionView({
   data,
   loading,
   onUpdate,
-  onRemove
+  onRemove,
+  onMoveUp,
+  onMoveDown
 }: {
   data: Subscription
   loading?: boolean
   onUpdate: () => void
   onRemove: () => void
+  onMoveUp?: () => void
+  onMoveDown?: () => void
 }) {
   return (
     <HStack
-      // contextMenu={{
-      //   menuItems: <Group>
-      //     <Button
-      //       systemImage='arrow.trianglehead.clockwise.rotate.90'
-      //       title='Update'
-      //       action={onUpdate}
-      //     />
-      //     <Button
-      //       systemImage='trash'
-      //       title='Delete'
-      //       role='destructive'
-      //       foregroundStyle='systemRed'
-      //       action={onRemove}
-      //     />
-      //   </Group>
-      // }}
+      contextMenu={{
+        menuItems: <Group>
+          <Button
+            systemImage='arrow.trianglehead.clockwise.rotate.90'
+            title='Update'
+            action={onUpdate}
+          />
+          <Button
+            systemImage='trash'
+            title='Delete'
+            role='destructive'
+            foregroundStyle='systemRed'
+            action={onRemove}
+          />
+        </Group>
+      }}
+      leadingSwipeActions={{
+        actions: [
+          <Button
+            systemImage='arrowshape.up.fill'
+            title='Up'
+            tint={Script.metadata.color as ColorStringRGBA}
+            action={() => onMoveUp?.()}
+          />,
+          <Button
+            systemImage='arrowshape.down.fill'
+            title='Down'
+            action={() => onMoveDown?.()}
+          />
+        ]
+      }}
       trailingSwipeActions={{
         actions: [
           <Button
