@@ -10,10 +10,10 @@
   "contributors" : [
 
   ],
-  "version" : "1.1.1",
+  "version" : "1.2.0",
   "remoteResource" : null,
   "intentInputTypes" : [
-
+    "URLs"
   ],
   "localizedNames" : null,
   "icon" : "chevron.left.slash.chevron.right",
