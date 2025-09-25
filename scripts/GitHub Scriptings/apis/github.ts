@@ -1,14 +1,16 @@
 import { fetch, Path } from 'scripting'
 import { Tree } from './types'
 import { OAuth } from '../types'
+import { StorageKey } from '../constants'
 
 const headers = {
   Accept: 'application/vnd.github+json'
 }
 Object.defineProperty(headers, 'Authorization', {
   get() {
-    const oauth = Storage.get<OAuth>('oauth')
-    return oauth?.accessToken ? `Bearer ${oauth.accessToken}` : undefined
+    const oauth = Storage.get<OAuth>(StorageKey.OAuth)
+    const accessToken = Storage.get<string>(StorageKey.AccessToken) || oauth?.accessToken
+    return accessToken ? `Bearer ${accessToken}` : undefined
   }
 })
 

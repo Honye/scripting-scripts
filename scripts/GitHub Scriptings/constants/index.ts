@@ -1,5 +1,6 @@
 export enum StorageKey {
-  OAuth = 'oauth'
+  OAuth = 'oauth',
+  AccessToken = 'accessToken'
 }
 
 export const DefaultOAuthApp = {

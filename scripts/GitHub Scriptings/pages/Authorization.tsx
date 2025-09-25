@@ -10,11 +10,15 @@ interface FormData {
 }
 
 export function Authorization() {
-  const { clientID, clientSecret, accessToken } = Storage.get<OAuth>(StorageKey.OAuth) || {
+  const [_accessToken, _setAccessToken] = useState(Storage.get<string>(StorageKey.AccessToken) || '')
+  const [formData, setFormData] = useState<FormData>(Storage.get<OAuth>(StorageKey.OAuth) || {
     clientID: DefaultOAuthApp.clientID,
     clientSecret: DefaultOAuthApp.clientSecret
+  })
+
+  const saveAccessToken = () => {
+    Storage.set(StorageKey.AccessToken, _accessToken)
   }
-  const [formData, setFormData] = useState<FormData>({ clientID, clientSecret, accessToken })
 
   const onFieldChange = (key: keyof FormData) => (value: string) => {
     setFormData({ ...formData, [key]: value })
@@ -35,8 +39,17 @@ export function Authorization() {
   return (
     <NavigationStack>
       <Form
+        navigationBarTitleDisplayMode='inline'
         navigationTitle='Authorization'
       >
+        <Section title='Personal access token'>
+          <SecureField
+            title='Personal access token'
+            value={_accessToken}
+            onChanged={_setAccessToken}
+            onSubmit={saveAccessToken}
+          />
+        </Section>
         <Section title='Client ID'>
           <TextField
             title='Client ID'
