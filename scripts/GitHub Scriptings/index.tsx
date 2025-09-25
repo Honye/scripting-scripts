@@ -1,7 +1,8 @@
-import { Button, fetch, ForEach, Image, List, Navigation, NavigationStack, Script, useState } from 'scripting'
+import { Button, fetch, Image, List, Navigation, NavigationLink, NavigationStack, Script, Spacer, useState } from 'scripting'
 import { Subscription, WidgetJSON } from './types'
 import { download } from './files'
 import SubscriptionView from './components/Subscription'
+import { Authorization } from './pages/Authorization'
 
 interface SubscriptionItem extends Subscription {
   loading?: boolean
@@ -37,7 +38,7 @@ function App() {
     if (i !== -1) {
       subscriptions.splice(i, 1)
       Storage.set('subscriptions', subscriptions)
-      // setSubscriptions(subscriptions)
+      setSubscriptions(subscriptions)
     }
   }
 
@@ -102,6 +103,14 @@ function App() {
       <List
         toolbar={{
           topBarTrailing: [
+            <NavigationLink
+              destination={<Authorization />}
+            >
+              <Image systemName='gearshape' />
+            </NavigationLink>
+          ],
+          bottomBar: [
+            <Spacer />,
             <Button action={showDialog}>
               <Image systemName='plus' />
             </Button>

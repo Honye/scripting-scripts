@@ -17,3 +17,9 @@ export interface WidgetJSON {
   color: ColorStringRGBA
   author: string
 }
+
+export interface OAuth {
+  clientID: string
+  clientSecret: string
+  accessToken?: string
+}

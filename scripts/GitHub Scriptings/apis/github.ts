@@ -1,9 +1,16 @@
 import { fetch, Path } from 'scripting'
 import { Tree } from './types'
+import { OAuth } from '../types'
 
 const headers = {
-  'Accept': 'application/vnd.github+json'
+  Accept: 'application/vnd.github+json'
 }
+Object.defineProperty(headers, 'Authorization', {
+  get() {
+    const oauth = Storage.get<OAuth>('oauth')
+    return oauth?.accessToken ? `Bearer ${oauth.accessToken}` : undefined
+  }
+})
 
 /** Get the tree SHA of a folder */
 async function getFolderTreeSha(owner: string, repo: string, folderPath: string): Promise<string | null> {
