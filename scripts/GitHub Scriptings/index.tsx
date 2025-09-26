@@ -10,7 +10,6 @@ interface SubscriptionItem extends Subscription {
 
 function App() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(Storage.get('subscriptions') || [])
-  const [foreachKey, setForeachKey] = useState(UUID.string())
 
   const dealURL = (url: string) => {
     const blobRegxp = /^https:\/\/github\.com\/(.+)\/blob\/(.+\.json$)/
@@ -67,7 +66,6 @@ function App() {
     }
     Storage.set('subscriptions', subscriptions)
     setSubscriptions(subscriptions)
-    setForeachKey(UUID.string())
     await download(
       `${owner}/${repo}`,
       branch,
@@ -101,6 +99,7 @@ function App() {
   return (
     <NavigationStack>
       <List
+        navigationBarTitleDisplayMode='inline'
         toolbar={{
           topBarTrailing: [
             <NavigationLink

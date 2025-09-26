@@ -1,4 +1,4 @@
-import { Button, Form, NavigationStack, Section, SecureField, TextField, useState } from 'scripting'
+import { Button, Form, NavigationStack, Section, SecureField, Text, TextField, useState } from 'scripting'
 import { DefaultOAuthApp, StorageKey } from '../constants'
 import { authorize, revoke } from '../oauth'
 import { OAuth } from '../types'
@@ -10,18 +10,23 @@ interface FormData {
 }
 
 export function Authorization() {
-  const [_accessToken, _setAccessToken] = useState(Storage.get<string>(StorageKey.AccessToken) || '')
+  const [accessToken, setAccessToken] = useState(Storage.get<string>(StorageKey.AccessToken) || '')
   const [formData, setFormData] = useState<FormData>(Storage.get<OAuth>(StorageKey.OAuth) || {
     clientID: DefaultOAuthApp.clientID,
     clientSecret: DefaultOAuthApp.clientSecret
   })
 
-  const saveAccessToken = () => {
-    Storage.set(StorageKey.AccessToken, _accessToken)
+  const saveAccessToken = (value: string) => {
+    Storage.set(StorageKey.AccessToken, value)
+    setAccessToken(value)
   }
 
   const onFieldChange = (key: keyof FormData) => (value: string) => {
     setFormData({ ...formData, [key]: value })
+    Storage.set<OAuth>(StorageKey.OAuth, {
+      ...formData,
+      [key]: value
+    })
   }
 
   const handleAuthorize = async () => {
@@ -42,22 +47,35 @@ export function Authorization() {
         navigationBarTitleDisplayMode='inline'
         navigationTitle='Authorization'
       >
-        <Section title='Personal access token'>
+        <Section
+          header={
+            <Text>Personal access token</Text>
+          }
+          footer={
+            <Text
+              attributedString='A personal access token is a more secure method. If this field is filled in, it will be used with priority. You can go to <https://github.com/settings/personal-access-tokens/new> to create and copy the token.'
+            />
+          }
+        >
           <SecureField
             title='Personal access token'
-            value={_accessToken}
-            onChanged={_setAccessToken}
-            onSubmit={saveAccessToken}
+            value={accessToken}
+            onChanged={saveAccessToken}
           />
         </Section>
-        <Section title='Client ID'>
+        <Section
+          header={
+            <Text>OAuth App</Text>
+          }
+          footer={
+            <Text>For your information security, do not share the Client Secret with others.</Text>
+          }
+        >
           <TextField
             title='Client ID'
             value={formData.clientID}
             onChanged={onFieldChange('clientID')}
           />
-        </Section>
-        <Section title='Client Secret'>
           <SecureField
             title='Client Secret'
             value={formData.clientSecret}
@@ -65,6 +83,7 @@ export function Authorization() {
           />
         </Section>
         <Button
+          disabled={!(formData.clientID && formData.clientSecret)}
           title={formData.accessToken ? 'Revoke' : 'Authorize'}
           role={formData.accessToken ? 'destructive' : undefined}
           action={formData.accessToken ? handleRevoke : handleAuthorize}

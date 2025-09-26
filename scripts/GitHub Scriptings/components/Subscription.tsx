@@ -21,7 +21,7 @@ export default function SubscriptionView({
       contextMenu={{
         menuItems: <Group>
           <Button
-            systemImage='arrow.trianglehead.clockwise.rotate.90'
+            systemImage='icloud.and.arrow.down'
             title='Update'
             action={onUpdate}
           />
