@@ -1,8 +1,9 @@
-import { Button, fetch, Image, List, Navigation, NavigationLink, NavigationStack, Script, Spacer, useState } from 'scripting'
-import { Subscription, WidgetJSON } from './types'
+import { Button, Image, List, Navigation, NavigationLink, NavigationStack, Script, Spacer, useState } from 'scripting'
+import { Subscription } from './types'
 import { download } from './files'
 import SubscriptionView from './components/Subscription'
 import { Authorization } from './pages/Authorization'
+import { getScriptInfo } from './apis/github'
 
 interface SubscriptionItem extends Subscription {
   loading?: boolean
@@ -47,7 +48,9 @@ function App() {
     if (!match) return
 
     const [, owner, repo, branch, path] = match
-    const data: WidgetJSON = await fetch(url).then((resp) => resp.json())
+    const data = await getScriptInfo(`${owner}/${repo}`, path)
+    if (!data) return
+
     const subscription: SubscriptionItem = {
       name: data.name,
       version: data.version,
@@ -86,7 +89,10 @@ function App() {
     if (!url) return
 
     url = dealURL(url)
-    await saveSubscription(url).catch((err) => console.error(err))
+    await saveSubscription(url).catch((err) => {
+      console.present()
+      console.error(err)
+    })
   }
 
   const move = (index: number, offset: number) => {

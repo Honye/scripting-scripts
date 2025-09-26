@@ -1,6 +1,6 @@
 import { fetch, Path } from 'scripting'
 import { Tree } from './types'
-import { OAuth } from '../types'
+import { OAuth, WidgetJSON } from '../types'
 import { StorageKey } from '../constants'
 
 const headers = {
@@ -97,4 +97,24 @@ export async function downloadFile(repo: string, filePath: string, destination: 
   } catch (error) {
     console.error(`Error processing file ${filePath}:`, error)
   }
+}
+
+export async function getScriptInfo(repo: `${string}/${string}`, path: string): Promise<WidgetJSON | null> {
+  const url = `https://api.github.com/repos/${repo}/contents/${path}`
+  const response = await fetch(url, { headers })
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(`[${response.status}] ${data.message}`)
+  }
+  const { content, encoding } = data
+  let json: string | null
+  if (encoding === 'base64') {
+    json = Data.fromBase64String(content.replace(/\n/g, ''))?.toRawString() || null
+  } else {
+    json = content
+  }
+  if (json) {
+    return JSON.parse(json)
+  }
+  return null
 }
