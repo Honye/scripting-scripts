@@ -1,4 +1,4 @@
-import { Button, Image, List, Navigation, NavigationLink, NavigationStack, Script, Spacer, useState } from 'scripting'
+import { Button, Image, List, Navigation, NavigationLink, NavigationStack, Script, Spacer, useEffect, useState } from 'scripting'
 import { Subscription } from './types'
 import { download } from './files'
 import SubscriptionView from './components/Subscription'
@@ -9,7 +9,7 @@ interface SubscriptionItem extends Subscription {
   loading?: boolean
 }
 
-function App() {
+function App({ url }: { url?: string }) {
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(Storage.get('subscriptions') || [])
 
   const dealURL = (url: string) => {
@@ -102,6 +102,16 @@ function App() {
     setSubscriptions([...subscriptions])
   }
 
+  useEffect(() => {
+    if (url) {
+      url = dealURL(url)
+      saveSubscription(url).catch((err) => {
+        console.present()
+        console.error(err)
+      })
+    }
+  }, [url])
+
   return (
     <NavigationStack>
       <List
@@ -139,8 +149,9 @@ function App() {
 }
 
 async function main() {
+  const { url } = Script.queryParameters
   Navigation.present({
-    element: <App />
+    element: <App url={url} />
   }).finally(() => {
     Script.exit()
   })
