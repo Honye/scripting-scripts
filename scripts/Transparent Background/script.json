@@ -1,6 +1,9 @@
 {
-  "localizedNames" : null,
-  "icon" : "puzzlepiece.fill",
+  "localizedNames" : {
+    "zh": "透明背景",
+    "en": "Transparent Background"
+  },
+  "icon" : "camera.metering.center.weighted.average",
   "version" : "1.0.0",
   "localizedDescriptions" : null,
   "runInApp" : false,

@@ -15,9 +15,12 @@
   ],
   "runInApp" : false,
   "version" : "1.0.0",
-  "localizedNames" : null,
+  "localizedNames" : {
+    "zh": "微博热搜",
+    "en": "Weibo"
+  },
   "name" : "Weibo",
-  "icon" : "tornado",
+  "icon" : "text.square.filled",
   "remoteResource" : null,
   "contributors" : [
 
