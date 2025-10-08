@@ -1,0 +1,223 @@
+import { Button, Group, HStack, Image, RoundedRectangle, Spacer, Text, useMemo, useState, VStack } from "scripting"
+import { Colors } from "../constansts/colors"
+import { Alphabet, getLettersInRow1, getLettersInRow2, getLettersInRow3, getNumbers } from "../constansts/symbols"
+import Key from "./Key"
+import { useFontConfig } from "../hooks/useFontConfig"
+import { FontSelect } from "./FontSelect"
+import { getChars } from "../utils"
+
+// 字母键宽：70
+// 符号键宽：90
+// 回车键款：194
+// 123：91
+//
+// 每行左右间隙：8
+// 字母左右间隙：12
+// 字母上下间隙：22
+
+export default function KeyboardView() {
+  const [hasShiftFlag, setHasShiftFlag] = useState(false)
+  const [numFlag, setNumFlag] = useState(false)
+  const padding = 4
+  const gapX = 6
+  const gapY = 11
+  const itemHeight = 45
+
+  const types = Object.keys(Alphabet)
+  types.unshift("Standard")
+
+  const { config, setFont } = useFontConfig()
+
+  const charsInRow1 = useMemo(
+    () => {
+      return numFlag
+        ? getNumbers(config?.font || 'Standard')
+        : getLettersInRow1(hasShiftFlag, config?.font || 'Standard')
+    },
+    [hasShiftFlag, config?.font, numFlag])
+  const charsInRow2 = useMemo(
+    () => getLettersInRow2(hasShiftFlag, config?.font || 'Standard'),
+    [hasShiftFlag, config?.font]
+  )
+  const charsInRow3 = useMemo(() => getLettersInRow3(hasShiftFlag, config?.font || 'Standard'),
+    [hasShiftFlag, config?.font])
+  const insertText = (char: string) => CustomKeyboard.insertText(char)
+
+  return (
+    <VStack
+      padding={{
+        horizontal: padding,
+        top: padding + 1,
+        bottom: padding
+      }}
+      spacing={gapY}
+    >
+      {/* <HStack spacing={gapX}>
+        {getNumbers(config?.font || 'Standard').map((n) => (
+          <Key key={n} title={`${n}`} font={22} />
+        ))}
+      </HStack> */}
+      <HStack spacing={gapX}>
+        {charsInRow1.map((char) => (
+          <Key
+            key={char}
+            title={char}
+            font={hasShiftFlag ? 22 : 26}
+          />
+        ))}
+      </HStack>
+      <HStack spacing={gapX}>
+        {charsInRow2.map((char) => (
+          <Key
+            key={char}
+            title={char}
+            font={hasShiftFlag ? 22 : 26}
+          />
+        ))}
+      </HStack>
+      <HStack spacing={6}>
+        <Button
+          frame={{ width: 45, height: itemHeight }}
+          background={
+            <RoundedRectangle
+              fill={Colors.Background2}
+              cornerRadius={6}
+              shadow={{
+                x: 0.5,
+                y: 1,
+                color: 'rgba(0,0,0,0.3)',
+                radius: 0.5
+              }}
+            />
+          }
+          font={20}
+          foregroundStyle={Colors.Foreground2}
+          action={() => setHasShiftFlag(!hasShiftFlag)}
+
+        >
+          <Image systemName={hasShiftFlag ? "shift.fill" : "shift"} />
+        </Button>
+        <Spacer minLength={0} />
+        {charsInRow3.map((char) => (
+          <Key
+            key={char}
+            title={char}
+            font={hasShiftFlag ? 22 : 26}
+          />
+        ))}
+        <Spacer minLength={0} />
+        <Button
+          frame={{ width: 45, height: itemHeight }}
+          background={
+            <RoundedRectangle
+              fill={Colors.Background2}
+              cornerRadius={6}
+              shadow={{
+                x: 0.5,
+                y: 1,
+                color: 'rgba(0,0,0,0.3)',
+                radius: 0.5
+              }}
+            />
+          }
+          font={20}
+          foregroundStyle={Colors.Foreground2}
+          action={() => CustomKeyboard.deleteBackward()}
+        >
+          <Image systemName="delete.left" />
+        </Button>
+      </HStack>
+      <HStack>
+        <Button
+          frame={{ width: 45, height: itemHeight }}
+          title={numFlag ? 'ABC' : '123'}
+          background={
+            <RoundedRectangle
+              fill={Colors.Background2}
+              cornerRadius={6}
+              shadow={{
+                x: 0.5,
+                y: 1,
+                color: 'rgba(0,0,0,0.3)',
+                radius: 0.5
+              }}
+            />
+          }
+          font={16}
+          foregroundStyle={Colors.Foreground2}
+          action={() => setNumFlag(!numFlag)}
+        />
+        <Button
+          frame={{ width: 45, height: itemHeight }}
+          background={
+            <RoundedRectangle
+              fill={Colors.Background2}
+              cornerRadius={6}
+              shadow={{
+                x: 0.5,
+                y: 1,
+                color: 'rgba(0,0,0,0.3)',
+                radius: 0.5
+              }}
+            />
+          }
+          font={20}
+          foregroundStyle={Colors.Foreground2}
+          action={() => CustomKeyboard.dismissToHome()}
+          contextMenu={{
+            menuItems: <Group>
+              {types.map((type) => (
+                <Button
+                  key={type}
+                  action={() => setFont(type)}
+                >
+                  <Text>{getChars(type, type)}</Text>
+                </Button>
+              ))}
+            </Group>
+          }}
+        >
+          <Image systemName="face.smiling" />
+        </Button>
+        <Button
+          frame={{ maxWidth: "infinity", maxHeight: itemHeight }}
+          title="space"
+          background={
+            <RoundedRectangle
+              fill={Colors.Background1}
+              cornerRadius={6}
+              shadow={{
+                x: 0.5,
+                y: 1,
+                color: 'rgba(0,0,0,0.3)',
+                radius: 0.5
+              }}
+            />
+          }
+          font={16}
+          foregroundStyle={Colors.Foreground1}
+          action={() => insertText(" ")}
+        />
+        <Button
+          frame={{ width: 97, height: itemHeight }}
+          title="return"
+          background={
+            <RoundedRectangle
+              fill={Colors.Background2}
+              cornerRadius={6}
+              shadow={{
+                x: 0.5,
+                y: 1,
+                color: 'rgba(0,0,0,0.3)',
+                radius: 0.5
+              }}
+            />
+          }
+          font={16}
+          foregroundStyle={Colors.Foreground2}
+          action={() => insertText("\n")}
+        />
+      </HStack>
+    </VStack>
+  )
+}
