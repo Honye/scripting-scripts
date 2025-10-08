@@ -36,11 +36,21 @@ export default function KeyboardView() {
     },
     [hasShiftFlag, config?.font, numFlag])
   const charsInRow2 = useMemo(
-    () => getLettersInRow2(hasShiftFlag, config?.font || 'Standard'),
-    [hasShiftFlag, config?.font]
+    () => {
+      return numFlag
+        ? ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"']
+        : getLettersInRow2(hasShiftFlag, config?.font || 'Standard')
+    },
+    [hasShiftFlag, config?.font, numFlag]
   )
-  const charsInRow3 = useMemo(() => getLettersInRow3(hasShiftFlag, config?.font || 'Standard'),
-    [hasShiftFlag, config?.font])
+  const charsInRow3 = useMemo(
+    () => {
+      return numFlag
+        ? ['.', ',', '{', '}', '?', '!', "'"]
+        : getLettersInRow3(hasShiftFlag, config?.font || 'Standard')
+    },
+    [hasShiftFlag, config?.font, numFlag]
+  )
   const insertText = (char: string) => CustomKeyboard.insertText(char)
 
   return (
@@ -180,8 +190,6 @@ export default function KeyboardView() {
           <Image systemName="face.smiling" />
         </Button>
         <Button
-          frame={{ maxWidth: "infinity", maxHeight: itemHeight }}
-          title="space"
           background={
             <RoundedRectangle
               fill={Colors.Background1}
@@ -197,7 +205,9 @@ export default function KeyboardView() {
           font={16}
           foregroundStyle={Colors.Foreground1}
           action={() => insertText(" ")}
-        />
+        >
+          <Text frame={{ maxWidth: 'infinity', maxHeight: itemHeight }}>space</Text>
+        </Button>
         <Button
           frame={{ width: 97, height: itemHeight }}
           title="return"
