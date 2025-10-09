@@ -9,12 +9,14 @@ export const enum Client {
 
 interface Settings {
   client: Client
+  fontSize: number
 }
 
 function initState(): Settings {
   const storedSettings = Storage.get<Settings>('settings')
   return {
     client: Client.International,
+    fontSize: 14,
     ...storedSettings
   }
 }
