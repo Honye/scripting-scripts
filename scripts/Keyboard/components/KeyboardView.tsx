@@ -15,10 +15,31 @@ import { getChars } from "../utils"
 // 字母左右间隙：12
 // 字母上下间隙：22
 
+const insertSpace = (() => {
+  let interval: number | null = null
+  const insert = () => {
+    CustomKeyboard.insertText(" ")
+    interval = setTimeout(insert, 100)
+  }
+  return (state: boolean) => {
+    if (state) {
+      HapticFeedback.lightImpact()
+      if (interval !== null) {
+        clearTimeout(interval)
+        interval = null
+      }
+      insert()
+    } else if (interval !== null) {
+      clearTimeout(interval)
+      interval = null
+    }
+  }
+})()
+
 export default function KeyboardView() {
   const [hasShiftFlag, setHasShiftFlag] = useState(false)
   const [numFlag, setNumFlag] = useState(false)
-  const padding = 4
+  const padding = Number.parseInt(Device.systemVersion) > 18 ? 8 : 4
   const gapX = 6
   const gapY = 11
   const itemHeight = 45
@@ -52,6 +73,39 @@ export default function KeyboardView() {
     [hasShiftFlag, config?.font, numFlag]
   )
   const insertText = (char: string) => CustomKeyboard.insertText(char)
+  const toggleShiftFlag = () => {
+    HapticFeedback.lightImpact()
+    setHasShiftFlag(!hasShiftFlag)
+  }
+  const toggleNumFlag = () => {
+    HapticFeedback.lightImpact()
+    setNumFlag(!numFlag)
+  }
+
+  const handleReturn = () => {
+    HapticFeedback.lightImpact()
+    insertText("\n")
+  }
+  const deleteBackward = () => {
+    let interval: number | null
+    const del = () => {
+      CustomKeyboard.deleteBackward()
+      interval = setTimeout(del, 100)
+    }
+    return (state: boolean) => {
+      if (state) {
+        HapticFeedback.lightImpact()
+        if (interval !== null) {
+          clearTimeout(interval)
+          interval = null
+        }
+        del()
+      } else if (interval !== null) {
+        clearTimeout(interval)
+        interval = null
+      }
+    }
+  }
 
   return (
     <VStack
@@ -102,8 +156,7 @@ export default function KeyboardView() {
           }
           font={20}
           foregroundStyle={Colors.Foreground2}
-          action={() => setHasShiftFlag(!hasShiftFlag)}
-
+          action={toggleShiftFlag}
         >
           <Image systemName={hasShiftFlag ? "shift.fill" : "shift"} />
         </Button>
@@ -132,7 +185,11 @@ export default function KeyboardView() {
           }
           font={20}
           foregroundStyle={Colors.Foreground2}
-          action={() => CustomKeyboard.deleteBackward()}
+          action={() => {}}
+          onLongPressGesture={{
+            perform: () => {},
+            onPressingChanged: deleteBackward()
+          }}
         >
           <Image systemName="delete.left" />
         </Button>
@@ -155,7 +212,7 @@ export default function KeyboardView() {
           }
           font={16}
           foregroundStyle={Colors.Foreground2}
-          action={() => setNumFlag(!numFlag)}
+          action={toggleNumFlag}
         />
         <Button
           frame={{ width: 45, height: itemHeight }}
@@ -204,7 +261,11 @@ export default function KeyboardView() {
           }
           font={16}
           foregroundStyle={Colors.Foreground1}
-          action={() => insertText(" ")}
+          action={() => {}}
+          onLongPressGesture={{
+            perform: () => {},
+            onPressingChanged: insertSpace
+          }}
         >
           <Text frame={{ maxWidth: 'infinity', maxHeight: itemHeight }}>space</Text>
         </Button>
@@ -225,7 +286,7 @@ export default function KeyboardView() {
           }
           font={16}
           foregroundStyle={Colors.Foreground2}
-          action={() => insertText("\n")}
+          action={handleReturn}
         />
       </HStack>
     </VStack>
