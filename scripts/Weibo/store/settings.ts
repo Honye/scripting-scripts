@@ -1,4 +1,4 @@
-import { useReducer } from 'scripting'
+import { Color, useReducer } from 'scripting'
 
 export const enum Client {
   /** 网页版 */
@@ -10,6 +10,11 @@ export const enum Client {
 interface Settings {
   client: Client
   fontSize: number
+  color: { light: Color, dark: Color }
+  timeColor: { light: Color, dark: Color }
+  gap: number
+  logoSize: number
+  background: { light: Color, dark: Color }
 }
 
 function initState(): Settings {
@@ -17,6 +22,11 @@ function initState(): Settings {
   return {
     client: Client.International,
     fontSize: 14,
+    color: { light: '#333333', dark: '#ffffff' },
+    timeColor: { light: '#666666', dark: '#666666' },
+    gap: 8,
+    logoSize: 30,
+    background: { light: '#ffffff', dark: '#242426' },
     ...storedSettings
   }
 }

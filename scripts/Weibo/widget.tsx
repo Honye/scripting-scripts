@@ -1,6 +1,5 @@
 import {
   Button,
-  DynamicShapeStyle,
   HStack,
   Image,
   Link,
@@ -15,21 +14,20 @@ import {
 import { IntentOpenSearch } from './app_intents'
 import { Client, useSettings } from './store/settings'
 
-const preference = {
-  gap: 8,
-  logoSize: 30,
-}
-
 function WidgetView({ list }: { list: any[] }) {
   const [settings] = useSettings()
-  const { gap, logoSize } = preference
   const { height } = Widget.displaySize
-  const color: DynamicShapeStyle = { light: '#333333', dark: '#ffffff' }
 
-  const count = Math.floor((height - 10 * 2 + gap) / (settings.fontSize + gap))
-  const logoLines = logoSize
-    ? Math.ceil(logoSize / (settings.fontSize + gap))
+  const count = Math.floor(
+    (height - 10 * 2 + settings.gap) / (settings.fontSize + settings.gap),
+  )
+  const logoLines = settings.logoSize
+    ? Math.ceil(settings.logoSize / (settings.fontSize + settings.gap))
     : 0
+  const iconSize = useMemo(() => {
+    const size = (settings.fontSize * 12) / 14
+    return { width: size, height: size }
+  }, [settings.fontSize])
   const now = new Date()
 
   const getItemLink = useCallback((item: any) => {
@@ -53,13 +51,13 @@ function WidgetView({ list }: { list: any[] }) {
   }, [settings.client])
 
   return (
-    <VStack padding={12} spacing={0}>
+    <VStack padding={12} spacing={0} widgetBackground={settings.background}>
       {list.slice(0, count - logoLines).map((item, i) => (
         <Link key={item.itemid} buttonStyle='plain' url={getItemLink(item)}>
           <HStack alignment='top'>
             <HStack
               key={item.itemid}
-              frame={{ height: settings.fontSize + gap }}
+              frame={{ height: settings.fontSize + settings.gap }}
               alignment='center'
             >
               <Text
@@ -69,14 +67,10 @@ function WidgetView({ list }: { list: any[] }) {
               >
                 {item.pic_id}
               </Text>
-              <Text font={settings.fontSize} foregroundStyle={color}>
+              <Text font={settings.fontSize} foregroundStyle={settings.color}>
                 {item.title}
               </Text>
-              <Image
-                imageUrl={item.icon}
-                frame={{ width: 12, height: 12 }}
-                resizable
-              />
+              <Image imageUrl={item.icon} frame={iconSize} resizable />
               <Spacer />
             </HStack>
             {i === 0 ? (
@@ -85,11 +79,11 @@ function WidgetView({ list }: { list: any[] }) {
                   <Image
                     systemName='clock.arrow.circlepath'
                     font={settings.fontSize * 0.7}
-                    foregroundStyle='#666666'
+                    foregroundStyle={settings.timeColor}
                   />
                   <Text
                     font={settings.fontSize * 0.7}
-                    foregroundStyle='#666666'
+                    foregroundStyle={settings.timeColor}
                   >
                     {`${now.getHours()}`.padStart(2, '0')}:
                     {`${now.getMinutes()}`.padStart(2, '0')}
@@ -106,7 +100,7 @@ function WidgetView({ list }: { list: any[] }) {
             <Link key={item.itemid} buttonStyle='plain' url={getItemLink(item)}>
               <HStack
                 key={item.itemid}
-                frame={{ height: settings.fontSize + gap }}
+                frame={{ height: settings.fontSize + settings.gap }}
                 alignment='center'
               >
                 <Text
@@ -116,14 +110,10 @@ function WidgetView({ list }: { list: any[] }) {
                 >
                   {item.pic_id}
                 </Text>
-                <Text font={settings.fontSize} foregroundStyle={color}>
+                <Text font={settings.fontSize} foregroundStyle={settings.color}>
                   {item.title}
                 </Text>
-                <Image
-                  imageUrl={item.icon}
-                  frame={{ width: 12, height: 12 }}
-                  resizable
-                />
+                <Image imageUrl={item.icon} frame={iconSize} resizable />
                 <Spacer />
               </HStack>
             </Link>
@@ -132,7 +122,7 @@ function WidgetView({ list }: { list: any[] }) {
         <Link url={hotSearchLink}>
           <Image
             imageUrl='https://www.sinaimg.cn/blog/developer/wiki/LOGO_64x64.png'
-            frame={{ width: logoSize, height: logoSize }}
+            frame={{ width: settings.logoSize, height: settings.logoSize }}
             resizable
           />
         </Link>
