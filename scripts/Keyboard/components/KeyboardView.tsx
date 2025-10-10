@@ -1,10 +1,27 @@
-import { Button, Group, HStack, Image, RoundedRectangle, Spacer, Text, useMemo, useState, VStack } from "scripting"
-import { Colors } from "../constansts/colors"
-import { Alphabet, getLettersInRow1, getLettersInRow2, getLettersInRow3, getNumbers } from "../constansts/symbols"
-import Key from "./Key"
-import { useFontConfig } from "../hooks/useFontConfig"
-import { FontSelect } from "./FontSelect"
-import { getChars } from "../utils"
+import {
+  Button,
+  Group,
+  HStack,
+  Image,
+  RoundedRectangle,
+  Spacer,
+  Text,
+  useMemo,
+  useState,
+  VStack,
+} from 'scripting'
+import { Colors } from '../constansts/colors'
+import {
+  Alphabet,
+  getLettersInRow1,
+  getLettersInRow2,
+  getLettersInRow3,
+  getNumbers,
+} from '../constansts/symbols'
+import Key from './Key'
+import { useFontConfig } from '../hooks/useFontConfig'
+import { FontSelect } from './FontSelect'
+import { getChars } from '../utils'
 
 // 字母键宽：70
 // 符号键宽：90
@@ -18,12 +35,12 @@ import { getChars } from "../utils"
 const insertSpace = (() => {
   let interval: number | null = null
   const insert = () => {
-    CustomKeyboard.insertText(" ")
+    CustomKeyboard.insertText(' ')
     interval = setTimeout(insert, 100)
   }
   return (state: boolean) => {
     if (state) {
-      HapticFeedback.lightImpact()
+      HapticFeedback.selection()
       if (interval !== null) {
         clearTimeout(interval)
         interval = null
@@ -45,46 +62,38 @@ export default function KeyboardView() {
   const itemHeight = 45
 
   const types = Object.keys(Alphabet)
-  types.unshift("Standard")
+  types.unshift('Standard')
 
   const { config, setFont } = useFontConfig()
 
-  const charsInRow1 = useMemo(
-    () => {
-      return numFlag
-        ? getNumbers(config?.font || 'Standard')
-        : getLettersInRow1(hasShiftFlag, config?.font || 'Standard')
-    },
-    [hasShiftFlag, config?.font, numFlag])
-  const charsInRow2 = useMemo(
-    () => {
-      return numFlag
-        ? ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"']
-        : getLettersInRow2(hasShiftFlag, config?.font || 'Standard')
-    },
-    [hasShiftFlag, config?.font, numFlag]
-  )
-  const charsInRow3 = useMemo(
-    () => {
-      return numFlag
-        ? ['.', ',', '{', '}', '?', '!', "'"]
-        : getLettersInRow3(hasShiftFlag, config?.font || 'Standard')
-    },
-    [hasShiftFlag, config?.font, numFlag]
-  )
+  const charsInRow1 = useMemo(() => {
+    return numFlag
+      ? getNumbers(config?.font || 'Standard')
+      : getLettersInRow1(hasShiftFlag, config?.font || 'Standard')
+  }, [hasShiftFlag, config?.font, numFlag])
+  const charsInRow2 = useMemo(() => {
+    return numFlag
+      ? ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"']
+      : getLettersInRow2(hasShiftFlag, config?.font || 'Standard')
+  }, [hasShiftFlag, config?.font, numFlag])
+  const charsInRow3 = useMemo(() => {
+    return numFlag
+      ? ['.', ',', '{', '}', '?', '!', "'"]
+      : getLettersInRow3(hasShiftFlag, config?.font || 'Standard')
+  }, [hasShiftFlag, config?.font, numFlag])
   const insertText = (char: string) => CustomKeyboard.insertText(char)
   const toggleShiftFlag = () => {
-    HapticFeedback.lightImpact()
+    HapticFeedback.selection()
     setHasShiftFlag(!hasShiftFlag)
   }
   const toggleNumFlag = () => {
-    HapticFeedback.lightImpact()
+    HapticFeedback.selection()
     setNumFlag(!numFlag)
   }
 
   const handleReturn = () => {
-    HapticFeedback.lightImpact()
-    insertText("\n")
+    HapticFeedback.selection()
+    insertText('\n')
   }
   const deleteBackward = () => {
     let interval: number | null
@@ -112,7 +121,7 @@ export default function KeyboardView() {
       padding={{
         horizontal: padding,
         top: padding + 1,
-        bottom: padding
+        bottom: padding,
       }}
       spacing={gapY}
     >
@@ -123,20 +132,12 @@ export default function KeyboardView() {
       </HStack> */}
       <HStack spacing={gapX}>
         {charsInRow1.map((char) => (
-          <Key
-            key={char}
-            title={char}
-            font={hasShiftFlag ? 22 : 26}
-          />
+          <Key key={char} title={char} font={hasShiftFlag ? 22 : 26} />
         ))}
       </HStack>
       <HStack spacing={gapX}>
         {charsInRow2.map((char) => (
-          <Key
-            key={char}
-            title={char}
-            font={hasShiftFlag ? 22 : 26}
-          />
+          <Key key={char} title={char} font={hasShiftFlag ? 22 : 26} />
         ))}
       </HStack>
       <HStack spacing={6}>
@@ -150,7 +151,7 @@ export default function KeyboardView() {
                 x: 0.5,
                 y: 1,
                 color: 'rgba(0,0,0,0.3)',
-                radius: 0.5
+                radius: 0.5,
               }}
             />
           }
@@ -158,15 +159,11 @@ export default function KeyboardView() {
           foregroundStyle={Colors.Foreground2}
           action={toggleShiftFlag}
         >
-          <Image systemName={hasShiftFlag ? "shift.fill" : "shift"} />
+          <Image systemName={hasShiftFlag ? 'shift.fill' : 'shift'} />
         </Button>
         <Spacer minLength={0} />
         {charsInRow3.map((char) => (
-          <Key
-            key={char}
-            title={char}
-            font={hasShiftFlag ? 22 : 26}
-          />
+          <Key key={char} title={char} font={hasShiftFlag ? 22 : 26} />
         ))}
         <Spacer minLength={0} />
         <Button
@@ -179,7 +176,7 @@ export default function KeyboardView() {
                 x: 0.5,
                 y: 1,
                 color: 'rgba(0,0,0,0.3)',
-                radius: 0.5
+                radius: 0.5,
               }}
             />
           }
@@ -188,10 +185,10 @@ export default function KeyboardView() {
           action={() => {}}
           onLongPressGesture={{
             perform: () => {},
-            onPressingChanged: deleteBackward()
+            onPressingChanged: deleteBackward(),
           }}
         >
-          <Image systemName="delete.left" />
+          <Image systemName='delete.left' />
         </Button>
       </HStack>
       <HStack>
@@ -206,7 +203,7 @@ export default function KeyboardView() {
                 x: 0.5,
                 y: 1,
                 color: 'rgba(0,0,0,0.3)',
-                radius: 0.5
+                radius: 0.5,
               }}
             />
           }
@@ -224,7 +221,7 @@ export default function KeyboardView() {
                 x: 0.5,
                 y: 1,
                 color: 'rgba(0,0,0,0.3)',
-                radius: 0.5
+                radius: 0.5,
               }}
             />
           }
@@ -232,19 +229,18 @@ export default function KeyboardView() {
           foregroundStyle={Colors.Foreground2}
           action={() => CustomKeyboard.dismissToHome()}
           contextMenu={{
-            menuItems: <Group>
-              {types.map((type) => (
-                <Button
-                  key={type}
-                  action={() => setFont(type)}
-                >
-                  <Text>{getChars(type, type)}</Text>
-                </Button>
-              ))}
-            </Group>
+            menuItems: (
+              <Group>
+                {types.map((type) => (
+                  <Button key={type} action={() => setFont(type)}>
+                    <Text>{getChars(type, type)}</Text>
+                  </Button>
+                ))}
+              </Group>
+            ),
           }}
         >
-          <Image systemName="face.smiling" />
+          <Image systemName='face.smiling' />
         </Button>
         <Button
           background={
@@ -255,7 +251,7 @@ export default function KeyboardView() {
                 x: 0.5,
                 y: 1,
                 color: 'rgba(0,0,0,0.3)',
-                radius: 0.5
+                radius: 0.5,
               }}
             />
           }
@@ -264,14 +260,16 @@ export default function KeyboardView() {
           action={() => {}}
           onLongPressGesture={{
             perform: () => {},
-            onPressingChanged: insertSpace
+            onPressingChanged: insertSpace,
           }}
         >
-          <Text frame={{ maxWidth: 'infinity', maxHeight: itemHeight }}>space</Text>
+          <Text frame={{ maxWidth: 'infinity', maxHeight: itemHeight }}>
+            space
+          </Text>
         </Button>
         <Button
           frame={{ width: 97, height: itemHeight }}
-          title="return"
+          title='return'
           background={
             <RoundedRectangle
               fill={Colors.Background2}
@@ -280,7 +278,7 @@ export default function KeyboardView() {
                 x: 0.5,
                 y: 1,
                 color: 'rgba(0,0,0,0.3)',
-                radius: 0.5
+                radius: 0.5,
               }}
             />
           }

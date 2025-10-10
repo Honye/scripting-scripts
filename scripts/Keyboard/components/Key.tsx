@@ -1,6 +1,6 @@
-import { Button, Font } from "scripting"
-import { RoundedRectangle } from "scripting"
-import { Colors } from "../constansts/colors"
+import { Button, Font } from 'scripting'
+import { RoundedRectangle } from 'scripting'
+import { Colors } from '../constansts/colors'
 
 export default function Key(props: {
   title: string
@@ -13,7 +13,7 @@ export default function Key(props: {
   const charWidth = (Device.screen.width - padding * 2 + gapX) / 10 - gapX
 
   const insertText = (char: string) => {
-    HapticFeedback.lightImpact()
+    HapticFeedback.selection()
     CustomKeyboard.insertText(char)
   }
 
@@ -29,7 +29,7 @@ export default function Key(props: {
             x: 0.5,
             y: 1,
             color: 'rgba(0,0,0,0.3)',
-            radius: 0.5
+            radius: 0.5,
           }}
         />
       }

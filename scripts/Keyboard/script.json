@@ -1,22 +1,18 @@
 {
-  "name" : "Keyboard",
-  "color" : "rgba(230, 190, 1,1)",
-  "version" : "1.0.1",
-  "description" : null,
-  "localizedNames" : null,
-  "runInApp" : false,
-  "remoteResource" : null,
-  "localizedDescriptions" : null,
-  "author" : {
-    "name" : "Jackie",
-    "email" : "Honye@github.com",
-    "homepage" : "https:\/\/t.me\/iiMarkr"
+  "name": "Keyboard",
+  "color": "rgba(230, 190, 1,1)",
+  "version": "1.0.2",
+  "description": null,
+  "localizedNames": null,
+  "runInApp": false,
+  "remoteResource": null,
+  "localizedDescriptions": null,
+  "author": {
+    "name": "Jackie",
+    "email": "Honye@github.com",
+    "homepage": "https:\/\/t.me\/iiMarkr"
   },
-  "intentInputTypes" : [
-
-  ],
-  "contributors" : [
-
-  ],
-  "icon" : "keyboard.fill"
+  "intentInputTypes": [],
+  "contributors": [],
+  "icon": "keyboard.fill"
 }
