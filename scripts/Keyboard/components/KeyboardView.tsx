@@ -103,7 +103,7 @@ export default function KeyboardView() {
     }
     return (state: boolean) => {
       if (state) {
-        HapticFeedback.lightImpact()
+        HapticFeedback.selection()
         if (interval !== null) {
           clearTimeout(interval)
           interval = null
