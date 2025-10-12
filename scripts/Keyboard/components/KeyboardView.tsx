@@ -6,6 +6,7 @@ import {
   RoundedRectangle,
   Spacer,
   Text,
+  useCallback,
   useMemo,
   useState,
   VStack,
@@ -56,6 +57,7 @@ const insertSpace = (() => {
 export default function KeyboardView() {
   const [hasShiftFlag, setHasShiftFlag] = useState(false)
   const [numFlag, setNumFlag] = useState(false)
+  const [charsFlag, setCharsFlag] = useState(false)
   const padding = Number.parseInt(Device.systemVersion) > 18 ? 8 : 4
   const gapX = 6
   const gapY = 11
@@ -68,28 +70,40 @@ export default function KeyboardView() {
 
   const charsInRow1 = useMemo(() => {
     return numFlag
-      ? getNumbers(config?.font || 'Standard')
+      ? charsFlag
+        ? ['[', ']', '{', '}', '#', '%', '^', '*', '+', '=']
+        : getNumbers(config?.font || 'Standard')
       : getLettersInRow1(hasShiftFlag, config?.font || 'Standard')
-  }, [hasShiftFlag, config?.font, numFlag])
+  }, [hasShiftFlag, config?.font, numFlag, charsFlag])
   const charsInRow2 = useMemo(() => {
     return numFlag
-      ? ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"']
+      ? charsFlag
+        ? ['_', '\\', '|', '~', '<', '>', '€', '£', '¥', '•']
+        : ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"']
       : getLettersInRow2(hasShiftFlag, config?.font || 'Standard')
-  }, [hasShiftFlag, config?.font, numFlag])
+  }, [hasShiftFlag, config?.font, numFlag, charsFlag])
   const charsInRow3 = useMemo(() => {
     return numFlag
       ? ['.', ',', '{', '}', '?', '!', "'"]
       : getLettersInRow3(hasShiftFlag, config?.font || 'Standard')
   }, [hasShiftFlag, config?.font, numFlag])
   const insertText = (char: string) => CustomKeyboard.insertText(char)
-  const toggleShiftFlag = () => {
+  const onShiftTap = useCallback(() => {
     HapticFeedback.selection()
-    setHasShiftFlag(!hasShiftFlag)
-  }
-  const toggleNumFlag = () => {
+    if (numFlag) {
+      setCharsFlag(!charsFlag)
+    } else {
+      setHasShiftFlag(!hasShiftFlag)
+    }
+  }, [charsFlag, hasShiftFlag, numFlag])
+
+  const toggleNumFlag = useCallback(() => {
     HapticFeedback.selection()
+    if (numFlag) {
+      setCharsFlag(false)
+    }
     setNumFlag(!numFlag)
-  }
+  }, [numFlag])
 
   const handleReturn = () => {
     HapticFeedback.selection()
@@ -157,9 +171,13 @@ export default function KeyboardView() {
           }
           font={20}
           foregroundStyle={Colors.Foreground2}
-          action={toggleShiftFlag}
+          action={onShiftTap}
         >
-          <Image systemName={hasShiftFlag ? 'shift.fill' : 'shift'} />
+          {numFlag ? (
+            <Text font={16}>#+=</Text>
+          ) : (
+            <Image systemName={hasShiftFlag ? 'shift.fill' : 'shift'} />
+          )}
         </Button>
         <Spacer minLength={0} />
         {charsInRow3.map((char) => (
