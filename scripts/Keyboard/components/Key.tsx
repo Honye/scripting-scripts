@@ -1,4 +1,4 @@
-import { Button, Font } from 'scripting'
+import { Button, Font, Text } from 'scripting'
 import { RoundedRectangle } from 'scripting'
 import { Colors } from '../constansts/colors'
 
@@ -19,8 +19,6 @@ export default function Key(props: {
 
   return (
     <Button
-      frame={{ width: charWidth, height: 45 }}
-      title={title}
       background={
         <RoundedRectangle
           fill={Colors.Background1}
@@ -36,6 +34,10 @@ export default function Key(props: {
       font={font}
       foregroundStyle={Colors.Foreground1}
       action={() => insertText(title)}
-    />
+    >
+      <Text
+        frame={{ width: charWidth, height: 45 }}
+      >{title}</Text>
+    </Button>
   )
 }

@@ -156,7 +156,6 @@ export default function KeyboardView() {
       </HStack>
       <HStack spacing={6}>
         <Button
-          frame={{ width: 45, height: itemHeight }}
           background={
             <RoundedRectangle
               fill={Colors.Background2}
@@ -174,9 +173,12 @@ export default function KeyboardView() {
           action={onShiftTap}
         >
           {numFlag ? (
-            <Text font={16}>#+=</Text>
+            <Text frame={{ width: 45, height: itemHeight }} font={16}>#+=</Text>
           ) : (
-            <Image systemName={hasShiftFlag ? 'shift.fill' : 'shift'} />
+            <Image
+              frame={{ width: 45, height: itemHeight }}
+              systemName={hasShiftFlag ? 'shift.fill' : 'shift'}
+            />
           )}
         </Button>
         <Spacer minLength={0} />
@@ -185,7 +187,6 @@ export default function KeyboardView() {
         ))}
         <Spacer minLength={0} />
         <Button
-          frame={{ width: 45, height: itemHeight }}
           background={
             <RoundedRectangle
               fill={Colors.Background2}
@@ -206,13 +207,11 @@ export default function KeyboardView() {
             onPressingChanged: deleteBackward(),
           }}
         >
-          <Image systemName='delete.left' />
+          <Image frame={{ width: 45, height: itemHeight }} systemName='delete.left' />
         </Button>
       </HStack>
       <HStack>
         <Button
-          frame={{ width: 45, height: itemHeight }}
-          title={numFlag ? 'ABC' : '123'}
           background={
             <RoundedRectangle
               fill={Colors.Background2}
@@ -228,9 +227,10 @@ export default function KeyboardView() {
           font={16}
           foregroundStyle={Colors.Foreground2}
           action={toggleNumFlag}
-        />
+        >
+          <Text frame={{ width: 45, height: itemHeight }}>{numFlag ? 'ABC' : '123'}</Text>
+        </Button>
         <Button
-          frame={{ width: 45, height: itemHeight }}
           background={
             <RoundedRectangle
               fill={Colors.Background2}
@@ -258,7 +258,7 @@ export default function KeyboardView() {
             ),
           }}
         >
-          <Image systemName='face.smiling' />
+          <Image frame={{ width: 45, height: itemHeight }} systemName='face.smiling' />
         </Button>
         <Button
           background={
@@ -286,8 +286,6 @@ export default function KeyboardView() {
           </Text>
         </Button>
         <Button
-          frame={{ width: 97, height: itemHeight }}
-          title='return'
           background={
             <RoundedRectangle
               fill={Colors.Background2}
@@ -303,7 +301,9 @@ export default function KeyboardView() {
           font={16}
           foregroundStyle={Colors.Foreground2}
           action={handleReturn}
-        />
+        >
+          <Text frame={{ width: 97, height: itemHeight }}>return</Text>
+        </Button>
       </HStack>
     </VStack>
   )
