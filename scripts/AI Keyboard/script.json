@@ -1,0 +1,18 @@
+{
+  "localizedNames" : null,
+  "color" : "rgba(28, 140, 255,1)",
+  "runInApp" : false,
+  "localizedDescriptions" : null,
+  "version" : "1.0.0",
+  "icon" : "keyboard.badge.eye.fill",
+  "name" : "AI Keyboard",
+  "contributors" : [
+
+  ],
+  "description" : null,
+  "intentInputTypes" : [
+
+  ],
+  "author" : null,
+  "remoteResource" : null
+}
