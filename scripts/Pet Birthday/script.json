@@ -1,0 +1,21 @@
+{
+  "name" : "Pet Birthday",
+  "color" : "rgba(243, 159, 68,1)",
+  "icon" : "pawprint.fill",
+  "contributors" : [
+
+  ],
+  "description" : null,
+  "intentInputTypes" : [
+
+  ],
+  "version" : "1.0.0",
+  "runInApp" : false,
+  "localizedNames" : {
+    "zh": "宠物生日",
+    "en": "Pet Birthday"
+  },
+  "localizedDescriptions" : null,
+  "author" : null,
+  "remoteResource" : null
+}
