@@ -61,7 +61,7 @@ function AgeInfo(props: { pet: Pet; reverse?: boolean }) {
           bottomTrailingRadius={12}
           bottomLeadingRadius={12}
           stroke={{
-            shapeStyle: 'rgba(30,31,36,0.1)',
+            shapeStyle: 'systemGray5',
             strokeStyle: { lineWidth: 3 },
           }}
         />

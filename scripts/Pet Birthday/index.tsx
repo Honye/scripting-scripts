@@ -175,7 +175,7 @@ function App() {
                 <Menu
                   label={
                     <HStack>
-                      <Text foregroundStyle='secondaryLabel' textCase={null}>
+                      <Text foregroundStyle='secondaryLabel'>
                         {i18n.pet} {index + 1}
                       </Text>
                       <Image
