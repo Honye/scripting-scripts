@@ -1,0 +1,21 @@
+{
+  "intentInputTypes": [],
+  "localizedDescriptions": null,
+  "contributors": [],
+  "remoteResource": null,
+  "runInApp": false,
+  "version": "1.0.0",
+  "localizedNames": {
+    "zh": "日历",
+    "en": "Calendar"
+  },
+  "icon": "7.calendar",
+  "description": null,
+  "color": "rgba(174, 109, 216,1)",
+  "author": {
+    "name": "Jackie",
+    "email": "Honye@github.com",
+    "homepage": "https://t.me/iiMarkr"
+  },
+  "name": "Calendar"
+}
