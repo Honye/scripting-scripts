@@ -31,3 +31,24 @@ export const SelectDateIntent = AppIntentManager.register({
   }
 })
 
+export const ChangeMonthIntent = AppIntentManager.register({
+  name: 'ChangeMonthIntent',
+  protocol: AppIntentProtocol.AppIntent,
+  perform: async (direction: 'prev' | 'next' | 'reset') => {
+    if (direction === 'reset') {
+      Storage.remove('monthOffset')
+      Storage.remove('selectedDate')
+    } else {
+      const val = Storage.get<string>('monthOffset') || '0'
+      let currentOffset = 0
+      try {
+        currentOffset = JSON.parse(val)
+      } catch (e) {
+        console.error(e)
+      }
+      const newOffset = currentOffset + (direction === 'next' ? 1 : -1)
+      Storage.set('monthOffset', JSON.stringify(newOffset))
+    }
+    Widget.reloadAll()
+  },
+})

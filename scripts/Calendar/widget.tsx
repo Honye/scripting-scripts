@@ -9,7 +9,9 @@ import {
   ZStack,
   Widget,
   Capsule,
-  useMemo,
+  Grid,
+  GridRow,
+  Color,
 } from 'scripting'
 import {
   getWeekNumber,
@@ -20,11 +22,15 @@ import {
   addDays,
   isSameDay,
 } from './dateUtils'
-import { ChangeWeekIntent, SelectDateIntent } from './app_intents'
+import {
+  ChangeWeekIntent,
+  SelectDateIntent,
+  ChangeMonthIntent,
+} from './app_intents'
 import { Lunar } from './lunar_lib'
 import { fetchHolidays, getHolidayType } from './holidayUtils'
 
-function WidgetView() {
+async function WeeklyWidget() {
   const val = Storage.get<string>('weekOffset') || '0'
   let offset = 0
   try {
@@ -36,6 +42,7 @@ function WidgetView() {
   const selectedDate = sd ? new Date(sd) : null
 
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const displayDate = addDays(today, offset * 7)
 
   const weekNum = getWeekNumber(displayDate)
@@ -44,19 +51,35 @@ function WidgetView() {
   const lunar = Lunar.fromDate(today)
   const solarTerm = lunar.getJieQi() ? ` ${lunar.getJieQi()}` : ''
 
-  const dayDesc = useMemo(() => {
-    const date = selectedDate || today
-    const lunar = Lunar.fromDate(date)
-    return (
-      `${formatMonthDay(date)}` +
-      ` 第${getWeekNumber(date)}周` +
-      ` ${lunar.getYearInGanZhi()}(${lunar.getYearShengXiao()})年` +
-      ` ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`
-    )
-  }, [today, displayDate, selectedDate])
+  const descDate = selectedDate || today
+  const lunarDesc = Lunar.fromDate(descDate)
+  const dayDesc =
+    `${formatMonthDay(descDate)}` +
+    ` 第${getWeekNumber(descDate)}周` +
+    ` ${lunarDesc.getYearInGanZhi()}(${lunarDesc.getYearShengXiao()})年` +
+    ` ${lunarDesc.getMonthInChinese()}月${lunarDesc.getDayInChinese()}`
 
   // Week Days (Sunday start) - Based on offset
   const startOfWeekDate = getStartOfWeek(displayDate)
+
+  const calendars = await Calendar.forEvents()
+  const holidayCal = calendars.find(
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays',
+  )
+  let eventTitles: Record<number, string> = {}
+
+  if (holidayCal) {
+    const start = startOfWeekDate
+    const end = addDays(startOfWeekDate, 7)
+    const events = await CalendarEvent.getAll(start, end, [holidayCal])
+    for (const event of events) {
+      if (event.title.includes('休') || event.title.includes('班')) {
+        continue
+      }
+      const d = event.startDate.getDate()
+      eventTitles[d] = event.title
+    }
+  }
 
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
     const d = addDays(startOfWeekDate, i)
@@ -68,6 +91,7 @@ function WidgetView() {
       lunarDay: l.getDayInChinese(),
       isToday: isSameDay(d, today),
       holidayType: getHolidayType(d),
+      eventTitle: eventTitles[d.getDate()],
     }
   })
 
@@ -158,11 +182,18 @@ function WidgetView() {
                     {item.dayNum.toString()}
                   </Text>
                   <Text
-                    font={10}
-                    foregroundStyle={item.isToday ? 'white' : 'secondaryLabel'}
+                    font={9}
+                    lineLimit={1}
+                    foregroundStyle={
+                      item.isToday
+                        ? 'white'
+                        : item.eventTitle
+                          ? 'red'
+                          : 'secondaryLabel'
+                    }
                     multilineTextAlignment='center'
                   >
-                    {item.lunarDay}
+                    {item.eventTitle || item.lunarDay}
                   </Text>
                   <Spacer />
                 </VStack>
@@ -195,6 +226,397 @@ function WidgetView() {
   )
 }
 
+async function MonthlyWidget() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+
+  const lunar = Lunar.fromDate(today)
+  const lunarText = `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`
+
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const daysInMonth = lastDay.getDate()
+  const startDayOfWeek = firstDay.getDay() // 0 is Sunday
+
+  const calendars = await Calendar.forEvents()
+  const holidayCal = calendars.find(
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays',
+  )
+  const dots: Record<number, Color> = {}
+  let eventTitles: Record<number, string> = {}
+
+  if (holidayCal) {
+    const start = new Date(year, month, 1)
+    const end = new Date(year, month + 1, 1)
+    const events = await CalendarEvent.getAll(start, end, [holidayCal])
+    for (const event of events) {
+      const d = event.startDate.getDate()
+      dots[d] = holidayCal.color
+    }
+  }
+
+  // Generate grid cells
+  const gridDays: (Date | null)[] = []
+
+  // Start padding
+  for (let i = 0; i < startDayOfWeek; i++) {
+    gridDays.push(null)
+  }
+  // Dates
+  for (let i = 1; i <= daysInMonth; i++) {
+    gridDays.push(new Date(year, month, i))
+  }
+  // End padding
+  while (gridDays.length % 7 !== 0) {
+    gridDays.push(null)
+  }
+
+  // Chunk into weeks
+  const weeks = []
+  for (let i = 0; i < gridDays.length; i += 7) {
+    weeks.push(gridDays.slice(i, i + 7))
+  }
+
+  const weekDayNames = ['日', '一', '二', '三', '四', '五', '六']
+
+  return (
+    <VStack
+      frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
+      padding={20}
+      background='systemBackground'
+    >
+      {/* Header */}
+      <HStack alignment='center'>
+        <Text font={12} fontWeight='medium' foregroundStyle='red'>
+          {month + 1}月
+        </Text>
+        <Spacer />
+        <Text font={12} fontWeight='medium' foregroundStyle='red'>
+          {lunarText}
+        </Text>
+      </HStack>
+      <Spacer />
+      {/* Calendar Grid */}
+      <Grid verticalSpacing={2} horizontalSpacing={0}>
+        <GridRow>
+          {weekDayNames.map((name, i) => (
+            <Text
+              key={i}
+              font={10}
+              fontWeight='medium'
+              foregroundStyle={i === 0 || i === 6 ? 'secondaryLabel' : 'label'}
+              frame={{ maxWidth: 'infinity' }}
+              multilineTextAlignment='center'
+            >
+              {name}
+            </Text>
+          ))}
+        </GridRow>
+        {weeks.map((week, i) => (
+          <GridRow key={i}>
+            {week.map((date, j) => {
+              if (!date) {
+                // Empty cell
+                return (
+                  <ZStack
+                    key={j}
+                    frame={{ maxWidth: 'infinity', height: 18 }}
+                  />
+                )
+              }
+              const isToday = isSameDay(date, today)
+              const dotColor = dots[date.getDate()]
+              return (
+                <ZStack
+                  key={j}
+                  frame={{ maxWidth: 'infinity', height: 20 }}
+                  alignment='center'
+                >
+                  {isToday && (
+                    <Circle fill='red' frame={{ width: 20, height: 20 }} />
+                  )}
+                  <VStack spacing={0} alignment='center'>
+                    <Text
+                      font={11}
+                      fontWeight='medium'
+                      foregroundStyle={
+                        isToday
+                          ? 'white'
+                          : j === 0 || j === 6
+                            ? 'secondaryLabel'
+                            : 'label'
+                      }
+                      multilineTextAlignment='center'
+                    >
+                      {date.getDate().toString()}
+                    </Text>
+                    {dotColor && (
+                      <Circle fill={dotColor} frame={{ width: 3, height: 3 }} />
+                    )}
+                  </VStack>
+                </ZStack>
+              )
+            })}
+          </GridRow>
+        ))}
+      </Grid>
+    </VStack>
+  )
+}
+
+async function LargeMonthlyWidget() {
+  const val = Storage.get<string>('monthOffset') || '0'
+  let offset = 0
+  try {
+    offset = JSON.parse(val)
+  } catch (e) {
+    console.error(e)
+  }
+
+  const today = new Date()
+
+  const sd = Storage.get<string>('selectedDate')
+  const selectedDate = sd ? new Date(sd) : null
+
+  const descDate = selectedDate || today
+  const lunarDesc = Lunar.fromDate(descDate)
+  const dayDesc =
+    `${formatMonthDay(descDate)}` +
+    ` 第${getWeekNumber(descDate)}周` +
+    ` ${lunarDesc.getYearInGanZhi()}(${lunarDesc.getYearShengXiao()})年` +
+    ` ${lunarDesc.getMonthInChinese()}月${lunarDesc.getDayInChinese()}`
+
+  const displayDate = new Date(
+    today.getFullYear(),
+    today.getMonth() + offset,
+    1,
+  )
+  const year = displayDate.getFullYear()
+  const month = displayDate.getMonth()
+
+  await fetchHolidays(year)
+
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const daysInMonth = lastDay.getDate()
+  const startDayOfWeek = firstDay.getDay() // 0 is Sunday
+
+  const calendars = await Calendar.forEvents()
+  const holidayCal = calendars.find(
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays',
+  )
+  let eventTitles: Record<number, string> = {}
+
+  if (holidayCal) {
+    const start = new Date(year, month, 1)
+    const end = new Date(year, month + 1, 1)
+    const events = await CalendarEvent.getAll(start, end, [holidayCal])
+    for (const event of events) {
+      if (event.title.includes('休') || event.title.includes('班')) {
+        continue
+      }
+      const d = event.startDate.getDate()
+      eventTitles[d] = event.title
+    }
+  }
+
+  // Generate grid cells
+  const gridDays: (Date | null)[] = []
+
+  // Start padding
+  for (let i = 0; i < startDayOfWeek; i++) {
+    gridDays.push(null)
+  }
+  // Dates
+  for (let i = 1; i <= daysInMonth; i++) {
+    gridDays.push(new Date(year, month, i))
+  }
+  // End padding
+  while (gridDays.length % 7 !== 0) {
+    gridDays.push(null)
+  }
+
+  // Chunk into weeks
+  const weeks = []
+  for (let i = 0; i < gridDays.length; i += 7) {
+    weeks.push(gridDays.slice(i, i + 7))
+  }
+
+  const weekDayNames = ['日', '一', '二', '三', '四', '五', '六']
+
+  return (
+    <VStack
+      frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
+      padding={20}
+      background='systemBackground'
+    >
+      {/* Header */}
+      <HStack alignment='center'>
+        <Button
+          intent={ChangeMonthIntent('prev')}
+          buttonStyle='bordered'
+          tint='systemGray2'
+        >
+          <Image
+            systemName='chevron.left'
+            font={12}
+            foregroundStyle='secondaryLabel'
+          />
+        </Button>
+        <Button intent={ChangeMonthIntent('reset')} buttonStyle='plain'>
+          <Text font={16} fontWeight='bold' foregroundStyle='label'>
+            {year}年{month + 1}月
+          </Text>
+        </Button>
+        <Spacer />
+        <Button
+          intent={ChangeMonthIntent('next')}
+          buttonStyle='bordered'
+          tint='systemGray2'
+        >
+          <Image
+            systemName='chevron.right'
+            font={12}
+            foregroundStyle='secondaryLabel'
+          />
+        </Button>
+      </HStack>
+
+      <Spacer />
+
+      {/* Calendar Grid */}
+      <Grid verticalSpacing={4} horizontalSpacing={0}>
+        <GridRow>
+          {weekDayNames.map((name, i) => (
+            <Text
+              key={i}
+              font={12}
+              fontWeight='medium'
+              foregroundStyle={i === 0 || i === 6 ? 'secondaryLabel' : 'label'}
+              frame={{ maxWidth: 'infinity' }}
+              multilineTextAlignment='center'
+            >
+              {name}
+            </Text>
+          ))}
+        </GridRow>
+        {weeks.map((week, i) => (
+          <GridRow key={i}>
+            {week.map((date, j) => {
+              if (!date) {
+                // Empty cell
+                return (
+                  <ZStack
+                    key={j}
+                    frame={{ maxWidth: 'infinity', height: 40 }}
+                  />
+                )
+              }
+              const isToday = isSameDay(date, today)
+              const eventTitle = eventTitles[date.getDate()]
+              const lunar = Lunar.fromDate(date)
+              const lunarDay = lunar.getDayInChinese()
+              const holidayType = getHolidayType(date)
+
+              return (
+                <ZStack
+                  key={j}
+                  frame={{ maxWidth: 'infinity', height: 40 }}
+                  alignment='topTrailing'
+                >
+                  <ZStack
+                    frame={{ maxWidth: 'infinity', height: 40 }}
+                    alignment='center'
+                  >
+                    <Button
+                      intent={SelectDateIntent(date.toISOString())}
+                      buttonStyle='plain'
+                    >
+                      <VStack
+                        frame={{ width: 40, height: 40 }}
+                        background={
+                          isToday ? (
+                            <Circle fill='red' />
+                          ) : selectedDate && isSameDay(date, selectedDate) ? (
+                            <Circle fill='secondarySystemBackground' />
+                          ) : undefined
+                        }
+                        alignment='center'
+                        spacing={0}
+                      >
+                        <Spacer />
+                        <Text
+                          font={14}
+                          fontWeight='medium'
+                          foregroundStyle={
+                            isToday
+                              ? 'white'
+                              : j === 0 || j === 6
+                                ? 'secondaryLabel'
+                                : 'label'
+                          }
+                          multilineTextAlignment='center'
+                        >
+                          {date.getDate().toString()}
+                        </Text>
+                        <Text
+                          font={9}
+                          foregroundStyle={
+                            isToday
+                              ? 'white'
+                              : eventTitle
+                                ? 'red'
+                                : 'secondaryLabel'
+                          }
+                          lineLimit={1}
+                          multilineTextAlignment='center'
+                        >
+                          {eventTitle || lunarDay}
+                        </Text>
+                        <Spacer />
+                      </VStack>
+                    </Button>
+                  </ZStack>
+                  {holidayType && (
+                    <ZStack frame={{ width: 14, height: 14 }}>
+                      <Circle fill={holidayType === 'work' ? 'red' : 'green'} />
+                      <Text font={10} foregroundStyle='white'>
+                        {holidayType === 'work' ? '班' : '休'}
+                      </Text>
+                    </ZStack>
+                  )}
+                </ZStack>
+              )
+            })}
+          </GridRow>
+        ))}
+      </Grid>
+      <Spacer />
+      <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
+        <Capsule frame={{ width: 4, height: 16 }} fill='red' />
+        <Text
+          font={14}
+          foregroundStyle='label'
+          multilineTextAlignment='leading'
+        >
+          {dayDesc}
+        </Text>
+      </HStack>
+    </VStack>
+  )
+}
+
+async function WidgetView() {
+  if (Widget.family === 'systemSmall') {
+    return await MonthlyWidget()
+  }
+  if (Widget.family === 'systemLarge') {
+    return await LargeMonthlyWidget()
+  }
+  return await WeeklyWidget()
+}
+
 // Main execution
 ;(async () => {
   const val = Storage.get<string>('weekOffset') || '0'
@@ -209,5 +631,5 @@ function WidgetView() {
 
   await fetchHolidays(displayDate.getFullYear())
 
-  Widget.present(<WidgetView />)
+  Widget.present(await WidgetView())
 })()
