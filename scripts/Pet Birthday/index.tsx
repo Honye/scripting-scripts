@@ -73,11 +73,13 @@ function App() {
   }, [pets, message])
 
   const addPet = useCallback(() => {
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
     setPets([
       ...pets,
       {
         nickname: `Pet${pets.length + 1}`,
-        birthday: Date.now(),
+        birthday: now.getTime(),
         image: ''
       }
     ])
@@ -218,7 +220,11 @@ function App() {
               <DatePicker
                 title={i18n.birthday}
                 value={pet.birthday}
-                onChanged={(birthday) => updatePet(index, { ...pet, birthday })}
+                onChanged={(date) => {
+                  const d = new Date(date)
+                  d.setHours(0, 0, 0, 0)
+                  updatePet(index, { ...pet, birthday: d.getTime() })
+                }}
                 displayedComponents={['date']}
               />
               <Button title={i18n.avatar} action={() => pickAvatar(index)} />
