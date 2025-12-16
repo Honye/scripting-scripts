@@ -11,7 +11,6 @@ import {
   Navigation,
   NavigationLink,
   NavigationStack,
-  Path,
   Picker,
   Script,
   Section,
@@ -23,6 +22,7 @@ import {
   Widget,
   ZStack,
   useEffect,
+  useObservable,
   useState
 } from 'scripting'
 import {
@@ -112,18 +112,20 @@ function AppEditor({
 }
 
 function App() {
-  const [apps, setApps] = useState<AppItem[]>([])
+  const apps = useObservable<AppItem[]>([])
   const [shape, setShape] = useState<'rounded' | 'circle'>(DEFAULT_CONFIG.shape)
   const [iconSize, setIconSize] = useState(DEFAULT_CONFIG.iconSize)
   const [spacing, setSpacing] = useState(DEFAULT_CONFIG.spacing)
+  const [isLoaded, setIsLoaded] = useState(false)
 
+  // Load data
   useEffect(() => {
     try {
       if (FileManager.existsSync(FILE_PATH)) {
         const str = FileManager.readAsStringSync(FILE_PATH)
-        setApps(JSON.parse(str))
+        apps.setValue(JSON.parse(str))
       } else {
-        setApps(DEFAULT_APPS)
+        apps.setValue(DEFAULT_APPS)
         if (!FileManager.existsSync(BASE_PATH)) {
           FileManager.createDirectory(BASE_PATH)
         }
@@ -134,66 +136,54 @@ function App() {
         const config = JSON.parse(FileManager.readAsStringSync(CONFIG_PATH))
         setShape(config.shape)
         if (config.iconSize) setIconSize(config.iconSize)
-        if (config.spacing) setSpacing(config.spacing)
+        if (config.spacing !== undefined) setSpacing(config.spacing)
       }
     } catch (e) {
       console.error(e)
+      apps.setValue(DEFAULT_APPS)
+    } finally {
+      setIsLoaded(true)
     }
   }, [])
 
-  function save(newApps: AppItem[]) {
-    setApps(newApps)
-    if (!FileManager.existsSync(BASE_PATH)) {
-      FileManager.createDirectory(BASE_PATH)
+  // Persist apps data
+  useEffect(() => {
+    if (!isLoaded) return
+    try {
+      if (!FileManager.existsSync(BASE_PATH)) {
+        FileManager.createDirectory(BASE_PATH)
+      }
+      FileManager.writeAsStringSync(FILE_PATH, JSON.stringify(apps.value))
+      Widget.reloadAll()
+    } catch (e) {
+      console.error(e)
     }
-    FileManager.writeAsString(FILE_PATH, JSON.stringify(newApps))
-    Widget.reloadAll()
-  }
+  }, [apps.value, isLoaded])
 
-  function saveConfig(
-    newShape: 'rounded' | 'circle',
-    newSize: number,
-    newSpacing: number
-  ) {
-    setShape(newShape)
-    setIconSize(newSize)
-    setSpacing(newSpacing)
+  function saveConfig(s: 'rounded' | 'circle', i: number, sp: number) {
+    const config = { shape: s, iconSize: i, spacing: sp }
     if (!FileManager.existsSync(BASE_PATH)) {
       FileManager.createDirectory(BASE_PATH)
     }
-    FileManager.writeAsString(
-      CONFIG_PATH,
-      JSON.stringify({
-        shape: newShape,
-        iconSize: newSize,
-        spacing: newSpacing
-      })
-    )
+    FileManager.writeAsStringSync(CONFIG_PATH, JSON.stringify(config))
     Widget.reloadAll()
+    setShape(s)
+    setIconSize(i)
+    setSpacing(sp)
   }
 
   function updateApp(item: AppItem) {
-    const index = apps.findIndex((a) => a.id === item.id)
+    const currentApps = apps.value
+    const index = currentApps.findIndex((a) => a.id === item.id)
     if (index >= 0) {
-      const newApps = [...apps]
+      const newApps = [...currentApps]
       newApps[index] = item
-      save(newApps)
+      apps.setValue(newApps)
     } else {
-      save([...apps, item])
+      apps.setValue([...currentApps, item])
     }
   }
 
-  function onMove(indices: number[], newOffset: number) {
-    const movingItems = indices.map((index) => apps[index])
-    const newApps = apps.filter((_, index) => !indices.includes(index))
-    newApps.splice(newOffset, 0, ...movingItems)
-    save(newApps)
-  }
-
-  function onDelete(indices: number[]) {
-    const newApps = apps.filter((_, index) => !indices.includes(index))
-    save(newApps)
-  }
 
   return (
     <NavigationStack>
@@ -206,7 +196,7 @@ function App() {
               destination={
                 <AppEditor
                   onSave={(item) => {
-                    save([...apps, item])
+                    updateApp(item)
                   }}
                 />
               }
@@ -260,40 +250,36 @@ function App() {
 
         <Section header={<Text>Apps</Text>}>
           <ForEach
-            count={apps.length}
-            onMove={onMove}
-            onDelete={onDelete}
-            itemBuilder={(index) => {
-              const item = apps[index]
-              return (
-                <NavigationLink
-                  key={item.id}
-                  destination={<AppEditor item={item} onSave={updateApp} />}
-                >
-                  <HStack>
-                    {item.iconType === 'image' ? (
-                      <ZStack
-                        frame={{ width: 24, height: 24 }}
-                        clipShape={{ type: 'rect', cornerRadius: 6 }}
-                      >
-                        <Image imageUrl={item.icon} resizable scaleToFill />
-                      </ZStack>
-                    ) : (
-                      <Image
-                        systemName={item.icon}
-                        foregroundStyle={item.color as Color}
-                      />
-                    )}
-                    <VStack alignment='leading'>
-                      <Text font={16}>{item.name}</Text>
-                      <Text font={12} opacity={0.6} lineLimit={1}>
-                        {item.url}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </NavigationLink>
-              )
-            }}
+            data={apps}
+            editActions='all'
+            builder={(item) => (
+              <NavigationLink
+                key={item.id}
+                destination={<AppEditor item={item} onSave={updateApp} />}
+              >
+                <HStack>
+                  {item.iconType === 'image' ? (
+                    <ZStack
+                      frame={{ width: 24, height: 24 }}
+                      clipShape={{ type: 'rect', cornerRadius: 6 }}
+                    >
+                      <Image imageUrl={item.icon} resizable scaleToFill />
+                    </ZStack>
+                  ) : (
+                    <Image
+                      systemName={item.icon}
+                      foregroundStyle={item.color as Color}
+                    />
+                  )}
+                  <VStack alignment='leading'>
+                    <Text font={16}>{item.name}</Text>
+                    <Text font={12} opacity={0.6} lineLimit={1}>
+                      {item.url}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </NavigationLink>
+            )}
           />
         </Section>
         <Section>
