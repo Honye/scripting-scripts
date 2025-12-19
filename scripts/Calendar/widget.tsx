@@ -99,7 +99,6 @@ async function WeeklyWidget() {
     <VStack
       frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
       padding={20}
-      background='systemBackground'
     >
       {/* Header: Year/Month and Week Number */}
       <HStack>
@@ -112,10 +111,11 @@ async function WeeklyWidget() {
             systemName='chevron.left'
             font={12}
             foregroundStyle='secondaryLabel'
+            widgetAccentable
           />
         </Button>
         <Button intent={ChangeWeekIntent('reset')} buttonStyle='plain'>
-          <Text font={24} foregroundStyle='label'>
+          <Text font={24} foregroundStyle='label' widgetAccentable>
             {formatYear(offset ? startOfWeekDate : today)}
             {offset ? startOfWeekDate.getMonth() + 1 : today.getMonth() + 1}月
           </Text>
@@ -126,7 +126,7 @@ async function WeeklyWidget() {
             {lunarYear}
             {solarTerm}
           </Text> */}
-          <Text font={14} foregroundStyle='secondaryLabel'>
+          <Text font={14} foregroundStyle='secondaryLabel' widgetAccentable>
             第{weekNum}周
           </Text>
         </VStack>
@@ -139,6 +139,7 @@ async function WeeklyWidget() {
             systemName='chevron.right'
             font={12}
             foregroundStyle='secondaryLabel'
+            widgetAccentable
           />
         </Button>
       </HStack>
@@ -163,11 +164,18 @@ async function WeeklyWidget() {
               >
                 <VStack
                   frame={{ width: 40, height: 40 }}
+                  widgetBackground={
+                    item.isToday
+                      ? { style: 'red', shape: 'circle' }
+                      : selectedDate && isSameDay(item.date, selectedDate)
+                      ? { style: 'secondarySystemBackground', shape: 'circle' }
+                      : undefined
+                  }
                   background={
                     item.isToday ? (
-                      <Circle fill='red' />
+                      <Circle fill='red' opacity={0.2} />
                     ) : selectedDate && isSameDay(item.date, selectedDate) ? (
-                      <Circle fill='secondarySystemBackground' />
+                      <Circle fill='secondarySystemBackground' opacity={0.1} />
                     ) : undefined
                   }
                   alignment='center'
@@ -177,6 +185,7 @@ async function WeeklyWidget() {
                   <Text
                     font={16}
                     foregroundStyle={item.isToday ? 'white' : 'label'}
+                    widgetAccentable
                     multilineTextAlignment='center'
                   >
                     {item.dayNum.toString()}
@@ -191,6 +200,7 @@ async function WeeklyWidget() {
                           ? 'red'
                           : 'secondaryLabel'
                     }
+                    widgetAccentable
                     multilineTextAlignment='center'
                   >
                     {item.eventTitle || item.lunarDay}
@@ -199,11 +209,22 @@ async function WeeklyWidget() {
                 </VStack>
               </Button>
               {item.holidayType && (
-                <ZStack frame={{ width: 14, height: 14 }}>
+                <ZStack
+                  frame={{ width: 14, height: 14 }}
+                  widgetBackground={{
+                    style: item.holidayType === 'work' ? 'red' : 'green',
+                    shape: 'circle',
+                  }}
+                >
                   <Circle
-                    fill={item.holidayType === 'work' ? 'red' : 'green'}
+                    fill={
+                      item.holidayType === 'work'
+                        ? 'rgba(255, 0, 0, 0.3)'
+                        : 'rgba(0, 255, 0, 0.3)'
+                    }
+                    widgetAccentable
                   />
-                  <Text font={10} foregroundStyle='white'>
+                  <Text font={10} foregroundStyle='white' widgetAccentable>
                     {item.holidayType === 'work' ? '班' : '休'}
                   </Text>
                 </ZStack>
@@ -213,7 +234,11 @@ async function WeeklyWidget() {
         ))}
       </HStack>
       <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-        <Capsule frame={{ width: 4, height: 16 }} fill='red' />
+        <Capsule
+          frame={{ width: 4, height: 16 }}
+          fill='rgba(255, 0, 0, 0.9)'
+          widgetAccentable
+        />
         <Text
           font={14}
           foregroundStyle='label'
@@ -284,7 +309,6 @@ async function MonthlyWidget() {
     <VStack
       frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
       padding={20}
-      background='systemBackground'
     >
       {/* Header */}
       <HStack alignment='center'>
@@ -334,7 +358,11 @@ async function MonthlyWidget() {
                   alignment='center'
                 >
                   {isToday && (
-                    <Circle fill='red' frame={{ width: 20, height: 20 }} />
+                    <Circle
+                      frame={{ width: 20, height: 20 }}
+                      widgetBackground={{ style: 'red', shape: 'circle' }}
+                      fill='rgba(255,0,0,0.2)'
+                    />
                   )}
                   <VStack spacing={0} alignment='center'>
                     <Text
@@ -347,12 +375,17 @@ async function MonthlyWidget() {
                             ? 'secondaryLabel'
                             : 'label'
                       }
+                      widgetAccentable
                       multilineTextAlignment='center'
                     >
                       {date.getDate().toString()}
                     </Text>
                     {dotColor && (
-                      <Circle fill={dotColor} frame={{ width: 3, height: 3 }} />
+                      <Circle
+                        fill={dotColor}
+                        frame={{ width: 3, height: 3 }}
+                        widgetAccentable
+                      />
                     )}
                   </VStack>
                 </ZStack>
@@ -449,7 +482,7 @@ async function LargeMonthlyWidget() {
     <VStack
       frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
       padding={20}
-      background='systemBackground'
+      widgetBackground='systemBackground'
     >
       {/* Header */}
       <HStack alignment='center'>
@@ -462,10 +495,11 @@ async function LargeMonthlyWidget() {
             systemName='chevron.left'
             font={12}
             foregroundStyle='secondaryLabel'
+            widgetAccentable
           />
         </Button>
         <Button intent={ChangeMonthIntent('reset')} buttonStyle='plain'>
-          <Text font={16} fontWeight='bold' foregroundStyle='label'>
+          <Text font={16} fontWeight='bold' foregroundStyle='label' widgetAccentable>
             {year}年{month + 1}月
           </Text>
         </Button>
@@ -479,6 +513,7 @@ async function LargeMonthlyWidget() {
             systemName='chevron.right'
             font={12}
             foregroundStyle='secondaryLabel'
+            widgetAccentable
           />
         </Button>
       </HStack>
@@ -535,11 +570,22 @@ async function LargeMonthlyWidget() {
                     >
                       <VStack
                         frame={{ width: 40, height: 40 }}
+                        widgetBackground={
+                          isToday
+                            ? { style: 'red', shape: 'circle' }
+                            : undefined
+                        }
                         background={
                           isToday ? (
-                            <Circle fill='red' />
+                            <Circle
+                              fill='rgba(255, 0, 0, 0.3)'
+                              widgetAccentable
+                            />
                           ) : selectedDate && isSameDay(date, selectedDate) ? (
-                            <Circle fill='secondarySystemBackground' />
+                            <Circle
+                              fill='secondarySystemBackground'
+                              opacity={0.5}
+                            />
                           ) : undefined
                         }
                         alignment='center'
@@ -556,6 +602,7 @@ async function LargeMonthlyWidget() {
                                 ? 'secondaryLabel'
                                 : 'label'
                           }
+                          widgetAccentable
                           multilineTextAlignment='center'
                         >
                           {date.getDate().toString()}
@@ -569,6 +616,7 @@ async function LargeMonthlyWidget() {
                                 ? 'red'
                                 : 'secondaryLabel'
                           }
+                          widgetAccentable={isToday}
                           lineLimit={1}
                           multilineTextAlignment='center'
                         >
@@ -579,9 +627,22 @@ async function LargeMonthlyWidget() {
                     </Button>
                   </ZStack>
                   {holidayType && (
-                    <ZStack frame={{ width: 14, height: 14 }}>
-                      <Circle fill={holidayType === 'work' ? 'red' : 'green'} />
-                      <Text font={10} foregroundStyle='white'>
+                    <ZStack
+                      frame={{ width: 14, height: 14 }}
+                      widgetBackground={{
+                        style: holidayType === 'work' ? 'red' : 'green',
+                        shape: 'circle',
+                      }}
+                    >
+                      <Circle
+                        fill={
+                          holidayType === 'work'
+                            ? 'rgba(255, 0, 0, 0.3)'
+                            : 'rgba(0, 255, 0, 0.3)'
+                        }
+                        widgetAccentable
+                      />
+                      <Text font={10} foregroundStyle='white' widgetAccentable>
                         {holidayType === 'work' ? '班' : '休'}
                       </Text>
                     </ZStack>
@@ -594,7 +655,11 @@ async function LargeMonthlyWidget() {
       </Grid>
       <Spacer />
       <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-        <Capsule frame={{ width: 4, height: 16 }} fill='red' />
+        <Capsule
+          frame={{ width: 4, height: 16 }}
+          fill='rgba(255, 0, 0, 0.9)'
+          widgetAccentable
+        />
         <Text
           font={14}
           foregroundStyle='label'

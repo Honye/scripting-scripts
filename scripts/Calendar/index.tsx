@@ -5,6 +5,7 @@ import {
   Image,
   List,
   Navigation,
+  NavigationLink,
   NavigationStack,
   Script,
   Section,
@@ -14,6 +15,7 @@ import {
   useEffect,
   useState,
   VStack,
+  Widget,
 } from 'scripting'
 
 // Helper to get ISO week number
@@ -177,8 +179,23 @@ function WeekCalculator() {
   )
 }
 
+function App() {
+  return (
+    <NavigationStack>
+      <List navigationTitle='Calendar'>
+        <Section>
+          <NavigationLink title='Week Calculator' destination={<WeekCalculator />} />
+        </Section>
+        <Section>
+          <Button title='Preview Widget' action={() => Widget.preview()}></Button>
+        </Section>
+      </List>
+    </NavigationStack>
+  )
+}
+
 async function main() {
-  await Navigation.present({ element: <WeekCalculator /> })
+  await Navigation.present({ element: <App /> })
   Script.exit()
 }
 
