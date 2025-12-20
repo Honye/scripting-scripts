@@ -7,117 +7,140 @@ import {
   Spacer,
   VStack,
   ZStack,
-  Widget
-} from 'scripting'
+  Widget,
+  EnvironmentValuesReader,
+} from "scripting";
 import {
   AppItem,
   CONFIG_PATH,
   Config,
   DEFAULT_APPS,
   DEFAULT_CONFIG,
-  FILE_PATH
-} from './constants'
+  FILE_PATH,
+} from "./constants";
 
 function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
-  const size = config?.iconSize || DEFAULT_CONFIG.iconSize
-  const radius = config?.shape === 'circle' ? size / 2 : size * 0.225
+  const size = config?.iconSize || DEFAULT_CONFIG.iconSize;
+  const radius = config?.shape === "circle" ? size / 2 : size * 0.225;
   return (
-    <Link url={item.url} buttonStyle='plain'>
+    <Link url={item.url} buttonStyle="plain">
       <ZStack>
-        {item.iconType === 'image' ? (
+        {item.iconType === "image" ? (
           <ZStack
             frame={{ width: size, height: size }}
             clipShape={{
-              type: 'rect',
-              cornerRadius: radius
+              type: "rect",
+              cornerRadius: radius,
             }}
           >
-            <Image imageUrl={item.icon} resizable scaleToFill />
+            <Image
+              imageUrl={item.icon}
+              resizable
+              scaleToFill
+              widgetAccentedRenderingMode={
+                config?.widgetAccentedRenderingMode ||
+                DEFAULT_CONFIG.widgetAccentedRenderingMode
+              }
+            />
           </ZStack>
-        ) : [
-          <RoundedRectangle
-            frame={{ width: size, height: size }}
-            fill={item.color as Color}
-            cornerRadius={radius}
-          />,
-          <Image
-            systemName={item.icon}
-            foregroundStyle='white'
-            font={size * 0.5}
-          />
-        ]}
+        ) : (
+          [
+            <RoundedRectangle
+                frame={{ width: size, height: size }}
+                fill={item.color as Color}
+                cornerRadius={radius}
+                opacity={0.2}
+              />,
+            <Image
+              systemName={item.icon}
+              foregroundStyle="white"
+              font={size * 0.5}
+              widgetAccentable
+            />,
+          ]
+        )}
       </ZStack>
     </Link>
-  )
+  );
 }
 
 export function LauncherWidget({
   apps: propApps,
-  config: propConfig
+  config: propConfig,
 }: {
-  apps?: AppItem[]
-  config?: Config
+  apps?: AppItem[];
+  config?: Config;
 }) {
-  let apps = propApps
-  let config = propConfig
+  let apps = propApps;
+  let config = propConfig;
 
   if (!apps || !config) {
     try {
       if (!apps && FileManager.existsSync(FILE_PATH)) {
-        const str = FileManager.readAsStringSync(FILE_PATH)
-        apps = JSON.parse(str)
+        const str = FileManager.readAsStringSync(FILE_PATH);
+        apps = JSON.parse(str);
       }
       if (!config && FileManager.existsSync(CONFIG_PATH)) {
-        const str = FileManager.readAsStringSync(CONFIG_PATH)
-        config = JSON.parse(str)
+        const str = FileManager.readAsStringSync(CONFIG_PATH);
+        config = JSON.parse(str);
       }
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
   if (!apps) {
-    apps = DEFAULT_APPS
+    apps = DEFAULT_APPS;
   }
 
   if (!propConfig) {
     if (FileManager.existsSync(CONFIG_PATH)) {
-      const configJson = JSON.parse(FileManager.readAsStringSync(CONFIG_PATH))
+      const configJson = JSON.parse(FileManager.readAsStringSync(CONFIG_PATH));
       config = {
         ...config,
-        ...configJson
-      }
+        ...configJson,
+      };
     }
   }
 
-  const iconSize = config?.iconSize || DEFAULT_CONFIG.iconSize
-  const spacing = config?.spacing !== undefined ? config.spacing : DEFAULT_CONFIG.spacing
-  const availableWidth = Widget.displaySize.width - 32
-  const availableHeight = Widget.displaySize.height - 32
+  const iconSize = config?.iconSize || DEFAULT_CONFIG.iconSize;
+  const preferredSpacing =
+    config?.spacing !== undefined ? config.spacing : DEFAULT_CONFIG.spacing;
+
+  const totalWidth = Widget.displaySize.width;
+  const totalHeight = Widget.displaySize.height;
 
   const columns = Math.max(
     1,
-    Math.floor((availableWidth + spacing) / (iconSize + spacing))
-  )
+    Math.floor((totalWidth - preferredSpacing) / (iconSize + preferredSpacing))
+  );
+  const actualSpacing = (totalWidth - columns * iconSize) / (columns + 1);
+
   const rowCount = Math.max(
     1,
-    Math.floor((availableHeight + spacing) / (iconSize + spacing))
-  )
-  const maxItems = columns * rowCount
-  const displayApps = apps.slice(0, maxItems)
+    Math.floor(
+      (totalHeight - 32 + preferredSpacing) / (iconSize + preferredSpacing)
+    )
+  );
+  const maxItems = columns * rowCount;
+  const displayApps = apps.slice(0, maxItems);
 
-  const actualSpacing =
-    columns > 1
-      ? (availableWidth - columns * iconSize) / (columns - 1)
-      : 0
-
-  const rows: AppItem[][] = []
+  const rows: AppItem[][] = [];
   for (let i = 0; i < displayApps.length; i += columns) {
-    rows.push(displayApps.slice(i, i + columns))
+    rows.push(displayApps.slice(i, i + columns));
   }
 
   return (
-    <VStack padding={16} spacing={spacing} alignment='leading'>
+    <VStack
+      padding={{
+        leading: actualSpacing,
+        trailing: actualSpacing,
+        top: 16,
+        bottom: 16,
+      }}
+      spacing={preferredSpacing}
+      alignment="leading"
+    >
       <Spacer />
       {rows.map((row, rowIndex) => (
         <HStack key={rowIndex} spacing={actualSpacing}>
@@ -128,7 +151,7 @@ export function LauncherWidget({
       ))}
       <Spacer />
     </VStack>
-  )
+  );
 }
 
-Widget.present(<LauncherWidget />)
+Widget.present(<LauncherWidget />);

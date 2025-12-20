@@ -29,6 +29,7 @@ import {
   AppItem,
   BASE_PATH,
   CONFIG_PATH,
+  Config,
   DEFAULT_APPS,
   DEFAULT_CONFIG,
   FILE_PATH
@@ -116,7 +117,11 @@ function App() {
   const [shape, setShape] = useState<'rounded' | 'circle'>(DEFAULT_CONFIG.shape)
   const [iconSize, setIconSize] = useState(DEFAULT_CONFIG.iconSize)
   const [spacing, setSpacing] = useState(DEFAULT_CONFIG.spacing)
+  const [accentedMode, setAccentedMode] = useState<Config['widgetAccentedRenderingMode']>(
+    DEFAULT_CONFIG.widgetAccentedRenderingMode
+  )
   const [isLoaded, setIsLoaded] = useState(false)
+  const dismiss = Navigation.useDismiss()
 
   // Load data
   useEffect(() => {
@@ -137,6 +142,8 @@ function App() {
         setShape(config.shape)
         if (config.iconSize) setIconSize(config.iconSize)
         if (config.spacing !== undefined) setSpacing(config.spacing)
+        if (config.widgetAccentedRenderingMode)
+          setAccentedMode(config.widgetAccentedRenderingMode)
       }
     } catch (e) {
       console.error(e)
@@ -160,8 +167,18 @@ function App() {
     }
   }, [apps.value, isLoaded])
 
-  function saveConfig(s: 'rounded' | 'circle', i: number, sp: number) {
-    const config = { shape: s, iconSize: i, spacing: sp }
+  function saveConfig(
+    s: 'rounded' | 'circle',
+    i: number,
+    sp: number,
+    m: Config['widgetAccentedRenderingMode']
+  ) {
+    const config: Config = {
+      shape: s,
+      iconSize: i,
+      spacing: sp,
+      widgetAccentedRenderingMode: m
+    }
     if (!FileManager.existsSync(BASE_PATH)) {
       FileManager.createDirectory(BASE_PATH)
     }
@@ -170,6 +187,7 @@ function App() {
     setShape(s)
     setIconSize(i)
     setSpacing(sp)
+    setAccentedMode(m)
   }
 
   function updateApp(item: AppItem) {
@@ -190,6 +208,9 @@ function App() {
       <List
         navigationTitle='Launch'
         toolbar={{
+          topBarLeading: [
+            <Button title="Close" systemImage="xmark" action={dismiss} />
+          ],
           confirmationAction: [
             <EditButton />,
             <NavigationLink
@@ -211,7 +232,12 @@ function App() {
             title='Icon Shape'
             value={shape}
             onChanged={(v: string) =>
-              saveConfig(v as 'rounded' | 'circle', iconSize, spacing)
+              saveConfig(
+                v as 'rounded' | 'circle',
+                iconSize,
+                spacing,
+                accentedMode
+              )
             }
           >
             <Text tag='rounded'>Rounded Rectangle</Text>
@@ -219,10 +245,12 @@ function App() {
           </Picker>
           <Stepper
             onIncrement={() => {
-              if (iconSize < 100) saveConfig(shape, iconSize + 1, spacing)
+              if (iconSize < 100)
+                saveConfig(shape, iconSize + 1, spacing, accentedMode)
             }}
             onDecrement={() => {
-              if (iconSize > 20) saveConfig(shape, iconSize - 1, spacing)
+              if (iconSize > 20)
+                saveConfig(shape, iconSize - 1, spacing, accentedMode)
             }}
           >
             <HStack>
@@ -234,10 +262,12 @@ function App() {
 
           <Stepper
             onIncrement={() => {
-              if (spacing < 50) saveConfig(shape, iconSize, spacing + 1)
+              if (spacing < 50)
+                saveConfig(shape, iconSize, spacing + 1, accentedMode)
             }}
             onDecrement={() => {
-              if (spacing > 0) saveConfig(shape, iconSize, spacing - 1)
+              if (spacing > 0)
+                saveConfig(shape, iconSize, spacing - 1, accentedMode)
             }}
           >
             <HStack>
@@ -246,6 +276,24 @@ function App() {
               <Text opacity={0.5}>{spacing.toString()}</Text>
             </HStack>
           </Stepper>
+
+          <Picker
+            title='Icon Rendering Mode'
+            value={accentedMode}
+            onChanged={(v: string) =>
+              saveConfig(
+                shape,
+                iconSize,
+                spacing,
+                v as Config['widgetAccentedRenderingMode']
+              )
+            }
+          >
+            <Text tag='fullColor'>Full Color</Text>
+            <Text tag='accented'>Accented</Text>
+            <Text tag='desaturated'>Desaturated</Text>
+            <Text tag='accentedDesaturated'>Accented & Desaturated</Text>
+          </Picker>
         </Section>
 
         <Section header={<Text>Apps</Text>}>

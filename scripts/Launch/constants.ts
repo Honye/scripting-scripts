@@ -17,12 +17,14 @@ export interface Config {
   shape: 'rounded' | 'circle'
   iconSize: number
   spacing: number
+  widgetAccentedRenderingMode: 'accented' | 'desaturated' | 'accentedDesaturated' | 'fullColor'
 }
 
 export const DEFAULT_CONFIG: Config = {
   shape: 'rounded',
   iconSize: 50,
-  spacing: 15
+  spacing: 15,
+  widgetAccentedRenderingMode: 'fullColor'
 }
 
 export const DEFAULT_APPS: AppItem[] = [
