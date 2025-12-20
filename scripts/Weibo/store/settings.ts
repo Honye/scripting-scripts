@@ -1,4 +1,4 @@
-import { Color, useReducer } from 'scripting'
+import { Color, useReducer, WidgetAccentedRenderingMode } from 'scripting'
 
 export const enum Client {
   /** 网页版 */
@@ -15,6 +15,7 @@ interface Settings {
   gap: number
   logoSize: number
   background: { light: Color, dark: Color }
+  renderingMode: WidgetAccentedRenderingMode
 }
 
 function initState(): Settings {
@@ -27,6 +28,7 @@ function initState(): Settings {
     gap: 8,
     logoSize: 30,
     background: { light: '#ffffff', dark: '#242426' },
+    renderingMode: 'accentedDesaturated',
     ...storedSettings
   }
 }

@@ -9,7 +9,7 @@
   "color": "rgba(238, 92, 98,1)",
   "intentInputTypes": [],
   "runInApp": false,
-  "version": "1.0.2",
+  "version": "1.1.0",
   "localizedNames": {
     "zh": "微博热搜",
     "en": "Weibo"

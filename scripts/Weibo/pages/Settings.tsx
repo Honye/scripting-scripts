@@ -10,7 +10,7 @@ import {
   useMemo,
   useColorScheme,
 } from 'scripting'
-import type { Color } from 'scripting'
+import type { Color, WidgetAccentedRenderingMode } from 'scripting'
 import { Client, useSettings } from '../store/settings'
 
 export default function Settings() {
@@ -31,6 +31,10 @@ export default function Settings() {
 
   const onClientChanged = (value: string) => {
     setSettings({ client: value as Client })
+  }
+
+  const onRenderingModeChanged = (value: string) => {
+    setSettings({ renderingMode: value as WidgetAccentedRenderingMode })
   }
 
   const onDecrement = useCallback(() => {
@@ -103,6 +107,17 @@ export default function Settings() {
           value={timeColor}
           onChanged={onTimeColorChanged}
         />
+        <Picker
+          title='图标染色模式'
+          pickerStyle='navigationLink'
+          value={settings.renderingMode}
+          onChanged={onRenderingModeChanged}
+        >
+          <Text tag='accented'>accented</Text>
+          <Text tag='desaturated'>desaturated</Text>
+          <Text tag='accentedDesaturated'>accentedDesaturated</Text>
+          <Text tag='fullColor'>fullColor</Text>
+        </Picker>
       </Section>
     </List>
   )

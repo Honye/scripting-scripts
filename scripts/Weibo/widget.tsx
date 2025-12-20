@@ -17,10 +17,13 @@ import { Client, useSettings } from './store/settings'
 function WidgetView({ list }: { list: any[] }) {
   const [settings] = useSettings()
   const { height } = Widget.displaySize
+  const paddingY = 12
 
+  const standardItemHeight = settings.fontSize + settings.gap
   const count = Math.floor(
-    (height - 10 * 2 + settings.gap) / (settings.fontSize + settings.gap),
+    (height - paddingY * 2 + settings.gap) / standardItemHeight
   )
+  const itemHeight = standardItemHeight + (height - paddingY * 2 - standardItemHeight * count) / count
   const logoLines = settings.logoSize
     ? Math.ceil(settings.logoSize / (settings.fontSize + settings.gap))
     : 0
@@ -51,13 +54,13 @@ function WidgetView({ list }: { list: any[] }) {
   }, [settings.client])
 
   return (
-    <VStack padding={12} spacing={0} widgetBackground={settings.background}>
+    <VStack padding={{ horizontal: 14, vertical: paddingY }} frame={Widget.displaySize} spacing={0} widgetBackground={settings.background}>
       {list.slice(0, count - logoLines).map((item, i) => (
         <Link key={item.itemid} buttonStyle='plain' url={getItemLink(item)}>
           <HStack alignment='top'>
             <HStack
               key={item.itemid}
-              frame={{ height: settings.fontSize + settings.gap }}
+              frame={{ height: itemHeight }}
               alignment='center'
             >
               <Text
@@ -70,7 +73,12 @@ function WidgetView({ list }: { list: any[] }) {
               <Text font={settings.fontSize} foregroundStyle={settings.color}>
                 {item.title}
               </Text>
-              <Image imageUrl={item.icon} frame={iconSize} resizable />
+              <Image
+                imageUrl={item.icon}
+                frame={iconSize}
+                widgetAccentedRenderingMode={settings.renderingMode}
+                resizable
+              />
               <Spacer />
             </HStack>
             {i === 0 ? (
@@ -100,7 +108,7 @@ function WidgetView({ list }: { list: any[] }) {
             <Link key={item.itemid} buttonStyle='plain' url={getItemLink(item)}>
               <HStack
                 key={item.itemid}
-                frame={{ height: settings.fontSize + settings.gap }}
+                frame={{ height: itemHeight }}
                 alignment='center'
               >
                 <Text
@@ -113,7 +121,12 @@ function WidgetView({ list }: { list: any[] }) {
                 <Text font={settings.fontSize} foregroundStyle={settings.color}>
                   {item.title}
                 </Text>
-                <Image imageUrl={item.icon} frame={iconSize} resizable />
+                <Image
+                  imageUrl={item.icon}
+                  frame={iconSize}
+                  widgetAccentedRenderingMode={settings.renderingMode}
+                  resizable
+                />
                 <Spacer />
               </HStack>
             </Link>
@@ -123,6 +136,7 @@ function WidgetView({ list }: { list: any[] }) {
           <Image
             imageUrl='https://www.sinaimg.cn/blog/developer/wiki/LOGO_64x64.png'
             frame={{ width: settings.logoSize, height: settings.logoSize }}
+            widgetAccentedRenderingMode={settings.renderingMode}
             resizable
           />
         </Link>
