@@ -28,11 +28,13 @@ import {
 import {
   AppItem,
   BASE_PATH,
+  CACHE_PATH,
   CONFIG_PATH,
   Config,
   DEFAULT_APPS,
   DEFAULT_CONFIG,
-  FILE_PATH
+  FILE_PATH,
+  getIconCachePath
 } from './constants'
 
 function AppEditor({
@@ -59,14 +61,14 @@ function AppEditor({
       </Section>
 
       <Section header={<Text>Appearance</Text>}>
-          <Picker
-            title='Icon Type'
-            value={iconType}
-            onChanged={(v: string) => setIconType(v as 'symbol' | 'image')}
-          >
-            <Text tag='symbol'>SF Symbol</Text>
-            <Text tag='image'>Network Image</Text>
-          </Picker>
+        <Picker
+          title='Icon Type'
+          value={iconType}
+          onChanged={(v: string) => setIconType(v as 'symbol' | 'image')}
+        >
+          <Text tag='symbol'>SF Symbol</Text>
+          <Text tag='image'>Network Image</Text>
+        </Picker>
 
         {iconType === 'symbol' ? (
           <HStack>
@@ -117,9 +119,9 @@ function App() {
   const [shape, setShape] = useState<'rounded' | 'circle'>(DEFAULT_CONFIG.shape)
   const [iconSize, setIconSize] = useState(DEFAULT_CONFIG.iconSize)
   const [spacing, setSpacing] = useState(DEFAULT_CONFIG.spacing)
-  const [accentedMode, setAccentedMode] = useState<Config['widgetAccentedRenderingMode']>(
-    DEFAULT_CONFIG.widgetAccentedRenderingMode
-  )
+  const [accentedMode, setAccentedMode] = useState<
+    Config['widgetAccentedRenderingMode']
+  >(DEFAULT_CONFIG.widgetAccentedRenderingMode)
   const [isLoaded, setIsLoaded] = useState(false)
   const dismiss = Navigation.useDismiss()
 
@@ -150,6 +152,7 @@ function App() {
       apps.setValue(DEFAULT_APPS)
     } finally {
       setIsLoaded(true)
+      apps.value.forEach(cacheAppIcon)
     }
   }, [])
 
@@ -190,6 +193,30 @@ function App() {
     setAccentedMode(m)
   }
 
+  async function cacheAppIcon(item: AppItem) {
+    if (item.iconType !== 'image' || !item.icon) return
+
+    const cachePath = getIconCachePath(item.icon)
+    if (FileManager.existsSync(cachePath)) return
+
+    if (!FileManager.existsSync(CACHE_PATH)) {
+      FileManager.createDirectorySync(CACHE_PATH, true)
+    }
+
+    try {
+      const image = await UIImage.fromURL(item.icon)
+      if (image) {
+        const data = image.toPNGData()
+        if (data) {
+          FileManager.writeAsDataSync(cachePath, data)
+          Widget.reloadAll()
+        }
+      }
+    } catch (e) {
+      console.error(`Failed to cache icon: ${item.icon}`, e)
+    }
+  }
+
   function updateApp(item: AppItem) {
     const currentApps = apps.value
     const index = currentApps.findIndex((a) => a.id === item.id)
@@ -200,8 +227,8 @@ function App() {
     } else {
       apps.setValue([...currentApps, item])
     }
+    cacheAppIcon(item)
   }
-
 
   return (
     <NavigationStack>
@@ -209,7 +236,7 @@ function App() {
         navigationTitle='Launch'
         toolbar={{
           topBarLeading: [
-            <Button title="Close" systemImage="xmark" action={dismiss} />
+            <Button title='Close' systemImage='xmark' action={dismiss} />
           ],
           confirmationAction: [
             <EditButton />,

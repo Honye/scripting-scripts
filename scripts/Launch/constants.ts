@@ -1,8 +1,18 @@
 import { Path, Script } from 'scripting'
 
-export const BASE_PATH = Path.join(FileManager.appGroupDocumentsDirectory, Script.name)
+export const BASE_PATH = Path.join(
+  FileManager.appGroupDocumentsDirectory,
+  Script.name
+)
 export const FILE_PATH = Path.join(BASE_PATH, 'launcher_apps.json')
 export const CONFIG_PATH = Path.join(BASE_PATH, 'launcher_config.json')
+export const CACHE_PATH = Path.join(BASE_PATH, 'cache')
+
+export function getIconCachePath(url: string) {
+  if (!url) return ''
+  const hash = Crypto.md5(Data.fromRawString(url)!).toHexString()
+  return Path.join(CACHE_PATH, `${hash}.png`)
+}
 
 export interface AppItem {
   id: string
@@ -17,7 +27,11 @@ export interface Config {
   shape: 'rounded' | 'circle'
   iconSize: number
   spacing: number
-  widgetAccentedRenderingMode: 'accented' | 'desaturated' | 'accentedDesaturated' | 'fullColor'
+  widgetAccentedRenderingMode:
+    | 'accented'
+    | 'desaturated'
+    | 'accentedDesaturated'
+    | 'fullColor'
 }
 
 export const DEFAULT_CONFIG: Config = {
