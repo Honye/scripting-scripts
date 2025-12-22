@@ -1,0 +1,26 @@
+{
+  "intentInputTypes" : [
+
+  ],
+  "localizedNames" : {
+    "zh": "照片墙",
+    "en": "Photo"
+  },
+  "iconImage" : null,
+  "localizedDescriptions" : null,
+  "name" : "Photo",
+  "author" : {
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "name" : "Jackie",
+    "email" : "Honye@github.com"
+  },
+  "color" : "rgba(243, 159, 68,1)",
+  "contributors" : [
+
+  ],
+  "runInApp" : false,
+  "description" : null,
+  "remoteResource" : null,
+  "version" : "1.0.0",
+  "icon" : "photo.on.rectangle.angled"
+}
