@@ -1,34 +1,26 @@
-import { Button, ButtonStyle, Picker, ShareSheet, Text, useMemo, useState, VStack } from "scripting"
-import { UIExample } from "../../ui_example"
+import { Button, ButtonStyle, Navigation, NavigationStack, Picker, Script, Text, useMemo, useState, VStack } from "scripting"
 
-export function ButtonWithTextAndIcon() {
+function Example() {
   const [value, setValue] = useState(0)
   const buttonStyles = useMemo<ButtonStyle[]>(() => [
     'automatic', 'bordered', 'borderedProminent', 'borderless', 'plain'
   ], [])
   const buttonStyle = buttonStyles[value]
 
-  return <UIExample
-    title={"Button with Text and Icon"}
-    code={`<Button
-  title={"Share"}
-  systemImage={"square.and.arrow.up"}
-  buttonStyle={"borderedProminent"}
-  action={async () => {
-    const success = await ShareSheet.present(["This is share content."])
-    console.log("Share successfully", success)
-  }}
-/>  
-    `}
-  >
-    <VStack>
+  return <NavigationStack>
+    <VStack
+      navigationTitle={"Button with text and icon"}
+      navigationBarTitleDisplayMode={"inline"}
+    >
       <Button
         title={"Share"}
         systemImage={"square.and.arrow.up"}
         buttonStyle={buttonStyle}
         action={async () => {
           const success = await ShareSheet.present(["This is share content."])
-          console.log("Share successfully", success)
+          Dialog.alert({
+            message: "Share successfully: " + success
+          })
         }}
       />
 
@@ -43,6 +35,15 @@ export function ButtonWithTextAndIcon() {
         )}
       </Picker>
     </VStack>
-
-  </UIExample>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

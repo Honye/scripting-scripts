@@ -1,32 +1,44 @@
-import { ScrollView, VStack } from "scripting"
-import { APIExample } from "../api_example"
+import { Button, List, Navigation, NavigationStack, Script, Section, Text } from "scripting"
 
-export function ShareSheetExample() {
+function Example() {
 
-  return <ScrollView
-    navigationTitle={"ShareSheet"}>
-    <VStack>
-      <APIExample
-        title={"ShareSheet.present"}
-        subtitle={"Present a ShareSheet UI."}
-        code={`// const image = await Photos.getLatestPhotos(1)
-// await ShareSheet.present([image])
-
-if (await ShareSheet.present(["Hello Scripting!"])) {
-  console.log("Share successfully.")
-} else {
-  console.log("Cancelled")
-}`}
-        run={async log => {
-          // const image = await Photos.getLatestPhotos(1)
-          // await ShareSheet.present([image])
-          if (await ShareSheet.present(["Hello Scripting!"])) {
-            log("Share successfully.")
-          } else {
-            log("Cancelled")
-          }
-        }}
-      />
-    </VStack>
-  </ScrollView>
+  return <NavigationStack>
+    <List
+      navigationTitle={"ShareSheet"}
+      navigationBarTitleDisplayMode={"inline"}
+    >
+      <Section
+        footer={
+          <Text>Present a ShareSheet UI.</Text>
+        }
+      >
+        <Button
+          title={"ShareSheet.present"}
+          action={async () => {
+            // const image = await Photos.getLatestPhotos(1)
+            // await ShareSheet.present([image])
+            if (await ShareSheet.present(["Hello Scripting!"])) {
+              Dialog.alert({
+                message: "Share successfully."
+              })
+            } else {
+              Dialog.alert({
+                message: "Cancelled"
+              })
+            }
+          }}
+        />
+      </Section>
+    </List>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

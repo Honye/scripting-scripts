@@ -2,7 +2,7 @@ import { HStack, Notification, Spacer, Text, VStack } from "scripting"
 
 function RichNotificationView() {
 
-  const document = Notification.current?.userInfo
+  const document = Notification.current?.request.content.userInfo
 
   if (document == null) {
     return <VStack>

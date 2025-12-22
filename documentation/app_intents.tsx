@@ -10,6 +10,7 @@ export const ToggleReadIntent = AppIntentManager.register({
   protocol: AppIntentProtocol.AppIntent,
   perform: async (title: string) => {
     store.toggleRead(title)
+    Widget.reloadAll()
   }
 })
 

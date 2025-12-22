@@ -1,23 +1,85 @@
-import { CommonTextExample } from "./text"
-import { CustomStyleTextExample } from "./custom_style_text"
-import { LabelExample } from "./label"
-import { MarkdownExample } from "./markdown"
-import { ScrollView } from "scripting"
-import { RichTextExample } from "./rich_text"
-import { AttributedStringTextExample } from "./attributed_string_text"
+import { Label, List, Markdown, Navigation, NavigationStack, Script, Section, Text, VStack } from "scripting"
 
-export function TextExample() {
-  return <ScrollView
-    navigationTitle={"Displaying Text"}
-    navigationBarTitleDisplayMode={"inline"}
-  >
-    <CommonTextExample />
-    <AttributedStringTextExample />
-    <CustomStyleTextExample />
-    <LabelExample />
-    <MarkdownExample />
-    <RichTextExample />
-  </ScrollView>
+function View() {
+  return <NavigationStack>
+    <List>
+      <Section title={"Text"}>
+        <VStack>
+          <Text
+            font={"title"}
+            foregroundStyle={"systemRed"}
+          >
+            Title
+          </Text>
+          <Text
+            font={"body"}
+            foregroundStyle={"systemBlue"}
+          >Hello Scripting!</Text>
+          <Text
+            foregroundStyle={"systemGreen"}
+            font={"footnote"}
+            italic
+          >
+            This is a footnote.
+          </Text>
+        </VStack>
+      </Section>
+
+      <Section title="AttributedString">
+        <Text
+          attributedString={`This is regular text.
+* This is **bold** text, this is *italic* text, and this is ***bold, italic*** text.
+~~A strikethrough example~~
+\`Monospaced works too\`
+Visit Apple: [click here](https://apple.com)`}
+        />
+      </Section>
+
+      <Section title={"Label"}>
+        <Label
+          title={"Hello world"}
+          systemImage={"globe"}
+        />
+      </Section>
+
+      <Section title={"Markdown"}>
+        <Markdown
+          content={`
+# Scripting App
+Run your *ideas* quickly **with** scripts.
+      `}
+        />
+      </Section>
+
+      <Section title={"RichText"}>
+        <Text
+          font={16}
+          styledText={{
+            content: [
+              "I agree the ",
+              {
+                content: "Terms",
+                foregroundColor: "systemOrange",
+                underlineColor: "systemBlue",
+                bold: true,
+                onTapGesture: () => {
+                  Dialog.alert({
+                    message: "OK!"
+                  })
+                }
+              }
+            ]
+          }}
+        />
+      </Section>
+
+    </List>
+  </NavigationStack>
 }
 
+async function run() {
+  await Navigation.present(<View />)
+  Script.exit()
+}
 
+run()

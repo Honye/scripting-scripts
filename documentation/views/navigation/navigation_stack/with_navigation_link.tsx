@@ -1,48 +1,6 @@
-import { Button, Color, List, NavigationLink, NavigationStack, Text, useState, VStack } from "scripting"
-import { CodePreview } from "../../../ui_example"
+import { Color, List, Navigation, NavigationLink, NavigationStack, Script, Text, VStack } from "scripting"
 
-export function WithNavigationLinkExample() {
-  const [codeVisible, setCodeVisible] = useState(false)
-  const colors: Color[] = [
-    "red", "green", "blue", "orange", "purple"
-  ]
-
-  return <NavigationStack>
-    <List
-      navigationTitle={"NavigationStack with links"}
-      toolbar={{
-        topBarTrailing: <Button
-          title={"Code"}
-          action={() => setCodeVisible(true)}
-          buttonStyle={"borderedProminent"}
-          controlSize={"small"}
-          popover={{
-            isPresented: codeVisible,
-            onChanged: setCodeVisible,
-            content: <CodePreview
-              code={code}
-              dismiss={() => setCodeVisible(false)}
-            />
-          }}
-        />
-      }}
-    >
-      {colors.map(color =>
-        <NavigationLink
-          destination={
-            <NavigationDetailView
-              color={color}
-            />
-          }
-        >
-          <Text>Navigation to {color} view</Text>
-        </NavigationLink>
-      )}
-    </List>
-  </NavigationStack>
-}
-
-export function NavigationDetailView({
+function NavigationDetailView({
   color
 }: {
   color: Color
@@ -59,7 +17,8 @@ export function NavigationDetailView({
   </VStack>
 }
 
-const code = `function WithNavigationLinkExample() {
+
+function Example() {
   const colors: Color[] = [
     "red", "green", "blue", "orange", "purple"
   ]
@@ -67,6 +26,7 @@ const code = `function WithNavigationLinkExample() {
   return <NavigationStack>
     <List
       navigationTitle={"NavigationStack with links"}
+      navigationBarTitleDisplayMode={"inline"}
     >
       {colors.map(color =>
         <NavigationLink
@@ -81,4 +41,14 @@ const code = `function WithNavigationLinkExample() {
       )}
     </List>
   </NavigationStack>
-}`
+}
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

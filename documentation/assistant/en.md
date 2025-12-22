@@ -1,0 +1,297 @@
+The `Assistant` module provides a powerful set of APIs that allow users to request structured JSON data from an intelligent assistant.
+This feature can be used for automation tasks such as extracting billing information, classifying expenses, parsing text, or recognizing image content.
+
+---
+
+## `isAvailable` Variable
+
+### Description
+
+Indicates whether the Assistant API is currently available.
+
+* This status depends on the selected AI provider and whether a valid API key has been configured.
+* If no valid API key is provided, the Assistant API will be unavailable.
+
+---
+
+## `requestStructuredData` Method
+
+### Description
+
+The `requestStructuredData` method allows you to send a natural language prompt and receive a structured data response that conforms to a defined JSON Schema.
+It supports two forms:
+
+1. Text-only input
+2. Input with images — allows the model to analyze both textual and visual data
+
+---
+
+### Syntax 1: Text Input Version
+
+```ts
+function requestStructuredData<R>(
+  prompt: string,
+  schema: JSONSchemaArray | JSONSchemaObject,
+  options?: {
+    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | { custom: string }
+    modelId?: string
+  }
+): Promise<R>
+```
+
+### Syntax 2: Image Input Version
+
+```ts
+function requestStructuredData<R>(
+  prompt: string,
+  images: string[],
+  schema: JSONSchemaArray | JSONSchemaObject,
+  options?: {
+    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | { custom: string }
+    modelId?: string
+  }
+): Promise<R>
+```
+
+---
+
+### Parameters
+
+#### `prompt` (`string`)
+
+The natural language prompt describing what should be parsed or extracted.
+Example:
+
+> “Please extract the amount, date, category, and location from the following bill.”
+
+#### `images` (`string[]`)
+
+An array of input images for the assistant to process.
+Each item must be a Base64-encoded **data URI** string, such as:
+
+```
+data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+```
+
+* Multiple images are supported, but avoid providing too many to prevent request timeouts or large payloads.
+* Useful for tasks like invoice OCR, document extraction, or image-based scene analysis.
+
+#### `schema` (`JSONSchemaArray | JSONSchemaObject`)
+
+Defines the structure of the expected JSON output (see “JSON Schema Definition” below).
+
+#### `options` (optional)
+
+* `provider` — specifies the AI provider to use:
+
+  | Value                | Description                                                          |
+  | -------------------- | -------------------------------------------------------------------- |
+  | `"openai"`           | Use OpenAI models (e.g., GPT-4, GPT-4 Turbo)                         |
+  | `"gemini"`           | Use Google Gemini models                                             |
+  | `"anthropic"`        | Use Anthropic Claude models                                          |
+  | `"deepseek"`         | Use DeepSeek models                                                  |
+  | `"openrouter"`       | Use the OpenRouter multi-model platform                              |
+  | `{ custom: string }` | Specify a custom API provider name, such as your own backend service |
+
+* `modelId` — specifies the model ID (e.g., `"gpt-4-turbo"`, `"gemini-1.5-pro"`, `"claude-3-opus"`).
+  If not provided, the default model for the selected provider will be used.
+
+---
+
+### Return Value
+
+Returns a `Promise` that resolves to the structured data object matching the defined `schema`, with a type of `R`.
+
+---
+
+## JSON Schema Definition
+
+The `schema` parameter defines the structure of the expected data.
+
+### `JSONSchemaType`
+
+```ts
+type JSONSchemaType = JSONSchemaPrimitive | JSONSchemaArray | JSONSchemaObject
+```
+
+#### Primitive Type
+
+```ts
+type JSONSchemaPrimitive = {
+  type: "string" | "number" | "boolean"
+  required?: boolean
+  description: string
+}
+```
+
+#### Array Type
+
+```ts
+type JSONSchemaArray = {
+  type: "array"
+  items: JSONSchemaType
+  required?: boolean
+  description: string
+}
+```
+
+#### Object Type
+
+```ts
+type JSONSchemaObject = {
+  type: "object"
+  properties: Record<string, JSONSchemaType>
+  required?: boolean
+  description: string
+}
+```
+
+---
+
+## Example: Extracting Bill Information (Text Input)
+
+Suppose you have a bill text and want to extract the amount, date, category, and location:
+
+```ts
+const someBillDetails = `
+- Amount: $15.00
+- Date: 2024-03-11 14:30
+- Location: City Center Parking
+- Category: Parking
+`
+
+const prompt = `Please parse the following bill information and output structured data: ${someBillDetails}`
+
+const schema: JSONSchemaObject = {
+  type: "object",
+  properties: {
+    totalAmount: {
+      type: "number",
+      required: true,
+      description: "Total bill amount"
+    },
+    category: {
+      type: "string",
+      required: true,
+      description: "Bill category"
+    },
+    date: {
+      type: "string",
+      required: false,
+      description: "Bill date"
+    },
+    location: {
+      type: "string",
+      required: false,
+      description: "Bill location"
+    }
+  }
+}
+
+const data = await Assistant.requestStructuredData(
+  prompt,
+  schema,
+  {
+    provider: "openai",
+    modelId: "gpt-4-turbo"
+  }
+)
+
+console.log(data)
+```
+
+### Possible Output
+
+```json
+{
+  "totalAmount": 15.00,
+  "category": "Parking",
+  "date": "2024-03-11 14:30",
+  "location": "City Center Parking"
+}
+```
+
+---
+
+## Example: Parsing Invoice Information from Images
+
+The following example demonstrates how to use `requestStructuredData` with image input to extract structured invoice data:
+
+```ts
+const prompt = "Please extract the total amount, date, and merchant name from the following images."
+
+// const base64Data = UIImage.fromFile("/path/to/image.png").toJPEGBase64String(0.6)
+// const base64Image = `data:image/jpeg;base64,${base64Data}`
+
+const images = [
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...", // First invoice
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ..."      // Second invoice
+]
+
+const schema: JSONSchemaObject = {
+  type: "object",
+  properties: {
+    total: { type: "number", description: "Invoice total amount", required: true },
+    date: { type: "string", description: "Invoice date" },
+    merchant: { type: "string", description: "Merchant name" }
+  },
+  description: "Invoice information"
+}
+
+const result = await Assistant.requestStructuredData(
+  prompt,
+  images,
+  schema,
+  { provider: "gemini", modelId: "gemini-1.5-pro" }
+)
+
+console.log(result)
+```
+
+**Possible Output:**
+
+```json
+{
+  "total": 268.5,
+  "date": "2024-12-01",
+  "merchant": "Shenzhen Youxuan Supermarket"
+}
+```
+
+---
+
+## Usage Notes
+
+1. **Ensure the schema is well-defined**
+   The returned data must match the defined schema; otherwise, parsing may fail.
+
+2. **Use the `required` field appropriately**
+   Fields that must always be present should have `required: true`. Optional fields may omit it.
+
+3. **Select the provider and modelId carefully**
+   If you need a specific model (e.g., GPT-4, Gemini Pro), specify it explicitly in `options`.
+
+4. **Supports OpenRouter and Custom Providers**
+
+   * `"openrouter"` allows using multiple models via the OpenRouter platform.
+   * `{ custom: "your-provider" }` lets you use your own backend AI service.
+
+5. **Supports Image Input for Multimodal Models**
+
+   * Only some models (e.g., GPT-4 Turbo, Gemini 1.5 Pro) support image input.
+   * Each image must be a valid Base64 `data:image/...;base64,` string.
+   * Avoid passing too many images at once.
+
+6. **Add proper error handling**
+
+```ts
+try {
+  const result = await Assistant.requestStructuredData(prompt, schema, {
+    provider: { custom: "my-ai-backend" },
+    modelId: "my-custom-model"
+  })
+  console.log("Parsed result:", result)
+} catch (err) {
+  console.error("Parsing failed:", err)
+}
+```

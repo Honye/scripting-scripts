@@ -1,66 +1,75 @@
-import { Font, ForEach, ScrollView, Text, VStack } from "scripting"
-import { UIExample } from "../../ui_example"
+import { Button, Font, ForEach, List, Navigation, NavigationStack, Script, Section, Text, useObservable, VStack } from "scripting"
 
-export function IteratingExample() {
-  const namedFonts: Font[] = [
-    "largeTitle",
-    "title",
-    "headline",
-    "body",
-    "caption"
-  ]
+function Example() {
+  const dismiss = Navigation.useDismiss()
 
-  return <ScrollView>
-    <UIExample
-      title={"ForEach"}
-      code={`const namedFonts: Font[] = [
-  "largeTitle",
-  "title",
-  "headline",
-  "body",
-  "caption"
-]
-        
-<ForEach
-  count={namedFonts.length}
-  itemBuilder={index => {
-    const namedFont = namedFonts[index]
-    return <Text
-      key={namedFont}
-      font={namedFont}
-    >{namedFont}</Text>
-  }}
-/>`}
+  const namedFonts = useObservable(() => {
+    return [
+      "largeTitle",
+      "title",
+      "headline",
+      "body",
+      "caption"
+    ].map(e => ({
+      id: e,
+      name: e as Font
+    }))
+  })
+
+  return <NavigationStack>
+    <List
+      navigationTitle={"Iterating"}
+      navigationBarTitleDisplayMode={"inline"}
+      toolbar={{
+        cancellationAction: <Button
+          title={"Done"}
+          action={dismiss}
+        />
+      }}
     >
-      <ForEach
-        count={namedFonts.length}
-        itemBuilder={index => {
-          const namedFont = namedFonts[index]
-          return <Text
-            key={namedFont}
-            font={namedFont}
-          >{namedFont}</Text>
-        }}
-      />
-    </UIExample>
-
-    <UIExample
-      title={"Iterating in code block"}
-      code={`<VStack>
-  {namedFonts.map(namedFont =>
-    <Text
-      font={namedFont}
-    >{namedFont}</Text>
-  )}
-</VStack>`}
-    >
-      <VStack>
-        {namedFonts.map(namedFont =>
+      <Section
+        header={
           <Text
-            font={namedFont}
-          >{namedFont}</Text>
-        )}
-      </VStack>
-    </UIExample>
-  </ScrollView>
+            textCase={null}
+          >ForEach</Text>
+        }
+      >
+        <ForEach
+          data={namedFonts}
+          builder={(namedFont) => {
+            return <Text
+              key={namedFont.id}
+              font={namedFont.name}
+            >{namedFont.name}</Text>
+          }}
+        />
+      </Section>
+
+      <Section
+        header={
+          <Text
+            textCase={null}
+          >Iterating in code block</Text>
+        }
+      >
+        <VStack>
+          {namedFonts.value.map(namedFont =>
+            <Text
+              font={namedFont.name}
+            >{namedFont.name}</Text>
+          )}
+        </VStack>
+      </Section>
+    </List>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

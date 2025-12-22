@@ -1,4 +1,7 @@
-import { RouteItem, routes } from "./routes"
+import { DocItem } from "./types"
+import doc from './doc.json'
+
+const docList: DocItem[] = doc
 
 const readKey = "scripting.doc.read"
 const dateKey = "scripting.doc.date"
@@ -7,7 +10,7 @@ const docCount = 8
 
 class DocStore {
 
-  docsToRead!: RouteItem[]
+  docsToRead!: DocItem[]
 
   constructor() {
     let today = new Date().toLocaleDateString()
@@ -16,15 +19,21 @@ class DocStore {
       Storage.set(dateKey, today)
       this.saveRandomDocsToRead()
     } else {
-      this.docsToRead = Storage.get<RouteItem[]>(docsKey) ?? []
+      let docsToRead = this.docsToRead = Storage.get<DocItem[]>(docsKey) ?? []
+
+      if (docsToRead.length && docsToRead.some(
+        e => e.example == null && e.readme == null)
+      ) {
+        this.saveRandomDocsToRead()
+      }
     }
   }
 
   saveRandomDocsToRead() {
-    const docs: RouteItem[] = []
+    const docs: DocItem[] = []
 
     while (docs.length < docCount) {
-      const route = this.getRandomRouteItem(routes)
+      const route = this.getRandomDocItem(docList)
 
       if (!docs.includes(route)) {
         docs.push(route)
@@ -35,12 +44,12 @@ class DocStore {
     Storage.set(docsKey, docs)
   }
 
-  private getRandomRouteItem(routes: RouteItem[]): RouteItem {
+  private getRandomDocItem(routes: DocItem[]): DocItem {
     const index = Math.random() * routes.length | 0
     const route = routes[index]
 
     return route.children != null
-      ? this.getRandomRouteItem(route.children)
+      ? this.getRandomDocItem(route.children)
       : route
   }
 

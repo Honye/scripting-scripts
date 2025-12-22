@@ -1,101 +1,90 @@
-import { ScrollView, VStack } from "scripting"
-import { APIExample } from "../api_example"
+import { Button, List, Navigation, NavigationStack, Script, } from "scripting"
 
-export function HapticFeedbackExample() {
+function Example() {
 
-  return <ScrollView
-    navigationTitle={"HapticFeedback"}
-  >
-    <VStack>
-      <APIExample
+  return <NavigationStack>
+    <List
+      navigationTitle={"HapticFeedback"}
+    >
+      <Button
         title={"HapticFeedback.vibrate"}
-        subtitle={"Invoke a brief vibration."}
-        code={`HapticFeedback.vibrate()`}
-        run={() => {
+        action={() => {
           HapticFeedback.vibrate()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.lightImpact"}
-        subtitle={"A collision between small, light user interface elements."}
-        code={`HapticFeedback.lightImpact()`}
-        run={() => {
+        action={() => {
           HapticFeedback.lightImpact()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.mediumImpact"}
-        subtitle={"A collision between moderately sized user interface elements."}
-        code={`HapticFeedback.mediumImpact()`}
-        run={() => {
+        action={() => {
           HapticFeedback.mediumImpact()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.heavyImpact"}
-        subtitle={"A collision between large, heavy user interface elements."}
-        code={`HapticFeedback.heavyImpact()`}
-        run={() => {
+        action={() => {
           HapticFeedback.heavyImpact()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.softImpact"}
-        subtitle={"A collision between user interface elements that are soft, exhibiting a large amount of compression or elasticity."}
-        code={`HapticFeedback.softImpact()`}
-        run={() => {
+        action={() => {
           HapticFeedback.softImpact()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.rigidImpact"}
-        subtitle={"A collision between user interface elements that are rigid, exhibiting a small amount of compression or elasticity."}
-        code={`HapticFeedback.rigidImpact()`}
-        run={() => {
+        action={() => {
           HapticFeedback.rigidImpact()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.selection"}
-        subtitle={"Triggers selection feedback. This method tells the generator that the user has changed a selection. In response, the generator may play the appropriate haptics. Don’t use this feedback when the user makes or confirms a selection; use it only when the selection changes."}
-        code={`HapticFeedback.selection()`}
-        run={() => {
+        action={() => {
           HapticFeedback.selection()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.notificationSuccess"}
-        subtitle={"A notification feedback type that indicates a task has completed successfully."}
-        code={`HapticFeedback.notificationSuccess()`}
-        run={() => {
+        action={() => {
           HapticFeedback.notificationSuccess()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.notificationError"}
-        subtitle={"A notification feedback type that indicates a task has failed."}
-        code={`HapticFeedback.notificationError()`}
-        run={() => {
+        action={() => {
           HapticFeedback.notificationError()
         }}
       />
 
-      <APIExample
+      <Button
         title={"HapticFeedback.notificationWarning"}
-        subtitle={"A notification feedback type that indicates a task has produced a warning."}
-        code={`HapticFeedback.notificationWarning()`}
-        run={() => {
+        action={() => {
           HapticFeedback.notificationWarning()
         }}
       />
-    </VStack>
-  </ScrollView>
+    </List>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

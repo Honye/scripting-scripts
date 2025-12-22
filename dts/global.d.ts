@@ -892,6 +892,7 @@ declare global {
     /**
      * Display an Alert UI.
      */
+    function alert(message: string): Promise<void>
     function alert(options: {
       /** The message of the alert. */
       message: string
@@ -903,6 +904,7 @@ declare global {
     /**
      * Display an Confirm modal, return a promise that will resolve a boolean value that indicate whether the user confirm or not.
      */
+    function confirm(message: string): Promise<boolean>
     function confirm(options: {
       /**
        * The message of the confirm.
@@ -924,6 +926,7 @@ declare global {
     /**
      * Display a Prompt UI. Returns string result or null.
      */
+    function prompt(message: string): Promise<string | null>
     function prompt(options: {
       /** You need to provide a title to describe the purpose */
       title: string
@@ -996,21 +999,90 @@ declare global {
      *
      * If the key was already in the storage, its associated value is changed.
      */
-    function set(key: string, value: string, options?: KeychainOptions): void
+    function set(key: string, value: string, options?: {
+      /**
+       * A key with a value that indicates when the keychain item is accessible. Defaults to 'unlocked'.
+       */
+      accessibility?: KeychainAccessibility
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean
+
+    function setBool(key: string, value: boolean, options?: {
+      /**
+       * A key with a value that indicates when the keychain item is accessible. Defaults to 'unlocked'.
+       */
+      accessibility?: KeychainAccessibility
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean
+    function setData(key: string, value: Data, options?: {
+      /**
+       * A key with a value that indicates when the keychain item is accessible. Defaults to 'unlocked'.
+       */
+      accessibility?: KeychainAccessibility
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean
     /**
      * Decrypts and returns the value for the given `key` or `null` if `key` is not in the storage.
      */
-    function get(key: string, options?: KeychainOptions): string | null
+    function get(key: string, options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): string | null
+    function getBool(key: string, options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean | null
+    function getData(key: string, options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): Data | null
     /**
      * Deletes associated value for the given `key`.
      *
      * If the given `key` does not exist, nothing will happen.
      */
-    function remove(key: string, options?: KeychainOptions): void
+    function remove(key: string, options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean
     /**
      * Returns true if the storage contains the given `key`.
      */
-    function contains(key: string, options?: KeychainOptions): boolean
+    function contains(key: string, options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean
+    function keys(options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): string[]
+    function clear(options?: {
+      /**
+       * A key with a boolean value that indicates whether the item synchronizes through iCloud. Defaults to false.
+       */
+      synchronizable?: boolean
+    }): boolean
   }
 
   type KeychainOptions = {
@@ -2361,7 +2433,7 @@ declare global {
     /**
      * The notes of the reminder.
      */
-    notes?: string
+    notes: string | null
     /**
      * A Boolean value determining whether or not the reminder is marked completed.
      * Setting this property to true will set `completionDate` to the current date; setting this property to false will set `completionDate` to null.
@@ -2377,17 +2449,17 @@ declare global {
     /**
      * The date on which the reminder was completed. Setting this property to a date will set `isCompleted` to true; setting this property to null will set completed to false.
      */
-    completionDate?: Date
+    completionDate: Date | null
     /**
      * The date components for the reminder's due date.
      */
-    dueDateComponents?: DateComponents
+    dueDateComponents: DateComponents | null
     /**
      * The date by which the reminder should be completed.
      * @deprecated
      * Use `dueDateComponents` instead, you can use `dueDateComponents?.date` to get the date value.
      */
-    dueDate?: Date
+    dueDate: Date | null
     /**
      * Whether the `dueDate` includes a time.
      * 
@@ -2399,11 +2471,28 @@ declare global {
     /**
      * The recurrence rules for the reminder.
      */
-    recurrenceRules?: RecurrenceRule[]
+    recurrenceRules: RecurrenceRule[] | null
+    alarms: EventAlarm[] | null
+    /**
+     * The attendees associated with the event, as an array of `EventParticipant` objects.
+     */
+    readonly attendees: EventParticipant[] | null
+
+    readonly hasAlarm: boolean
+    readonly hasNotes: boolean
+    /**
+     * Returns whether this object or any of the objects it contains has uncommitted changes.
+     */
+    readonly hasChanges: boolean
+    readonly hasAttendees: boolean
     /**
      * A Boolean value that indicates whether the reminder has recurrence rules.
      */
     readonly hasRecurrenceRules: boolean
+    addAlarm(alarm: EventAlarm): void
+
+    removAlarm(alarm: EventAlarm): void
+
     /**
      * Adds a recurrence rule to the recurrence rule array.
      */
@@ -2523,6 +2612,67 @@ declare global {
    * The action taken by the user after editing an event.
    */
   type EventEditViewAction = "deleted" | "saved" | "canceled"
+
+  enum AlarmProximity {
+    none = 0,
+    enter = 1,
+    leave = 2
+  }
+
+  enum EventAvailability {
+    notSupported = -1,
+    busy = 0,
+    free = 1,
+    tentative = 2,
+    unavailable = 3,
+  }
+
+  /**
+   * An object that specifies a geofence to activate the alarm of a calendar item.
+   */
+  type EventStructuredLocation = {
+    /**
+     * The title of the location.
+     */
+    title: string | null
+    geoLocation: LocationInfo | null
+    /**
+     * A minimum distance from the core location that would trigger the alarm or reminder.
+     */
+    radius: number
+  }
+
+  class EventAlarm {
+    /**
+     * Creates and returns an alarm with an absolute date.
+     */
+    static fromAbsoluteDate(date: Date): EventAlarm
+    /**
+     * Creates and returns an alarm with a relative offset.
+     * @param offset The offset from the start of an event, at which the alarm fires. 
+     */
+    static fromRelativeOffset(offset: DurationInSeconds): EventAlarm
+
+    /**
+     * If you set this property for a relative offset alarm, it loses the relative offset and becomes an absolute alarm.
+     */
+    absoluteDate: Date | null
+    /**
+     * The offset from the start of an event, at which the alarm fires.
+     * If you set this value for an absolute alarm, it loses its absolute date and becomes a relative offset alarm.
+     */
+    relativeOffset: number
+    /**
+     * This property is used in conjunction with `proximity` to perform geofence-based triggering of reminders.
+     */
+    structuredLocation: EventStructuredLocation | null
+    /**
+     * A value indicating how a location-based alarm is triggered.
+     * Alarms can be set to trigger when entering or exiting a location specified by structuredLocation. By default, alarms are not affected by location.
+     */
+    proximity: AlarmProximity
+  }
+
   /**
    * The `CalendarEvent` API enables you to create and manage events in iOS calendars, with properties like title, location, dates, attendees, and recurrence.
    */
@@ -2531,6 +2681,8 @@ declare global {
      * A unique identifier for the event.
      */
     readonly identifier: string
+    readonly creationDate: Date | null
+    readonly lastModifiedDate: Date | null
     /**
      * The calendar for the event. This property cannot be set to null.
      * If you want to remove the event from the calendar, use the `remove` method.
@@ -2543,15 +2695,19 @@ declare global {
     /**
      * The notes for the event.
      */
-    notes?: string
+    notes: string | null
     /**
      * The URL string for the event.
      */
-    url?: string
+    url: string | null
     /**
      * A Boolean value that indicates whether the event is an all-day event.
      */
     isAllDay: boolean
+    /**
+     * The original occurrence date of an event if it is part of a recurring series.
+     */
+    readonly occurrenceDate: Date
     /**
      * The start date of the event.
      */
@@ -2563,24 +2719,54 @@ declare global {
     /**
      * The location associated with the calendar item.
      */
-    location?: string
+    location: string | null
     /**
      * The time zone for the 
      */
-    timeZone?: string
+    timeZone: string | null
+    /**
+     * This setting is used by CalDAV and Exchange servers to indicate how the event should be treated for scheduling purposes.
+If the event’s calendar does not support availability settings, this property’s value is EventAvailability.notSupported.
+     */
+    availability: EventAvailability
+    /**
+     * A Boolean value that indicates whether an event is a detached instance of a repeating event.
+     */
+    readonly isDetached: boolean
+    readonly hasAlarm: boolean
+    readonly hasNotes: boolean
+    /**
+     * Returns whether this object or any of the objects it contains has uncommitted changes.
+     */
+    readonly hasChanges: boolean
+    readonly hasAttendees: boolean
     /**
      * The attendees associated with the event, as an array of `EventParticipant` objects.
      */
-    readonly attendees?: EventParticipant[]
+    readonly attendees: EventParticipant[] | null
+    readonly organizer: EventParticipant | null
+    /**
+     * The alarms associated with the calendar item, as an array of EventAlarm objects.
+     */
+    alarms: EventAlarm[] | null
     /**
      * The recurrence rules for the event.
      */
-    recurrenceRules?: RecurrenceRule[]
+    recurrenceRules: RecurrenceRule[] | null
+    /**
+     * The event’s location with a potential geocoordinate.
+     */
+    structuredLocation: EventStructuredLocation | null
     /**
      * A Boolean value that indicates whether the event has recurrence rules.
      */
     readonly hasRecurrenceRules: boolean
+
     new(): CalendarEvent
+
+    addAlarm(alarm: EventAlarm): void
+
+    removAlarm(alarm: EventAlarm): void
     /**
      * Adds a recurrence rule to the recurrence rule array.
      */
@@ -6180,6 +6366,72 @@ declare global {
     unlock(password: string): boolean
   }
 
+  enum DateFormatterStyle {
+    none = 0,
+    short = 1,
+    medium = 2,
+    long = 3,
+    full = 4,
+  }
+
+  enum DateFormatterBehavior {
+    default = 0,
+    behavior10_4 = 1040,
+  }
+
+  type CalendarIdentifier = "current" | "autoupdatingCurrent" | "gregorian" | "buddhist" | "chinese" | "hebrew" | "islamic" | "japanese" | "persian" | "republicOfChina" | "indian" | "coptic" | "ethiopianAmeteMihret" | "ethiopianAmeteAlem" | "islamicCivil" | "islamicTabular" | "islamicUmmAlQura" | "iso8601" | "persianCivil"
+
+  type TimeZoneIdentifier = "current" | "autoupdatingCurrent" | "gmt" | string
+
+  class DateFormatter {
+    new(): DateFormatter
+
+    static localizedString(date: Date, options: {
+      dateStyle: DateFormatterStyle
+      timeStyle: DateFormatterStyle
+    }): string
+
+    static dateFormat(template: string, locale?: string): string | null
+
+    string(date: Date): string
+    date(string: string): Date | null
+    setLocalizedDateFormatFromTemplate(template: string): void
+
+    calendar: CalendarIdentifier
+    timeZone: TimeZoneIdentifier
+    locale: string
+    dateFormat: string
+    dateStyle: DateFormatterStyle
+    timeStyle: DateFormatterStyle
+    generatesCalendarDates: boolean
+    formatterBehavior: DateFormatterBehavior
+    isLenient: boolean
+    twoDigitStartDate: Date | null
+    defaultDate: Date | null
+    eraSymbols: string[]
+    monthSymbols: string[]
+    shortMonthSymbols: string[]
+    weekdaySymbols: string[]
+    shortWeekdaySymbols: string[]
+    longEraSymbols: string[]
+    veryShortMonthSymbols: string[]
+    standaloneMonthSymbols: string[]
+    shortStandaloneMonthSymbols: string[]
+    veryShortStandaloneMonthSymbols: string[]
+    quarterSymbols: string[]
+    shortQuarterSymbols: string[]
+    standaloneQuarterSymbols: string[]
+    shortStandaloneQuarterSymbols: string[]
+    veryShortWeekdaySymbols: string[]
+    standaloneWeekdaySymbols: string[]
+    shortStandaloneWeekdaySymbols: string[]
+    veryShortStandaloneWeekdaySymbols: string[]
+    amSymbol: string
+    pmSymbol: string
+    gregorianStartDate: Date | null
+    doesRelativeDateFormatting: boolean
+  }
+
   /**
    * This class provides an interface for working with date components.
    * It allows you to create and manipulate date components such as year, month, day, hour, minute, second, and nanosecond.
@@ -6188,8 +6440,8 @@ declare global {
    */
   class DateComponents {
     constructor(options?: {
-      calendar?: "current" | "autoupdatingCurrent" | "gregorian" | "buddhist" | "chinese" | "hebrew" | "islamic" | "japanese" | "persian" | "republicOfChina" | "indian" | "coptic" | "ethiopianAmeteMihret" | "ethiopianAmeteAlem" | "islamicCivil" | "islamicTabular" | "islamicUmmAlQura" | "iso8601" | "persianCivil" | null
-      timeZone?: "current" | "autoupdatingCurrent" | "gmt" | string | null
+      calendar?: CalendarIdentifier | null
+      timeZone?: TimeZoneIdentifier | null
       era?: number | null
       year?: number | null
       yearForWeekOfYear?: number | null
@@ -10203,6 +10455,46 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      */
     static identity(): UIGlass
   }
+
+  // /**
+  //  * A class that defines the configuration of the navigation path.
+  //  */
+  // class NavigationPath {
+
+  //   /**
+  //    * The number of elements in this path.
+  //    */
+  //   readonly count: number
+
+  //   /**
+  //    * A Boolean that indicates whether this path is empty.
+  //    */
+  //   readonly isEmpty: boolean
+
+  //   /**
+  //    * Appends a new codable value to the end of this path.
+  //    */
+  //   append(path: string): void
+
+  //   /**
+  //    * Removes values from the end of this path.
+  //    * @param count The number of values to remove. The default value is 1.
+  //    */
+  //   removeLast(count?: number): void
+
+  //   /**
+  //    * Convert the NavigationPath to data. You can use this to save the path to a file or the Storage.
+  //    * @returns The data or null if the NavigationPath fails to convert to data.
+  //    */
+  //   toData(): Data | null
+
+  //   /**
+  //    * Create a NavigationPath from data.
+  //    * @param data The data to create the NavigationPath from, use the `toData` method to create the data.
+  //    * @returns The NavigationPath or null if the data is invalid.
+  //    */
+  //   static fromData(data: Data): NavigationPath | null
+  // }
 }
 
 export { }

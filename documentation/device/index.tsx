@@ -1,6 +1,8 @@
-import { Device, List, Text, VStack } from "scripting"
+import { Button, Device, List, Navigation, NavigationStack, Script, Text, VStack } from "scripting"
 
-export function DeviceExample() {
+ function Example() {
+  const dismiss = Navigation.useDismiss()
+
   const details: {
     name: string
     value: string | boolean | number
@@ -43,17 +45,35 @@ export function DeviceExample() {
       }
     ]
 
-  return <List
-    navigationTitle={"Device"}
-  >
-    {details.map(item =>
-      <VStack
-        badge={item.value.toString()}
-        alignment={"leading"}
-      >
-        <Text font={"headline"}>{item.name}</Text>
-        <Text font={"caption"}>{typeof item.value}</Text>
-      </VStack>
-    )}
-  </List>
+  return <NavigationStack>
+    <List
+      navigationTitle={"Device"}
+      toolbar={{
+        cancellationAction: <Button
+          title={"Done"}
+          action={dismiss}
+        />
+      }}
+    >
+      {details.map(item =>
+        <VStack
+          badge={item.value.toString()}
+          alignment={"leading"}
+        >
+          <Text font={"headline"}>{item.name}</Text>
+          <Text font={"caption"}>{typeof item.value}</Text>
+        </VStack>
+      )}
+    </List>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

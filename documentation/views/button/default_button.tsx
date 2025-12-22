@@ -1,21 +1,29 @@
-import { Button } from "scripting"
-import { UIExample } from "../../ui_example"
+import { Button, Navigation, NavigationStack, Script, VStack } from "scripting"
 
-export function DefaultButton() {
-  return <UIExample
-    title={"Default Button"}
-    code={`<Button
-  title={"Default Button"}
-  action={() => {
-    console.log("Button tapped.")
-  }}
-/>`}
-  >
-    <Button
-      title={"Default Button"}
-      action={() => {
-        console.log("Button tapped.")
-      }}
-    />
-  </UIExample>
+function Example() {
+  return <NavigationStack>
+    <VStack
+      navigationTitle={"Default Button"}
+      navigationBarTitleDisplayMode={"inline"}
+    >
+      <Button
+        title={"Tap Me"}
+        action={() => {
+          Dialog.alert({
+            message: "Button tapped."
+          })
+        }}
+      />
+    </VStack>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

@@ -1,134 +1,81 @@
-import { Button, ControlGroup, HStack, Spacer, TextField, useState, VStack } from "scripting"
-import { CodePreview } from "../../ui_example"
+import { Button, ControlGroup, HStack, Navigation, NavigationStack, Script, Spacer, TextField, useState, VStack } from "scripting"
 
-export function ToolbarExample() {
-  const [codeVisible, setCodeVisible] = useState(false)
+function Example() {
   const [text, setText] = useState("")
 
-  return <VStack
-    toolbar={{
-      topBarTrailing: [
-        <Button
-          title={"Select"}
-          action={() => { }}
-        />,
-        <ControlGroup
-          label={
+  return <NavigationStack>
+    <VStack
+      navigationTitle={"Toolbars"}
+      navigationBarTitleDisplayMode={"inline"}
+      toolbar={{
+        topBarTrailing: [
+          <Button
+            title={"Select"}
+            action={() => { }}
+          />,
+          <ControlGroup
+            label={
+              <Button
+                title={"Add"}
+                systemImage={"plus"}
+                action={() => { }}
+              />
+            }
+            controlGroupStyle={"palette"}
+          >
             <Button
-              title={"Add"}
+              title={"New"}
               systemImage={"plus"}
               action={() => { }}
             />
-          }
-          controlGroupStyle={"palette"}
+            <Button
+              title={"Import"}
+              systemImage={"square.and.arrow.down"}
+              action={() => { }}
+            />
+          </ControlGroup>
+        ],
+        bottomBar: [
+          <Button
+            title={"New Sub Category"}
+            action={() => { }}
+          />,
+          <Button
+            title={"Add category"}
+            action={() => { }}
+          />
+        ],
+        keyboard: <HStack
+          padding
         >
+          <Spacer />
           <Button
-            title={"New"}
-            systemImage={"plus"}
-            action={() => { }}
+            title={"Done"}
+            action={() => {
+              Keyboard.hide()
+            }}
           />
-          <Button
-            title={"Import"}
-            systemImage={"square.and.arrow.down"}
-            action={() => { }}
-          />
-        </ControlGroup>
-      ],
-      bottomBar: [
-        <Button
-          title={"New Sub Category"}
-          action={() => { }}
-        />,
-        <Button
-          title={"Add category"}
-          action={() => { }}
-        />
-      ],
-      keyboard: <HStack
-        padding
-      >
-        <Spacer />
-        <Button
-          title={"Done"}
-          action={() => { }}
-        />
-      </HStack>
-    }}
-    padding
-  >
-    <Button
-      padding
-      title={"Code"}
-      action={() => setCodeVisible(true)}
-      controlSize={"small"}
-      buttonStyle={"borderedProminent"}
-      popover={{
-        isPresented: codeVisible,
-        onChanged: setCodeVisible,
-        content: <CodePreview
-          code={code}
-          dismiss={() => setCodeVisible(false)}
-        />
+        </HStack>
       }}
-    />
-
-    <TextField
-      title={"TextField"}
-      value={text}
-      onChanged={setText}
-      textFieldStyle={"roundedBorder"}
-      prompt={"Focus to show the keyboard toolbar"}
-    />
-  </VStack>
-}
-
-const code = `<VStack
-  toolbar={{
-    topBarTrailing: [
-      <Button
-        title={"Select"}
-        action={() => { }}
-      />,
-      <ControlGroup
-        label={
-          <Button
-            title={"Add"}
-            systemImage={"plus"}
-            action={() => { }}
-          />
-        }
-        controlGroupStyle={"palette"}
-      >
-        <Button
-          title={"New"}
-          systemImage={"plus"}
-          action={() => { }}
-        />
-        <Button
-          title={"Import"}
-          systemImage={"square.and.arrow.down"}
-          action={() => { }}
-        />
-      </ControlGroup>
-    ],
-    bottomBar: [
-      <Button
-        title={"New Sub Category"}
-        action={() => { }}
-      />,
-      <Button
-        title={"Add category"}
-        action={() => { }}
-      />
-    ],
-    keyboard: <HStack
       padding
     >
-      <Spacer />
-      <Button
-        title={"Done"}
-        action={() => { }}
+      <TextField
+        title={"TextField"}
+        value={text}
+        onChanged={setText}
+        textFieldStyle={"roundedBorder"}
+        prompt={"Focus to show the keyboard toolbar"}
       />
-    </HStack>
-  }}
-></VStack>`
+    </VStack>
+  </NavigationStack>
+}
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

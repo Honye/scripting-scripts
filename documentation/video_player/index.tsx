@@ -1,6 +1,7 @@
-import { Button, ScrollView, useEffect, useMemo, useState, VideoPlayer, VStack } from "scripting"
+import { Button, Navigation, NavigationStack, Script, useEffect, useMemo, useState, VideoPlayer, VStack } from "scripting"
 
-export function VideoPlayerExample() {
+function Example() {
+  const dismiss = Navigation.useDismiss()
   const [status, setStatus] = useState<TimeControlStatus>(TimeControlStatus.paused)
 
   const player = useMemo(() => {
@@ -23,11 +24,17 @@ export function VideoPlayerExample() {
     }
   }, [])
 
-  return <ScrollView
-    navigationTitle={"VideoPlayer"}
-    navigationBarTitleDisplayMode={"inline"}
-  >
-    <VStack>
+  return <NavigationStack>
+    <VStack
+      navigationTitle={"VideoPlayer"}
+      navigationBarTitleDisplayMode={"inline"}
+      toolbar={{
+        cancellationAction: <Button
+          title={"Done"}
+          action={dismiss}
+        />
+      }}
+    >
       <VideoPlayer
         player={player}
         frame={{
@@ -48,5 +55,15 @@ export function VideoPlayerExample() {
         }}
       />
     </VStack>
-  </ScrollView>
+  </NavigationStack >
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

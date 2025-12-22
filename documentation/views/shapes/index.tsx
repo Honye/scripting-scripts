@@ -1,45 +1,36 @@
-import { Capsule, Circle, Ellipse, Rectangle, RoundedRectangle, ScrollView, UnevenRoundedRectangle, VStack } from "scripting"
-import { UIExample } from "../../ui_example"
+import { Capsule, Circle, Ellipse, List, Navigation, NavigationStack, Rectangle, RoundedRectangle, Script, Section, Text, UnevenRoundedRectangle, } from "scripting"
 
-export function ShapesExample() {
+function Example() {
 
-  return <ScrollView
-    navigationTitle={"Shapes"}
-  >
-    <VStack>
-      <UIExample
-        title={"Rectangle"}
-        code={`<Rectangle
-  fill={"orange"}
-  stroke={"red"}
-  strokeLineWidth={3}
-  frame={{
-    width: 100,
-    height: 100,
-  }}
-/>`}
+  return <NavigationStack>
+    <List
+      navigationTitle={"Shapes"}
+      navigationBarTitleDisplayMode={"inline"}
+    >
+      <Section
+        header={
+          <Text>Rectangle</Text>
+        }
       >
         <Rectangle
           fill={"orange"}
-          stroke={"red"}
-          strokeLineWidth={3}
+          stroke={{
+            shapeStyle: "red",
+            strokeStyle: {
+              lineWidth: 3,
+            }
+          }}
           frame={{
             width: 100,
             height: 100,
           }}
         />
-      </UIExample>
+      </Section>
 
-      <UIExample
-        title={"RoundedRectangle"}
-        code={`<RoundedRectangle
-  fill={"blue"}
-  cornerRadius={16}
-  frame={{
-    width: 100,
-    height: 100,
-  }}
-/>`}
+      <Section
+        header={
+          <Text>RoundedRectangle</Text>
+        }
       >
         <RoundedRectangle
           fill={"blue"}
@@ -49,38 +40,31 @@ export function ShapesExample() {
             height: 100,
           }}
         />
-      </UIExample>
+      </Section>
 
-      <UIExample
-        title={"Circle"}
-        code={`<Circle
-  stroke={"purple"}
-  strokeLineWidth={4}
-  frame={{
-    width: 100,
-    height: 100,
-  }}
-/>`}
+      <Section
+        header={
+          <Text>Circle</Text>
+        }
       >
         <Circle
-          stroke={"purple"}
-          strokeLineWidth={4}
+          stroke={{
+            shapeStyle: "purple",
+            strokeStyle: {
+              lineWidth: 4,
+            }
+          }}
           frame={{
             width: 100,
             height: 100,
           }}
         />
-      </UIExample>
+      </Section>
 
-      <UIExample
-        title={"Capsule"}
-        code={`<Capsule
-  fill={"systemIndigo"}
-  frame={{
-    width: 100,
-    height: 100,
-  }}
-/>`}
+      <Section
+        header={
+          <Text>Capsule</Text>
+        }
       >
         <Capsule
           fill={"systemIndigo"}
@@ -89,17 +73,12 @@ export function ShapesExample() {
             height: 40,
           }}
         />
-      </UIExample>
+      </Section>
 
-      <UIExample
-        title={"Ellipse"}
-        code={`<Ellipse
-  fill={"green"}
-  frame={{
-    width: 100,
-    height: 100,
-  }}
-/>`}
+      <Section
+        header={
+          <Text>Ellipse</Text>
+        }
       >
         <Ellipse
           fill={"green"}
@@ -108,21 +87,12 @@ export function ShapesExample() {
             height: 100,
           }}
         />
-      </UIExample>
+      </Section>
 
-      <UIExample
-        title={"UnevenRoundedRectangle"}
-        code={`<UnevenRoundedRectangle
-  fill={"brown"}
-  topLeadingRadius={8}
-  topTrailingRadius={0}
-  bottomLeadingRadius={0}
-  bottomTrailingRadius={8}
-  frame={{
-    width: 100,
-    height: 100,
-  }}
-/>`}
+      <Section
+        header={
+          <Text>UnevenRoundedRectangle</Text>
+        }
       >
         <UnevenRoundedRectangle
           fill={"brown"}
@@ -135,7 +105,17 @@ export function ShapesExample() {
             height: 50,
           }}
         />
-      </UIExample>
-    </VStack>
-  </ScrollView>
+      </Section>
+    </List>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

@@ -1,12 +1,14 @@
 import { Button, Capsule, Divider, HStack, Image, Link, Script, Spacer, Text, Toggle, VirtualNode, VStack, Widget } from "scripting"
-import { getDocTotalCount, } from "./routes"
 import { RefreshDocsIntent, ToggleReadIntent } from "./app_intents"
 import { store } from "./store"
+import { getDocTotalCount, getSubtitle, getTitle } from "./utils"
+import { getLocale } from "./model"
 
 const readRecord = store.getReadRecord()
 const readCount = Object.keys(readRecord).length
 const totalCount = getDocTotalCount()
 const isAllDone = readCount == totalCount
+const locale = getLocale()
 
 const displayCountMap: Record<string, number> = {
   "systemExtraLarge": 8,
@@ -30,7 +32,7 @@ function RandomDocsView() {
         Script.createRunURLScheme(
           Script.name,
           {
-            doc: doc.title
+            doc: doc.title.en
           }
         )
       }
@@ -62,14 +64,16 @@ function RandomDocsView() {
   const rows: VirtualNode[] = []
 
   docs.map((doc, index) => {
-    let hasRead = !!readRecord[doc.title]
+    let hasRead = !!readRecord[doc.title.en]
+    let title = getTitle(doc, locale)
+    let subtitle = getSubtitle(doc, locale)
 
     rows.push(
       <Link url={
         Script.createRunURLScheme(
           Script.name,
           {
-            doc: doc.title
+            doc: doc.title.en
           }
         )
       }>
@@ -80,7 +84,8 @@ function RandomDocsView() {
         >
           <Toggle
             value={hasRead}
-            intent={ToggleReadIntent(doc.title)}
+            intent={ToggleReadIntent(doc.title.en)}
+            toggleStyle={"button"}
             buttonStyle={"plain"}
           >
             <Image
@@ -105,13 +110,13 @@ function RandomDocsView() {
             <Text
               font={14}
               fontWeight={"medium"}
-            >{doc.title}</Text>
-            {doc.subtitle != null
+            >{title}</Text>
+            {subtitle != null
               ? <Text
                 font={12}
                 foregroundStyle={"secondaryLabel"}
                 lineLimit={2}
-              >{doc.subtitle}</Text>
+              >{subtitle}</Text>
               : null
             }
           </VStack>

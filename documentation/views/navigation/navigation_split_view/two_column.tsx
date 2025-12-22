@@ -1,9 +1,101 @@
-import { List, NavigationSplitView, Text, useState } from "scripting"
-import { companyA } from "../../list/represent_data_hierarchy_in_sections"
-import { PersonDetailView } from "../../list/use_list_for_navigations"
-import { Person, PersonRowView } from "../../list/display_data_inside_a_row"
+import { HStack, Label, List, Navigation, NavigationSplitView, Script, Text, useState, VStack } from "scripting"
 
-export function TwoColumnSplitViewExample() {
+type Department = {
+  name: string
+  staff: Person[]
+}
+
+type Company = {
+  name: string
+  departments: Department[]
+}
+
+type Person = {
+  name: string
+  phoneNumber: string
+}
+
+const companyA: Company = {
+  name: "Company A",
+  departments: [
+    {
+      name: "Sales",
+      staff: [
+        {
+          name: "Juan Chavez",
+          phoneNumber: "(408) 555-4301",
+        },
+        {
+          name: "Mei Chen",
+          phoneNumber: "(919) 555-2481",
+        }
+      ]
+    },
+    {
+      name: "Engineering",
+      staff: [
+        {
+          name: "Bill James",
+          phoneNumber: "(408) 555-4450"
+        },
+        {
+          name: "Anne Johnson",
+          phoneNumber: "(417) 555-9311"
+        }
+      ]
+    }
+  ]
+}
+
+function PersonRowView({
+  person
+}: {
+  person: Person
+}) {
+  return <VStack
+    alignment={"leading"}
+    spacing={3}
+  >
+    <Text
+      foregroundStyle={"label"}
+      font={"headline"}
+    >{person.name}</Text>
+    <HStack
+      spacing={3}
+      foregroundStyle={"secondaryLabel"}
+      font={"subheadline"}
+    >
+      <Label
+        title={person.phoneNumber}
+        systemImage={"phone"}
+      />
+    </HStack>
+  </VStack>
+}
+
+function PersonDetailView({
+  person
+}: {
+  person: Person
+}) {
+
+  return <VStack>
+    <Text
+      font={"title"}
+      foregroundStyle={"label"}
+    >{person.name}</Text>
+    <HStack
+      foregroundStyle={"secondaryLabel"}
+    >
+      <Label
+        title={person.phoneNumber}
+        systemImage={"phone"}
+      />
+    </HStack>
+  </VStack>
+}
+
+function Example() {
   const [selectedPerson, setSelectedPerson] = useState<Person>()
 
   return <NavigationSplitView
@@ -29,3 +121,13 @@ export function TwoColumnSplitViewExample() {
     }
   </NavigationSplitView>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

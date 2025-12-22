@@ -1,8 +1,6 @@
-import { Button, List, ListStyle, Menu, Picker, Section, Text, useMemo, useState } from "scripting"
-import { CodePreview } from "../../ui_example"
+import { List, ListStyle, Navigation, NavigationStack, Picker, Script, Section, Text, useMemo, useState } from "scripting"
 
-export function ListStyleExample() {
-  const [codeVisible, setCodeVisible] = useState(false)
+function Example() {
   const [listStyle, setListStyle] = useState<ListStyle>("automatic")
   const listStyleOptions = useMemo<ListStyle[]>(() => [
     "automatic",
@@ -16,102 +14,63 @@ export function ListStyleExample() {
     "sidebar",
   ], [])
 
-  return <List
-    navigationTitle={"List Style"}
-    navigationBarTitleDisplayMode={"inline"}
-    toolbar={{
-      topBarTrailing: <Button
-        title={"Code"}
-        buttonStyle={'borderedProminent'}
-        controlSize={'small'}
-        action={() => setCodeVisible(true)}
-        popover={{
-          isPresented: codeVisible,
-          onChanged: setCodeVisible,
-          content: <CodePreview
-            code={code}
-            dismiss={() => setCodeVisible(false)}
-          />
-        }}
-      />,
-    }}
-    listStyle={listStyle}
-  // listSectionSpacing={5} // apply for all sections
-  >
-    <Picker
-      title={"ListStyle"}
-      value={listStyle}
-      onChanged={setListStyle as any}
-      pickerStyle={"menu"}
+  return <NavigationStack>
+    <List
+      navigationTitle={"List Style"}
+      navigationBarTitleDisplayMode={"inline"}
+      listStyle={listStyle}
+    // listSectionSpacing={5} // apply for all sections
     >
-      {listStyleOptions.map(listStyle =>
-        <Text tag={listStyle}>{listStyle}</Text>
-      )}
-    </Picker>
+      <Picker
+        title={"ListStyle"}
+        value={listStyle}
+        onChanged={setListStyle as any}
+        pickerStyle={"menu"}
+      >
+        {listStyleOptions.map(listStyle =>
+          <Text tag={listStyle}>{listStyle}</Text>
+        )}
+      </Picker>
 
-    <Section>
-      <Text
-        badge={10} // Use a badge to convey optional, supplementary information about a view
-      >Recents</Text>
-      <Text>Favorites</Text>
-    </Section>
+      <Section>
+        <Text
+          badge={10} // Use a badge to convey optional, supplementary information about a view
+        >Recents</Text>
+        <Text>Favorites</Text>
+      </Section>
 
-    <Section
-      header={<Text>Colors</Text>}
-      listItemTint={"systemBlue"}
-    >
-      <Text>Red</Text>
-      <Text>Blue</Text>
-    </Section>
+      <Section
+        header={<Text>Colors</Text>}
+        listItemTint={"systemBlue"}
+      >
+        <Text>Red</Text>
+        <Text>Blue</Text>
+      </Section>
 
-    <Section
-      header={<Text>Shapes</Text>}
-    >
-      <Text>Rectangle</Text>
-      <Text>Circle</Text>
-    </Section>
+      <Section
+        header={<Text>Shapes</Text>}
+      >
+        <Text>Rectangle</Text>
+        <Text>Circle</Text>
+      </Section>
 
-    <Section
-      header={<Text>Borders</Text>}
-      listSectionSpacing={10} // specify on an individual Section
-    >
-      <Text>Dashed</Text>
-      <Text>Solid</Text>
-    </Section>
-  </List>
+      <Section
+        header={<Text>Borders</Text>}
+        listSectionSpacing={10} // specify on an individual Section
+      >
+        <Text>Dashed</Text>
+        <Text>Solid</Text>
+      </Section>
+    </List>
+  </NavigationStack>
 }
 
-const code = `<List
-  listStyle="grouped"
-  // listSectionSpacing={5} // apply for all sections
->
-  <Section>
-    <Text
-      badge={10} // Use a badge to convey optional, supplementary information about a view
-    >Recents</Text>
-    <Text>Favorites</Text>
-  </Section>
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
 
-  <Section
-    header={<Text>Colors</Text>}
-    listItemTint={"systemBlue"}
-  >
-    <Text>Red</Text>
-    <Text>Blue</Text>
-  </Section>
+  Script.exit()
+}
 
-  <Section
-    header={<Text>Shapes</Text>}
-  >
-    <Text>Rectangle</Text>
-    <Text>Circle</Text>
-  </Section>
-
-  <Section
-    header={<Text>Borders</Text>}
-    listSectionSpacing={10} // specify on an individual Section
-  >
-    <Text>Dashed</Text>
-    <Text>Solid</Text>
-  </Section>
-</List>`
+run()

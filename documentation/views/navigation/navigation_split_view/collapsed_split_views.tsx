@@ -1,6 +1,6 @@
-import { NavigationSplitView, NavigationSplitViewColumn, Text, useState, VStack } from "scripting"
+import { Navigation, NavigationSplitView, NavigationSplitViewColumn, Script, Text, useState, VStack } from "scripting"
 
-export function CollapsedSplitViewsExample() {
+function Example() {
   const [preferredColumn, setPreferredColumn] = useState<NavigationSplitViewColumn>("detail")
 
   return <NavigationSplitView
@@ -34,3 +34,13 @@ export function CollapsedSplitViewsExample() {
     </VStack>
   </NavigationSplitView>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

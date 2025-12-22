@@ -1,39 +1,17 @@
-import { Button, Group, Menu, ScrollView, Text, VStack } from "scripting"
-import { UIExample } from "../../ui_example"
+import { Button, Group, List, Menu, Navigation, NavigationStack, Script, ScrollView, Section, Text, VStack } from "scripting"
 
-export function MenuExample() {
+function Example() {
 
-  return <ScrollView
-    navigationTitle={"Menu"}
-    navigationBarTitleDisplayMode={"inline"}
-  >
-    <VStack
+  return <NavigationStack>
+    <List
+      navigationTitle={"Menu"}
+      navigationBarTitleDisplayMode={"inline"}
     >
-      <UIExample
-        title={"Menu"}
-        code={`<Menu
-  title={"Open Menu"}
->
-  <Button
-    title="Rename"
-    action={() => console.log("Rename")}
-  />
-  <Button
-    title="Delete"
-    role={"destructive"}
-    action={() => console.log("Delete")}
-  />
-  <Menu title="Copy">
-    <Button
-      title="Copy"
-      action={() => console.log("Copy")}
-    />
-    <Button
-      title="Copy Formated"
-      action={() => console.log("Copy fomatted")}
-    />
-  </Menu>
-</Menu>`}
+
+      <Section
+        header={
+          <Text>Menu</Text>
+        }
       >
         <Menu
           title={"Open Menu"}
@@ -58,30 +36,12 @@ export function MenuExample() {
             />
           </Menu>
         </Menu>
-      </UIExample>
+      </Section>
 
-      <UIExample
-        title={"Context Menu"}
-        code={`<Text
-  foregroundStyle={"link"}
-  contextMenu={{
-    menuItems: <Group>
-      <Button
-        title="Add"
-        action={() => {
-          // Add
-        }}
-      />
-      <Button
-        title="Delete"
-        role="destructive"
-        action={() => {
-          // Delete
-        }}
-      />
-    </Group>
-  }}
->Long Press to open context menu</Text>`}
+      <Section
+        header={
+          <Text>ContextMenu</Text>
+        }
       >
         <Text
           foregroundStyle={"link"}
@@ -103,7 +63,17 @@ export function MenuExample() {
             </Group>
           }}
         >Long Press to open context menu</Text>
-      </UIExample>
-    </VStack>
-  </ScrollView>
+      </Section>
+    </List>
+  </NavigationStack>
 }
+
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

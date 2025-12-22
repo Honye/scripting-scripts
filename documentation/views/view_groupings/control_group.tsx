@@ -1,8 +1,7 @@
-import { Button, ControlGroup, ControlGroupStyle, Label, List, Picker, Text, useMemo, useState } from "scripting"
-import { CodePreview } from "../../ui_example"
+import { Button, ControlGroup, ControlGroupStyle, Label, List, Navigation, NavigationStack, Picker, Script, Text, useMemo, useState } from "scripting"
 
-export function ControlGroupExample() {
-  const [codeVisible, setCodeVisible] = useState(false)
+function Example() {
+  const dismiss = Navigation.useDismiss()
   const [style, setStyle] = useState<ControlGroupStyle>("palette")
   const styles = useMemo<ControlGroupStyle[]>(() => [
     'automatic',
@@ -12,77 +11,59 @@ export function ControlGroupExample() {
     'palette'
   ], [])
 
-  return <List
-    navigationTitle={"ControlGroup"}
-    navigationBarTitleDisplayMode={"inline"}
-    toolbar={{
-      topBarTrailing: [
-        <Button
-          title={"Code"}
-          action={() => setCodeVisible(true)}
-          popover={{
-            isPresented: codeVisible,
-            onChanged: setCodeVisible,
-            content: <CodePreview
-              code={code}
-              dismiss={() => setCodeVisible(false)}
-            />
-          }}
+  return <NavigationStack>
+    <List
+      navigationTitle={"ControlGroup"}
+      navigationBarTitleDisplayMode={"inline"}
+      toolbar={{
+        cancellationAction: <Button
+          title={"Done"}
+          action={dismiss}
         />,
-        <ControlGroup
-          label={
-            <Label
-              title={"Plus"}
-              systemImage={"plus"}
+        confirmationAction: [
+          <ControlGroup
+            label={
+              <Label
+                title={"Plus"}
+                systemImage={"plus"}
+              />
+            }
+            controlGroupStyle={style}
+          >
+            <Button
+              title={"Edit"}
+              systemImage={"pencil"}
+              action={() => { }}
             />
-          }
-          controlGroupStyle={style}
-        >
-          <Button
-            title={"Edit"}
-            systemImage={"pencil"}
-            action={() => { }}
-          />
-          <Button
-            title={"Delete"}
-            systemImage={"trash"}
-            role={"destructive"}
-            action={() => { }}
-          />
-        </ControlGroup>
-      ]
-    }}
-  >
-    <Picker
-      title={"Control Group Style"}
-      value={style}
-      onChanged={setStyle as any}
+            <Button
+              title={"Delete"}
+              systemImage={"trash"}
+              role={"destructive"}
+              action={() => { }}
+            />
+          </ControlGroup>
+        ]
+      }}
     >
-      {styles.map(style =>
-        <Text tag={style}>{style}</Text>
-      )}
-    </Picker>
-  </List>
+      <Picker
+        title={"Control Group Style"}
+        value={style}
+        onChanged={setStyle as any}
+      >
+        {styles.map(style =>
+          <Text tag={style}>{style}</Text>
+        )}
+      </Picker>
+    </List>
+  </NavigationStack>
 }
 
-const code = `<ControlGroup
-  label={
-    <Label
-      title={"Plus"}
-      systemImage={"plus"}
-    />
-  }
-  controlGroupStyle={"palette"}
->
-  <Button
-    title={"Edit"}
-    systemImage={"pencil"}
-    action={() => { }}
-  />
-  <Button
-    title={"Delete"}
-    systemImage={"trash"}
-    role={"destructive"}
-    action={() => { }}
-  />
-</ControlGroup>`
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
+
+  Script.exit()
+}
+
+run()

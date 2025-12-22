@@ -1,16 +1,6 @@
-import { Color, TabView, Text, VStack } from "scripting"
-import { UIExample } from "../../../ui_example"
+import { Color, Navigation, NavigationStack, Script, TabView, Text, VStack } from "scripting"
 
-export function TabViewWithMultipleScrollingPagesExample() {
-  return <UIExample
-    title={"TabView with multiple scrolling pages"}
-    code={code}
-  >
-    <TabViewExample />
-  </UIExample>
-}
-
-function TabViewExample() {
+function Example() {
   const colors: Color[] = [
     "red",
     "green",
@@ -18,18 +8,24 @@ function TabViewExample() {
     "purple"
   ]
 
-  return <TabView
-    tabViewStyle={"page"}
-    frame={{
-      height: 200
-    }}
-  >
-    {colors.map(color =>
-      <ColorView
-        color={color}
-      />
-    )}
-  </TabView>
+  return <NavigationStack>
+    <VStack
+      navigationTitle={"TabView"}
+    >
+      <TabView
+        tabViewStyle={"page"}
+        frame={{
+          height: 200
+        }}
+      >
+        {colors.map(color =>
+          <ColorView
+            color={color}
+          />
+        )}
+      </TabView>
+    </VStack>
+  </NavigationStack>
 }
 
 function ColorView({
@@ -48,24 +44,12 @@ function ColorView({
   </VStack>
 }
 
-const code = `function TabViewExample() {
-  const colors: Color[] = [
-    "red",
-    "green",
-    "blue",
-    "purple"
-  ]
+async function run() {
+  await Navigation.present({
+    element: <Example />
+  })
 
-  return <TabView
-    tabViewStyle={"page"}
-    frame={{
-      height: 200
-    }}
-  >
-    {colors.map(color =>
-      <ColorView
-        color={color}
-      />
-    )}
-  </TabView>
-}`
+  Script.exit()
+}
+
+run()

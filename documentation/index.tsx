@@ -1,26 +1,47 @@
-import { Navigation, NavigationStack, Button, Script, EmptyView, ContentUnavailableView, VirtualNode, Group, Widget, } from 'scripting'
-import { NavigationListView } from './navigation_list_view'
-import { useModel } from './model'
-import { findRouteByTitle } from './routes'
+import { Navigation, NavigationStack, Button, Script, EmptyView, ContentUnavailableView, Group, Widget, Picker, Text, useContext, Menu, } from 'scripting'
+import { DocExampleView, DocReadMeView, NavListView } from './helper_views'
 import { store } from './store'
+import { supportedLanguages } from './l10n'
+import { ModelContext, ModelProvider } from './model'
+import { DocItem } from './types'
+import { findDocByTitle, getTitle } from './utils'
 
 function MainView() {
   const dismiss = Navigation.useDismiss()
   const {
+    l10n,
+    locale,
+    setLocale,
     searchText,
     setSearchText,
     list,
-  } = useModel()
+  } = useContext(ModelContext)
 
   return <NavigationStack>
-    <NavigationListView
-      title="Documentation"
+    <NavListView
+      title={l10n.documentation}
       items={list}
       toolbar={{
-        topBarLeading: <Button
-          title={"Done"}
+        cancellationAction: <Button
+          title={l10n.done}
           action={dismiss}
-        />
+        />,
+        confirmationAction: <Menu
+          title={"Language"}
+          systemImage={"globe"}
+        >
+          <Picker
+            title={l10n.language}
+            value={locale}
+            onChanged={setLocale}
+          >
+            {supportedLanguages.map(item =>
+              <Text
+                tag={item.locale}
+              >{item.name}</Text>
+            )}
+          </Picker>
+        </Menu>
       }}
       searchable={{
         value: searchText,
@@ -30,7 +51,7 @@ function MainView() {
         list.length
           ? <EmptyView />
           : <ContentUnavailableView
-            title={"Not found"}
+            title={l10n.notFound}
             systemImage={"square.2.layers.3d"}
           />
       }
@@ -39,26 +60,46 @@ function MainView() {
 }
 
 function SingleDocViewer({
-  title,
-  children,
+  doc,
 }: {
-  title: string
-  children: VirtualNode | undefined
+  doc: DocItem
 }) {
   const dismiss = Navigation.useDismiss()
+  const {
+    locale,
+    l10n
+  } = useContext(ModelContext)
+  const title = getTitle(doc, locale)
 
   return <NavigationStack>
     <Group
       navigationTitle={title}
       navigationBarTitleDisplayMode={"inline"}
       toolbar={{
-        topBarLeading: <Button
-          title={"Done"}
+        cancellationAction: <Button
+          title={l10n.done}
           action={dismiss}
-        />
+        />,
       }}
     >
-      {children}
+      {
+        doc.readme
+          ? <DocReadMeView
+            title={title}
+            readme={doc.readme}
+            example={doc.example}
+            items={doc.children}
+          />
+          : doc.example
+            ? <DocExampleView
+              title={title}
+              example={doc.example}
+            />
+            : <ContentUnavailableView
+              title={"You must provide a example path or a readme path."}
+              systemImage={"tray"}
+            />
+      }
     </Group>
   </NavigationStack>
 }
@@ -67,24 +108,24 @@ async function run() {
   const docTitle = Script.queryParameters["doc"]
   if (typeof docTitle === "string") {
     // If the script is opened by widget
-    const route = findRouteByTitle(docTitle)
+    const doc = findDocByTitle(docTitle)
 
-    if (route != null) {
+    if (doc != null) {
       await Navigation.present({
         element: (
-          <SingleDocViewer
-            title={route.title}
-          >
-            {route.destination}
-          </SingleDocViewer>
+          <ModelProvider>
+            <SingleDocViewer
+              doc={doc}
+            />
+          </ModelProvider>
         ),
         modalPresentationStyle: 'pageSheet',
       })
 
       // Mark as read.
-      store.setRead(route.title)
+      store.setRead(doc.title["en"])
       Widget.reloadAll()
-      
+
       Script.exit()
       return
     } else {
@@ -93,7 +134,11 @@ async function run() {
   }
 
   await Navigation.present({
-    element: <MainView />,
+    element: (
+      <ModelProvider>
+        <MainView />
+      </ModelProvider>
+    ),
     modalPresentationStyle: 'pageSheet',
   })
 
