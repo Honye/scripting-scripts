@@ -1,23 +1,22 @@
 {
-  "author" : {
-    "email" : "Honye@github.com",
-    "name" : "Jackie",
-    "homepage" : "https:\/\/t.me\/iiMarkr"
+  "author": {
+    "email": "Honye@github.com",
+    "name": "Jackie",
+    "homepage": "https://t.me/iiMarkr"
   },
-  "icon" : "appclip",
-  "contributors" : [
-
-  ],
-  "name" : "Launch",
-  "description" : null,
-  "color" : "rgba(243, 159, 68,1)",
-  "intentInputTypes" : [
-
-  ],
-  "version" : "1.1.0",
-  "remoteResource" : null,
-  "localizedDescriptions" : null,
-  "runInApp" : false,
-  "localizedNames" : null,
-  "iconImage" : null
+  "icon": "appclip",
+  "contributors": [],
+  "name": "Launch",
+  "description": null,
+  "color": "rgba(243, 159, 68,1)",
+  "intentInputTypes": [],
+  "version": "1.2.0",
+  "remoteResource": null,
+  "localizedDescriptions": null,
+  "runInApp": false,
+  "localizedNames": {
+    "zh": "启动台",
+    "en": "Launch"
+  },
+  "iconImage": null
 }

@@ -47,45 +47,70 @@ function AppEditor({
   const [name, setName] = useState(item?.name ?? '')
   const [url, setUrl] = useState(item?.url ?? '')
   const [icon, setIcon] = useState(item?.icon ?? 'app')
-  const [iconType, setIconType] = useState<'symbol' | 'image'>(
-    item?.iconType ?? 'symbol'
-  )
+  const [iconType, setIconType] = useState<
+    'symbol' | 'image' | 'transparent_image'
+  >(item?.iconType ?? 'symbol')
   const [color, setColor] = useState<Color>((item?.color ?? '#007AFF') as Color)
   const dismiss = Navigation.useDismiss()
 
   return (
     <Form navigationTitle={item ? 'Edit App' : 'Add App'}>
       <Section header={<Text>Basic Info</Text>}>
-        <TextField title='Name' value={name} onChanged={setName} />
-        <TextField title='URL Scheme' value={url} onChanged={setUrl} />
+        <TextField title="Name" value={name} onChanged={setName} />
+        <TextField title="URL Scheme" value={url} onChanged={setUrl} />
       </Section>
 
       <Section header={<Text>Appearance</Text>}>
         <Picker
-          title='Icon Type'
+          title="Icon Type"
           value={iconType}
-          onChanged={(v: string) => setIconType(v as 'symbol' | 'image')}
+          onChanged={(v: string) =>
+            setIconType(v as 'symbol' | 'image' | 'transparent_image')
+          }
         >
-          <Text tag='symbol'>SF Symbol</Text>
-          <Text tag='image'>Network Image</Text>
+          <Text tag="symbol">SF Symbol</Text>
+          <Text tag="image">Network Image</Text>
+          <Text tag="transparent_image">Transparent Image</Text>
         </Picker>
 
         {iconType === 'symbol' ? (
           <HStack>
             <Text>Icon (SF Symbol)</Text>
-            <TextField title='Icon' value={icon} onChanged={setIcon} />
+            <TextField title="Icon" value={icon} onChanged={setIcon} />
             <Image systemName={icon} font={20} foregroundStyle={color} />
           </HStack>
         ) : (
           <HStack>
             <Text>Image URL</Text>
-            <TextField title='URL' value={icon} onChanged={setIcon} />
-            <ZStack
-              frame={{ width: 20, height: 20 }}
-              clipShape={{ type: 'rect', cornerRadius: 4 }}
-            >
-              <Image imageUrl={icon} resizable scaleToFill />
-            </ZStack>
+            <TextField title="URL" value={icon} onChanged={setIcon} />
+            <Button
+              title="Photos"
+              action={async () => {
+                try {
+                  const images = await Photos.pickPhotos(1)
+                  const image = images?.[0]
+                  if (image) {
+                    const data = image.toPNGData()
+                    if (data) {
+                      const id = `img_${Date.now()}`
+                      if (!FileManager.existsSync(CACHE_PATH)) {
+                        FileManager.createDirectorySync(CACHE_PATH, true)
+                      }
+                      const cachePath = getIconCachePath(id)
+                      FileManager.writeAsDataSync(cachePath, data)
+                      setIcon(id)
+                    }
+                  }
+                } catch (e) {
+                  console.error(e)
+                }
+              }}
+            />
+            <AppIconView
+              icon={icon}
+              iconType={iconType}
+              color={color as unknown as string}
+            />
           </HStack>
         )}
 
@@ -96,7 +121,7 @@ function AppEditor({
 
       <Section>
         <Button
-          title='Save'
+          title="Save"
           action={() => {
             onSave({
               id: item?.id ?? Math.random().toString(36).slice(2),
@@ -112,6 +137,39 @@ function AppEditor({
       </Section>
     </Form>
   )
+}
+
+function AppIconView({
+  icon,
+  iconType,
+  color
+}: {
+  icon: string
+  iconType: AppItem['iconType']
+  color: string
+}) {
+  if (iconType === 'image' || iconType === 'transparent_image') {
+    const cachePath = getIconCachePath(icon)
+    if (FileManager.existsSync(cachePath)) {
+      return (
+        <ZStack
+          frame={{ width: 24, height: 24 }}
+          clipShape={{ type: 'rect', cornerRadius: 6 }}
+        >
+          <Image filePath={cachePath} resizable scaleToFill />
+        </ZStack>
+      )
+    }
+    return (
+      <ZStack
+        frame={{ width: 24, height: 24 }}
+        clipShape={{ type: 'rect', cornerRadius: 6 }}
+      >
+        <Image imageUrl={icon} resizable scaleToFill />
+      </ZStack>
+    )
+  }
+  return <Image systemName={icon} foregroundStyle={color as Color} />
 }
 
 function App() {
@@ -194,7 +252,11 @@ function App() {
   }
 
   async function cacheAppIcon(item: AppItem) {
-    if (item.iconType !== 'image' || !item.icon) return
+    if (
+      (item.iconType !== 'image' && item.iconType !== 'transparent_image') ||
+      !item.icon
+    )
+      return
 
     const cachePath = getIconCachePath(item.icon)
     if (FileManager.existsSync(cachePath)) return
@@ -204,12 +266,15 @@ function App() {
     }
 
     try {
-      const image = await UIImage.fromURL(item.icon)
-      if (image) {
-        const data = image.toPNGData()
-        if (data) {
-          FileManager.writeAsDataSync(cachePath, data)
-          Widget.reloadAll()
+      // If it looks like a URL, try to download it
+      if (item.icon.startsWith('http')) {
+        const image = await UIImage.fromURL(item.icon)
+        if (image) {
+          const data = image.toPNGData()
+          if (data) {
+            FileManager.writeAsDataSync(cachePath, data)
+            Widget.reloadAll()
+          }
         }
       }
     } catch (e) {
@@ -233,10 +298,10 @@ function App() {
   return (
     <NavigationStack>
       <List
-        navigationTitle='Launch'
+        navigationTitle="Launch"
         toolbar={{
           topBarLeading: [
-            <Button title='Close' systemImage='xmark' action={dismiss} />
+            <Button title="Close" systemImage="xmark" action={dismiss} />
           ],
           confirmationAction: [
             <EditButton />,
@@ -249,14 +314,14 @@ function App() {
                 />
               }
             >
-              <Image systemName='plus' />
+              <Image systemName="plus" />
             </NavigationLink>
           ]
         }}
       >
         <Section header={<Text>Settings</Text>}>
           <Picker
-            title='Icon Shape'
+            title="Icon Shape"
             value={shape}
             onChanged={(v: string) =>
               saveConfig(
@@ -267,8 +332,8 @@ function App() {
               )
             }
           >
-            <Text tag='rounded'>Rounded Rectangle</Text>
-            <Text tag='circle'>Circle</Text>
+            <Text tag="rounded">Rounded Rectangle</Text>
+            <Text tag="circle">Circle</Text>
           </Picker>
           <Stepper
             onIncrement={() => {
@@ -305,7 +370,7 @@ function App() {
           </Stepper>
 
           <Picker
-            title='Icon Rendering Mode'
+            title="Icon Rendering Mode"
             value={accentedMode}
             onChanged={(v: string) =>
               saveConfig(
@@ -316,37 +381,29 @@ function App() {
               )
             }
           >
-            <Text tag='fullColor'>Full Color</Text>
-            <Text tag='accented'>Accented</Text>
-            <Text tag='desaturated'>Desaturated</Text>
-            <Text tag='accentedDesaturated'>Accented & Desaturated</Text>
+            <Text tag="fullColor">Full Color</Text>
+            <Text tag="accented">Accented</Text>
+            <Text tag="desaturated">Desaturated</Text>
+            <Text tag="accentedDesaturated">Accented & Desaturated</Text>
           </Picker>
         </Section>
 
         <Section header={<Text>Apps</Text>}>
           <ForEach
             data={apps}
-            editActions='all'
+            editActions="all"
             builder={(item) => (
               <NavigationLink
                 key={item.id}
                 destination={<AppEditor item={item} onSave={updateApp} />}
               >
                 <HStack>
-                  {item.iconType === 'image' ? (
-                    <ZStack
-                      frame={{ width: 24, height: 24 }}
-                      clipShape={{ type: 'rect', cornerRadius: 6 }}
-                    >
-                      <Image imageUrl={item.icon} resizable scaleToFill />
-                    </ZStack>
-                  ) : (
-                    <Image
-                      systemName={item.icon}
-                      foregroundStyle={item.color as Color}
-                    />
-                  )}
-                  <VStack alignment='leading'>
+                  <AppIconView
+                    icon={item.icon}
+                    iconType={item.iconType}
+                    color={item.color}
+                  />
+                  <VStack alignment="leading">
                     <Text font={16}>{item.name}</Text>
                     <Text font={12} opacity={0.6} lineLimit={1}>
                       {item.url}
@@ -359,7 +416,7 @@ function App() {
         </Section>
         <Section>
           <Button
-            title='Preview Widget'
+            title="Preview Widget"
             action={async () => {
               await Widget.preview({ family: 'systemMedium' })
             }}

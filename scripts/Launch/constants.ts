@@ -18,7 +18,7 @@ export interface AppItem {
   id: string
   name: string
   icon: string
-  iconType?: 'symbol' | 'image'
+  iconType?: 'symbol' | 'image' | 'transparent_image'
   url: string
   color: string
 }

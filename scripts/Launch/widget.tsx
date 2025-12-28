@@ -24,7 +24,7 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
   const size = config?.iconSize || DEFAULT_CONFIG.iconSize
   const radius = config?.shape === 'circle' ? size / 2 : size * 0.225
   return (
-    <Link url={item.url} buttonStyle='plain'>
+    <Link url={item.url} buttonStyle="plain">
       <ZStack>
         {item.iconType === 'image' ? (
           <ZStack
@@ -74,12 +74,48 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
                 />
               )}
             </EnvironmentValuesReader>
-            <Image
-              systemName={item.icon}
-              foregroundStyle='white'
-              font={size * 0.5}
-              widgetAccentable
-            />
+            {item.iconType === 'transparent_image' ? (
+              (() => {
+                const cachePath = getIconCachePath(item.icon)
+                if (FileManager.existsSync(cachePath)) {
+                  return (
+                    <Image
+                      filePath={cachePath}
+                      resizable
+                      scaleToFit
+                      frame={{ width: size * 0.6, height: size * 0.6 }}
+                      widgetAccentedRenderingMode={
+                        config?.widgetAccentedRenderingMode ||
+                        DEFAULT_CONFIG.widgetAccentedRenderingMode
+                      }
+                    />
+                  )
+                }
+                return (
+                  <Image
+                    imageUrl={item.icon}
+                    resizable
+                    scaleToFit
+                    frame={{ width: size * 0.6, height: size * 0.6 }}
+                    widgetAccentedRenderingMode={
+                      config?.widgetAccentedRenderingMode ||
+                      DEFAULT_CONFIG.widgetAccentedRenderingMode
+                    }
+                  />
+                )
+              })()
+            ) : (
+              <Image
+                systemName={item.icon}
+                foregroundStyle="white"
+                font={size * 0.5}
+                widgetAccentable
+                widgetAccentedRenderingMode={
+                  config?.widgetAccentedRenderingMode ||
+                  DEFAULT_CONFIG.widgetAccentedRenderingMode
+                }
+              />
+            )}
           </Fragment>
         )}
       </ZStack>
@@ -162,7 +198,7 @@ export function LauncherWidget({
         bottom: 16
       }}
       spacing={preferredSpacing}
-      alignment='leading'
+      alignment="leading"
     >
       <Spacer />
       {rows.map((row, rowIndex) => (
