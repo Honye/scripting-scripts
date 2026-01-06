@@ -1,4 +1,4 @@
-import { HStack, Image, Path, Script, Spacer, Text, VStack, Widget } from "scripting"
+import { Color, HStack, Image, Link, Path, Script, Spacer, Text, VStack, Widget } from "scripting"
 import { rpt } from "./utils"
 import type { DynamicShapeStyle } from 'scripting'
 
@@ -61,11 +61,17 @@ function getLunarDate(date: Date) {
   return `${zodiac}年${lunarMonth}${lunarDay}`
 }
 
-const preference = {
-    secondaryColor: {
-        light: '#80828d',
-        dark: '#b3b3bd'
-    } satisfies DynamicShapeStyle
+const COLORS = {
+  light: {
+    background: '#ffffff',
+    primaryText: '#000000',
+    secondaryText: '#80828d'
+  },
+  dark: {
+    background: '#1c1c1e',
+    primaryText: '#ffffff',
+    secondaryText: '#b3b3bd'
+  }
 }
 
 export function PhotoWidget() {
@@ -77,6 +83,27 @@ export function PhotoWidget() {
   const weekday = cnWeekdays[date.getDay()]
   const lunarDate = getLunarDate(date)
   const customText = (Storage.get("customText") as string) || "MOMO\nMIANMIAN"
+  const cornerRadius = (Storage.get("cornerRadius") as number) ?? 12
+  const themeMode = (Storage.get("themeMode") as string) || "auto"
+
+  const colors = (() => {
+    if (themeMode === 'light') return {
+      background: COLORS.light.background as Color,
+      primaryText: COLORS.light.primaryText as Color,
+      secondaryText: COLORS.light.secondaryText as Color
+    }
+    if (themeMode === 'dark') return {
+      background: COLORS.dark.background as Color,
+      primaryText: COLORS.dark.primaryText as Color,
+      secondaryText: COLORS.dark.secondaryText as Color
+    }
+    return {
+      background: { light: COLORS.light.background, dark: COLORS.dark.background } as DynamicShapeStyle,
+      primaryText: { light: COLORS.light.primaryText, dark: COLORS.dark.primaryText } as DynamicShapeStyle,
+      secondaryText: { light: COLORS.light.secondaryText, dark: COLORS.dark.secondaryText } as DynamicShapeStyle
+    }
+  })()
+
   
   const getProps = (index: number) => {
     const path = Path.join(imageDir, `${index}.jpg`)
@@ -97,20 +124,26 @@ export function PhotoWidget() {
       padding={rpt(16)}
       spacing={rpt(12)}
       frame={Widget.displaySize}
+      widgetBackground={colors.background}
     >
       <HStack spacing={0}>
         <Text
           font={{ name: "DFPKanTingLiuW9-GB", size: rpt(28) }}
+          foregroundStyle={colors.primaryText}
         >{customText}</Text>
         <Spacer />
-        <HStack spacing={rpt(6)}>
-          <Text
-            font={{ name: "DIN Alternate", size: rpt(38) }}>{date.getDate().toString()}</Text>
-          <VStack spacing={rpt(4)}>
-            <Text font={rpt(10)} foregroundStyle={preference.secondaryColor}>{`${month}月｜${weekday}`}</Text>
-            <Text font={rpt(10)} foregroundStyle={preference.secondaryColor}>{lunarDate}</Text>
-          </VStack>
-        </HStack>
+        <Link url={Device.isiOSAppOnMac ? 'ical://' : 'calshow://'}>
+          <HStack spacing={rpt(6)}>
+            <Text
+              font={{ name: "DIN Alternate", size: rpt(38) }}
+              foregroundStyle={colors.primaryText}
+            >{date.getDate().toString().padStart(2, "0")}</Text>
+            <VStack spacing={rpt(4)}>
+              <Text font={rpt(10)} foregroundStyle={colors.secondaryText}>{`${month}月｜${weekday}`}</Text>
+              <Text font={rpt(10)} foregroundStyle={colors.secondaryText}>{lunarDate}</Text>
+            </VStack>
+          </HStack>
+        </Link>
       </HStack>
       <HStack spacing={0}>
         <Image
@@ -121,7 +154,7 @@ export function PhotoWidget() {
           frame={{ width: rpt(80), height: rpt(152) }}
           clipShape={{
             type: "rect",
-            cornerRadius: 12
+            cornerRadius
           }}
         />
         <Spacer minLength={rpt(4)} />
@@ -133,7 +166,7 @@ export function PhotoWidget() {
           frame={{ width: rpt(80), height: rpt(152) }}
           clipShape={{
             type: "rect",
-            cornerRadius: 12
+            cornerRadius
           }}
         />
         <Spacer minLength={rpt(8)} />
@@ -146,7 +179,7 @@ export function PhotoWidget() {
             widgetAccentedRenderingMode="fullColor"
             clipShape={{
               type: "rect",
-              cornerRadius: 12
+              cornerRadius
             }}
           />
           <Image
@@ -157,7 +190,7 @@ export function PhotoWidget() {
             widgetAccentedRenderingMode="fullColor"
             clipShape={{
               type: "rect",
-              cornerRadius: 12
+              cornerRadius
             }}
           />
         </VStack>

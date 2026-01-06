@@ -7,9 +7,11 @@ import {
   NavigationLink,
   NavigationStack,
   Path,
+  Picker,
   Script,
   Section,
   Spacer,
+  Stepper,
   Text,
   useEffect,
   useState,
@@ -70,11 +72,19 @@ export function PhotoConfig() {
   const [customText, setCustomText] = useState(
     (Storage.get('customText') as string) || 'MOMO\nMIANMIAN'
   )
+  const [cornerRadius, setCornerRadius] = useState(
+    (Storage.get('cornerRadius') as number) ?? 12
+  )
+  const [themeMode, setThemeMode] = useState(
+    (Storage.get('themeMode') as string) || 'auto'
+  )
 
   useEffect(() => {
     Storage.set('customText', customText)
+    Storage.set('cornerRadius', cornerRadius)
+    Storage.set('themeMode', themeMode)
     Widget.reloadAll()
-  }, [customText])
+  }, [customText, cornerRadius, themeMode])
 
   useEffect(() => {
     loadImages()
@@ -163,6 +173,15 @@ export function PhotoConfig() {
         }}
       >
         <Section header={<Text>Settings</Text>}>
+          <Picker
+            title='Theme'
+            value={themeMode}
+            onChanged={(v: string) => setThemeMode(v)}
+          >
+            <Text tag='auto'>System</Text>
+            <Text tag='light'>Light</Text>
+            <Text tag='dark'>Dark</Text>
+          </Picker>
           <NavigationLink
             destination={
               <TextEditor text={customText} onSave={setCustomText} />
@@ -176,6 +195,16 @@ export function PhotoConfig() {
               </Text>
             </HStack>
           </NavigationLink>
+          <Stepper
+            onIncrement={() => setCornerRadius((c) => c + 1)}
+            onDecrement={() => setCornerRadius((c) => Math.max(c - 1, 0))}
+          >
+            <HStack>
+              <Text>Corner Radius</Text>
+              <Spacer />
+              <Text foregroundStyle='secondaryLabel'>{cornerRadius.toString()}</Text>
+            </HStack>
+          </Stepper>
         </Section>
 
         <Section
