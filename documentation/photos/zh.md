@@ -1,106 +1,400 @@
-## 概述
+`Photos` 模块为 Scripting 提供了对系统相册与相机能力的统一访问接口，用于：
 
-`Photos` 类提供了对用户相册中的照片进行访问和管理的方法。它包括获取最新照片、通过照片选择器对话框选择照片、拍摄新照片以及将图像保存到相册的功能。
+* 使用系统相机拍照或录制视频
+* 从系统照片库中选择图片、视频或 Live Photo
+* 获取最近拍摄的照片
+* 将图片或视频保存到系统 Photos 应用
 
----
+所有 API 均基于 iOS 原生框架（Photos、PHPicker、UIImagePicker 等）封装，并遵循以下设计原则：
 
-### 类：`Photos`
-
-> `Photos` 类是一个静态工具类，不需要创建实例即可使用。您可以直接调用其静态方法。
-
-#### 方法说明
-
----
-
-### `getLatestPhotos(count: number): Promise<UIImage[] | null>`
-
-从系统“照片”应用中获取指定数量的最新照片。
-
-- **参数**:
-  - `count`（number）：要获取的照片数量。
-
-- **返回值**: `Promise<UIImage[] | null>`  
-  返回一个 Promise，当操作成功时，Promise 会解析为包含若干 `UIImage` 对象的数组；如果操作失败，Promise 会解析为 `null`。
-
-- **示例**:
-  ```typescript
-  const photos = await Photos.getLatestPhotos(10)
-  if (photos) {
-      console.log("Retrieved photos:", photos)
-  } else {
-      console.log("Failed to retrieve photos.")
-  }
-  ```
+* 系统级权限管理
+* Promise 异步接口
+* 系统 UI 托管，不可自定义
+* 媒体数据访问安全、受控
 
 ---
 
-### `pickPhotos(count: number): Promise<UIImage[]>`
+## CaptureInfo
 
-打开照片选择器对话框，允许用户选择限定数量的照片。
+```ts
+type CaptureInfo = {
+  cropRect: {
+    x: number
+    y: number
+    width: number
+    height: number
+  } | null
+  originalImage: UIImage | null
+  editedImage: UIImage | null
+  imagePath: string | null
+  mediaMetadata: Record<string, any> | null
+  mediaPath: string | null
+  mediaType: string | null
+}
+```
 
-- **参数**:
-  - `count`（number）：用户可选择的照片数量上限。
+`CaptureInfo` 描述了一次拍摄操作（照片或视频）的完整返回信息。
 
-- **返回值**: `Promise<UIImage[]>`  
-  返回一个 Promise，会解析为用户所选照片的 `UIImage` 对象数组。
+### 字段说明
 
-- **示例**:
-  ```typescript
-  const selectedPhotos = await Photos.pickPhotos(5)
-  console.log("User selected photos:", selectedPhotos)
-  ```
+* `cropRect`
+  用户在编辑阶段应用的裁剪区域
+  若未裁剪则为 `null`
 
----
+* `originalImage`
+  拍摄得到的原始图片（未编辑）
 
-### `takePhoto(): Promise<UIImage | null>`
+* `editedImage`
+  用户编辑后的图片
+  仅在 `allowsEditing` 启用且实际编辑后存在
 
-让用户使用相机拍摄一张照片，并在成功时返回一个 `UIImage` 对象。
+* `imagePath`
+  图片在磁盘中的文件路径
 
-- **返回值**: `Promise<UIImage | null>`  
-  返回一个 Promise，当拍摄成功时，会解析为表示该照片的 `UIImage`；如果操作未成功，则解析为 `null`。
+* `mediaMetadata`
+  媒体的元数据，如 EXIF、方向信息等
 
-- **示例**:
-  ```typescript
-  const photo = await Photos.takePhoto()
-  if (photo) {
-      console.log("Photo taken:", photo)
-  } else {
-      console.log("Photo capture was unsuccessful.")
-  }
-  ```
+* `mediaPath`
+  视频文件在磁盘中的路径
 
----
-
-### `savePhoto(image: Data, options?: { fileName?: string }): Promise<boolean>`
-
-将一张图片保存到系统相册，并可选择指定元数据。
-
-- **参数**:
-  - `image`（Data）：要保存的图像数据。
-  - `options`（object，可选）：额外的保存选项。
-    - `fileName`（string，可选）：保存时给照片指定的名称。
-
-- **返回值**: `Promise<boolean>`  
-  返回一个 Promise，当照片成功保存时，解析为 `true`；否则为 `false`。
-
-- **示例**:
-  ```typescript
-  const imageData = Data.fromJPEG(uiImage)! /* 图像数据来源 */
-  const success = await Photos.savePhoto(imageData, { fileName: "Vacation Photo" })
-  if (success) {
-      console.log("Photo saved successfully.")
-  } else {
-      console.log("Failed to save the photo.")
-  }
-  ```
+* `mediaType`
+  媒体的 UTType 字符串标识
 
 ---
 
-### 注意事项
+## availableMediaTypes()
 
-- **错误处理**：每个方法都返回一个 Promise，您可以在异步函数中使用 `try...catch` 来处理错误。
-- **权限**：当您首次使用某些方法时，应用可能会请求访问用户的照片库或相机的权限。请确保正确处理这些权限请求。
+```ts
+function availableMediaTypes(): string[] | null
+```
+
+返回当前设备相机支持的媒体类型（UTType 字符串数组）。
+
+常用于：
+
+* 判断设备是否支持视频拍摄
+* 根据设备能力动态配置拍摄参数
+
+当信息不可获取时返回 `null`。
 
 ---
 
-通过 `Photos` 接口，您可以轻松将相册和相机功能集成到脚本中，实现与用户照片的多种互动。
+## capture(options)
+
+```ts
+function capture(options: {
+  mode: "photo" | "video"
+  mediaTypes: UTType[]
+  allowsEditing?: boolean
+  cameraDevice?: "rear" | "front"
+  cameraFlashMode?: "auto" | "on" | "off"
+  videoMaximumDuration?: DurationInSeconds
+  videoQuality?: 
+    | "low"
+    | "medium"
+    | "high"
+    | "640x480"
+    | "iFrame960x540"
+    | "iFrame1280x720"
+}): Promise<CaptureInfo | null>
+```
+
+展示系统相机界面以进行拍照或视频录制。
+
+### 参数说明
+
+* `mode`
+  拍摄模式
+
+  * `"photo"`：拍照
+  * `"video"`：录制视频
+
+* `mediaTypes`
+  允许拍摄的媒体类型（UTType 数组）
+
+* `allowsEditing`
+  是否允许用户在完成拍摄后编辑媒体
+
+* `cameraDevice`
+  使用的摄像头
+  默认为 `"rear"`
+
+* `cameraFlashMode`
+  闪光灯模式
+  默认为 `"auto"`
+
+* `videoMaximumDuration`
+  视频最长录制时长（秒）
+
+* `videoQuality`
+  视频分辨率与编码质量设置
+
+### 行为说明
+
+* 拍摄界面完全由系统管理
+* Promise 在用户完成或取消操作后返回
+* 权限请求由系统自动处理
+
+---
+
+## pick(options)
+
+```ts
+function pick(options?: {
+  mode?: "default" | "compact"
+  filter?: PHPickerFilter
+  limit?: number
+}): Promise<PHPickerResult[]>
+```
+
+展示系统照片选择器，用于从相册中选择媒体资源。
+
+### 参数说明
+
+* `mode`
+  选择器布局模式
+
+  * `default`：网格布局
+  * `compact`：线性紧凑布局
+
+* `filter`
+  用于限制可选择资源类型的 `PHPickerFilter`
+
+* `limit`
+  最大选择数量
+  默认为 `1`
+
+### 返回值
+
+返回 `PHPickerResult` 数组。
+每个结果必须显式调用对应方法解析为具体资源。
+
+---
+
+## PHPickerFilter
+
+`PHPickerFilter` 用于描述 **Photos.pick** 可选择的资源类型。
+它是一个不可实例化的类，仅通过静态方法构建。
+
+### 基础过滤器
+
+* `PHPickerFilter.images()`
+  仅允许选择普通图片
+
+* `PHPickerFilter.videos()`
+  仅允许选择视频
+
+* `PHPickerFilter.livePhotos()`
+  仅允许选择 Live Photo
+
+* `PHPickerFilter.bursts()`
+  连拍照片
+
+* `PHPickerFilter.panoramas()`
+  全景照片
+
+* `PHPickerFilter.screenshots()`
+  屏幕截图
+
+* `PHPickerFilter.screenRecordings()`
+  屏幕录制视频
+
+* `PHPickerFilter.depthEffectPhotos()`
+  含景深效果的照片（人像）
+
+* `PHPickerFilter.cinematicVideos()`
+  电影效果视频
+
+* `PHPickerFilter.slomoVideos()`
+  慢动作视频
+
+* `PHPickerFilter.timelapseVideos()`
+  延时摄影视频
+
+---
+
+### 组合过滤器
+
+* `PHPickerFilter.all(filters)`
+  同时满足所有过滤条件
+  相当于逻辑 AND
+
+* `PHPickerFilter.any(filters)`
+  满足任意一个过滤条件
+  相当于逻辑 OR
+
+* `PHPickerFilter.not(filter)`
+  排除指定过滤条件
+  相当于逻辑 NOT
+
+### 示例说明
+
+```ts
+// 仅允许选择 Live Photo 或普通图片
+const filter = PHPickerFilter.any([
+  PHPickerFilter.livePhotos(),
+  PHPickerFilter.images()
+])
+
+await Photos.pick({ filter })
+```
+
+---
+
+## PHPickerResult
+
+表示照片选择器返回的单个选择结果。
+
+### itemProvider: ItemProvider
+
+获取结果的 `ItemProvider`对象，是一个Swift 的 `NSItemProvider` 对象的包装。
+
+### livePhoto()
+
+```ts
+livePhoto(): Promise<LivePhoto | null>
+```
+
+尝试将结果解析为 Live Photo。
+若资源不支持 Live Photo，则返回 `null`。
+
+---
+
+### uiImage()
+
+```ts
+uiImage(): Promise<UIImage | null>
+```
+
+尝试将结果解析为 `UIImage`。
+若资源不是图片，则返回 `null`。
+
+---
+
+### imagePath()
+
+```ts
+imagePath(): Promise<string | null>
+```
+
+尝试将结果解析为图片。如果可以加载成功，该文件会被复制到 app group 的沙盒中，返回图片路径。
+你应该在使用完成后删除该文件。
+
+#### 示例
+
+```ts
+const filePath = await result.imagePath()
+```
+
+---
+
+### videoPath()
+
+```ts
+videoPath(): Promise<string | null>
+```
+
+尝试将结果解析为视频。如果可以加载成功，该文件会被复制到 app group 的沙盒中，返回视频路径。
+你应该在使用完成后删除该文件。
+
+---
+
+## getLatestPhotos(count)
+
+```ts
+function getLatestPhotos(count: number): Promise<UIImage[] | null>
+```
+
+获取相册中最新的若干张照片。
+
+### 行为说明
+
+* 仅返回图片
+* 顺序为从最新到最旧
+* 无权限时返回 `null`
+
+---
+
+## pickPhotos(count)
+
+```ts
+function pickPhotos(count: number): Promise<UIImage[]>
+```
+
+旧版便捷 API，用于快速选择固定数量的照片。
+
+直接返回 `UIImage` 数组，不包含路径或元数据。
+
+---
+
+## takePhoto()
+
+```ts
+function takePhoto(): Promise<UIImage | null>
+```
+
+快速拍照接口。
+
+* 不支持高级配置
+* 用户取消时返回 `null`
+
+---
+
+## savePhoto(path, options)
+
+```ts
+function savePhoto(
+  path: string,
+  options?: { fileName?: string }
+): Promise<boolean>
+```
+
+将磁盘中的图片文件保存到系统 Photos 应用。
+
+---
+
+## savePhoto(image, options)
+
+```ts
+function savePhoto(
+  image: Data,
+  options?: { fileName?: string }
+): Promise<boolean>
+```
+
+将图片二进制数据直接写入系统相册，避免创建临时文件。
+
+---
+
+## saveVideo(path, options)
+
+```ts
+function saveVideo(
+  path: string,
+  options?: { fileName?: string }
+): Promise<boolean>
+```
+
+将视频文件保存到系统 Photos 应用。
+
+---
+
+## saveVideo(video, options)
+
+```ts
+function saveVideo(
+  video: Data,
+  options?: { fileName?: string }
+): Promise<boolean>
+```
+
+将视频二进制数据直接写入系统相册。
+
+---
+
+## 设计说明
+
+* 所有 API 均为异步 Promise 接口
+* 所有 UI 均由系统托管
+* Picker 返回的结果为惰性对象，需显式解析
+* 保存接口仅返回成功状态，不暴露系统资源标识

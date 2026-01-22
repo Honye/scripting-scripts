@@ -1,143 +1,458 @@
-The `Device` interface provides information about the current device and its environment, as well as methods to control certain device capabilities like wake locks. You can access device-specific metadata such as model, operating system details, orientation, battery state, and localization settings.
+The `Device` namespace provides access to information about the current device and its environment, including hardware characteristics, system details, screen metrics, battery status, orientation, proximity sensor state, locale and language settings, wake lock control, and network interfaces.
 
-## Overview
+This API is commonly used to adapt UI layouts, behavior, and feature availability based on the device’s runtime context.
 
-`Device` is a utility class that exposes static properties and methods. This means you can call its members directly on the class without needing to instantiate it.
+---
 
-For example, you can retrieve the device model like this:
+## Orientation
 
-```tsx
-const deviceModel = Device.model
-console.log('Device Model:', deviceModel)
+Represents the physical orientation of the device.
+
+```ts
+type Orientation =
+  | "portrait"
+  | "portraitUpsideDown"
+  | "landscapeLeft"
+  | "landscapeRight"
+  | "faceUp"
+  | "faceDown"
+  | "unknown"
 ```
+
+### Description
+
+* `portrait`: Portrait orientation, default upright position
+* `portraitUpsideDown`: Portrait orientation, upside down
+* `landscapeLeft`: Landscape orientation rotated to the left
+* `landscapeRight`: Landscape orientation rotated to the right
+* `faceUp`: Device is lying flat with the screen facing upward
+* `faceDown`: Device is lying flat with the screen facing downward
+* `unknown`: Orientation cannot be determined
+
+---
+
+## NetworkInterface
+
+Describes a single network interface address.
+
+```ts
+type NetworkInterface = {
+  address: string
+  netmask: string | null
+  family: "IPv4" | "IPv6"
+  mac: string | null
+  isInternal: boolean
+  cidr: string | null
+}
+```
+
+### Properties
+
+* `address`: IP address
+* `netmask`: Subnet mask
+* `family`: Address family, either IPv4 or IPv6
+* `mac`: MAC address (may be null depending on system restrictions)
+* `isInternal`: Indicates whether the interface is internal (for example, loopback)
+* `cidr`: CIDR notation, such as `192.168.1.10/24`
+
+---
+
+## BatteryState
+
+Represents the current battery state.
+
+```ts
+type BatteryState = "full" | "charging" | "unplugged" | "unknown"
+```
+
+### Description
+
+* `full`: Battery is fully charged
+* `charging`: Device is currently charging
+* `unplugged`: Device is not connected to power
+* `unknown`: Battery state cannot be determined
+
+---
 
 ## Device Information
 
-- **`Device.model: string`**  
-  The device model, e.g., `"iPhone"`.  
-  ```tsx
-  console.log(Device.model)  // "iPhone"
-  ```
+### model
 
-- **`Device.systemVersion: string`**  
-  The current OS version, such as `"16.0"`.  
-  ```tsx
-  console.log(Device.systemVersion)  // "16.0"
-  ```
-
-- **`Device.systemName: string`**  
-  The name of the operating system, typically `"iOS"`.  
-  ```tsx
-  console.log(Device.systemName)  // "iOS"
-  ```
-
-- **`Device.isiPad: boolean`**  
-  Indicates whether the current device is an iPad.  
-  ```tsx
-  if (Device.isiPad) {
-    console.log("Running on an iPad")
-  }
-  ```
-
-- **`Device.isiPhone: boolean`**  
-  Indicates whether the current device is an iPhone.  
-  ```tsx
-  if (Device.isiPhone) {
-    console.log("Running on an iPhone")
-  }
-  ```
-
-- **`Device.isiOSAppOnMac: boolean`**  
-  Checks if the process is an iPhone or iPad app running on a Mac.  
-  ```tsx
-  if (Device.isiOSAppOnMac) {
-    console.log("This iOS app is running on a Mac")
-  }
-  ```
-
-## Battery Information
-
-- **`Device.batteryState: "full" | "charging" | "unplugged" | "unknown"`**  
-  The current battery state of the device.  
-  ```tsx
-  console.log(Device.batteryState)  // e.g., "charging"
-  ```
-
-- **`Device.batteryLevel: number`**  
-  A number between 0.0 and 1.0 representing the battery level.  
-  ```tsx
-  console.log(Device.batteryLevel)  // e.g., 0.8 means 80%
-  ```
-
-## Screen & Orientation & Appearance
-
-- **`Device.screen: { width: number; height: number; scale: number }`**  
-  The current screen's width, height, and scale.
-
-- **`Device.isLandscape: boolean`**  
-  `true` if the device is currently in a landscape orientation.
-  
-- **`Device.isPortrait: boolean`**  
-  `true` if the device is currently in a portrait orientation.
-  
-- **`Device.isFlat: boolean`**  
-  `true` if the device is lying flat (face up or face down).
-  
-- **`Device.colorScheme: "light" | "dark"`**  
-  The current interface appearance, either `"light"` or `"dark"`.
-  
-  ```tsx
-  if (Device.colorScheme === 'dark') {
-    console.log("Dark mode is enabled")
-  }
-  ```
-
-## Localization Settings
-
-- **`Device.systemLocale: string`**  
-  The current system locale, such as `"en_US"`.
-  
-- **`Device.systemLocales: string[]`**  
-  The user’s preferred locales, e.g., `["en-US", "zh-Hans-CN"]`.
-  
-- **`Device.systemLanguageTag: string`**  
-  The current locale language tag, such as `"en-US"`.
-  
-- **`Device.systemLanguageCode: string`**  
-  The language code derived from the locale, e.g., `"en"`.
-  
-- **`Device.systemCountryCode?: string`**  
-  The country code derived from the locale, e.g., `"US"`.
-  
-- **`Device.systemScriptCode?: string`**  
-  The script code if available, e.g., `"Hans"` in `"zh_CN_Hans"`.
-
-```tsx
-console.log(Device.systemLocale)       // "en_US"
-console.log(Device.systemLocales)      // ["en-US", "zh-Hans-CN"]
-console.log(Device.systemLanguageTag)  // "en-US"
-console.log(Device.systemLanguageCode) // "en"
-console.log(Device.systemCountryCode)  // "US"
-console.log(Device.systemScriptCode)   // "Hans" if available
+```ts
+const model: string
 ```
+
+The device model, such as `"iPhone"` or `"iPad"`.
+
+---
+
+### localizedModel
+
+```ts
+const localizedModel: string
+```
+
+The localized name of the device model.
+
+---
+
+### systemVersion
+
+```ts
+const systemVersion: string
+```
+
+The current operating system version, for example `"18.2"`.
+
+---
+
+### systemName
+
+```ts
+const systemName: string
+```
+
+The name of the operating system, such as `"iOS"`, `"iPadOS"`, or `"macOS"`.
+
+---
+
+### isiPad / isiPhone
+
+```ts
+const isiPad: boolean
+const isiPhone: boolean
+```
+
+Indicates whether the current device is an iPad or an iPhone.
+
+---
+
+### screen
+
+```ts
+const screen: {
+  width: number
+  height: number
+  scale: number
+}
+```
+
+Screen metrics:
+
+* `width`: Screen width in logical pixels
+* `height`: Screen height in logical pixels
+* `scale`: Screen scale factor (for example, 2 or 3)
+
+---
+
+## Battery and Sensors
+
+### batteryState
+
+```ts
+const batteryState: BatteryState
+```
+
+The current battery state.
+
+---
+
+### batteryLevel
+
+```ts
+const batteryLevel: number
+```
+
+The current battery level, expressed as a value between `0.0` and `1.0`.
+
+---
+
+### proximityState
+
+```ts
+const proximityState: boolean
+```
+
+The state of the proximity sensor.
+`true` indicates that the device is close to the user, such as during a phone call.
+
+---
+
+## Orientation and Layout
+
+### isLandscape / isPortrait / isFlat
+
+```ts
+const isLandscape: boolean
+const isPortrait: boolean
+const isFlat: boolean
+```
+
+* `isLandscape`: Indicates whether the device is in a landscape orientation
+* `isPortrait`: Indicates whether the device is in a portrait orientation
+* `isFlat`: Indicates whether the device is lying flat (face up or face down)
+
+---
+
+### orientation
+
+```ts
+const orientation: Orientation
+```
+
+The current physical orientation of the device.
+
+---
+
+## Appearance and Environment
+
+### colorScheme
+
+```ts
+const colorScheme: ColorScheme
+```
+
+The current system color scheme, such as light or dark mode.
+
+---
+
+### isiOSAppOnMac
+
+```ts
+const isiOSAppOnMac: boolean
+```
+
+Indicates whether the current process is an iPhone or iPad app running on macOS.
+
+---
+
+## Locale and Language
+
+### systemLocale
+
+```ts
+const systemLocale: string
+```
+
+The current system locale, for example `"en_US"`.
+
+---
+
+### preferredLanguages
+
+```ts
+const preferredLanguages: string[]
+```
+
+The user’s preferred languages, for example:
+
+```ts
+["en-US", "zh-Hans-CN"]
+```
+
+---
+
+### systemLocales (Deprecated)
+
+```ts
+const systemLocales: string[]
+```
+
+Deprecated. Use `preferredLanguages` instead.
+
+---
+
+### systemLanguageTag
+
+```ts
+const systemLanguageTag: string
+```
+
+The current language tag, such as `"en-US"`.
+
+---
+
+### systemLanguageCode
+
+```ts
+const systemLanguageCode: string
+```
+
+The current language code, such as `"en"`.
+
+---
+
+### systemCountryCode
+
+```ts
+const systemCountryCode: string | undefined
+```
+
+The current country code, such as `"US"`.
+
+---
+
+### systemScriptCode
+
+```ts
+const systemScriptCode: string | undefined
+```
+
+The script code of the current locale, such as `"Hans"` for Simplified Chinese.
+
+---
 
 ## Wake Lock
 
-A wake lock prevents the device’s screen from turning off due to inactivity. Use these methods to control the wake lock:
+### isWakeLockEnabled
 
-- **`Device.setWakeLockEnabled(enabled: boolean): void`**  
-  Enable or disable the wake lock. Setting `enabled` to `true` prevents the screen from sleeping.
-  
-  ```tsx
-  // Keep the screen awake
-  Device.setWakeLockEnabled(true)
-  ```
+```ts
+const isWakeLockEnabled: Promise<boolean>
+```
 
-- **`Device.isWakeLockEnabled(): Promise<boolean>`**  
-  Checks if the wake lock is currently enabled.
-  
-  ```tsx
-  Device.isWakeLockEnabled().then(isEnabled => {
-    console.log("Wake lock enabled:", isEnabled)
-  })
-  ```
+Retrieves whether the wake lock is currently enabled, preventing the device from automatically sleeping.
+
+---
+
+### setWakeLockEnabled
+
+```ts
+function setWakeLockEnabled(enabled: boolean): void
+```
+
+Enables or disables the wake lock.
+
+Notes:
+
+* Available only in the **Scripting app**
+* When enabled, the device will remain awake and not auto-lock
+
+---
+
+## Battery Listeners
+
+### addBatteryStateListener
+
+```ts
+function addBatteryStateListener(
+  callback: (state: BatteryState) => void
+): void
+```
+
+Registers a listener for battery state changes.
+
+---
+
+### removeBatteryStateListener
+
+```ts
+function removeBatteryStateListener(
+  callback?: (state: BatteryState) => void
+): void
+```
+
+Removes a battery state listener.
+If `callback` is not provided, all battery state listeners are removed.
+
+---
+
+### addBatteryLevelListener
+
+```ts
+function addBatteryLevelListener(
+  callback: (level: number) => void
+): void
+```
+
+Registers a listener for battery level changes.
+
+---
+
+### removeBatteryLevelListener
+
+```ts
+function removeBatteryLevelListener(
+  callback?: (level: number) => void
+): void
+```
+
+Removes a battery level listener.
+If `callback` is not provided, all battery level listeners are removed.
+
+---
+
+## Orientation Listeners
+
+### addOrientationListener
+
+```ts
+function addOrientationListener(
+  callback: (orientation: Orientation) => void
+): void
+```
+
+Starts observing device orientation changes.
+
+Notes:
+
+* This method must be called before orientation updates are delivered
+* Orientation updates do not work when system orientation lock is enabled
+
+---
+
+### removeOrientationListener
+
+```ts
+function removeOrientationListener(
+  callback?: (orientation: Orientation) => void
+): void
+```
+
+Removes an orientation change listener.
+If `callback` is not provided, all orientation listeners are removed and observation is stopped.
+
+---
+
+## Proximity Listeners
+
+### addProximityStateListener
+
+```ts
+function addProximityStateListener(
+  callback: (state: boolean) => void
+): void
+```
+
+Registers a listener for proximity sensor state changes.
+
+---
+
+### removeProximityStateListener
+
+```ts
+function removeProximityStateListener(
+  callback?: (state: boolean) => void
+): void
+```
+
+Removes a proximity state listener.
+If `callback` is not provided, all proximity listeners are removed.
+
+---
+
+## Network
+
+### networkInterfaces
+
+```ts
+function networkInterfaces(): Record<string, NetworkInterface[]>
+```
+
+Returns the network interfaces available on the device.
+
+Return value:
+
+* Keys are interface names (such as `en0`, `lo0`)
+* Values are arrays of `NetworkInterface` objects associated with each interface
+
+This method is useful for network diagnostics, retrieving local IP addresses, and debugging connectivity issues.

@@ -9,38 +9,38 @@
 
 表示事件的参与者：
 
-* `isCurrentUser: boolean`：是否为当前用户
-* `name?: string`：姓名
-* `role: ParticipantRole`：角色
-* `type: ParticipantType`：类型
-* `status: ParticipantStatus`：出席状态
+- `isCurrentUser: boolean`：是否为当前用户
+- `name?: string`：姓名
+- `role: ParticipantRole`：角色
+- `type: ParticipantType`：类型
+- `status: ParticipantStatus`：出席状态
 
 ### ParticipantRole
 
-* `chair`（主持人）
-* `nonParticipant`（非参与者）
-* `optional`（可选）
-* `required`（必需）
-* `unknown`（未知）
+- `chair`（主持人）
+- `nonParticipant`（非参与者）
+- `optional`（可选）
+- `required`（必需）
+- `unknown`（未知）
 
 ### ParticipantType
 
-* `group`（群组）
-* `person`（个人）
-* `resource`（资源）
-* `room`（房间）
-* `unknown`（未知）
+- `group`（群组）
+- `person`（个人）
+- `resource`（资源）
+- `room`（房间）
+- `unknown`（未知）
 
 ### ParticipantStatus
 
-* `unknown`（未知）
-* `pending`（待定）
-* `accepted`（接受）
-* `declined`（拒绝）
-* `tentative`（暂定）
-* `delegated`（已委托）
-* `completed`（已完成）
-* `inProcess`（处理中）
+- `unknown`（未知）
+- `pending`（待定）
+- `accepted`（接受）
+- `declined`（拒绝）
+- `tentative`（暂定）
+- `delegated`（已委托）
+- `completed`（已完成）
+- `inProcess`（处理中）
 
 ---
 
@@ -48,11 +48,11 @@
 
 用于表明事件在日程中的可用性状态：
 
-* `notSupported`：日历不支持可用性设置
-* `busy`：忙碌
-* `free`：空闲
-* `tentative`：暂定
-* `unavailable`：不可用
+- `notSupported`：日历不支持可用性设置
+- `busy`：忙碌
+- `free`：空闲
+- `tentative`：暂定
+- `unavailable`：不可用
 
 ---
 
@@ -60,9 +60,9 @@
 
 用于地理位置提醒的结构化位置：
 
-* `title: string | null`：名称
-* `geoLocation: LocationInfo | null`：地理位置（经纬度）
-* `radius: number`：触发半径（米）
+- `title: string | null`：名称
+- `geoLocation: LocationInfo | null`：地理位置（经纬度）
+- `radius: number`：触发半径（米）
 
 此结构与 `EventAlarm.structuredLocation` 配合使用。
 
@@ -72,9 +72,9 @@
 
 位置提醒的触发方式：
 
-* `none`：不使用位置触发
-* `enter`：进入区域时触发
-* `leave`：离开区域时触发
+- `none`：不使用位置触发
+- `enter`：进入区域时触发
+- `leave`：离开区域时触发
 
 ---
 
@@ -82,9 +82,9 @@
 
 CalendarEvent 支持添加多个 `EventAlarm`，包括：
 
-* **绝对时间提醒**
-* **相对事件开始时间提醒**
-* **位置提醒（geofence）**
+- **绝对时间提醒**
+- **相对事件开始时间提醒**
+- **位置提醒（geofence）**
 
 详细说明请参考独立的 EventAlarm 文档。
 
@@ -264,11 +264,11 @@ new(): CalendarEvent
 
 ## 3. 事件保存与删除
 
-### save(): Promise<void>
+### `save(): Promise<void>`
 
 保存事件（或重复事件的变化）。
 
-### remove(): Promise<void>
+### `remove(): Promise<void>`
 
 从日历中移除事件。
 
@@ -276,33 +276,33 @@ new(): CalendarEvent
 
 ## 4. 显示编辑界面
 
-### presentEditView(): Promise<EventEditViewAction>
+### `presentEditView(): Promise<EventEditViewAction>`
 
 显示系统提供的事件编辑界面，并返回用户执行的操作：
 
-* `"saved"`
-* `"deleted"`
-* `"canceled"`
+- `"saved"`
+- `"deleted"`
+- `"canceled"`
 
 ---
 
 # 六、静态方法
 
-## getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>
+## `getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
 
 获取指定日期范围内的事件。
 
-* 可传入 `calendars` 数组过滤事件
-* 若不传或传 `null`，则搜索所有可访问的日历
+- 可传入 `calendars` 数组过滤事件
+- 若不传或传 `null`，则搜索所有可访问的日历
 
 ---
 
-## presentCreateView(): Promise<CalendarEvent | null>
+## `presentCreateView(): Promise<CalendarEvent | null>`
 
 显示事件创建界面。
 
-* 用户点击保存时返回创建的事件
-* 用户取消时返回 `null`
+- 用户点击保存时返回创建的事件
+- 用户取消时返回 `null`
 
 ---
 
@@ -331,7 +331,7 @@ const rule = RecurrenceRule.create({
   frequency: "weekly",
   interval: 1,
   daysOfTheWeek: ["monday", "wednesday", "friday"],
-  end: RecurrenceEnd.fromDate(new Date("2024-12-31"))
+  end: RecurrenceEnd.fromDate(new Date("2024-12-31")),
 })
 
 event.addRecurrenceRule(rule)
@@ -356,7 +356,7 @@ await event.save()
 const events = await CalendarEvent.getAll(
   new Date("2024-01-01"),
   new Date("2024-01-31")
-)
+ )
 
 for (const e of events) {
   console.log(`事件: ${e.title} 开始时间: ${e.startDate}`)
@@ -402,8 +402,8 @@ console.log("事件已移除")
 
 ### 重复事件编辑
 
-* 修改单个重复事件实例会创建一个 detached instance
-* `occurrenceDate` 可用于识别该实例对应的原始日期
+- 修改单个重复事件实例会创建一个 detached instance
+- `occurrenceDate` 可用于识别该实例对应的原始日期
 
 ### 参与者
 

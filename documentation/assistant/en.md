@@ -1,297 +1,436 @@
-The `Assistant` module provides a powerful set of APIs that allow users to request structured JSON data from an intelligent assistant.
-This feature can be used for automation tasks such as extracting billing information, classifying expenses, parsing text, or recognizing image content.
+The `Assistant` module is Scripting’s unified AI interaction system.
+It provides a consistent abstraction over multiple AI providers and supports three major usage patterns:
+
+1. **Structured JSON data extraction**
+2. **Low-level streaming AI output**
+3. **System-level assistant chat UI (conversation mode)**
+
+The module is designed to be flexible enough for automation scripts while also supporting rich, interactive user experiences.
 
 ---
 
-## `isAvailable` Variable
+## 1. Provider
 
-### Description
+### `Assistant.Provider`
 
-Indicates whether the Assistant API is currently available.
+```ts
+type Provider =
+  | "openai"
+  | "gemini"
+  | "anthropic"
+  | "deepseek"
+  | "openrouter"
+  | { custom: string }
+```
 
-* This status depends on the selected AI provider and whether a valid API key has been configured.
-* If no valid API key is provided, the Assistant API will be unavailable.
+#### Description
+
+Specifies which AI provider the Assistant should use.
+
+* Built-in providers cover mainstream AI platforms
+* `{ custom: string }` allows integration with:
+
+  * Self-hosted backends
+  * Internal company AI services
+  * Proxy or gateway APIs
+
+In **conversation mode**, users may change the provider directly from the assistant chat UI.
 
 ---
 
-## `requestStructuredData` Method
+## 2. Availability and State Flags
 
-### Description
+### 2.1 `Assistant.isAvailable: boolean`
 
-The `requestStructuredData` method allows you to send a natural language prompt and receive a structured data response that conforms to a defined JSON Schema.
-It supports two forms:
+#### Meaning
 
-1. Text-only input
-2. Input with images — allows the model to analyze both textual and visual data
+Indicates **whether the current user has access to the Assistant feature**.
 
----
+#### Notes
 
-### Syntax 1: Text Input Version
+* This value is determined internally by Scripting
+* It may depend on:
 
-```ts
-function requestStructuredData<R>(
-  prompt: string,
-  schema: JSONSchemaArray | JSONSchemaObject,
-  options?: {
-    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | { custom: string }
-    modelId?: string
-  }
-): Promise<R>
-```
+  * User permissions
+  * Subscription or feature availability
+  * App-level configuration
+* It does **not** directly reflect whether an API key is configured
 
-### Syntax 2: Image Input Version
+If `false`, all Assistant APIs should be considered unavailable and may throw errors.
+
+#### Recommended usage
 
 ```ts
-function requestStructuredData<R>(
-  prompt: string,
-  images: string[],
-  schema: JSONSchemaArray | JSONSchemaObject,
-  options?: {
-    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | { custom: string }
-    modelId?: string
-  }
-): Promise<R>
-```
-
----
-
-### Parameters
-
-#### `prompt` (`string`)
-
-The natural language prompt describing what should be parsed or extracted.
-Example:
-
-> “Please extract the amount, date, category, and location from the following bill.”
-
-#### `images` (`string[]`)
-
-An array of input images for the assistant to process.
-Each item must be a Base64-encoded **data URI** string, such as:
-
-```
-data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
-```
-
-* Multiple images are supported, but avoid providing too many to prevent request timeouts or large payloads.
-* Useful for tasks like invoice OCR, document extraction, or image-based scene analysis.
-
-#### `schema` (`JSONSchemaArray | JSONSchemaObject`)
-
-Defines the structure of the expected JSON output (see “JSON Schema Definition” below).
-
-#### `options` (optional)
-
-* `provider` — specifies the AI provider to use:
-
-  | Value                | Description                                                          |
-  | -------------------- | -------------------------------------------------------------------- |
-  | `"openai"`           | Use OpenAI models (e.g., GPT-4, GPT-4 Turbo)                         |
-  | `"gemini"`           | Use Google Gemini models                                             |
-  | `"anthropic"`        | Use Anthropic Claude models                                          |
-  | `"deepseek"`         | Use DeepSeek models                                                  |
-  | `"openrouter"`       | Use the OpenRouter multi-model platform                              |
-  | `{ custom: string }` | Specify a custom API provider name, such as your own backend service |
-
-* `modelId` — specifies the model ID (e.g., `"gpt-4-turbo"`, `"gemini-1.5-pro"`, `"claude-3-opus"`).
-  If not provided, the default model for the selected provider will be used.
-
----
-
-### Return Value
-
-Returns a `Promise` that resolves to the structured data object matching the defined `schema`, with a type of `R`.
-
----
-
-## JSON Schema Definition
-
-The `schema` parameter defines the structure of the expected data.
-
-### `JSONSchemaType`
-
-```ts
-type JSONSchemaType = JSONSchemaPrimitive | JSONSchemaArray | JSONSchemaObject
-```
-
-#### Primitive Type
-
-```ts
-type JSONSchemaPrimitive = {
-  type: "string" | "number" | "boolean"
-  required?: boolean
-  description: string
-}
-```
-
-#### Array Type
-
-```ts
-type JSONSchemaArray = {
-  type: "array"
-  items: JSONSchemaType
-  required?: boolean
-  description: string
-}
-```
-
-#### Object Type
-
-```ts
-type JSONSchemaObject = {
-  type: "object"
-  properties: Record<string, JSONSchemaType>
-  required?: boolean
-  description: string
+if (!Assistant.isAvailable) {
+  throw new Error("Assistant is not available for the current user")
 }
 ```
 
 ---
 
-## Example: Extracting Bill Information (Text Input)
+### 2.2 `Assistant.isPresented: boolean`
 
-Suppose you have a bill text and want to extract the amount, date, category, and location:
+#### Meaning
+
+Indicates **whether the Assistant chat page is currently visible on screen**.
+
+#### Behavior
+
+* `true`: the assistant UI is presented
+* `false`: the assistant UI is not visible
+
+This flag reflects **UI state only** and does not indicate whether a conversation exists.
+
+---
+
+### 2.3 `Assistant.hasActiveConversation: boolean`
+
+#### Meaning
+
+Indicates **whether there is an active assistant conversation instance**.
+
+#### Behavior
+
+* `true`: `startConversation` has been called and not yet stopped
+* `false`: no active conversation exists
+
+#### Relationship between flags
+
+| State                | isPresented | hasActiveConversation |
+| -------------------- | ----------- | --------------------- |
+| Idle                 | false       | false                 |
+| Conversation created | false       | true                  |
+| UI presented         | true        | true                  |
+| UI dismissed         | false       | true                  |
+| Conversation stopped | false       | false                 |
+
+---
+
+## 3. Message and Content Model
+
+The streaming API and conversation system use a unified message structure.
+
+---
+
+### 3.1 `MessageItem`
 
 ```ts
-const someBillDetails = `
-- Amount: $15.00
-- Date: 2024-03-11 14:30
-- Location: City Center Parking
-- Category: Parking
-`
+type MessageItem = {
+  role: "user" | "assistant"
+  content: MessageContent | MessageContent[]
+}
+```
 
-const prompt = `Please parse the following bill information and output structured data: ${someBillDetails}`
+#### Fields
 
-const schema: JSONSchemaObject = {
-  type: "object",
-  properties: {
-    totalAmount: {
-      type: "number",
-      required: true,
-      description: "Total bill amount"
-    },
-    category: {
-      type: "string",
-      required: true,
-      description: "Bill category"
-    },
-    date: {
-      type: "string",
-      required: false,
-      description: "Bill date"
-    },
-    location: {
-      type: "string",
-      required: false,
-      description: "Bill location"
+* `role`
+
+  * `"user"`: user input
+  * `"assistant"`: assistant output or history
+* `content`
+
+  * A single content item
+  * Or an array of content items for multimodal input
+
+---
+
+### 3.2 `MessageContent`
+
+```ts
+type MessageContent =
+  | MessageTextContent
+  | MessageImageContent
+  | MessageDocumentContent
+```
+
+Represents one unit of message content. Multiple contents may be combined in an array.
+
+---
+
+### 3.3 Text Content
+
+#### `MessageTextContent`
+
+```ts
+type MessageTextContent =
+  | string
+  | {
+      type: "text"
+      content: string
     }
-  }
-}
-
-const data = await Assistant.requestStructuredData(
-  prompt,
-  schema,
-  {
-    provider: "openai",
-    modelId: "gpt-4-turbo"
-  }
-)
-
-console.log(data)
 ```
 
-### Possible Output
+#### Notes
 
-```json
-{
-  "totalAmount": 15.00,
-  "category": "Parking",
-  "date": "2024-03-11 14:30",
-  "location": "City Center Parking"
+* The string form is a shorthand for simple cases
+* The object form is recommended when mixing multiple content types
+* Used for:
+
+  * Prompts
+  * Chat messages
+  * Instructions
+
+---
+
+### 3.4 Image Content
+
+#### `MessageImageContent`
+
+```ts
+type MessageImageContent = {
+  type: "image"
+  content: string
 }
+```
+
+#### Notes
+
+* `content` must be a **Base64 data URI**
+* Required format:
+
+```
+data:image/png;base64,...
+data:image/jpeg;base64,...
+```
+
+* Used for:
+
+  * Image understanding
+  * OCR
+  * Visual analysis
+
+---
+
+### 3.5 Document Content
+
+#### `MessageDocumentContent`
+
+```ts
+type MessageDocumentContent = {
+  type: "document"
+  content: {
+    mediaType: string
+    data: string
+  }
+}
+```
+
+#### Notes
+
+* Designed for full document ingestion
+* `mediaType` examples:
+
+  * `application/pdf`
+  * `text/plain`
+  * `application/json`
+* `data` must be Base64-encoded raw file data
+
+---
+
+## 4. Streaming API
+
+The streaming API enables real-time consumption of assistant output.
+
+---
+
+### 4.1 Stream Chunk Types
+
+#### `StreamTextChunk`
+
+```ts
+type StreamTextChunk = {
+  type: "text"
+  content: string
+}
+```
+
+* Standard textual output
+* The most common chunk type
+
+---
+
+#### `StreamReasoningChunk`
+
+```ts
+type StreamReasoningChunk = {
+  type: "reasoning"
+  content: string
+}
+```
+
+* Represents the model’s reasoning process
+* Only supported by some models
+* Suitable for:
+
+  * Debugging
+  * Explanation displays
+  * Internal inspection
+
+---
+
+#### `StreamUsageChunk`
+
+```ts
+type StreamUsageChunk = {
+  type: "usage"
+  content: {
+    totalCost: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    inputTokens: number
+    outputTokens: number
+  }
+}
+```
+
+#### Field descriptions
+
+* `totalCost`: total request cost, if available
+* `cacheReadTokens`: tokens read from cache
+* `cacheWriteTokens`: tokens written to cache
+* `inputTokens`: number of input tokens
+* `outputTokens`: number of output tokens
+
+---
+
+### 4.2 `requestStreaming`
+
+```ts
+function requestStreaming(options: {
+  systemPrompt?: string | null
+  messages: MessageItem | MessageItem[]
+  provider?: Provider
+  modelId?: string
+}): Promise<ReadableStream<StreamChunk>>
+```
+
+#### Behavior
+
+* Returns a `ReadableStream`
+* Must be consumed using `for await ... of`
+* `systemPrompt` defines model behavior but is independent of the chat UI
+
+---
+
+## 5. Structured Data Requests
+
+`requestStructuredData` allows the assistant to return JSON data that conforms to a predefined schema.
+
+(Text-only and image-assisted variants behave as previously documented; schema definitions remain unchanged.)
+
+---
+
+## 6. Conversation (Assistant Chat UI)
+
+The conversation APIs manage Scripting’s built-in assistant chat interface.
+
+---
+
+### 6.1 `startConversation`
+
+```ts
+function startConversation(options: {
+  message: string
+  images?: UIImage[]
+  autoStart?: boolean
+  systemPrompt?: string
+  modelId?: string
+  provider?: Provider
+}): Promise<void>
+```
+
+#### Behavior
+
+* Creates a new conversation instance
+* Does **not** automatically present the UI
+* Throws an error if a conversation already exists
+
+#### `systemPrompt` note
+
+* Not provided:
+
+  * Uses Scripting’s default assistant system prompt
+  * Assistant Tools are available
+* Provided:
+
+  * Replaces the default prompt
+  * **Assistant Tools become unavailable**
+
+#### `provider` and `modelId` note
+
+If you want to use a custom provider, you can pass it in here, and the user can change the provider in the assistant chat page.
+
+#### `autoStart` note
+
+* `true`: automatically send the first message
+* `false` (default): do not automatically send the first message
+
+---
+
+### 6.2 `present`
+
+```ts
+function present(): Promise<void>
+```
+
+* Presents the assistant chat UI
+* If a conversation already exists, it resumes that conversation
+
+---
+
+### 6.3 `dismiss`
+
+```ts
+function dismiss(): Promise<void>
+```
+
+* Hides the assistant UI
+* Does **not** end the conversation
+* The conversation can be presented again later
+
+---
+
+### 6.4 `stopConversation`
+
+```ts
+function stopConversation(): Promise<void>
+```
+
+* Ends the current conversation
+* Automatically dismisses the UI
+* Clears internal conversation state
+
+---
+
+## 7. Recommended Usage Flow
+
+### Typical interaction
+
+```ts
+if (!Assistant.isAvailable) return
+
+await Assistant.startConversation({
+  message: "Analyze this receipt",
+  systemPrompt: "You are a receipt analyzer.",
+  provider: "openai",
+  autoStart: true,
+})
+
+await Assistant.present()
+```
+
+### Proper cleanup
+
+```ts
+await Assistant.stopConversation()
 ```
 
 ---
 
-## Example: Parsing Invoice Information from Images
+## 8. Typical Use Cases
 
-The following example demonstrates how to use `requestStructuredData` with image input to extract structured invoice data:
-
-```ts
-const prompt = "Please extract the total amount, date, and merchant name from the following images."
-
-// const base64Data = UIImage.fromFile("/path/to/image.png").toJPEGBase64String(0.6)
-// const base64Image = `data:image/jpeg;base64,${base64Data}`
-
-const images = [
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...", // First invoice
-  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ..."      // Second invoice
-]
-
-const schema: JSONSchemaObject = {
-  type: "object",
-  properties: {
-    total: { type: "number", description: "Invoice total amount", required: true },
-    date: { type: "string", description: "Invoice date" },
-    merchant: { type: "string", description: "Merchant name" }
-  },
-  description: "Invoice information"
-}
-
-const result = await Assistant.requestStructuredData(
-  prompt,
-  images,
-  schema,
-  { provider: "gemini", modelId: "gemini-1.5-pro" }
-)
-
-console.log(result)
-```
-
-**Possible Output:**
-
-```json
-{
-  "total": 268.5,
-  "date": "2024-12-01",
-  "merchant": "Shenzhen Youxuan Supermarket"
-}
-```
-
----
-
-## Usage Notes
-
-1. **Ensure the schema is well-defined**
-   The returned data must match the defined schema; otherwise, parsing may fail.
-
-2. **Use the `required` field appropriately**
-   Fields that must always be present should have `required: true`. Optional fields may omit it.
-
-3. **Select the provider and modelId carefully**
-   If you need a specific model (e.g., GPT-4, Gemini Pro), specify it explicitly in `options`.
-
-4. **Supports OpenRouter and Custom Providers**
-
-   * `"openrouter"` allows using multiple models via the OpenRouter platform.
-   * `{ custom: "your-provider" }` lets you use your own backend AI service.
-
-5. **Supports Image Input for Multimodal Models**
-
-   * Only some models (e.g., GPT-4 Turbo, Gemini 1.5 Pro) support image input.
-   * Each image must be a valid Base64 `data:image/...;base64,` string.
-   * Avoid passing too many images at once.
-
-6. **Add proper error handling**
-
-```ts
-try {
-  const result = await Assistant.requestStructuredData(prompt, schema, {
-    provider: { custom: "my-ai-backend" },
-    modelId: "my-custom-model"
-  })
-  console.log("Parsed result:", result)
-} catch (err) {
-  console.error("Parsing failed:", err)
-}
-```
+* Receipt and invoice parsing
+* Multimodal AI analysis
+* Interactive AI assistants
+* Token and cost visualization
+* AI-driven automation workflows

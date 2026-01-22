@@ -35,8 +35,8 @@
 
 记录提醒是否已完成。
 
-* 设置为 `true` 时，会自动将 `completionDate` 设为当前时间。
-* 设置为 `false` 时，会将 `completionDate` 设为 `null`。
+- 设置为 `true` 时，会自动将 `completionDate` 设为当前时间。
+- 设置为 `false` 时，会将 `completionDate` 设为 `null`。
 
 说明：如果在其他设备完成了提醒，系统可能出现 `isCompleted = true` 但 `completionDate = null` 的情况。
 
@@ -44,8 +44,8 @@
 
 提醒被完成的时间。
 
-* 设置为某个日期时，会自动令 `isCompleted = true`。
-* 设置为 `null` 会将提醒标记为未完成。
+- 设置为某个日期时，会自动令 `isCompleted = true`。
+- 设置为 `null` 会将提醒标记为未完成。
 
 ---
 
@@ -100,9 +100,9 @@
 
 支持：
 
-* 绝对时间闹钟
-* 相对截止时间的闹钟（基于事件开始时间时使用）
-* 地理围栏位置提醒
+- 绝对时间闹钟
+- 相对截止时间的闹钟（基于事件开始时间时使用）
+- 地理围栏位置提醒
 
 ### hasAlarm: boolean
 
@@ -159,11 +159,11 @@
 
 ---
 
-### save(): Promise<void>
+### `save(): Promise<void>`
 
 保存提醒的修改。若为新建提醒，将自动添加到所属日历。
 
-### remove(): Promise<void>
+### `remove(): Promise<void>`
 
 从日历中删除该提醒事项。
 
@@ -171,25 +171,25 @@
 
 # 三、静态方法
 
-### Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>
+### `Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>`
 
 获取所有提醒，可选指定日历列表。
 
 ---
 
-### Reminder.getIncompletes(options?): Promise<Reminder[]>
+### `Reminder.getIncompletes(options?): Promise<Reminder[]>`
 
 获取未完成的提醒事项，可按截止时间与日历过滤。
 
 选项说明：
 
-* `startDate?: Date`
+- `startDate?: Date`
   仅包含截止时间在该日期之后的提醒。
 
-* `endDate?: Date`
+- `endDate?: Date`
   仅包含截止时间在该日期之前的提醒。
 
-* `calendars?: Calendar[]`
+- `calendars?: Calendar[]`
   可选指定要查询的日历。
 
 说明：
@@ -197,19 +197,19 @@
 
 ---
 
-### Reminder.getCompleteds(options?): Promise<Reminder[]>
+### `Reminder.getCompleteds(options?): Promise<Reminder[]>`
 
 获取已完成的提醒事项，可按完成日期范围与日历过滤。
 
 选项说明：
 
-* `startDate?: Date`
+- `startDate?: Date`
   仅包含完成时间在该日期之后的提醒。
 
-* `endDate?: Date`
+- `endDate?: Date`
   仅包含完成时间在该日期之前的提醒。
 
-* `calendars?: Calendar[]`
+- `calendars?: Calendar[]`
   可选指定要查询的日历。
 
 ---
@@ -228,7 +228,7 @@ reminder.dueDateComponents = new DateComponents({
   month: 10,
   day: 6,
   hour: 9,
-  minute: 30
+  minute: 30,
 })
 
 reminder.priority = 2
@@ -243,7 +243,7 @@ await reminder.save()
 reminder.dueDateComponents = new DateComponents({
   year: 2025,
   month: 10,
-  day: 6
+  day: 6,
 })
 ```
 
@@ -274,7 +274,7 @@ for (const r of reminders) {
 ```ts
 const incompletes = await Reminder.getIncompletes({
   startDate: new Date("2025-01-01"),
-  endDate: new Date("2025-01-31")
+  endDate: new Date("2025-01-31"),
 })
 ```
 
@@ -304,9 +304,9 @@ await reminder.remove()
 建议使用 `dueDateComponents` 统一处理截止时间相关逻辑。
 支持：
 
-* 仅日期
-* 完整日期与时间
-* 部分字段指定（如只指定小时与分钟）
+- 仅日期
+- 完整日期与时间
+- 部分字段指定（如只指定小时与分钟）
 
 可使用 `.isValidDate` 判断组件组合是否有效。
 

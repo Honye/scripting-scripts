@@ -1,15 +1,16 @@
-`onDropContent` 是 Scripting 提供的一个视图修饰符，用于使某个视图成为接收来自其他 App 拖入的文件、图片或文本的拖放目标。该功能特别适用于 iPadOS 和 macOS 上支持多窗口、多任务操作的场景，提升交互体验。
+`onDropContent` 是 Scripting 提供的一个视图修饰符，用于将当前视图设置为**拖放目标（Drop Target）**，以接收从其他 App 拖拽进入的文件、图片或文本内容。
 
 ---
 
-## 功能概览
+## 功能说明
 
-使用 `onDropContent` 可以：
+通过 `onDropContent`，你可以实现以下能力：
 
-* 接收从其他 App 拖拽进来的图片、文件或文本；
-* 指定仅接受特定类型的内容（使用 UTI 类型标识符）；
-* 实时感知拖拽指针是否悬停在视图上方；
-* 在内容被成功放下后处理拖入数据。
+* 接收来自其他 App 的拖拽内容
+* 使用 UTType 精确限制可接收的数据类型
+* 实时感知拖拽指针是否悬停在视图上方
+* 在内容被放下时，通过 `ItemProvider` 启动数据加载流程
+* 对安全作用域文件建立持久访问权限
 
 ---
 
@@ -21,74 +22,213 @@ onDropContent?: {
   isTarget: {
     value: boolean
     onChanged: (value: boolean) => void
-  }
-  onResult: (result: {
-    texts: string[]
-    images: UIImage[]
-    fileURLs: string[]
-  }) => void
+  } | Observable<boolean>
+  perform: (attachments: ItemProvider[]) => boolean
 }
 ```
-
-### 参数说明
-
-| 参数名        | 类型                                                        | 说明                                                                               |
-| ---------- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `types`    | `UTType[]`                                                | 可接收的内容类型标识符数组，例如 `"public.image"`、`"public.text"` 等。若拖拽内容不包含这些类型，视图将不会成为有效的放置目标。 |
-| `isTarget` | `{ value: boolean; onChanged: (value: boolean) => void }` | 表示当前拖拽是否悬停在该视图上方的绑定状态。可用于高亮或提示用户拖放目标区域。                                          |
-| `onResult` | `(result) => void`                                        | 当有效内容被放下时触发的回调函数，提供所接收到的内容结果对象。                                                  |
 
 ---
 
-## 内容结果结构
+## 参数说明
+
+### types
+
+用于指定当前视图**可以接收的内容类型列表**，类型值为 UTType 字符串。
+
+当拖拽内容不包含任意匹配的类型时：
+
+* 当前视图不会激活为放置目标
+* `isTarget` 不会发生变化
+* `perform` 不会被调用
+
+示例：
 
 ```ts
-{
-  texts: string[]
-  images: UIImage[]
-  fileURLs: string[]
-}
+types: ["public.image", "public.movie"]
 ```
 
-* **`texts`**：拖拽文本内容的字符串数组；
-* **`images`**：拖拽进来的图片，格式为 `UIImage`；
-* **`fileURLs`**：拖入文件的本地路径（字符串形式）。
+---
+
+### isTarget
+
+用于表示拖拽操作是否悬停在当前视图上方。
+
+* 当拖拽进入视图区域时，值为 `true`
+* 当拖拽移出视图区域时，值为 `false`
+
+支持以下两种形式：
+
+* 绑定对象形式
+
+  ```ts
+  {
+    value: boolean
+    onChanged: (value: boolean) => void
+  }
+  ```
+
+* Observable 形式
+
+  ```ts
+  Observable<boolean>
+  ```
+
+Observable 形式适合与 `useObservable` 搭配使用，语义更简洁。
+
+---
+
+### perform
+
+当符合 `types` 要求的内容被成功放下时触发。
+
+```ts
+perform: (attachments: ItemProvider[]) => boolean
+```
+
+* 参数 `attachments` 为 `ItemProvider` 数组
+* 每一个 `ItemProvider` 表示一个被拖入的内容项
+* 函数返回值表示是否成功处理了此次拖放操作
+
+返回值说明：
+
+* 返回 `true` 表示拖放被成功接收
+* 返回 `false` 表示未处理该拖放内容
+
+---
+
+## perform 的执行规则（重要）
+
+在 `perform` 中需要遵循以下规则：
+
+* 必须在 `perform` 函数的同步执行过程中**启动对 ItemProvider 的加载**
+* 允许使用 `Promise` / `then` 等方式延迟完成加载
+* 不允许在 `perform` 返回之后，再通过其他回调或事件启动加载
+* 返回 `false` 时，系统会认为该拖放未被接受
+
+原因说明：
+
+* 拖放内容受系统安全机制保护
+* 只有在 `perform` 执行期间，脚本才拥有对拖放数据的访问权限
+* 若未在此期间启动加载，后续将无法访问对应资源
+
+---
+
+## ItemProvider 的使用方式
+
+在 `perform` 中，开发者应当通过 `ItemProvider` 判断类型并启动加载。
+
+常见流程包括：
+
+* 使用 `hasItemConforming` 判断内容类型
+* 根据内容类型选择合适的加载方式
+* 对文件类资源获取路径并进行后续处理
 
 ---
 
 ## 示例用法
 
 ```tsx
-const [isTarget, setIsTarget] = useState(false)
+const isTarget = useObservable(false)
 
 return <VStack
   onDropContent={{
-    types: ["public.image"],
-    isTarget: {
-      value: isTarget,
-      onChanged: setIsTarget
-    },
-    onResult: (result) => {
-      console.log(`接收到 ${result.images.length} 张图片`)
+    types: ["public.image", "public.movie"],
+    isTarget: isTarget,
+    perform: (attachments) => {
+      const images: UIImage[] = []
+      const videos: string[] = []
+
+      let found = false
+
+      for (const attachment of attachments) {
+        if (attachment.hasItemConforming("public.png")) {
+          found = true
+          attachment.loadUIImage().then(image => {
+            if (image != null) {
+              images.push(image)
+            }
+          })
+        } else if (attachment.hasItemConforming("public.movie")) {
+          found = true
+          attachment.loadFilePath("public.movie").then(filePath => {
+            if (filePath != null) {
+              // 为安全作用域文件创建书签
+              FileManager.addFileBookmark(filePath)
+              videos.push(filePath)
+            }
+          })
+        }
+      }
+
+      return found
     }
   }}
 >
-  <Text>
-    {isTarget ? "请将图片拖到此处" : "拖拽一张图片进入此区域"}
-  </Text>
+  ...
 </VStack>
 ```
 
-上述示例中：
+---
 
-* 该 `VStack` 仅接收 `"public.image"` 类型的拖拽内容；
-* 当拖拽指针进入该区域时，`isTarget` 被设为 `true`，用于动态更新 UI；
-* 图片被放下后，回调函数处理拖入结果。
+## 安全作用域文件访问
+
+通过 `onDropContent` 获取的文件路径，通常属于**安全作用域资源**。
+
+这类路径在以下情况下可能失效：
+
+* `perform` 返回之后
+* App 重启
+* 脚本生命周期结束
+
+为保证后续仍可访问文件，建议在获取路径后创建文件书签。
 
 ---
 
-## 使用提示
+## FileManager.addFileBookmark
 
-* `types` 字段中的类型字符串遵循 Apple 的 [Uniform Type Identifier (UTType)](https://developer.apple.com/documentation/uniformtypeidentifiers) 规范；
-* 支持常见类型如 `"public.image"`、`"public.text"`、`"com.adobe.pdf"` 等；
-* 拖放功能在 iPad 和 Mac 上体验最佳，尤其适用于文件管理、图片收集、文档导入等场景。
+```ts
+FileManager.addFileBookmark(path: string, name?: string): string | null
+```
+
+说明：
+
+* 为指定文件或文件夹创建安全作用域书签
+* 适用于通过 `Photos`、`onDropContent` 等 API 获取的路径
+* 返回书签名称，用于后续访问或移除
+
+示例：
+
+```ts
+const bookmarkName = FileManager.addFileBookmark(filePath)
+```
+
+---
+
+## FileManager.removeFileBookmark
+
+```ts
+FileManager.removeFileBookmark(name: string): boolean
+```
+
+说明：
+
+* 移除指定名称的文件书签
+* 当不再需要访问对应文件时应及时调用
+* 返回是否成功移除
+
+示例：
+
+```ts
+FileManager.removeFileBookmark(bookmarkName)
+```
+
+---
+
+## 使用建议
+
+* 在 `types` 中尽量明确声明可接收的内容类型
+* 在 `perform` 中只负责启动加载，不要等待加载完成
+* 对图片等轻量内容可直接加载为对象
+* 对视频、音频、文档等资源优先使用文件路径
+* 对需要长期访问的文件务必创建书签
+* 在资源不再使用时移除对应书签

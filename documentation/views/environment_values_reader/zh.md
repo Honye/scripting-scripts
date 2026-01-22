@@ -22,6 +22,8 @@ type EnvironmentValues = {
     showsWidgetContainerBackground: boolean;
     isSearching: boolean;
     isPresented: boolean;
+    activityFamily: "small" | "medium";
+    tabViewBottomAccessoryPlacement: 'expanded' | 'inline';
 };
 ```
 
@@ -115,6 +117,18 @@ type EnvironmentValues = {
 说明：当前 view 是否已呈现，和 `onAppear` 回调不同，不像 `onAppear` 会多次触发。
 
 ---
+
+### 13. activityFamily
+
+类型：`"small" | "medium"`
+说明：当前LiveActivity的尺寸，同 SwiftUI 中的 `activityFamily`，用于根据些大小渲染 LiveActivity UI。
+
+---
+
+### 14. tabViewBottomAccessoryPlacement
+
+类型：`'expanded' | 'inline'`
+说明：当前 TabView 的底部辅助栏的显示方式，同 SwiftUI 中的 `tabViewBottomAccessoryPlacement`。
 
 # EnvironmentValuesReader 组件
 

@@ -27,6 +27,13 @@
     - `baseURL`（可选）：用于解析相对链接的基 URL。
   - **返回值：** 成功完成加载请求时返回 `true`。
 
+- **`loadFile(path: string, allowingReadAccessTo?: string): Promise<boolean>`**
+  - 从文件加载内容。
+  - **参数:**
+    - `path`：要加载的文件路径。
+    - `allowingReadAccessTo`（可选）：允许系统读取文件的路径，默认为 `path` 参数的值，只能读取当前的文件的内容。
+  - **返回值：** 成功完成加载请求时返回 `true`。
+
 - **`loadData(data: Data, mimeType: string, encoding: string, baseURL: string): Promise<boolean>`**
   - 从原始数据加载内容。
   - **参数:**
@@ -38,22 +45,28 @@
 
 #### 导航
 
-- **`canGoBack(): Promise<boolean>`**
+- **`canGoBack(): boolean`**
   - 检查导航历史中是否有有效的后退项。
 
-- **`canGoForward(): Promise<boolean>`**
+- **`canGoForward(): boolean`**
   - 检查导航历史中是否有有效的前进项。
 
-- **`goBack(): Promise<boolean>`**
+- **`goBack(): boolean`**
   - 导航到上一页。
 
-- **`goForward(): Promise<boolean>`**
+- **`goForward(): boolean`**
   - 导航到下一页。
 
-- **`reload(): Promise<void>`**
+- **`reload(): void`**
   - 重新加载当前页面。
 
 #### 内容交互
+
+- **`setCustomUserAgent(userAgent: string): void`**
+  - 设置自定义用户代理字符串。
+
+- **`getCustomUserAgent(): string | null`**
+  - 获取自定义用户代理字符串。
 
 - **`getHTML(): Promise<string | null>`**
   - 获取当前网页的 HTML 内容。

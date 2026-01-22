@@ -191,6 +191,30 @@ await SharedAudioSession.setPrefersNoInterruptionsFromSystemAlerts(true)
 
 ---
 
+### 9. **系统输出音量**
+
+#### `outputVolume: number`
+
+获取当前系统输出音量（范围为 0 到 1）。
+
+#### outputVolume 监听事件
+
+类型类型
+
+```ts
+type AudioSessionOutputVolumeListener = (newValue: number, oldValue: number) => void
+```
+
+##### `addOutputVolumeListener(listener: AudioSessionOutputVolumeListener): void`
+
+添加系统输出音量监听器。
+
+##### `removeOutputVolumeListener(listener: AudioSessionOutputVolumeListener): void`
+
+移除系统输出音量监听器。
+
+---
+
 ## 枚举（Enumerations）
 
 ### **AudioSessionSetActiveOptions**

@@ -37,8 +37,8 @@ Optional notes providing additional context.
 
 Indicates whether the reminder is marked as completed.
 
-* Setting this property to `true` automatically sets `completionDate` to the current date.
-* Setting it to `false` sets `completionDate` to `null`.
+- Setting this property to `true` automatically sets `completionDate` to the current date.
+- Setting it to `false` sets `completionDate` to `null`.
 
 Special consideration:
 If a reminder is completed on another device or client, `isCompleted` may be `true` while `completionDate` remains `null`.
@@ -47,8 +47,8 @@ If a reminder is completed on another device or client, `isCompleted` may be `tr
 
 The date on which the reminder was completed.
 
-* Assigning a date sets `isCompleted = true`.
-* Assigning `null` clears the completed state.
+- Assigning a date sets `isCompleted = true`.
+- Assigning `null` clears the completed state.
 
 ---
 
@@ -103,9 +103,9 @@ Indicates whether the reminder contains recurrence rules (read-only).
 A collection of alarms associated with the reminder.
 Alarms may be based on:
 
-* absolute dates
-* relative offsets
-* structured locations (geofence triggers)
+- absolute dates
+- relative offsets
+- structured locations (geofence triggers)
 
 ### hasAlarm: boolean
 
@@ -161,12 +161,12 @@ Removes a recurrence rule.
 
 ---
 
-### save(): Promise<void>
+### `save(): Promise<void>`
 
 Saves changes to the reminder.
 If the reminder has not been saved before, it is added to its associated calendar.
 
-### remove(): Promise<void>
+### `remove(): Promise<void>`
 
 Deletes the reminder from the calendar.
 
@@ -174,44 +174,44 @@ Deletes the reminder from the calendar.
 
 # 4. Static Methods
 
-### Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>
+### `Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>`
 
 Returns all reminders, optionally filtered by the specified calendars.
 
 ---
 
-### Reminder.getIncompletes(options?): Promise<Reminder[]>
+### `Reminder.getIncompletes(options?): Promise<Reminder[]>`
 
 Returns incomplete reminders filtered by due date range and/or calendar set.
 
 Options:
 
-* `startDate?: Date`
+- `startDate?: Date`
   Includes reminders whose due date is after this date.
 
-* `endDate?: Date`
+- `endDate?: Date`
   Includes reminders whose due date is before this date.
 
-* `calendars?: Calendar[]`
+- `calendars?: Calendar[]`
   Specifies which calendars to search.
 
 This method does not expand recurrence rules; it only returns reminders with concrete due dates.
 
 ---
 
-### Reminder.getCompleteds(options?): Promise<Reminder[]>
+### `Reminder.getCompleteds(options?): Promise<Reminder[]>`
 
 Returns completed reminders filtered by completion date range and/or calendar set.
 
 Options:
 
-* `startDate?: Date`
+- `startDate?: Date`
   Includes reminders completed after this date.
 
-* `endDate?: Date`
+- `endDate?: Date`
   Includes reminders completed before this date.
 
-* `calendars?: Calendar[]`
+- `calendars?: Calendar[]`
   Specifies which calendars to search.
 
 ---
@@ -230,7 +230,7 @@ reminder.dueDateComponents = new DateComponents({
   month: 10,
   day: 6,
   hour: 9,
-  minute: 30
+  minute: 30,
 })
 
 reminder.priority = 2
@@ -245,7 +245,7 @@ await reminder.save()
 reminder.dueDateComponents = new DateComponents({
   year: 2025,
   month: 10,
-  day: 6
+  day: 6,
 })
 ```
 
@@ -276,7 +276,7 @@ for (const r of reminders) {
 ```ts
 const incompletes = await Reminder.getIncompletes({
   startDate: new Date("2025-01-01"),
-  endDate: new Date("2025-01-31")
+  endDate: new Date("2025-01-31"),
 })
 ```
 
@@ -306,10 +306,10 @@ await reminder.remove()
 Using `dueDateComponents` is recommended for all due-date handling.
 It supports:
 
-* date-only values
-* date with time
-* partial components
-* validity checks through `isValidDate`
+- date-only values
+- date with time
+- partial components
+- validity checks through `isValidDate`
 
 ### Recurrence
 

@@ -22,6 +22,8 @@ type EnvironmentValues = {
     showsWidgetContainerBackground: boolean;
     isSearching: boolean;
     isPresented: boolean;
+    activityFamily: "small" | "medium";
+    tabViewBottomAccessoryPlacement: 'expanded' | 'inline';
 };
 ```
 
@@ -112,6 +114,20 @@ Whether the view is currently in a searching state triggered by `searchable`.
 
 Type: `boolean`
 Whether the view is currently being shown, unlike `onAppear` which is called every time the view appears, `isPresented` is called only once when the view is first shown.
+
+---
+
+### 13. activityFamily
+
+Type: `"small" | "medium"`
+The current LiveActivity size, similar to SwiftUI's `activityFamily`, used to determine the size of LiveActivity UI.
+
+---
+
+### 14. tabViewBottomAccessoryPlacement
+
+Type: `'expanded' | 'inline'`
+The current TabView bottom accessory placement, similar to SwiftUI's `tabViewBottomAccessoryPlacement`.
 
 ---
 

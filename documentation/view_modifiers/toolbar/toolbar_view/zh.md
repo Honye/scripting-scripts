@@ -70,7 +70,7 @@ Scripting 的工具栏系统不仅支持直接在 `toolbar` 属性中传入 `Too
 ```tsx
 <Toolbar>
   <ToolbarItem placement="navigation">
-    <Button title="返回" action={() => navigation.pop()} />
+    <Button title="返回" action={Navigation.useDismiss()} />
   </ToolbarItem>
 </Toolbar>
 ```
@@ -175,7 +175,7 @@ declare const DefaultToolbarItem: FunctionComponent<DefaultToolbarItemProps>;
 
         {/* 左侧导航按钮 */}
         <ToolbarItem placement="navigation">
-          <Button title="返回" action={navigation.pop} />
+          <Button title="返回" action={Navigation.useDismiss()} />
         </ToolbarItem>
 
         {/* 标题 */}

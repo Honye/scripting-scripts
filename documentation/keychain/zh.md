@@ -11,7 +11,7 @@
 
 ---
 
-## 一、Keychain 的脚本作用域隔离规则（重要）
+## 一、Keychain 的脚本作用域隔离规则
 
 在 Scripting 中，`Keychain` 采用 **按脚本隔离（Per-Script Sandbox）** 的安全模型：
 

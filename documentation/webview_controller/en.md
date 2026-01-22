@@ -71,6 +71,16 @@ await webView.present({ navigationTitle: 'Filtered WebView' })
 
 ## Methods
 
+### `loadFile(path: string, allowingReadAccessTo?: string): Promise<boolean>`
+
+Loads a web page from a local file.
+
+* **Parameters**:
+
+  * `path`: The path to the local file.
+  * `allowingReadAccessTo` (optional): A directory to allow read access to.
+* **Returns**: `Promise<boolean>` — Resolves to `true` if the load succeeds.
+
 ### `loadURL(url: string): Promise<boolean>`
 
 Loads a webpage by its URL.

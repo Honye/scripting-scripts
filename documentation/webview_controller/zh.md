@@ -82,6 +82,16 @@ await webView.present({ navigationTitle: '已过滤的网页视图' })
 
 ---
 
+### `loadFile(path: string, allowingReadAccessTo?: string): Promise<boolean>`
+
+加载文件内容作为网页。
+
+* **参数**:
+
+  * `path`：要加载的文件路径。
+  * `allowingReadAccessTo`（可选）：允许读取文件的路径，默认为 `path`。
+* **返回**：`Promise<boolean>`
+
 ### `loadHTML(html: string, baseURL?: string): Promise<boolean>`
 
 加载原始 HTML 字符串内容。

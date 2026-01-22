@@ -23,10 +23,10 @@ declare const List: FunctionComponent<ListProps>
 
 `selection` 通过 `Observable` 的泛型类型自动区分选择模式：
 
-| 模式 | Observable 类型          | 说明         |           |
-| -- | ---------------------- | ---------- | --------- |
+| 模式 | Observable 类型          | 说明         | 
+| -- | ---------------------- | ---------- |
 | 单选 | `Observable<string \| null>`     | 仅允许选中一个元素 |
-| 多选 | `Observable<string[]>` | 允许同时选中多个元素 |           |
+| 多选 | `Observable<string[]>` | 允许同时选中多个元素 |
 
 ---
 

@@ -27,6 +27,13 @@ The `WebViewController` and `WebView` APIs provide tools to display and interact
         - `baseURL` (optional): Base URL for resolving relative links.
     - **Returns:** A promise resolving to `true` if the load request completes successfully.
 
+- **`loadFile(path: string, allowingReadAccessTo?: string): Promise<boolean>`**
+    - Loads content from a file.
+    - **Parameters:**
+        - `path`: The file path to load.
+        - `allowingReadAccessTo` (optional): Path to allow read access to, defaults to `path`, only the current file can be read.
+    - **Returns:** A promise resolving to `true` if the load request completes successfully.
+
 - **`loadData(data: Data, mimeType: string, encoding: string, baseURL: string): Promise<boolean>`**
     - Loads content from raw data.
     - **Parameters:**
@@ -38,22 +45,28 @@ The `WebViewController` and `WebView` APIs provide tools to display and interact
 
 #### Navigation
 
-- **`canGoBack(): Promise<boolean>`**
+- **`canGoBack(): boolean`**
     - Checks if there is a valid back item in the navigation history.
 
-- **`canGoForward(): Promise<boolean>`**
+- **`canGoForward(): boolean`**
     - Checks if there is a valid forward item in the navigation history.
 
-- **`goBack(): Promise<boolean>`**
+- **`goBack(): boolean`**
     - Navigates to the previous page.
 
-- **`goForward(): Promise<boolean>`**
+- **`goForward(): boolean`**
     - Navigates to the next page.
 
-- **`reload(): Promise<void>`**
+- **`reload(): void`**
     - Reloads the current page.
 
 #### Content Interaction
+
+- **`setCustomUserAgent(userAgent: string): void`**
+    - Sets a custom user agent for the WebView.
+
+- **`getCustomUserAgent(): string | null`**
+    - Gets the custom user agent for the WebView.
 
 - **`getHTML(): Promise<string | null>`**
     - Retrieves the current webpage's HTML content.

@@ -58,31 +58,29 @@ activitySystemActionForegroundColor?: Color | {
 
 ---
 
-# 正确示例：在 Live Activity UI Builder 中使用
+# 示例：在 Live Activity UI Builder 中使用
 
 Live Activity 的 UI builder 必须返回包含多个区域（content / compactLeading / compactTrailing / minimal等）的对象结构。
 
 以下示例展示了如何在 **content** 区域中使用这两个修饰符：
 
 ```tsx
-function ActivityUIBuilder() {
-  return {
-    content: <VStack
-      activityBackgroundTint={"blue"}
-      activitySystemActionForegroundColor={"white"}
-    >
-      <Text>Workout Progress</Text>
-      <Text>Distance: 1.2 km</Text>
-      <Text>Time: 08:32</Text>
-    </VStack>,
-
-    compactLeading: <Text>1.2 km</Text>,
-    compactTrailing: <Text>08:32</Text>,
-    minimal: <Text>Run</Text>,
-    expanded: {
-      center: <Text>08:32</Text>,
+function ActivityView() {
+  <LiveActivityUI
+    content={
+      <ContentView
+        activityBackgroundTint={"blue"}
+        activitySystemActionForegroundColor={"white"}
+      />
     }
-  }
+    compactLeading={...}
+    compactTrailing={...}
+    minimal={<Image systemName="clock" />}
+  >
+    <LiveActivityUIExpandedCenter>
+      <ContentView />
+    </LiveActivityUIExpandedCenter>
+  </LiveActivityUI>
 }
 ```
 

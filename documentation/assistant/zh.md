@@ -1,299 +1,459 @@
-`Assistant` 模块提供了一套强大的 API，允许用户通过智能助手请求结构化的 JSON 数据。该功能可用于自动化任务，例如提取账单信息、分类支出、解析文本、识别图像内容等。
+`Assistant` 模块是 Scripting 内置的 AI 交互与助手系统，提供三类核心能力：
+
+1. **结构化数据请求（JSON Schema）**
+2. **低层流式 AI 输出（Streaming）**
+3. **系统级助手聊天页面（Conversation UI）**
+
+该模块统一封装了多 AI Provider 的差异，使脚本可以用一致的方式访问不同模型能力。
 
 ---
 
-## `isAvailable` 变量
+## 一、Provider（AI 提供商）
 
-### 描述
+### `Assistant.Provider`
 
-表示 Assistant API 当前是否可用。
+```ts
+type Provider =
+  | "openai"
+  | "gemini"
+  | "anthropic"
+  | "deepseek"
+  | "openrouter"
+  | { custom: string }
+```
 
-* 此状态取决于所选的 AI 提供商及其 API 密钥是否已配置。
-* 如果未提供有效的 API Key，Assistant API 将无法使用。
+#### 说明
+
+* 表示 Assistant 使用的 AI 服务提供商
+* 内置 Provider 覆盖主流平台
+* `{ custom: string }` 用于：
+
+  * 自建后端
+  * 私有代理
+  * 公司内部 AI 服务
+
+在 **对话模式（Conversation）** 下，用户可在 UI 中切换 Provider。
 
 ---
 
-## `requestStructuredData` 方法
+## 二、可用性与状态变量
 
-### 描述
+### 1. `Assistant.isAvailable: boolean`
 
-`requestStructuredData` 允许用户发送自然语言提示，并根据定义好的 JSON Schema 接收结构化数据响应。
-该方法现已支持两种形式：
+#### 含义
 
-1. 仅文本输入版本
-2. 带图片输入版本 —— 可同时传入多张图片，让 AI 结合视觉内容进行结构化分析。
+表示 **当前用户是否拥有 Assistant 的使用权限**。
 
----
+#### 说明
 
-### 语法 1：文本输入版本
+* 该值由 Scripting 内部统一判定
+* 可能受以下因素影响：
 
-```ts
-function requestStructuredData<R>(
-  prompt: string,
-  schema: JSONSchemaArray | JSONSchemaObject,
-  options?: {
-    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | { custom: string }
-    modelId?: string
-  }
-): Promise<R>
-```
+  * 用户权限（如订阅、功能开关）
+  * Assistant 功能是否对当前用户开放
+* **不直接等同于 API Key 是否配置**
+* 当该值为 `false` 时：
 
-### 语法 2：带图片输入版本
+  * 所有 Assistant 请求都应被视为不可用
+  * 调用相关方法可能抛出错误
+
+#### 使用建议
 
 ```ts
-function requestStructuredData<R>(
-  prompt: string,
-  images: string[],
-  schema: JSONSchemaArray | JSONSchemaObject,
-  options?: {
-    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | { custom: string }
-    modelId?: string
-  }
-): Promise<R>
-```
-
----
-
-### 参数说明
-
-#### `prompt` (`string`)
-
-自然语言提示，用于描述要解析的内容或任务。
-例如：
-
-> “请从以下账单中提取金额、日期、类别和地点。”
-
-#### `images` (`string[]`)
-
-要提供给模型的输入图片列表。每个元素应为 **Base64 数据 URI 格式** 的字符串，例如：
-
-```
-data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
-```
-
-* 允许多张图片，但**不建议一次传入过多图片**，否则可能导致请求体过大或超时。
-* 可用于 OCR 账单识别、发票解析、图像场景分析等任务。
-
-#### `schema` (`JSONSchemaArray | JSONSchemaObject`)
-
-定义返回的 JSON 数据结构（参见下方 “JSON Schema 定义”）。
-
-#### `options`（可选）
-
-* `provider`：
-
-  指定要使用的 AI 提供商。支持以下值：
-
-  | 值                    | 说明                                |
-  | -------------------- | --------------------------------- |
-  | `"openai"`           | 使用 OpenAI 模型（如 GPT-4、GPT-4-Turbo） |
-  | `"gemini"`           | 使用 Google Gemini 模型               |
-  | `"anthropic"`        | 使用 Anthropic Claude 系列            |
-  | `"deepseek"`         | 使用 DeepSeek 模型                    |
-  | `"openrouter"`       | 使用 OpenRouter 平台（可聚合多模型）          |
-  | `{ custom: string }` | 指定自定义的 API 提供商名称，例如自建代理服务         |
-
-* `modelId`：
-
-  指定模型 ID（如 `"gpt-4-turbo"`、`"gemini-1.5-pro"`、`"claude-3-opus"` 等）。
-  如果未指定，则会自动使用应用中配置的该提供商的默认模型。
-
----
-
-### 返回值
-
-返回一个 `Promise`，解析为符合 `schema` 所定义结构的 JSON 数据，类型为 `R`。
-
----
-
-## JSON Schema 定义
-
-`schema` 参数定义了返回数据的结构类型。
-
-### `JSONSchemaType`
-
-```ts
-type JSONSchemaType = JSONSchemaPrimitive | JSONSchemaArray | JSONSchemaObject
-```
-
-#### 原始类型（Primitive）
-
-```ts
-type JSONSchemaPrimitive = {
-  type: "string" | "number" | "boolean"
-  required?: boolean
-  description: string
-}
-```
-
-#### 数组类型（Array）
-
-```ts
-type JSONSchemaArray = {
-  type: "array"
-  items: JSONSchemaType
-  required?: boolean
-  description: string
-}
-```
-
-#### 对象类型（Object）
-
-```ts
-type JSONSchemaObject = {
-  type: "object"
-  properties: Record<string, JSONSchemaType>
-  required?: boolean
-  description: string
+if (!Assistant.isAvailable) {
+  throw new Error("当前用户无法使用 Assistant")
 }
 ```
 
 ---
 
-## 示例：提取账单信息（文本输入）
+### 2. `Assistant.isPresented: boolean`
 
-假设你有一段账单文本，想要提取金额、日期、类别和地点：
+#### 含义
+
+表示 **Assistant 聊天页面是否正在屏幕上展示**。
+
+#### 行为说明
+
+* `true`：
+
+  * 助手 UI 当前处于可见状态
+* `false`：
+
+  * 助手 UI 未展示（可能尚未 present，或已 dismiss）
+
+#### 重要区别
+
+* `isPresented` **只反映 UI 状态**
+* 并不表示是否存在对话
+
+---
+
+### 3. `Assistant.hasActiveConversation: boolean`
+
+#### 含义
+
+表示 **当前是否存在一个正在进行中的助手会话**。
+
+#### 行为说明
+
+* `true`：
+
+  * 已调用 `startConversation`
+  * 会话尚未被 `stopConversation`
+* `false`：
+
+  * 当前没有活跃会话
+
+#### 与 `isPresented` 的关系
+
+| 状态        | isPresented | hasActiveConversation |
+| --------- | ----------- | --------------------- |
+| 未开始       | false       | false                 |
+| 已创建但未展示   | false       | true                  |
+| 已展示       | true        | true                  |
+| dismiss 后 | false       | true                  |
+| stop 后    | false       | false                 |
+
+---
+
+## 三、消息与内容模型（Message System）
+
+Assistant 的流式请求与对话 API 使用统一的消息结构。
+
+---
+
+### 1. `MessageItem`
 
 ```ts
-const someBillDetails = `
-- 金额：$15.00
-- 日期：2024-03-11 14:30
-- 地点：城市中心停车场
-- 类别：停车
-`
+type MessageItem = {
+  role: "user" | "assistant"
+  content: MessageContent | MessageContent[]
+}
+```
 
-const prompt = `请解析以下账单信息并输出结构化数据：${someBillDetails}`
+#### 字段说明
 
-const schema: JSONSchemaObject = {
-  type: "object",
-  properties: {
-    totalAmount: {
-      type: "number",
-      required: true,
-      description: "账单总金额"
-    },
-    category: {
-      type: "string",
-      required: true,
-      description: "账单类别"
-    },
-    date: {
-      type: "string",
-      required: false,
-      description: "账单日期"
-    },
-    location: {
-      type: "string",
-      required: false,
-      description: "账单地点"
+* `role`
+
+  * `"user"`：用户输入
+  * `"assistant"`：模型输出（历史消息）
+* `content`
+
+  * 单个内容
+  * 或多个内容组成的数组（多模态）
+
+---
+
+### 2. `MessageContent`（联合类型）
+
+```ts
+type MessageContent =
+  | MessageTextContent
+  | MessageImageContent
+  | MessageDocumentContent
+```
+
+---
+
+### 3. 文本内容
+
+#### `MessageTextContent`
+
+```ts
+type MessageTextContent =
+  | string
+  | {
+      type: "text"
+      content: string
     }
-  }
-}
-
-const data = await Assistant.requestStructuredData(
-  prompt,
-  schema,
-  {
-    provider: "openai",
-    modelId: "gpt-4-turbo"
-  }
-)
-
-console.log(data)
 ```
 
-### 可能的输出结果：
+#### 说明
 
-```json
-{
-  "totalAmount": 15.00,
-  "category": "停车",
-  "date": "2024-03-11 14:30",
-  "location": "城市中心停车场"
+* 最常用的内容类型
+* 可直接使用字符串（语法糖）
+* 在多内容数组中，建议使用对象形式以保持一致性
+
+---
+
+### 4. 图片内容
+
+#### `MessageImageContent`
+
+```ts
+type MessageImageContent = {
+  type: "image"
+  content: string
 }
+```
+
+#### 说明
+
+* `content` 必须是 **Base64 Data URI**
+* 格式要求：
+
+```
+data:image/png;base64,xxxx
+data:image/jpeg;base64,xxxx
+```
+
+* 用于：
+
+  * 图片理解
+  * OCR
+  * 场景识别
+
+---
+
+### 5. 文档内容
+
+#### `MessageDocumentContent`
+
+```ts
+type MessageDocumentContent = {
+  type: "document"
+  content: {
+    mediaType: string
+    data: string
+  }
+}
+```
+
+#### 说明
+
+* 用于向模型提供完整文档数据
+* `mediaType` 示例：
+
+  * `"application/pdf"`
+  * `"text/plain"`
+  * `"application/json"`
+* `data` 为 **Base64 编码的原始文件数据**
+
+---
+
+## 四、流式输出（Streaming API）
+
+用于实时消费模型输出，适合聊天、逐字展示、调试和分析。
+
+---
+
+### 1. Stream Chunk 类型
+
+#### `StreamTextChunk`
+
+```ts
+type StreamTextChunk = {
+  type: "text"
+  content: string
+}
+```
+
+* 普通文本输出
+* 最常见的 chunk 类型
+
+---
+
+#### `StreamReasoningChunk`
+
+```ts
+type StreamReasoningChunk = {
+  type: "reasoning"
+  content: string
+}
+```
+
+* 模型推理过程
+* 仅部分模型支持
+* 可用于：
+
+  * 调试
+  * 解释性展示
+  * 隐藏或单独展示推理链
+
+---
+
+#### `StreamUsageChunk`
+
+```ts
+type StreamUsageChunk = {
+  type: "usage"
+  content: {
+    totalCost: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    inputTokens: number
+    outputTokens: number
+  }
+}
+```
+
+#### 字段说明
+
+* `totalCost`
+
+  * 本次请求的总费用（如可用）
+* `cacheReadTokens / cacheWriteTokens`
+
+  * 用于支持模型缓存的统计信息
+* `inputTokens`
+
+  * 输入 Token 数量
+* `outputTokens`
+
+  * 输出 Token 数量
+
+---
+
+### 2. `requestStreaming`
+
+```ts
+function requestStreaming(options: {
+  systemPrompt?: string | null
+  messages: MessageItem | MessageItem[]
+  provider?: Provider
+  modelId?: string
+}): Promise<ReadableStream<StreamChunk>>
+```
+
+#### 使用说明
+
+* 返回一个 `ReadableStream`
+* 需使用 `for await ... of` 消费
+* `systemPrompt`：
+
+  * 用于设定模型角色
+  * 与对话 UI 无关
+
+---
+
+## 五、结构化数据请求（requestStructuredData）
+
+用于从自然语言或多模态输入中 **直接生成符合 Schema 的 JSON 数据**。
+
+（Schema 定义此处略，与前文保持一致）
+
+---
+
+## 六、对话式助手（Conversation API）
+
+用于展示 **系统级 Assistant 聊天页面**。
+
+---
+
+### 1. `startConversation`
+
+```ts
+function startConversation(options: {
+  message: string
+  images?: UIImage[]
+  autoStart?: boolean
+  systemPrompt?: string
+  modelId?: string
+  provider?: Provider
+}): Promise<void>
+```
+
+#### 行为说明
+
+* 创建一个新的对话实例
+* **不会自动展示 UI**
+* 若已有活跃会话：
+
+  * 会抛出错误
+  * 必须先调用 `stopConversation`
+
+#### `systemPrompt` 特别说明
+
+* 不传入：
+
+  * 使用 Scripting 内置 Assistant Prompt
+  * Assistant Tools 可用
+* 传入自定义 Prompt：
+
+  * **Assistant Tools 将不可用**
+  * 适用于纯模型对话场景
+
+#### `provider` 和 `modelId` 特别说明
+
+* 用于指定AI提供商和模型，用户可以在对话 UI 中切换
+
+### `autoStart` 特别说明
+
+* `true`: 自动发送第一条消息
+* `false` (默认): 不自动发送
+
+---
+
+### 2. `present`
+
+```ts
+function present(): Promise<void>
+```
+
+* 展示 Assistant 聊天页面
+* 若已有会话：
+
+  * 会继续当前会话
+* 若无会话：
+
+  * 不会自动创建
+
+---
+
+### 3. `dismiss`
+
+```ts
+function dismiss(): Promise<void>
+```
+
+* 仅关闭 UI
+* **不会结束会话**
+* 可稍后再次 `present`
+
+---
+
+### 4. `stopConversation`
+
+```ts
+function stopConversation(): Promise<void>
+```
+
+* 结束当前会话
+* 自动调用 `dismiss`
+* 清理内部对话状态
+
+---
+
+## 七、推荐使用流程
+
+### 标准交互流程
+
+```ts
+if (!Assistant.isAvailable) return
+
+await Assistant.startConversation({
+  message: "帮我分析这张账单",
+  systemPrompt: "你是一个财务分析师，你的任务是帮助用户分析账单。",
+  provider: "openai",
+  autoStart: true,
+})
+
+await Assistant.present()
+```
+
+### 完整结束流程
+
+```ts
+await Assistant.stopConversation()
 ```
 
 ---
 
-## 示例：解析图片中的发票信息
+## 八、适用场景总结
 
-以下示例展示如何通过带图片输入的 `requestStructuredData` 方法，提取发票中的结构化数据：
-
-```ts
-const prompt = "请从以下图片中提取发票金额、开票日期和商家名称"
-
-// const base64Data = UIImage.fromFile("/path/to/image.png").toJPEGBase64String(0.6)
-// const base64Image = `data:image/jpeg;base64,${base64Data}`
-
-const images = [
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...", // 第一张发票图
-  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ..."      // 第二张发票图
-]
-
-const schema: JSONSchemaObject = {
-  type: "object",
-  properties: {
-    total: { type: "number", description: "发票总金额", required: true },
-    date: { type: "string", description: "发票日期" },
-    merchant: { type: "string", description: "商家名称" }
-  },
-  description: "发票信息"
-}
-
-const result = await Assistant.requestStructuredData(
-  prompt,
-  images,
-  schema,
-  { provider: "gemini", modelId: "gemini-1.5-pro" }
-)
-
-console.log(result)
-```
-
-**可能的输出：**
-
-```json
-{
-  "total": 268.5,
-  "date": "2024-12-01",
-  "merchant": "深圳市优选超市"
-}
-```
-
----
-
-## 使用注意事项
-
-1. **确保 `schema` 定义合理**
-   返回的数据结构必须与定义的 schema 匹配，否则可能解析失败。
-
-2. **合理设置 `required` 字段**
-   对于必须存在的字段，务必设置 `required: true`；可选字段可省略。
-
-3. **明确选择 provider 和 modelId**
-   若需使用特定模型（如 GPT-4、Gemini Pro），应通过 `options` 参数明确指定。
-
-4. **支持 OpenRouter 与自定义 Provider**
-
-   * `"openrouter"` 允许使用 OpenRouter 平台聚合的多种模型。
-   * `{ custom: "your-provider" }` 可用于自定义后端 API。
-
-5. **支持图片输入（多模态解析）**
-
-   * 仅部分模型（如 `gpt-4-turbo`、`gemini-1.5-pro`）支持图像输入。
-   * 图片必须为 Base64 编码的 `data:image/...;base64,` 格式。
-   * 不建议一次上传过多图片，以避免超时。
-
-6. **建议加入错误处理逻辑**
-
-```ts
-try {
-  const result = await Assistant.requestStructuredData(prompt, schema, {
-    provider: { custom: "my-ai-backend" },
-    modelId: "my-custom-model"
-  })
-  console.log("解析结果：", result)
-} catch (err) {
-  console.error("解析失败：", err)
-}
-```
+* 账单 / 发票 / 文档解析
+* 多模态 AI 分析
+* 交互式智能助手
+* 可视化 Token / 成本监控
+* AI 驱动的自动化脚本

@@ -73,27 +73,27 @@ Specifies the foreground (text/icon) color of the system’s auxiliary action bu
 
 ---
 
-# Correct Usage Example (Content Only)
+# Usage Example (Content Only)
 
 These modifiers must be applied to the **content** view inside your Live Activity UI builder:
 
 ```tsx
 function ActivityView() {
-  return {
-    content: <VStack
-      activityBackgroundTint={"blue"}
-      activitySystemActionForegroundColor={"white"}
-    >
-      <Text>Workout Progress</Text>
-      <Text>Distance: 1.2 km</Text>
-      <Text>Time: 08:32</Text>
-    </VStack>,
-
-    compactLeading: <Text>1.2 km</Text>,
-    compactTrailing: <Text>08:32</Text>,
-    minimal: <Text>Run</Text>,
-    expanded: { ... }
-  }
+  <LiveActivityUI
+    content={
+      <ContentView
+        activityBackgroundTint={"blue"}
+        activitySystemActionForegroundColor={"white"}
+      />
+    }
+    compactLeading={...}
+    compactTrailing={...}
+    minimal={<Image systemName="clock" />}
+  >
+    <LiveActivityUIExpandedCenter>
+      <ContentView />
+    </LiveActivityUIExpandedCenter>
+  </LiveActivityUI>
 }
 ```
 

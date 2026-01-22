@@ -1,15 +1,16 @@
-The `onDropContent` view modifier allows a view in your script to act as a drop target, accepting files, images, or text dragged in from other apps. This makes it easy to build interactive interfaces that respond to drag-and-drop gestures for your script.
+`onDropContent` is a view modifier provided by Scripting that allows a view to act as a **drop target**, receiving files, images, or text dragged in from other applications.
 
 ---
 
 ## Overview
 
-Use `onDropContent` to:
+With `onDropContent`, you can:
 
-* Accept content (e.g., images or files) dragged into your view.
-* Restrict accepted data types using **Uniform Type Identifiers (UTIs)**.
-* Track when the drag cursor enters or exits the drop area.
-* Handle the dropped content through a callback.
+- Receive drag-and-drop content from other apps
+- Restrict acceptable content using UTType identifiers
+- Track whether a drag operation is hovering over the view
+- Start loading dropped content through `ItemProvider`
+- Establish persistent access to security-scoped files when needed
 
 ---
 
@@ -21,66 +22,213 @@ onDropContent?: {
   isTarget: {
     value: boolean
     onChanged: (value: boolean) => void
-  }
-  onResult: (result: {
-    texts: string[]
-    images: UIImage[]
-    fileURLs: string[]
-  }) => void
+  } | Observable<boolean>
+  perform: (attachments: ItemProvider[]) => boolean
 }
 ```
 
-### Parameters
-
-| Property   | Type                                                      | Description                                                                                                                                                                                                                     |
-| ---------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `types`    | `UTType[]`                                                | A list of Uniform Type Identifiers (e.g., `"public.image"`, `"public.text"`) that specifies which content types this view can accept. If the dragged content does not match these types, the view does not respond to the drop. |
-| `isTarget` | `{ value: boolean; onChanged: (value: boolean) => void }` | A binding object that reflects whether the drag operation is currently hovering over the view. Use this to update UI appearance (e.g., highlight the drop area).                                                                |
-| `onResult` | `(result) => void`                                        | A callback that provides the dropped content when a valid drop occurs. The result includes text, images, and file URLs if available.                                                                                            |
-
 ---
 
-## Result Object Structure
+## Parameters
+
+### types
+
+Specifies the list of content types that the view can accept, expressed as UTType strings.
+
+If the drag operation does not contain any of the specified types:
+
+- The view does not activate as a drop target
+- `isTarget` does not update
+- `perform` is not called
+
+Example:
 
 ```ts
-{
-  texts: string[]
-  images: UIImage[]
-  fileURLs: string[]
-}
+types: ["public.image", "public.movie"]
 ```
-
-* **`texts`** – Plain text strings extracted from the drop.
-* **`images`** – Dropped images as `UIImage` instances.
-* **`fileURLs`** – Local file paths of dropped files.
 
 ---
 
-## Example
+### isTarget
+
+Indicates whether the drag operation is currently hovering over the view.
+
+- The value is `true` when the drag enters the view’s area
+- The value is `false` when the drag exits the area
+
+Two forms are supported:
+
+- Binding object form
+
+  ```ts
+  {
+    value: boolean
+    onChanged: (value: boolean) => void
+  }
+  ```
+
+- Observable form
+
+  ```ts
+  Observable<boolean>
+  ```
+
+The observable form works well with `useObservable` and provides a more concise reactive binding.
+
+---
+
+### perform
+
+Called when content matching the specified `types` is dropped onto the view.
+
+```ts
+perform: (attachments: ItemProvider[]) => boolean
+```
+
+- `attachments` is an array of `ItemProvider`
+- Each `ItemProvider` represents one dropped item
+- The return value indicates whether the drop was successfully handled
+
+Return value semantics:
+
+- Return `true` to indicate the drop was accepted
+- Return `false` to indicate the drop was not handled
+
+---
+
+## Execution Rules for perform
+
+The following rules must be followed inside `perform`:
+
+- Loading of `ItemProvider` contents must be **started synchronously within the execution scope of `perform`**
+- Asynchronous completion is allowed using `Promise` or `then`
+- Loading must not be initiated later from a different callback or event
+- If `perform` returns `false`, the system treats the drop as unhandled
+
+Reasoning:
+
+- Dropped content is protected by system security rules
+- Access to the dropped payload is only valid while `perform` is executing
+- If loading does not begin within this scope, the content may no longer be accessible
+
+---
+
+## Working with ItemProvider
+
+Within `perform`, you should inspect each `ItemProvider` and start loading based on its capabilities.
+
+Typical steps include:
+
+- Checking type conformance using `hasItemConforming`
+- Selecting an appropriate loading method
+- Handling files, images, or text accordingly
+
+---
+
+## Example Usage
 
 ```tsx
-const [isTarget, setIsTarget] = useState(false)
+const isTarget = useObservable(false)
 
 return <VStack
   onDropContent={{
-    types: ["public.image"],
-    isTarget: {
-      value: isTarget,
-      onChanged: setIsTarget
-    },
-    onResult: (result) => {
-      console.log(`Received ${result.images.length} image(s)`)
+    types: ["public.image", "public.movie"],
+    isTarget: isTarget,
+    perform: (attachments) => {
+      const images: UIImage[] = []
+      const videos: string[] = []
+
+      let found = false
+
+      for (const attachment of attachments) {
+        if (attachment.hasItemConforming("public.png")) {
+          found = true
+          attachment.loadUIImage().then(image => {
+            if (image != null) {
+              images.push(image)
+            }
+          })
+        } else if (attachment.hasItemConforming("public.movie")) {
+          found = true
+          attachment.loadFilePath("public.movie").then(filePath => {
+            if (filePath != null) {
+              // Create a bookmark for the security-scoped file
+              FileManager.addFileBookmark(filePath)
+              videos.push(filePath)
+            }
+          })
+        }
+      }
+
+      return found
     }
   }}
 >
-  <Text>
-    {isTarget ? "Drop here!" : "Drag an image into this area."}
-  </Text>
+  ...
 </VStack>
 ```
 
-In this example:
+---
 
-* The `VStack` accepts dropped images (`"public.image"`).
-* The UI updates when the cursor hovers over the drop area.
-* When an image is dropped, the count is logged.
+## Security-Scoped File Access
+
+File paths obtained via `onDropContent` are typically **security-scoped resources**.
+
+These paths may become invalid when:
+
+- `perform` returns
+- The app restarts
+- The script lifecycle ends
+
+To retain long-term access, you should create a file bookmark as soon as the path is obtained.
+
+---
+
+## FileManager.addFileBookmark
+
+```ts
+FileManager.addFileBookmark(path: string, name?: string): string | null
+```
+
+Description:
+
+- Creates a security-scoped bookmark for a file or folder
+- Intended for paths obtained via APIs such as `Photos` or `onDropContent`
+- Returns the bookmark name, or `null` if creation fails
+
+Example:
+
+```ts
+const bookmarkName = FileManager.addFileBookmark(filePath)
+```
+
+---
+
+## FileManager.removeFileBookmark
+
+```ts
+FileManager.removeFileBookmark(name: string): boolean
+```
+
+Description:
+
+- Removes a previously created file bookmark
+- Should be called when access to the file is no longer needed
+- Returns whether the removal was successful
+
+Example:
+
+```ts
+FileManager.removeFileBookmark(bookmarkName)
+```
+
+---
+
+## Usage Recommendations
+
+- Specify `types` as precisely as possible
+- Use `perform` only to start loading, not to wait for results
+- Load images and lightweight data as objects when appropriate
+- Prefer file paths for large resources such as videos or documents
+- Create bookmarks for files that require long-term access
+- Remove bookmarks when the associated files are no longer needed

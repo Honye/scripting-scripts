@@ -10,7 +10,7 @@ All data is protected using the system-level Keychain security mechanism.
 
 ---
 
-## 1. Per-Script Keychain Scope (Important)
+## 1. Per-Script Keychain Scope
 
 In Scripting, `Keychain` uses a **per-script isolation model**.
 

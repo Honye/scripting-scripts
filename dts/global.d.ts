@@ -1,6 +1,13 @@
-import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility } from "scripting"
+import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream } from "scripting"
 
 declare global {
+  type Without<T, U> = {
+    [P in Exclude<keyof T, keyof U>]?: never
+  }
+
+  type XOR<T, U> =
+    | (T & Without<U, T>)
+    | (U & Without<T, U>)
 
   /**
    * The console object provides access to the debugging console pop-up view.
@@ -44,9 +51,42 @@ declare global {
    */
   namespace Device {
     /**
+     * A type that represents the orientation of the device.
+     */
+    type Orientation =
+      | "portrait"
+      | "portraitUpsideDown"
+      | "landscapeLeft"
+      | "landscapeRight"
+      | "faceUp"
+      | "faceDown"
+      | "unknown"
+
+    /**
+     * Network interface information
+     */
+    type NetworkInterface = {
+      address: string
+      netmask: string | null
+      family: 'IPv4' | 'IPv6'
+      mac: string | null
+      isInternal: boolean
+      cidr: string | null
+    }
+
+    /**
+     * A type that represents the state of the battery.
+     */
+    type BatteryState = "full" | "charging" | "unplugged" | "unknown"
+
+    /**
      * Model of the device, e.g. "iPhone".
      */
     const model: string
+    /**
+     * Localized model of the device, e.g. "iPhone".
+     */
+    const localizedModel: string
     /**
      * The current version of the operating system.
      */
@@ -62,11 +102,44 @@ declare global {
       height: number
       scale: number
     }
-    const batteryState: "full" | "charging" | "unplugged" | "unknown"
+
+    /**
+     * The current state of the battery.
+     */
+    const batteryState: BatteryState
+
+    /**
+     * The current level of the battery.
+     */
     const batteryLevel: number
+
+    /**
+     * A boolean value that indicates whether the proximity sensor is close to the user.
+     */
+    const proximityState: boolean
+
+    /**
+     * Whether the device is in a landscape orientation.
+     */
     const isLandscape: boolean
+
+    /**
+     * Whether the device is in a portrait orientation.
+     */
     const isPortrait: boolean
+
+    /**
+     * Whether the device is in a flat orientation.
+     */
     const isFlat: boolean
+    /**
+     * The current orientation of the device.
+     */
+    const orientation: Orientation
+
+    /**
+     * The current color scheme of the device.
+     */
     const colorScheme: ColorScheme
     /**
      * A boolean value that indicates whether the process is an iPhone or iPad app running on a Mac.
@@ -112,6 +185,56 @@ declare global {
      * @param enabled Whether to enable or disable the wake lock.
      */
     function setWakeLockEnabled(enabled: boolean): void
+
+    /**
+     * Add a battery state listener.
+     * @param callback The callback function to be called when the battery state changes.
+     */
+    function addBatteryStateListener(callback: (state: BatteryState) => void): void
+    /**
+     * Remove a battery state listener.
+     * @param callback The callback function to be removed. If callback is not specified, all battery state listeners will be removed.
+     */
+    function removeBatteryStateListener(callback?: (state: BatteryState) => void): void
+    /**
+     * Add a battery level listener. 
+     * @param callback The callback function to be called when the battery level changes.
+     */
+    function addBatteryLevelListener(callback: (level: number) => void): void
+    /**
+     * Remove a battery level listener.
+     * @param callback The callback function to be removed. If callback is not specified, all battery level listeners will be removed.
+     */
+    function removeBatteryLevelListener(callback?: (level: number) => void): void
+
+    /**
+     * Add an orientation change listener. You should call this method first to begin the orientation observation.
+     * This only works when your device has disabled the orientation lock.
+     * @param callback The callback function to be called when the orientation changes.
+     */
+    function addOrientationListener(callback: (orientation: Orientation) => void): void
+    /**
+     * Remove an orientation change listener. If callback is not specified, all orientation change listeners will be removed and the orientation observation will be stopped.
+     * This only works when your device has disabled the orientation lock.
+     * @param callback The callback function to be removed.
+     */
+    function removeOrientationListener(callback?: (orientation: Orientation) => void): void
+    /**
+     * Add a proximity state listener.
+     * @param callback The callback function to be called when the proximity state changes.
+     */
+    function addProximityStateListener(callback: (state: boolean) => void): void
+    /**
+     * Remove a proximity state listener.
+     * @param callback The callback function to be removed. If callback is not specified, all proximity state listeners will be removed.
+     */
+    function removeProximityStateListener(callback?: (state: boolean) => void): void
+
+    /**
+     * Get the network interfaces of the device.
+     * @returns A dictionary of network interfaces, where the key is the interface name and the value is an array of network interface objects.
+     */
+    function networkInterfaces(): Record<string, NetworkInterface[]>
   }
 
   /**
@@ -1153,7 +1276,7 @@ declare global {
   /**
    * The accuracy of a geographical coordinate.
    */
-  type LocationAccuracy = "best" | "tenMeters" | "hundredMeters" | "kilometer" | "threeKilometers"
+  type LocationAccuracy = "best" | "tenMeters" | "hundredMeters" | "kilometer" | "threeKilometers" | "bestForNavigation" | "reduced"
   type LocationInfo = {
     /**
      * The latitude in degrees.
@@ -1232,12 +1355,51 @@ declare global {
   namespace Location {
 
     /**
-     * A Boolean value that indicates whether a widget is eligible to receive location updates.
+     * A Heading object contains computed values for the device’s azimuth (orientation) relative to true or magnetic north. It also includes the raw data for the three-dimensional vector used to compute those values.
      */
-    const isAuthorizedForWidgetUpdates: Promise<boolean>
+    type Heading = {
+      /**
+       * The maximum deviation (measured in degrees) between the reported heading and the true geomagnetic heading.
+       */
+      headingAccuracy: number
+      /**
+       * The heading (measured in degrees) relative to true north.
+       */
+      trueHeading: number
+      /**
+       * The heading (measured in degrees) relative to magnetic north.
+       */
+      magneticHeading: number
+      /**
+       * The time at which this heading was determined.
+       */
+      timestamp: Date
+      /**
+       * The geomagnetic data (measured in microteslas) for the x-axis.
+       */
+      x: number
+      /**
+       * The geomagnetic data (measured in microteslas) for the y-axis.
+       */
+      y: number
+      /**
+       * The geomagnetic data (measured in microteslas) for the z-axis.
+       */
+      z: number
+    }
 
     /**
-     * Set the accuracy of the location data that your app wants to receive.
+     * A Boolean value that indicates whether a widget is eligible to receive location updates.
+     */
+    const isAuthorizedForWidgetUpdates: boolean
+
+    /**
+     * The accuracy of the location data that your script wants to receive.
+     */
+    const accuracy: LocationAccuracy
+
+    /**
+     * Set the accuracy of the location data that your script wants to receive.
      */
     function setAccuracy(accuracy: LocationAccuracy): Promise<void>
     /**
@@ -1257,21 +1419,53 @@ declare global {
     function pickFromMap(): Promise<LocationInfo | null>
     /**
      * Submits a reverse-geocoding request for the specified location and locale.
+     * @param options The options for the reverse geocoding request.
+     * @param options.latitude The latitude in degrees.
+     * @param options.longitude The longitude in degrees.
+     * @param options.locale The preferred locale to use when returning the address information.
+     * @returns A promise that resolves to an array of `LocationPlacemark` objects, or rejects with an error if the request fails.
      */
     function reverseGeocode(options: {
-      /**
-       * The latitude in degrees.
-       */
       latitude: number
-      /**
-       * The longitude in degrees.
-       */
       longitude: number
-      /**
-       * The locale to use when returning the address information. You might specify a value for this parameter when you want the address returned in a locale that differs from the user’s current language settings. Specify null to use the user’s default locale information.
-       */
       locale?: string
     }): Promise<LocationPlacemark[] | null>
+
+    /**
+     * Submits a forward-geocoding request for the specified address and locale.
+     * @param options The options for the forward geocoding request.
+     * @param options.address The address to geocode.
+     * @param options.locale The preferred locale to use when returning the address information.
+     * @returns A promise that resolves to an array of `LocationPlacemark` objects, or rejects with an error if the request fails.
+     */
+    function geocodeAddress(options: {
+      address: string
+      locale?: string
+    }): Promise<LocationPlacemark[] | null>
+
+
+    /**
+     * Requests the most recently reported heading. The value of this property is null if heading updates have never been initiated.
+     */
+    function requestHeading(): Promise<Heading | null>
+    /**
+     * Starts updating the heading.
+     */
+    function startUpdatingHeading(): Promise<void>
+    /**
+     * Stops updating the heading.
+     */
+    function stopUpdatingHeading(): Promise<void>
+    /**
+     * Add a listener to be notified when the heading changes.
+     * @param listener The listener is called when the heading changes.
+     */
+    function addHeadingListener(listener: (heading: Heading) => void): void
+    /**
+     * Remove a heading listener, if you do not specify a listener, all heading listeners will be removed.
+     * @param listener The listener is called when the heading changes.
+     */
+    function removeHeadingListener(listener?: (heading: Heading) => void): void
   }
 
   /**
@@ -1397,6 +1591,19 @@ declare global {
      */
     function exists(path: string): Promise<boolean>
     function existsSync(path: string): boolean
+    /**
+     * Add a bookmark for a file or folder. This is useful when you obtain a security-scoped file or folder path, such as a file obtained from the user via the `Photos` or `onDropContent` APIs.
+     * @param path The path of the file or folder
+     * @param name The name of the bookmark, you can specify a name for the bookmark, or it will be generated automatically
+     * @returns The name of the bookmark or `null` if the bookmark is not created.
+     */
+    function addFileBookmark(path: string, name?: string): string | null
+    /**
+     * Remove a bookmark for a file or folder. This is useful when you have access to a security-scoped file or folder, and no longer need to access it.
+     * @param name The name of the bookmark
+     * @returns Returns a boolean value indicates that whether the operation is successful
+     */
+    function removeFileBookmark(name: string): boolean
     /**
      * Get path to a bookmarked file or folder.
      * @param name Name of a bookmark.
@@ -1602,10 +1809,194 @@ declare global {
     function scan(): Promise<string | null>
   }
 
+  class LivePhoto {
+    /**
+     * The size of the live photo
+     */
+    readonly size: Size
+
+    /**
+     * Get the resources of the live photo.
+     * @returns A promise that resolves to an array of objects containing the data, assetLocalIdentifier, contentType, originalFilename, pixelHeight, and pixelWidth of the live photo.
+     */
+    getAssetResources(): Promise<{
+      data: Data
+      assetLocalIdentifier: string
+      contentType: UTType
+      originalFilename: string
+      pixelHeight: number
+      pixelWidth: number
+    }[]>
+
+    /**
+     * Asynchronously loads a Live Photo from the specified resource files.
+     * @param options The options for the live photo
+     * @param options.imagePath The path to the image file.
+     * @param options.videoPath The path to the video file.
+     * @param options.targetSize The target size of Live Photo to be returned. Pass null to obtain the requested Live Photo at its original size.
+     * @param options.placeholderImage The placeholder image to use while the live photo loads.
+     * @param options.contentMode The content mode of the placeholder image.
+     * @param options.onResult A callback to be called when image loading is complete, providing the
+     * requested Live Photo or information about the status of the request. This callback will be called multiple times.
+     * The block takes the following parameters:
+     *   - `result`: The requested Live Photo object.
+     *   - `info`: A map providing information about the status of the request.
+     *     - `error`: An error message, if the request failed.
+     *     - `degraded`: A Boolean value indicating whether the live photo is degraded.
+     *     - `cancelled`: A Boolean value indicating whether the request was cancelled.
+     * @returns Returns a promise that resolves a cancellable function, you can call this function to cancel the loading.
+     */
+    static from(options: {
+      imagePath: string
+      videoPath: string
+      targetSize?: Size | null
+      placeholderImage: UIImage | null
+      contentMode?: "aspectFit" | "aspectFill"
+      onResult: (result: LivePhoto | null, info: {
+        error: string | null
+        degraded: boolean | null
+        cancelled: boolean | null
+      }) => void
+    }): Promise<() => void>
+  }
+
+  /**
+   * The interface that represents a filter that can be applied to the `Photos.pick` method.
+   */
+  class PHPickerFilter {
+    private constructor()
+
+    static bursts(): PHPickerFilter
+    static cinematicVideos(): PHPickerFilter
+    static depthEffectPhotos(): PHPickerFilter
+    static livePhotos(): PHPickerFilter
+    static images(): PHPickerFilter
+    static panoramas(): PHPickerFilter
+    static screenRecordings(): PHPickerFilter
+    static screenshots(): PHPickerFilter
+    static videos(): PHPickerFilter
+    static slomoVideos(): PHPickerFilter
+    static timelapseVideos(): PHPickerFilter
+    static all(filters: PHPickerFilter[]): PHPickerFilter
+    static any(filters: PHPickerFilter[]): PHPickerFilter
+    static not(filter: PHPickerFilter): PHPickerFilter
+  }
+
+  class PHPickerResult {
+    private constructor()
+
+    /**
+     * The item provider of the result
+     */
+    readonly itemProvider: ItemProvider
+
+    /**
+     * Reads the result as a live photo, if this result can be read as a live photo, returns a promise that resolves to the live photo, otherwise returns null, or rejects with an error.
+     */
+    livePhoto(): Promise<LivePhoto | null>
+
+    /**
+     * Reads the result as a UIImage, if this result can be read as a UIImage, returns a promise that resolves to the UIImage, otherwise returns null, or rejects with an error.
+     */
+    uiImage(): Promise<UIImage | null>
+
+    /**
+     * Reads the result as an image, if this result can be read as an image, the image will be copy to the app group's sandbox, returns a promise that resolves to the image path, otherwise returns null, or rejects with an error. You should delete the image file when you no longer need it.
+     */
+    imagePath(): Promise<string | null>
+
+    /**
+     * Reads the result as a video, if this result can be read as a video, the video will be copy to the app group's sandbox, returns a promise that resolves to the video path, otherwise returns null, or rejects with an error. You should delete the video file when you no longer need it.
+     */
+    videoPath(): Promise<string | null>
+  }
+
   /**
    * The interface that manages access and changes to the user’s photo library.
    */
   namespace Photos {
+
+    /**
+     * The information about the captured media.
+     */
+    type CaptureInfo = {
+      /**
+       * The cropping rectangle that was applied to the original image.
+       */
+      cropRect: {
+        x: number
+        y: number
+        width: number
+        height: number
+      } | null
+      /**
+       * The original image of the captured photo.
+       */
+      originalImage: UIImage | null
+      /**
+       * The edited image of the captured photo.
+       */
+      editedImage: UIImage | null
+      /**
+       * The image path of the captured photo.
+       */
+      imagePath: string | null
+      /**
+       * The metadata of the captured photo.
+       */
+      mediaMetadata: Record<string, any> | null
+      /**
+       * The video path of the captured video.
+       */
+      mediaPath: string | null
+      /**
+       * The media type of the captured media.
+       */
+      mediaType: string | null
+    }
+
+    /**
+     * Get the available media types from the Photos app.
+     */
+    function availableMediaTypes(): string[] | null
+
+    /**
+     * Capture a photo or video.
+     * @param options The options for capture
+     * @param options.mode The capture mode, either "photo" or "video".
+     * @param options.mediaTypes The media types to capture, such as ["public.image", "public.movie"].
+     * @param options.allowsEditing A Boolean value indicating whether the captured media can be edited.
+     * @param options.cameraDevice The camera device to use, either "rear" or "front". Defaults to "rear".
+     * @param options.cameraFlashMode The flash mode to use, either "auto", "on", or "off". Defaults to "auto".
+     * @param options.videoMaximumDuration The maximum duration of the video capture, in seconds. Defaults to 600. This value is ignored if the mode is "photo".
+     * @param options.videoQuality The quality of the video capture, either "low", "medium", "high", "640x480", "iFrame960x540", or "iFrame1280x720". Defaults to "medium".
+     * @returns A promise that resolves to a CaptureInfo object, or null if the capture is canceled.
+     */
+    function capture(options: {
+      mode: "photo" | "video"
+      mediaTypes: UTType[]
+      allowsEditing?: boolean
+      cameraDevice?: "rear" | "front"
+      cameraFlashMode?: "auto" | "on" | "off"
+      videoMaximumDuration?: DurationInSeconds
+      videoQuality?: "low" | "medium" | "high" | "640x480" | "iFrame960x540" | "iFrame1280x720"
+    }): Promise<CaptureInfo | null>
+
+    /**
+     * Present a photo picker dialog and pick limited number of photos.
+     * @param options The options for pick
+     * @param options.mode This property offers two ways that photos lay out in the picker:
+     *   - A linear mode (compact), in which photos form a line in a smaller area in the picker
+     *   - A two-dimensional mode (default), in which photos form a grid in a larger area in the picker
+     * @param options.filter The filter for the picker
+     * @param options.limit The limited number of photos, defaults to 1.
+     */
+    function pick(options?: {
+      mode?: "default" | "compact"
+      filter?: PHPickerFilter
+      limit?: number
+    }): Promise<PHPickerResult[]>
+
     /**
      * Get the latest specified number of photos from the Photos app.
      * @param count The number of photos you want.
@@ -1621,7 +2012,28 @@ declare global {
      */
     function takePhoto(): Promise<UIImage | null>
     /**
-     * Save an image data to the Photos app. Returns a boolean value indicates that whether the operation is successful.
+     * Save an image by path to the Photos app.
+     * @param path The path of the image
+     * @param options The option for saving image
+     * @param options.fileName The optional image name
+     * @returns Returns a promise that resolves a boolean value indicates that whether the operation is successful
+     */
+    function savePhoto(path: string, options?: {
+      /**
+       * The optional photo name.
+       */
+      fileName?: string
+      /**
+       * Whether to move the file to the Photos app, or just copy it.
+       */
+      shouldMoveFile?: boolean
+    }): Promise<boolean>
+    /**
+     * Save an image data to the Photos app.
+     * @param image The image data
+     * @param options The option for saving image
+     * @param options.fileName The optional image name
+     * @returns Returns a promise that resolves a boolean value indicates that whether the operation is successful
      */
     function savePhoto(image: Data, options?: {
       /**
@@ -1629,6 +2041,149 @@ declare global {
        */
       fileName?: string
     }): Promise<boolean>
+    /**
+     * Save a video data to the Photos app.
+     * @param path The path of the video file
+     * @param options The option for saving video
+     * @returns Returns a promise that resolves a boolean value indicates that whether the operation is successful
+     */
+    function saveVideo(path: string, options?: {
+      /**
+       * The optional video name.
+       */
+      fileName?: string
+      /**
+       * Whether to move the file to the Photos app, or just copy it.
+       */
+      shouldMoveFile?: boolean
+    }): Promise<boolean>
+    /**
+     * Save a video data to the Photos app.
+     * @param video The video data
+     * @param options The option for saving video
+     * @returns Returns a promise that resolves a boolean value indicates that whether the operation is successful
+     */
+    function saveVideo(video: Data, options?: {
+      /**
+       * The optional photo name.
+       */
+      fileName?: string
+    }): Promise<boolean>
+    /**
+     * Save a live photo to the Photos app
+     * @param imagePath The path of the image
+     * @param videoPath The path of the video
+     * @param shouldMoveFile If true, the file will be moved to the Photos app, otherwise it will be copied. Defaults to false.
+     * @returns Returns a promise that resolves when the operation is complete, or rejects with an error if the operation fails.
+     */
+    function saveLivePhoto(imagePath: string, videoPath: string, shouldMoveFile?: boolean): Promise<void>
+  }
+
+  /**
+   * The current state of a drop.
+   */
+  class DropInfo {
+    private constructor()
+
+    /**
+     * The location of the drag in the coordinate space of the drop view.
+     */
+    readonly location: Point
+    /**
+     * Indicates whether at least one item conforms to at least one of the specified uniform type identifiers.
+     * @param types The uniform type identifiers to query for.
+     */
+    hasItemsConforming(types: UTType[]): boolean
+    /**
+     * Finds item providers that conform to at least one of the specified uniform type identifiers. This function is only valid during the `onDrop.performDrop` action.
+     * @param types The uniform type identifiers to query for.
+     * @returns The item providers that conforms to contentTypes.
+     */
+    itemProviders(types: UTType[]): ItemProvider[]
+  }
+
+  /**
+   * The ItemProvider class is used to provide data for a file or file system item.
+   */
+  class ItemProvider {
+
+    /**
+     * The types that the item provider can provide.
+     */
+    readonly registeredTypes: UTType[]
+
+    /**
+     * The types that the item provider can provide in place.
+     */
+    readonly registeredInPlaceTypes: UTType[]
+
+    /**
+     * Returns a Boolean value indicating whether an item provider contains a data representation conforming to a specified universal type identifier.
+     */
+    hasItemConforming(type: UTType): boolean
+    /**
+     * Returns a Boolean value indicating whether an item provider contains a data representation conforming to a specified universal type identifier.
+     */
+    hasRepresentationConforming(type: UTType): boolean
+    /**
+     * Returns a Boolean value indicating whether an item provider contains a data representation conforming to a specified universal type identifier and to specified open-in-place behavior.
+     */
+    hasInPlaceRepresentationConforming(type: UTType): boolean
+
+    /**
+     * Checks whether the item provider can load a UIImage object.
+     */
+    canLoadUIImage(): boolean
+    /**
+     * Checks whether the item provider can load a LivePhoto object.
+     */
+    canLoadLivePhoto(): boolean
+
+    /**
+     * Loads a UIImage object from the item provider.
+     */
+    loadUIImage(): Promise<UIImage | null>
+    /**
+     * Loads a PHLivePhoto object from the item provider.
+     */
+    loadLivePhoto(): Promise<LivePhoto | null>
+    /**
+     * Loads a URL string from the item provider.
+     */
+    loadURL(): Promise<string | null>
+    /**
+     * Loads a text string from the item provider.
+     */
+    loadText(): Promise<string | null>
+    /**
+     * Asynchronously copies the provided, typed data into a generic data object.
+     * @param type The type of data to load
+     * @returns Returns a promise that resolves to the data or null.
+     */
+    loadData(type: UTType): Promise<Data | null>
+    /**
+     * Loads a file path from the item provider. If the item provide can load data as the specified type, this file will be copied to the app group's temporary directory and the file path will be returned, otherwise null will be returned.
+     * @param type The type of data to load
+     * @returns Returns a promise that resolves to the file path or null.
+     */
+    loadFilePath(type: UTType): Promise<string | null>
+
+    /**
+     * Creates an item provider from a UIImage object.
+     */
+    static fromUIImage(image: UIImage): ItemProvider
+    /**
+     * Creates an item provider from a text string.
+     */
+    static fromText(text: string): ItemProvider
+    /**
+     * Creates an item provider from a URL string, or null if the URL string is invalid.
+     */
+    static fromURL(url: string): ItemProvider | null
+    /**
+     * Creates an item provider from a file path.
+     */
+    static fromFilePath(path: string): ItemProvider
   }
 
   type PickFilesOption = {
@@ -1672,147 +2227,197 @@ declare global {
     }[]
   }
 
+
   /**
    * Type definition for iOS UTType identifiers
    * Reference: https://developer.apple.com/documentation/uniformtypeidentifiers/system_declared_uniform_type_identifiers
    */
   type UTType =
-    // Image Types
-    | "public.image"                     // Generic image type
-    | "public.image.live-photo"          // Live Photo
-    | "public.image.raw"                 // RAW image
-    | "public.jpeg"                      // JPEG image
-    | "public.jpeg-2000"                 // JPEG 2000
-    | "public.png"                       // PNG image
-    | "public.heic"                      // HEIC image
-    | "public.heif"                      // HEIF image
-    | "public.gif"                       // GIF image
-    | "public.tiff"                      // TIFF image
-    | "com.compuserve.gif"               // GIF alias
-    | "public.svg-image"                 // SVG image
-    | "public.bmp"                       // BMP image
-    | "com.microsoft.bmp"                // BMP alias
-    | "com.microsoft.ico"                // ICO icon
+    // 3D content
+    | "public.3d-content"
+    | "com.pixar.universal-scene-description"
+    | "com.pixar.universal-scene-description-mobile"
 
-    // Video Types
-    | "public.movie"                     // Generic movie/video type
-    | "public.video"                     // Video
-    | "public.mpeg-4"                    // MP4 video
-    | "public.mpeg"                      // MPEG video
-    | "public.avi"                       // AVI video
-    | "public.quicktime-movie"           // QuickTime video
-    | "com.apple.quicktime-movie"        // QuickTime alias
-    | "public.3gpp"                      // 3GPP video
-    | "public.3gpp2"                     // 3GPP2 video
-    | "com.microsoft.windows-media-wmv"   // WMV video
-    | "com.microsoft.windows-media-wm"    // WM video
-    | "com.apple.m4v-video"              // M4V video
+    // Apple 3D content
+    | "com.apple.reality"
+    | "com.apple.scenekit.scene"
+    | "com.apple.arobject"
 
-    // Audio Types
-    | "public.audio"                     // Generic audio type
-    | "public.mp3"                       // MP3 audio
-    | "public.wav"                       // WAV audio
-    | "public.m4a"                       // M4A audio
-    | "public.aiff"                      // AIFF audio
-    | "com.apple.protected-mpeg-4-audio" // Protected audio
-    | "com.microsoft.windows-media-wma"   // WMA audio
-    | "public.aifc"                      // AIFC audio
-    | "public.midi"                      // MIDI audio
-    | "com.apple.coreaudio-format"       // Core Audio Format
+    // Apple file system objects
+    | "public.directory"
+    | "public.symlink"
+    | "public.mount-point"
+    | "com.apple.alias-file"
+    | "public.folder"
+    | "public.volume"
+    | "public.disk-image"
 
-    // Document Types
-    | "public.data"                      // Generic data type
-    | "public.text"                      // Text file
-    | "public.plain-text"                // Plain text
-    | "public.html"                      // HTML file
-    | "public.xml"                       // XML file
-    | "public.json"                      // JSON file
-    | "public.yaml"                      // YAML file
-    | "public.rtf"                       // RTF file
-    | "public.pdf"                       // PDF file
-    | "com.adobe.pdf"                    // Adobe PDF
-    | "public.markdown"                  // Markdown file
-    | "public.markdown-text"             // Markdown text
-    | "public.csv"                       // CSV file
-    | "public.source-code"               // Source code
-    | "public.swift-source"              // Swift source code
-    | "public.objective-c-source"        // Objective-C source code
-    | "public.c-source"                  // C source code
-    | "public.c-plus-plus-source"        // C++ source code
-    | "public.java-source"               // Java source code
-    | "public.python-script"             // Python script
-    | "public.shell-script"              // Shell script
-    | "public.ruby-script"               // Ruby script
+    // Apple image formats
+    | "public.heic"
+    | "public.heif"
+    | "com.apple.live-photo"
 
-    // Archive Types
-    | "public.zip-archive"               // ZIP archive
-    | "org.gnu.gnu-zip-archive"          // GZIP archive
-    | "public.tar-archive"               // TAR archive
-    | "org.gnu.gnu-zip-tar-archive"      // GZIP TAR archive
-    | "com.pkware.zip-archive"           // PKWare ZIP archive
-    | "com.rarlab.rar-archive"           // RAR archive
-    | "org.7-zip.7-zip-archive"          // 7ZIP archive
+    // Apple system types
+    | "com.apple.framework"
+    | "com.apple.application-bundle"
+    | "com.apple.application-and-system-extension"
+    | "com.apple.metadata-importer"
+    | "com.apple.quicklook-generator"
+    | "com.apple.xpc-service"
+    | "com.apple.systempreference.prefpane"
 
-    // Office Document Types
-    | "com.microsoft.word.doc"           // Word document
-    | "com.microsoft.word.docx"          // Word DOCX document
-    | "com.microsoft.excel.xls"          // Excel document
-    | "com.microsoft.excel.xlsx"         // Excel XLSX document
-    | "com.microsoft.powerpoint.ppt"     // PowerPoint document
-    | "com.microsoft.powerpoint.pptx"    // PowerPoint PPTX document
-    | "org.openxmlformats.wordprocessingml.document"   // OpenXML Word
-    | "org.openxmlformats.spreadsheetml.sheet"         // OpenXML Excel
-    | "org.openxmlformats.presentationml.presentation" // OpenXML PowerPoint
-    | "org.oasis-open.opendocument.text"              // OpenDocument Text
-    | "org.oasis-open.opendocument.spreadsheet"       // OpenDocument Spreadsheet
-    | "org.oasis-open.opendocument.presentation"      // OpenDocument Presentation
+    // Application files
+    | "com.adobe.pdf"
+    | "com.apple.rtfd"
+    | "com.apple.flat-rtfd"
+    | "org.idpf.epub-container"
 
-    // iWork Document Types
-    | "com.apple.iwork.pages.pages"     // Pages document
-    | "com.apple.iwork.numbers.numbers" // Numbers document
-    | "com.apple.iwork.keynote.keynote" // Keynote document
+    // Audio
+    | "public.mp3"
+    | "public.aiff-audio"
+    | "com.microsoft.waveform-audio"
+    | "public.midi-audio"
+    | "public.playlist"
+    | "public.m3u-playlist"
 
-    // System Types
-    | "public.folder"                    // Folder
-    | "public.directory"                 // Directory
-    | "public.symlink"                   // Symbolic link
-    | "public.url"                       // URL
-    | "public.file-url"                  // File URL
-    | "com.apple.application"            // Application
-    | "com.apple.application-bundle"     // Application bundle
-    | "com.apple.framework"              // Framework
-    | "com.apple.package"                // Package
-    | "com.apple.resolvable"            // Resolvable
-    | "public.executable"                // Executable
-    | "public.disk-image"                // Disk image
-    | "public.database"                  // Database
+    // Audio and video
+    | "com.apple.quicktime-movie"
+    | "public.mpeg"
+    | "public.mpeg-2-video"
+    | "public.mpeg-2-transport-stream"
+    | "public.mpeg-4"
+    | "public.mpeg-4-audio"
+    | "com.apple.protected-mpeg-4-video"
+    | "com.apple.protected-mpeg-4-audio"
+    | "public.avi"
 
-    // Font Types
-    | "public.font"                      // Font
-    | "public.truetype-font"             // TrueType font
-    | "public.opentype-font"             // OpenType font
-    | "com.adobe.postscript-font"        // PostScript font
+    // Compiled programming language sources
+    | "public.assembly-source"
+    | "public.c-header"
+    | "public.c-source"
+    | "public.c-plus-plus-header"
+    | "public.c-plus-plus-source"
+    | "public.objective-c-plus-plus-source"
+    | "public.objective-c-source"
+    | "public.swift-source"
 
-    // Graphic Design Types
-    | "com.adobe.photoshop-image"        // Photoshop file
-    | "com.adobe.illustrator.ai-image"   // Illustrator file
-    | "org.webmproject.webp"             // WebP image
+    // Compressed archives
+    | "public.archive"
+    | "public.zip-archive"
+    | "org.gnu.gnu-zip-archive"
+    | "public.bzip2-archive"
+    | "com.apple.archive"
 
-    // 3D File Types
-    | "public.3d-content"                // 3D content
-    | "public.usd"                       // USD file
-    | "public.obj"                       // OBJ file
-    | "public.stl"                       // STL file
+    // Cryptographic files
+    | "com.rsa.pkcs-12"
+    | "public.x509-certificate"
 
-    // Other Types
-    | "public.content"                   // Generic content
-    | "public.composite-content"         // Composite content
-    | "public.archive"                   // Archive
-    | "public.item"                      // Item
-    | "public.contact"                   // Contact
-    | "public.message"                   // Message
-    | "public.calendar-event"            // Calendar event
-    | "public.log"                       // Log
+    // Data interchange formats
+    | "public.delimited-values-text"
+    | "public.comma-separated-values-text"
+    | "public.tab-separated-values-text"
+    | "public.utf8-tab-separated-values-text"
+    | "public.rtf"
+    | "public.xml"
+    | "public.yaml"
+    | "public.json"
+    | "public.vcard"
+
+    // Executables
+    | "public.executable"
+    | "public.unix-executable"
+    | "public.windows-executable"
+
+    // Icon images
+    | "com.microsoft.ico"
+    | "com.apple.icns"
+
+    // Images
+    | "public.png"
+    | "com.compuserve.gif"
+    | "public.jpeg"
+    | "org.webmproject.webp"
+    | "public.tiff"
+    | "com.microsoft.bmp"
+    | "public.svg-image"
+    | "public.camera-raw-image"
+
+    // Internet-specific
+    | "public.html"
+    | "com.apple.webarchive"
+    | "com.apple.internet-location"
+    | "com.microsoft.internet-shortcut"
+
+    // Property lists
+    | "com.apple.property-list"
+    | "com.apple.xml-property-list"
+    | "com.apple.binary-property-list"
+
+    // Shazam
+    | "com.apple.shazamsignature"
+    | "com.apple.shazamcatalog"
+
+    // Scripted programming language sources
+    | "public.script"
+    | "com.apple.applescript.text"
+    | "com.netscape.javascript-source"
+    | "com.apple.applescript.script"
+    | "com.apple.applescript.script-bundle"
+    | "public.make-source"
+    | "public.shell-script"
+    | "public.python-script"
+    | "public.ruby-script"
+    | "public.perl-script"
+    | "public.php-script"
+
+    // Text files
+    | "public.text"
+    | "public.plain-text"
+    | "public.utf8-plain-text"
+    | "public.utf16-plain-text"
+    | "public.utf16-external-plain-text"
+
+    // URLs
+    | "public.url"
+    | "public.file-url"
+    | "com.apple.bookmark"
+
+    // Apple system base types
+    | "public.item"
+    | "public.content"
+    | "public.composite-content"
+    | "public.data"
+    | "com.apple.resolvable"
+    | "com.apple.package"
+    | "com.apple.bundle"
+    | "com.apple.plugin"
+    | "com.apple.application"
+    | "public.source-code"
+    | "public.bookmark"
+    | "public.log"
+
+    // Application base types
+    | "public.spreadsheet"
+    | "public.presentation"
+    | "public.database"
+    | "public.message"
+    | "public.contact"
+    | "public.calendar-event"
+    | "public.to-do-item"
+    | "public.email-message"
+    | "public.font"
+
+    // Image, audio, and video base types
+    | "public.image"
+    | "public.audio"
+    | "public.audiovisual-content"
+    | "public.movie"
+    | "public.video"
+
+    // Tag classes
+    | "public.filename-extension"
+    | "public.mime-type"
+
 
 
   /**
@@ -1991,6 +2596,13 @@ declare global {
       navigationType: "linkActivated" | "reload" | "backForward" | "formResubmitted" | "formSubmitted" | "other"
     }) => Promise<boolean>
     /**
+     * Load a webpage by a file path, returns a Promise with boolean value indicates that whether the load request is completed.
+     * @param path The path of a file that contains web content.
+     * @param allowingReadAccessTo The path of a file or directory containing web content that you grant the system permission to read. This path must not be empty. To prevent WebKit from reading any other content, specify the same value as the `path` parameter. To read additional files related to the content file, specify a directory. Default value is the same as the `path` parameter.
+     * @returns A Promise with boolean value indicates that whether the load request is completed.
+     */
+    loadFile(path: string, allowingReadAccessTo?: string): Promise<boolean>
+    /**
      * Load a webpage by a URL string, returns a Promise with boolean value indicates that whether the load request is completed.
      * @param url URL string.
      */
@@ -2062,9 +2674,9 @@ declare global {
       navigationTitle?: string
     }): Promise<void>
     /**
-     * Get the custom user agent string of the WebView, returns a Promise that resolves with the custom user agent string or `null` if it is not set.
+     * Get the custom user agent string of the WebView, returns the custom user agent string or `null` if it is not set.
      */
-    getCustomUserAgent(): Promise<string | null>
+    getCustomUserAgent(): string | null
     /**
      * Set the custom user agent string of the WebView, returns a Promise that resolves with a boolean value indicates whether the operation is successful.
      * @param userAgent The custom user agent string, or `null` to reset to the default user agent.
@@ -2077,27 +2689,27 @@ declare global {
      * console.log(userAgent) // "MyCustomUserAgent/1.0"
      * ```
      */
-    setCustomUserAgent(userAgent: string | null): Promise<boolean>
+    setCustomUserAgent(userAgent: string | null): boolean
     /**
      * Check whether there is a valid back item in the back-forward list.
      */
-    canGoBack(): Promise<boolean>
+    canGoBack(): boolean
     /**
      * Check whether there is a valid forward item in the back-forward list.
      */
-    canGoForward(): Promise<boolean>
+    canGoForward(): boolean
     /**
-     * Navigates to the back item in the back-forward list. Returns a Promise fulfills a boolean value indicates whether go back successfully.
+     * Navigates to the back item in the back-forward list. Returns a boolean value indicates whether go back successfully.
      */
-    goBack(): Promise<boolean>
+    goBack(): boolean
     /**
-     * Navigates to the forward item in the back-forward list. Returns a Promise fulfills a boolean value indicates whether go forward successfully.
+     * Navigates to the forward item in the back-forward list. Returns a boolean value indicates whether go forward successfully.
      */
-    goForward(): Promise<boolean>
+    goForward(): boolean
     /**
      * Reloads the current webpage.
      */
-    reload(): Promise<void>
+    reload(): void
     /**
      * Dismiss the WebView, if the WebView is not presented, do nothing. You can presented the WebView again before it was disposed.
      */
@@ -2844,6 +3456,11 @@ If the event’s calendar does not support availability settings, this property�
     type AudioSessionSetActiveOptions = "notifyOthersOnDeactivation"
 
     /**
+     * The systemwide output volume set by the user.
+     */
+    const outputVolume: number
+
+    /**
      * Get session category.
      * An audio session category defines a set of audio behaviors for your app. The default category assigned to an audio session is soloAmbient.
      */
@@ -2926,6 +3543,19 @@ If the event’s calendar does not support availability settings, this property�
      * Sets the preference for not interrupting the audio session with system alerts.
      */
     function setPrefersNoInterruptionsFromSystemAlerts(valiue: boolean): Promise<void>
+
+    type AudioSessionOutputVolumeListener = (newValue: number, oldValue: number) => void
+
+    /**
+     * Adds a listener that is called when the output volume changes.
+     * @param listener The listener is called when the output volume changes.
+     */
+    function addOutputVolumeListener(listener: AudioSessionOutputVolumeListener): void
+    /**
+     * Removes a listener that is called when the output volume changes.
+     * @param listener The listener is called when the output volume changes.
+     */
+    function removeOutputVolumeListener(listener: AudioSessionOutputVolumeListener): void
   }
   /**
   * The type of an audio interruption.
@@ -3701,6 +4331,281 @@ If the event’s calendar does not support availability settings, this property�
   }
 
   /**
+   * Rounding methods to use when performing time calculations.
+   *  - `quickTime`: Rounds using the QuickTime method.
+   *  - `roundAwayFromZero`: Rounds away from zero.
+   *  - `roundTowardZero`: Rounds toward zero.
+   *  - `roundHalfAwayFromZero`: Rounds half away from zero.
+   *  - `roundTowardNegativeInfinity`: Rounds toward negative infinity.
+   *  - `roundTowardPositiveInfinity`: Rounds toward positive infinity.
+   *  - `default`: The default rounding method. This value is equal to `roundHalfAwayFromZero`.
+   */
+  type MediaTimeRoundingMethod = 'quickTime' | 'roundAwayFromZero' | 'roundTowardZero' | 'roundHalfAwayFromZero' | 'roundTowardNegativeInfinity' | 'roundTowardPositiveInfinity' | 'default'
+
+  /**
+   * Represents a media time.
+   */
+  class MediaTime {
+    private constructor()
+
+    readonly secondes: number
+    readonly isValid: boolean
+    readonly isPositiveInfinity: boolean
+    readonly isNegativeInfinity: boolean
+    readonly isIndefinite: boolean
+    readonly isNumeric: boolean
+    readonly hasBeenRounded: boolean
+
+    convertScale(newTimescale: number, method: MediaTimeRoundingMethod): MediaTime
+    getSeconds(): number
+    minus(other: MediaItem): MediaItem
+    plus(other: MediaItem): MediaItem
+    lt(other: MediaItem): boolean
+    gt(other: MediaItem): boolean
+    lte(other: MediaItem): boolean
+    gte(other: MediaItem): boolean
+    eq(other: MediaItem): boolean
+    neq(other: MediaItem): boolean
+
+    /**
+     * Makes a media time.
+     * @param options The options to make the media time.
+     * 
+     * Makes with `value` and `timescale`:
+     * @param options.value The value of the media time.
+     * @param options.timescale The timescale of the media time.
+     * 
+     * Makes with `seconds` and `preferredTimescale`:
+     * @param options.seconds The seconds of the media time.
+     * @param options.preferredTimescale The preferred timescale of the media time.
+     * 
+     * @returns The media time. If the media time is invalid, then `MediaTime.invalid()` is returned.
+     */
+    static make(options: {
+      value: number
+      timescale: number
+    } | {
+      seconds: number
+      preferredTimescale: number
+    }): MediaTime
+    static zero(): MediaTime
+    static invalid(): MediaTime
+    static indefinite(): MediaTime
+    static positiveInfinity(): MediaTime
+    static negativeInfinity(): MediaTime
+  }
+
+  namespace MediaComposer {
+    /**
+     * Represents a time range.
+     */
+    type TimeRange = {
+      /**
+       * The start time of the time range.
+       */
+      start: MediaTime
+      /**
+       * The duration of the time range.
+       */
+      duration: MediaTime
+    }
+
+    /**
+     * Represents a fade configuration.
+     */
+    type FadeConfig = {
+      /**
+       * The number of seconds to fade in the clip. Defaults to 0.
+       */
+      fadeInSeconds?: number
+      /**
+       * The number of seconds to fade out the clip. Defaults to 0.
+       */
+      fadeOutSeconds?: number
+    }
+
+    type DuckingConfig = {
+      /**
+       * Whether ducking is enabled. Defaults to true.
+       */
+      enabled?: boolean
+      /**
+       * External audio volume during voice/dialogue. (0...1). Defaults to 0.25.
+       */
+      duckedVolume?: number
+      /**
+       * Seconds to ramp down before a voice segment starts. Defaults to 0.15.
+       */
+      attackSeconds?: number
+      /**
+       * Seconds to ramp up after a voice segment ends. Defaults to 0.25.
+       */
+      releaseSeconds?: number
+    }
+
+    /**
+     * Represents an export preset.
+     */
+    type ExportPreset = "640x480" | "960x540" | "1280x720" | "1920x1080" | "3840x2160" | "AppleM4A" | "LowQuality" | "MediumQuality" | "HighestQuality" | "HEVC1920x1080" | "HEVC3840x2160" | "HEVC4320x2160"
+      | "HEVC7680x4320" | "MVHEVC960x960" | "MVHEVC1440x1440" | "MVHEVC4320x4320" | "MVHEVC7680x7680"
+      | "HEVCHighestQuality" | "AppleProRes422LPCM" | "AppleProRes4444LPCM" | "HEVC1920x1080WithAlpha"
+      | "HEVC3840x2160WithAlpha" | "HEVCHighestQualityWithAlpha"
+
+    type VideoClip = {
+      /**
+       * The video file path.
+       */
+      videoPath: string
+      /**
+       * The time range to use from the source video. Defaults to the entire video.
+       */
+      sourceTimeRange?: TimeRange | null
+      /**
+       * Whether to keep the original audio from the source video. Defaults to false.
+       */
+      keepOriginalAudio?: boolean
+      /**
+       * The fade configuration.
+       */
+      fade?: FadeConfig | null
+    }
+
+    type ImageClip = {
+      /**
+       * The image file path.
+       */
+      imagePath: string
+      /**
+       * The duration of the clip.
+       */
+      duration: MediaTime
+      /**
+       * The content mode to handle the image.
+       */
+      contentMode?: "fit" | "crop"
+      /**
+       * The background color of the clip.
+       */
+      backgroundColor?: Color
+      /**
+       * The fade configuration.
+       */
+      fade?: FadeConfig | null
+    }
+
+    /**
+     * Represents a video or image clip.
+     */
+    type VideoItem = XOR<VideoClip, ImageClip>
+
+    type AudioClip = {
+      /**
+       * The audio file path.
+       */
+      path: string
+      /**
+       * The time range to use from the source audio. Defaults to the entire audio.
+       */
+      sourceTimeRange?: TimeRange | null
+      /**
+       * Place this clip at a specific time on the final timeline. If null, clips are appended sequentially after the previous external audio clip.
+       */
+      at?: MediaTime
+      /**
+       * Per-clip gain (0...1). Defaults to 1.
+       */
+      volume?: number
+      /**
+       * The fade configuration.
+       */
+      fade?: FadeConfig | null
+      /**
+       * Whether to loop the audio clip to match the duration of the video. Defaults to false.
+       */
+      loopToFitVideoDuration?: boolean
+    }
+
+    /**
+     * Represents a video scale mode.
+     *  - `fit`: The video is resized to fit the `renderSize` using the default resizing mode.
+     *  - `crop`: The video is resized to fit the `renderSize` using the `crop` resizing mode.
+     */
+    type VideoScaleMode = 'fit' | 'crop'
+
+    /**
+     * Represents a color space policy.
+     *  - `keepSource`: Keep the color space of the source video.
+     *  - `forceSDR`: Force the color space to SDR.
+     */
+    type ColorSpacePolicy = 'keepSource' | 'forceSDR'
+
+    type ExportFileType = "mp4" | "mov" | "qta" | "m4v" | "m4a" | "mobile3GPP" | "mobile3GPP2"
+
+    type ExportOptions = {
+      /**
+       * The size to render the video at. Defaults to 1080x1920.
+       */
+      renderSize?: Size
+      /**
+       * The frame rate to use when rendering the video. Defaults to 30.
+       */
+      frameRate?: number
+      /**
+       * The color space policy to use when rendering the video. Defaults to `fit`.
+       */
+      scaleMode?: VideoScaleMode
+      /**
+       * Global fade for video clips. Per-clip fade overrides it when provided.
+       */
+      globalVideoFade?: FadeConfig | null
+      /**
+       * External audio default gain (applied as base before per-clip volume). (0...1). Defaults to 1.
+       */
+      externalAudioBaseVolume?: number
+      /**
+       * Duck external audio when video original audio exists.
+       */
+      ducking?: DuckingConfig
+      /**
+       * The export preset to use. Defaults to `HighestQuality`.
+       */
+      presetName?: ExportPreset
+      /**
+       * The output file type to use. Defaults to `mp4`.
+       */
+      outputFileType?: ExportFileType
+      /**
+       * The color space policy to use when rendering the video. Defaults to `forceSDR`.
+       */
+      colorSpacePolicy?: ColorSpacePolicy
+    }
+
+    /**
+     * Composes a video and audio timeline and exports it to a file.
+     * @param options The options for the export.
+     * @param options.exportPath The path to export the video to.
+     * @param options.timeline The timeline to export.
+     * @param options.timeline.videoItems The video items to include in the timeline, either video clips or image clips.
+     * @param options.timeline.audioClips The audio clips to include in the timeline.
+     * @param options.exportOptions The export options to use.
+     * @param options.overwrite Whether to overwrite the output file if it already exists. Defaults to true.
+     * @returns A promise that resolves to an object containing the output path and duration, or rejects with an error.
+     */
+    function composeAndExport(options: {
+      exportPath: string
+      timeline: {
+        videoItems: VideoItem[]
+        audioClips: AudioClip[]
+      }
+      exportOptions?: ExportOptions
+      overwrite?: boolean
+    }): Promise<{
+      exportPath: string
+      duration: MediaTime
+    }>
+  }
+
+  /**
    * Use for playing audio or video.
    */
   class AVPlayer {
@@ -3903,6 +4808,197 @@ If the event’s calendar does not support availability settings, this property�
      * Callback that is called when ecorder encode error occured.
      */
     onError?: (message: string) => void
+  }
+
+  /**
+   * A type that represents a camera position.
+   */
+  type CameraPosition = "front" | "back"
+
+  /**
+   * A type that represents a camera type.
+   */
+  type CameraType = "wide" | "ultraWide" | "telephoto" | "trueDepth" | "dual" | "dualWide" | "triple"
+
+  type VideoRecorderState = "idle" | "preparing" | "ready" | "recording" | "paused" | "finishing" | "finished" | "failed"
+
+  type VideoCaptureSessionPreset = "high" | "medium" | "low" | "cif352x288" | "vga640x480" | "iFrame960x540" | "iFrame1280x720" | "hd1280x720" | "hd1920x1080" | "hd4K3840x2160"
+
+  type VideoCodec = "hevc" | "h264" | "jpeg" | "JPEGXL" | "proRes4444" | "appleProRes4444XQ" | "proRes422" | "proRes422HQ" | "proRes422LT" | "proRes422Proxy" | "proResRAW" | "proResRAWHQ" | "hevcWithAlpha"
+
+  type VideoOrientation = "portrait" | "landscapeLeft" | "landscapeRight"
+
+  /**
+   * A type that represents video recorder configuration.
+   *  - `camera`: The camera to use for the recording. Defaults to { position: "back" }. If you don't provide the preferredTypes, it will use the default types by camera position.
+   * - `frameRate`: The frame rate to use for the recording. Supports 24, 30, 60, 120. Defaults to 30.
+   * - `audioEnabled`: A boolean value that indicates whether audio is enabled for the recording. Defaults to true.
+   * - `sessionPreset`: The session preset to use for the recording. Defaults to "high".
+   * - `videoCodec`: The video codec to use for the recording. Defaults to "hevc".
+   * - `videoBitRate`: The video bit rate to use for the recording. Defaults to 5000000.
+   * - `orientation`: The orientation to use for the recording. Defaults to "portrait".
+   * - `mirrorFrontCamera`: A boolean value that indicates whether the front camera should be mirrored. Defaults to false.
+   * - `autoConfigAppAudioSession`: A boolean value that indicates whether the capture session automatically changes settings in the SharedAudioSession. The value of this property defaults to true, causing the capture session to automatically configure the SharedAudioSession for optimal recording. For example, if the capture session uses a device’s rear-facing camera, the system sets the audio session’s microphone and polar pattern for optimal recording of sound from that direction. The audio session’s original state isn’t restored after capture finishes.If you set value to false, your app is responsible for selecting appropriate audio session settings. Recording may fail if the audio session’s settings are incompatible with the capture session.
+   */
+  type VideoRecorderConfiguration = {
+    camera?: {
+      position: CameraPosition
+      preferredTypes?: CameraType[]
+    }
+    frameRate?: number
+    audioEnabled?: boolean
+    sessionPreset?: VideoCaptureSessionPreset
+    videoCodec?: VideoCodec
+    videoBitRate?: number
+    orientation?: VideoOrientation
+    mirrorFrontCamera?: boolean
+    autoConfigAppAudioSession?: boolean
+  }
+  class VideoRecorder {
+    /**
+     * Creates a video recorder with configuration.
+     */
+    constructor(configuration?: VideoRecorderConfiguration)
+
+    /**
+     * The minimum zoom factor for the video recorder.
+     */
+    readonly minZoomFactor: number
+    /**
+     * The maximum zoom factor for the video recorder.
+     */
+    readonly maxZoomFactor: number
+    /**
+     * The current zoom factor for the video recorder.
+     */
+    readonly currentZoomFactor: number
+    /**
+     * A video zoom factor multiplier to use when displaying zoom information in a user interface.
+     * @available iOS 18.0+
+     */
+    readonly displayZoomFactor: number
+    /**
+     * A video zoom factor multiplier to use when displaying zoom information in a user interface.
+     * @available iOS 18.0+
+     */
+    readonly displayZoomFactorMultiplier: number
+    /**
+     * A boolean value that indicates whether the current device of the video recorder has a torch.
+     */
+    readonly hasTorch: boolean
+    /**
+     * The current torch mode for the video recorder.
+     */
+    readonly torchMode: 'auto' | 'on' | 'off'
+
+    /**
+     * The current state of the video recorder.
+     */
+    state: VideoRecorderState
+
+    /**
+     * The callback that is called when the state of the video recorder changes.
+     * @param state The new state of the video recorder.
+     * @param details Additional details about the state change. When the state is "failed", this parameter contains the error message, and when the state is "finished", this parameter contains the path to the video file.
+     */
+    onStateChanged?:
+      | ((state: VideoRecorderState, details?: string) => void)
+      | null
+
+    /**
+     * Prepares the video recorder for recording.
+     * @returns A promise that resolves when the video recorder is ready for recording, or rejects with an error.
+     */
+    prepare(): Promise<void>
+
+    /**
+     * Starts a video recording, saving it to the specified path.
+     * @param toPath The path to save the video recording to.
+     * @throws An error if the video recording could not be started.
+     */
+    startRecording(toPath: string): void
+
+    /**
+     * Pauses a video recording.
+     * @throws An error if the video recording could not be paused.
+     */
+    pauseRecording(): void
+
+    /**
+     * Resumes a video recording.
+     * @throws An error if the video recording could not be resumed.
+     */
+    resumeRecording(): void
+
+    /**
+     * Cancels a video recording, the file will be deleted.
+     * @returns A promise that resolves when the video recording is canceled.
+     */
+    cancelRecording(): Promise<void>
+
+    /**
+     * Stops a video recording.
+     * @returns A promise that resolves when the video recording is stopped, or rejects with an error.
+     */
+    stopRecording(): Promise<void>
+
+    /**
+     * Resets the video recorder, resetting the state. You should call this method when the video recorder is stopped or paused and you want to start a new recording.
+     * @param newConfiguration The new configuration to use for the video recorder.
+     * @returns A promise that resolves when the video recorder is reset, or rejects with an error.
+     */
+    reset(newConfiguration?: VideoRecorderConfiguration): Promise<void>
+
+    /**
+     * Sets the torch mode for the video recorder.
+     * @param mode The torch mode to set.
+     */
+    setTorchMode(mode: 'auto' | 'off' | 'on'): void
+
+    /**
+     * Sets the focus point.
+     * @param focusPoint The focus point to set.
+     */
+    setFocusPoint(focusPoint: { x: number; y: number }): void
+
+    /**
+     * Sets the exposure point.
+     * @param focusPoint The exposure point to set.
+     */
+    setExposurePoint(focusPoint: { x: number; y: number }): void
+
+    /**
+     * Resets the focus point.
+     */
+    resetFocus(): void
+
+    /**
+     * Resets the exposure point.
+     */
+    resetExposure(): void
+
+    /**
+     * Sets the zoom factor for the video recorder.
+     * @param factor The zoom factor to set.
+     */
+    setZoomFactor(factor: number): void
+
+    /**
+     * Sets the zoom factor for the video recorder using a ramp.
+     * @param toFactor The new magnification factor.
+     * @param rate The rate at which to transition to the new magnification factor, specified in powers of two per second.
+     */
+    rampZoomFactor(toFactor: number, rate: number): void
+
+    /**
+     * Resets the zoom factor for the video recorder.
+     */
+    resetZoom(): void
+
+    /**
+     * Disposes the video recorder. You should call this method when the video recorder is no longer needed. After this method is called, the video recorder will be destroyed and cannot be used again.
+     */
+    dispose(): Promise<void>
   }
 
   type SocketIOStatus =
@@ -5257,28 +6353,164 @@ If the event’s calendar does not support availability settings, this property�
   type JSONSchemaType = JSONSchemaPrimitive | JSONSchemaArray | JSONSchemaObject
 
   namespace Assistant {
+
     /**
-     * Indicates whether the Assistant API is available.
-     * This status depends on the selected AI provider and whether a valid API Key is configured.
-     * If the appropriate API Key is not provided, the Assistant API will be unavailable.
+     * The provider for the Assistant API.
+     */
+    type Provider = "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | {
+      custom: string
+    }
+
+    /**
+     * A chunk of text output from the assistant.
+     */
+    type StreamTextChunk = {
+      type: 'text'
+      content: string
+    }
+
+    /**
+     * A chunk of reasoning output from the assistant.
+     */
+    type StreamReasoningChunk = {
+      type: 'reasoning'
+      content: string
+    }
+
+    /**
+     * A chunk of usage output from the assistant.
+     */
+    type StreamUsageChunk = {
+      type: 'usage'
+      content: {
+        /**
+         * The total cost of the request.
+         */
+        totalCost: number | null
+        /**
+         * The number of tokens that were read from cache.
+         */
+        cacheReadTokens: number | null
+        /**
+         * The number of tokens that were written to cache.
+         */
+        cacheWriteTokens: number | null
+        /**
+         * The number of input tokens.
+         */
+        inputTokens: number
+        /**
+         * The number of output tokens.
+         */
+        outputTokens: number
+      }
+    }
+
+    type StreamChunk = StreamTextChunk | StreamReasoningChunk | StreamUsageChunk
+
+    /**
+     * The text content of a message.
+     */
+    type MessageTextContent = string | {
+      type: 'text'
+      content: string
+    }
+
+    /**
+     * The image content of a message.
+     */
+    type MessageImageContent = {
+      type: 'image'
+      /**
+       * Base64 encoded image data string. Must include the `data:image/xxx;base64,` prefix.
+       */
+      content: string
+    }
+
+    /**
+     * The document content of a message.
+     */
+    type MessageDocumentContent = {
+      type: 'document'
+      content: {
+        /**
+         * The MIME type of the document data.
+         */
+        mediaType: string
+        /**
+         * Base64 encoded document data string.
+         */
+        data: string
+      }
+    }
+
+    /**
+     * The content of a message.
+     */
+    type MessageContent = MessageTextContent | MessageImageContent | MessageDocumentContent
+
+    type MessageItem = {
+      role: "user" | "assistant"
+      content: MessageContent | MessageContent[]
+    }
+
+    /**
+     * Indicates whether the user has access to the assistant.
      */
     const isAvailable: boolean
+
+
+    /**
+     * Indicates whether the assistant chat page is currently presented.
+     */
+    const isPresented: boolean
+
+    /**
+     * Indicates whether there is an active conversation with the assistant.
+     */
+    const hasActiveConversation: boolean
+
+    /**
+     * Requests streamed output from the assistant, returning a ReadableStream of chunks. You can pass in a system prompt, a list of messages, and specify the AI provider and model to use.
+     * @param options The options for the request.
+     * @param options.systemPrompt The system prompt to use for the request.
+     * @param options.messages The messages to use for the request.
+     * @param options.provider Specifies the AI provider to use. You can use a custom provider with the given name.
+     * @example
+     * const stream = await Assistant.requestStreaming({
+     *   systemPrompt: "You are a helpful assistant.",
+     *   messages: [
+     *     {
+     *       role: "user",
+     *       content: "Tell me a joke."
+     *     }
+     *   ],
+     *   provider: "openai"
+     * })
+     * for await (const chunk of stream) {
+     *   console.log(chunk)
+     * }
+     */
+    function requestStreaming(options: {
+      systemPrompt?: string | null
+      messages: MessageItem | MessageItem[]
+      provider?: Provider
+      modelId?: string
+    }): Promise<ReadableStream<StreamChunk>>
     /**
      * Requests structured JSON output from the assistant.
      * @param prompt The input prompt for the assistant.
      * @param schema The expected output JSON schema.
      * @param options The options for the request.
      * @param options.provider Specifies the AI provider to use. You can use a custom provider with the given name.
-     * @param options.modelId You must ensure the specified ID matches a model supported by that provider (e.g., `"gpt-4-turbo"` for OpenAI, or `"gemini-1.5-pro"` for Gemini). If not specified, the app will use the default model configured for the provider.
+     * @param options.modelId You must ensure the specified ID matches a model supported by that provider (e.g., `"gpt-4-turbo"` for OpenAI, or `"gemini-2.5-pro"` for Gemini). If not specified, the app will use the default model configured for the provider.
      * @returns A promise that resolves to the structured data.
      */
     function requestStructuredData<R>(
       prompt: string,
       schema: JSONSchemaArray | JSONSchemaObject,
       options?: {
-        provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | {
-          custom: string
-        }
+        provider: Provider
         modelId?: string
       }
     ): Promise<R>
@@ -5303,6 +6535,45 @@ If the event’s calendar does not support availability settings, this property�
         modelId?: string
       }
     ): Promise<R>
+
+    /**
+     * Starts a conversation with the assistant. You can pass in a message and an optional list of images to send to the assistant. You should call `present` to present the assistant chat page.
+     * If the conversation is already running, this method will throw an error. You should call `stopConversation` to stop the conversation before starting a new one.
+     * @param options The options for the conversation.
+     * @param options.message The message to send to the assistant.
+     * @param options.images The images to send to the assistant.
+     * @param options.autoStart Whether to start the conversation automatically. Defaults to false.
+     * @param options.systemPrompt The system prompt to use for the conversation. The default system prompt is the Scripting Assistant system prompt, the Assistant Tools are available in this prompt. If you want to use a different system prompt, you can pass it in here, and the Assistant Tools are not available anymore.
+     * @param options.modelId The model ID to use for the conversation.
+     * @param options.provider The provider to use for the conversation. User can change the provider in the assistant chat page.
+     * @returns A promise that resolves when the conversation is created, or throws an error if the operation fails.
+     */
+    function startConversation(options: {
+      message: string
+      images?: UIImage[]
+      autoStart?: boolean
+      systemPrompt?: string
+      modelId?: string
+      provider?: Provider
+    }): Promise<void>
+
+    /**
+     * Stops the conversation with the assistant. This will dismiss the assistant chat page.
+     * @returns A promise that resolves when the conversation is stopped, or throws an error if the operation fails.
+     */
+    function stopConversation(): Promise<void>
+
+    /**
+     * Presents the assistant chat page. You can call this method after `startConversation` to present the assistant chat page, or represent the conversation after `dismiss` is called.
+     * @returns A promise that resolves when the assistant chat page is dismissed, or throws an error if the operation fails.
+     */
+    function present(): Promise<void>
+
+    /**
+     * Dismisses the assistant chat page. If `stopConversation` is called, this method will be called automatically.
+     * @returns A promise that resolves when the assistant chat page is dismissed, or throws an error if the operation fails.
+     */
+    function dismiss(): Promise<void>
   }
 
   /**
@@ -10456,45 +11727,18 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     static identity(): UIGlass
   }
 
-  // /**
-  //  * A class that defines the configuration of the navigation path.
-  //  */
-  // class NavigationPath {
-
-  //   /**
-  //    * The number of elements in this path.
-  //    */
-  //   readonly count: number
-
-  //   /**
-  //    * A Boolean that indicates whether this path is empty.
-  //    */
-  //   readonly isEmpty: boolean
-
-  //   /**
-  //    * Appends a new codable value to the end of this path.
-  //    */
-  //   append(path: string): void
-
-  //   /**
-  //    * Removes values from the end of this path.
-  //    * @param count The number of values to remove. The default value is 1.
-  //    */
-  //   removeLast(count?: number): void
-
-  //   /**
-  //    * Convert the NavigationPath to data. You can use this to save the path to a file or the Storage.
-  //    * @returns The data or null if the NavigationPath fails to convert to data.
-  //    */
-  //   toData(): Data | null
-
-  //   /**
-  //    * Create a NavigationPath from data.
-  //    * @param data The data to create the NavigationPath from, use the `toData` method to create the data.
-  //    * @returns The NavigationPath or null if the data is invalid.
-  //    */
-  //   static fromData(data: Data): NavigationPath | null
-  // }
+  namespace AppStore {
+    /**
+     * Apens a modal that will allow user to interact with a product in the App Store without leaving the Scripting app.
+     * @param id The identifier of the app to open in the App Store.
+     * @returns A promise that resolves when the modal is closed. Or throws an error if there was already a modal open.
+     */
+    function presentApp(id: string): Promise<void>
+    /**
+     * Dismiss the modal that was opened using `presentApp`.
+     */
+    function dismissApp(): Promise<void>
+  }
 }
 
 export { }

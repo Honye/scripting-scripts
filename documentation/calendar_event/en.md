@@ -9,38 +9,38 @@ Developers can configure event details such as title, time, location, participan
 
 Represents an attendee of the event:
 
-* `isCurrentUser: boolean` – Indicates whether this attendee represents the current user
-* `name?: string` – Display name
-* `role: ParticipantRole` – The attendee’s role
-* `type: ParticipantType` – The type of attendee
-* `status: ParticipantStatus` – The attendee’s participation status
+- `isCurrentUser: boolean` – Indicates whether this attendee represents the current user
+- `name?: string` – Display name
+- `role: ParticipantRole` – The attendee’s role
+- `type: ParticipantType` – The type of attendee
+- `status: ParticipantStatus` – The attendee’s participation status
 
 ### ParticipantRole
 
-* `chair`
-* `nonParticipant`
-* `optional`
-* `required`
-* `unknown`
+- `chair`
+- `nonParticipant`
+- `optional`
+- `required`
+- `unknown`
 
 ### ParticipantType
 
-* `group`
-* `person`
-* `resource`
-* `room`
-* `unknown`
+- `group`
+- `person`
+- `resource`
+- `room`
+- `unknown`
 
 ### ParticipantStatus
 
-* `unknown`
-* `pending`
-* `accepted`
-* `declined`
-* `tentative`
-* `delegated`
-* `completed`
-* `inProcess`
+- `unknown`
+- `pending`
+- `accepted`
+- `declined`
+- `tentative`
+- `delegated`
+- `completed`
+- `inProcess`
 
 ---
 
@@ -48,11 +48,11 @@ Represents an attendee of the event:
 
 Indicates how the event affects the user’s availability:
 
-* `notSupported`
-* `busy`
-* `free`
-* `tentative`
-* `unavailable`
+- `notSupported`
+- `busy`
+- `free`
+- `tentative`
+- `unavailable`
 
 ---
 
@@ -60,9 +60,9 @@ Indicates how the event affects the user’s availability:
 
 Describes a location that can be used for location-based alarms.
 
-* `title: string | null` – A name for the location
-* `geoLocation: LocationInfo | null` – Latitude and longitude
-* `radius: number` – Radius in meters for the geofence trigger
+- `title: string | null` – A name for the location
+- `geoLocation: LocationInfo | null` – Latitude and longitude
+- `radius: number` – Radius in meters for the geofence trigger
 
 ---
 
@@ -70,9 +70,9 @@ Describes a location that can be used for location-based alarms.
 
 Describes how a location alarm triggers:
 
-* `none`
-* `enter`
-* `leave`
+- `none`
+- `enter`
+- `leave`
 
 ---
 
@@ -81,9 +81,9 @@ Describes how a location alarm triggers:
 `CalendarEvent` supports attaching one or more `EventAlarm` instances.
 Alarms may be:
 
-* absolute date alarms
-* relative alarms (relative to the start of the event)
-* location-based alarms using geofence triggers
+- absolute date alarms
+- relative alarms (relative to the start of the event)
+- location-based alarms using geofence triggers
 
 See the EventAlarm documentation for detailed information.
 
@@ -262,11 +262,11 @@ Removes a recurrence rule.
 
 ## Saving and Deleting
 
-### save(): Promise<void>
+### `save(): Promise<void>`
 
 Saves the event to the calendar.
 
-### remove(): Promise<void>
+### `remove(): Promise<void>`
 
 Removes the event from the calendar.
 
@@ -274,33 +274,33 @@ Removes the event from the calendar.
 
 ## Editing UI
 
-### presentEditView(): Promise<EventEditViewAction>
+### `presentEditView(): Promise<EventEditViewAction>`
 
 Displays the system event-editing interface and resolves with:
 
-* `saved`
-* `deleted`
-* `canceled`
+- `saved`
+- `deleted`
+- `canceled`
 
 ---
 
 # 6. Static Methods
 
-### CalendarEvent.getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>
+### `CalendarEvent.getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
 
 Fetches calendar events within a given date range.
 
-* Provide an array of calendars to restrict the search
-* Use `null` or omit the parameter to search all calendars
+- Provide an array of calendars to restrict the search
+- Use `null` or omit the parameter to search all calendars
 
 ---
 
-### CalendarEvent.presentCreateView(): Promise<CalendarEvent | null>
+### `CalendarEvent.presentCreateView(): Promise<CalendarEvent | null>`
 
 Displays the system interface for creating a new event.
 
-* Returns the created event if saved
-* Returns `null` if canceled
+- Returns the created event if saved
+- Returns `null` if canceled
 
 ---
 
@@ -329,7 +329,7 @@ const rule = RecurrenceRule.create({
   frequency: "weekly",
   interval: 1,
   daysOfTheWeek: ["monday", "wednesday", "friday"],
-  end: RecurrenceEnd.fromDate(new Date("2024-12-31"))
+  end: RecurrenceEnd.fromDate(new Date("2024-12-31")),
 })
 
 event.addRecurrenceRule(rule)
@@ -353,8 +353,8 @@ await event.save()
 ```ts
 const events = await CalendarEvent.getAll(
   new Date("2024-01-01"),
-  new Date("2024-01-31")
-)
+   new Date("2024-01-31")
+ )
 
 for (const e of events) {
   console.log(`Event: ${e.title}, Starts: ${e.startDate}`)

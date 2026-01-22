@@ -192,6 +192,36 @@ await SharedAudioSession.setPrefersNoInterruptionsFromSystemAlerts(true)
 
 ---
 
+### 9. **Systemwide Output Volume**
+
+#### `outputVolume: number`
+
+The systemwide output volume. This property is a number between 0 and 1, representing the volume level as a percentage.
+
+#### outputVolume EventListener
+
+Type Definition:
+
+```ts
+type AudioSessionOutputVolumeListener = (newValue: number, oldValue: number) => void
+```
+
+##### `addOutputVolumeListener(listener: AudioSessionOutputVolumeListener)`
+
+Add an event listener for changes in the systemwide output volume.
+
+```typescript
+SharedAudioSession.addOutputVolumeListener((newValue, oldValue) => {
+  console.log(`Output volume changed from ${oldValue} to ${newValue}`)
+})
+```
+
+##### `removeOutputVolumeListener(listener: AudioSessionOutputVolumeListener)`
+
+Remove an event listener for changes in the systemwide output volume.
+
+---
+
 ## Enumerations
 
 ### **AudioSessionSetActiveOptions**

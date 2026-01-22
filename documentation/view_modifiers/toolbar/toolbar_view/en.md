@@ -66,7 +66,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 ```tsx
 <Toolbar>
   <ToolbarItem placement="navigation">
-    <Button title="Back" action={() => navigation.pop()} />
+    <Button title="Back" action={Navigation.useDismiss()} />
   </ToolbarItem>
 </Toolbar>
 ```
@@ -162,7 +162,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
         {/* Navigation button */}
         <ToolbarItem placement="navigation">
-          <Button title="Back" action={navigation.pop} />
+          <Button title="Back" action={Navigation.useDismiss()} />
         </ToolbarItem>
 
         {/* Title */}

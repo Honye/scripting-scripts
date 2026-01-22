@@ -24,10 +24,10 @@ declare const List: FunctionComponent<ListProps>
 
 The selection mode is determined by the generic type of `Observable`:
 
-| Mode               | Observable Type        | Description                                   |                               |
-| ------------------ | ---------------------- | --------------------------------------------- | ----------------------------- |
-| Single selection   | `Observable<string \| null>`                                        | Only one item can be selected |
-| Multiple selection | `Observable<string[]>` | Multiple items can be selected simultaneously |                               |
+| Mode               | Observable Type        |Description  |
+| ------------------ | ---------------------- | ------------|
+| Single selection   | `Observable<string \| null>`| Only one item can be selected |
+| Multiple selection | `Observable<string[]>` | Multiple items can be selected simultaneously |
 
 ---
 

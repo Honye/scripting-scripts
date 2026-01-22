@@ -1,139 +1,457 @@
-`Device` 接口提供了对当前设备及其环境的信息访问，并提供了一些控制设备功能（如唤醒锁）的方法。您可以获取设备相关的元数据，如机型、操作系统信息、屏幕方向、电池状态以及本地化设置。
+`Device` 命名空间提供对当前设备硬件、系统环境、语言区域、屏幕信息、电池状态、方向感知、接近传感器以及网络接口等信息的访问能力，并提供相关状态变化的监听接口。
 
-## 概述
+该 API 主要用于根据设备环境动态调整 UI、行为逻辑或系统能力使用方式。
 
-`Device` 是一个工具类，暴露了静态属性和方法。这意味着您可以直接在类上调用其成员，而无需实例化它。
+---
 
-示例：您可以像这样获取设备型号：
-```tsx
-const deviceModel = Device.model
-console.log('Device Model:', deviceModel)
+## Orientation
+
+表示设备当前的物理朝向。
+
+```ts
+type Orientation =
+  | "portrait"
+  | "portraitUpsideDown"
+  | "landscapeLeft"
+  | "landscapeRight"
+  | "faceUp"
+  | "faceDown"
+  | "unknown"
 ```
 
-## 设备信息
+### 说明
 
-- **`Device.model: string`**  
-  设备型号，例如 `"iPhone"`。  
-  ```tsx
-  console.log(Device.model)  // "iPhone"
-  ```
+* `portrait`：竖屏，Home 键在下（或标准竖屏方向）
+* `portraitUpsideDown`：竖屏倒置
+* `landscapeLeft`：横屏，设备向左旋转
+* `landscapeRight`：横屏，设备向右旋转
+* `faceUp`：设备平放，屏幕朝上
+* `faceDown`：设备平放，屏幕朝下
+* `unknown`：无法确定方向
 
-- **`Device.systemVersion: string`**  
-  当前操作系统的版本，例如 `"16.0"`。  
-  ```tsx
-  console.log(Device.systemVersion)  // "16.0"
-  ```
+---
 
-- **`Device.systemName: string`**  
-  操作系统名称，通常为 `"iOS"`。  
-  ```tsx
-  console.log(Device.systemName)  // "iOS"
-  ```
+## NetworkInterface
 
-- **`Device.isiPad: boolean`**  
-  指示当前设备是否为 iPad。  
-  ```tsx
-  if (Device.isiPad) {
-    console.log("Running on an iPad")
-  }
-  ```
+描述单个网络接口地址的信息。
 
-- **`Device.isiPhone: boolean`**  
-  指示当前设备是否为 iPhone。  
-  ```tsx
-  if (Device.isiPhone) {
-    console.log("Running on an iPhone")
-  }
-  ```
-
-- **`Device.isiOSAppOnMac: boolean`**  
-  检测当前进程是否为在 Mac 上运行的 iPhone 或 iPad App。  
-  ```tsx
-  if (Device.isiOSAppOnMac) {
-    console.log("This iOS app is running on a Mac")
-  }
-  ```
-
-## 电池信息
-
-- **`Device.batteryState: "full" | "charging" | "unplugged" | "unknown"`**  
-  设备当前的电池状态。  
-  ```tsx
-  console.log(Device.batteryState)  // 例如 "charging"
-  ```
-
-- **`Device.batteryLevel: number`**  
-  代表电池电量的数值，范围在 `0.0` 到 `1.0` 之间。  
-  ```tsx
-  console.log(Device.batteryLevel)  // 例如 0.8 表示80%
-  ```
-
-## 屏幕方向 & 尺寸 & 外观
-
-- **`Device.screen: { width: number; height: number; scale: number }`**  
-  包含当前的屏幕尺寸和缩放比例。
-
-- **`Device.isLandscape: boolean`**  
-  如果设备目前为横向，则返回 `true`。
-
-- **`Device.isPortrait: boolean`**  
-  如果设备目前为纵向，则返回 `true`。
-
-- **`Device.isFlat: boolean`**  
-  如果设备平放在桌面（正面或背面朝上），则返回 `true`。
-
-- **`Device.colorScheme: "light" | "dark"`**  
-  设备当前的界面外观，为 `"light"` 或 `"dark"`。  
-  ```tsx
-  if (Device.colorScheme === 'dark') {
-    console.log("Dark mode is enabled")
-  }
-  ```
-
-## 本地化设置
-
-- **`Device.systemLocale: string`**  
-  当前系统区域设置，例如 `"en_US"`。
-
-- **`Device.systemLocales: string[]`**  
-  用户的偏好区域设置列表，例如 `["en-US", "zh-Hans-CN"]`。
-
-- **`Device.systemLanguageTag: string`**  
-  当前语言标记，如 `"en-US"`。
-
-- **`Device.systemLanguageCode: string`**  
-  从区域设置中得出的语言代码，例如 `"en"`。
-
-- **`Device.systemCountryCode?: string`**  
-  从区域设置中得出的国家/地区代码，例如 `"US"`。
-
-- **`Device.systemScriptCode?: string`**  
-  如果可用，脚本代码，例如 `"Hans"`（在 `"zh_CN_Hans"` 中）。
-
-```tsx
-console.log(Device.systemLocale)       // "en_US"
-console.log(Device.systemLocales)      // ["en-US", "zh-Hans-CN"]
-console.log(Device.systemLanguageTag)  // "en-US"
-console.log(Device.systemLanguageCode) // "en"
-console.log(Device.systemCountryCode)  // "US"
-console.log(Device.systemScriptCode)   // 如果可用，则为 "Hans"
+```ts
+type NetworkInterface = {
+  address: string
+  netmask: string | null
+  family: "IPv4" | "IPv6"
+  mac: string | null
+  isInternal: boolean
+  cidr: string | null
+}
 ```
 
-## 唤醒锁 (Wake Lock)
+### 字段说明
 
-唤醒锁可以防止设备因无操作而自动熄屏。您可以使用以下方法来控制唤醒锁：
+* `address`：IP 地址
+* `netmask`：子网掩码
+* `family`：地址族，IPv4 或 IPv6
+* `mac`：MAC 地址（部分系统或接口可能为 null）
+* `isInternal`：是否为内部接口（如 loopback）
+* `cidr`：CIDR 表示形式，例如 `192.168.1.10/24`
 
-- **`Device.setWakeLockEnabled(enabled: boolean): void`**  
-  启用或禁用唤醒锁。将 `enabled` 设置为 `true` 会阻止设备进入休眠状态。
-  ```tsx
-  // 让屏幕保持唤醒
-  Device.setWakeLockEnabled(true)
-  ```
+---
 
-- **`Device.isWakeLockEnabled(): Promise<boolean>`**  
-  检查当前是否启用了唤醒锁。
-  ```tsx
-  Device.isWakeLockEnabled().then(isEnabled => {
-    console.log("Wake lock enabled:", isEnabled)
-  })
-  ```
+## BatteryState
+
+表示当前电池状态。
+
+```ts
+type BatteryState = "full" | "charging" | "unplugged" | "unknown"
+```
+
+### 说明
+
+* `full`：电量已充满
+* `charging`：正在充电
+* `unplugged`：未连接电源
+* `unknown`：无法确定状态
+
+---
+
+## Device Information
+
+### model
+
+```ts
+const model: string
+```
+
+设备型号，例如 `"iPhone"`、`"iPad"`。
+
+---
+
+### localizedModel
+
+```ts
+const localizedModel: string
+```
+
+本地化后的设备型号名称。
+
+---
+
+### systemVersion
+
+```ts
+const systemVersion: string
+```
+
+当前操作系统版本号，例如 `"18.2"`。
+
+---
+
+### systemName
+
+```ts
+const systemName: string
+```
+
+操作系统名称，例如 `"iOS"`、`"iPadOS"`、`"macOS"`。
+
+---
+
+### isiPad / isiPhone
+
+```ts
+const isiPad: boolean
+const isiPhone: boolean
+```
+
+指示当前设备是否为 iPad 或 iPhone。
+
+---
+
+### screen
+
+```ts
+const screen: {
+  width: number
+  height: number
+  scale: number
+}
+```
+
+屏幕信息：
+
+* `width`：屏幕宽度（逻辑像素）
+* `height`：屏幕高度（逻辑像素）
+* `scale`：屏幕缩放比例（如 2、3）
+
+---
+
+## Battery & Sensors
+
+### batteryState
+
+```ts
+const batteryState: BatteryState
+```
+
+当前电池状态。
+
+---
+
+### batteryLevel
+
+```ts
+const batteryLevel: number
+```
+
+当前电量百分比，范围为 `0.0` 到 `1.0`。
+
+---
+
+### proximityState
+
+```ts
+const proximityState: boolean
+```
+
+接近传感器状态，`true` 表示设备靠近用户（例如通话时贴近耳朵）。
+
+---
+
+## Orientation & Layout
+
+### isLandscape / isPortrait / isFlat
+
+```ts
+const isLandscape: boolean
+const isPortrait: boolean
+const isFlat: boolean
+```
+
+* `isLandscape`：是否处于横屏
+* `isPortrait`：是否处于竖屏
+* `isFlat`：设备是否平放（face up / face down）
+
+---
+
+### orientation
+
+```ts
+const orientation: Orientation
+```
+
+当前设备物理方向。
+
+---
+
+## Appearance & Environment
+
+### colorScheme
+
+```ts
+const colorScheme: ColorScheme
+```
+
+当前系统颜色模式，例如浅色或深色模式。
+
+---
+
+### isiOSAppOnMac
+
+```ts
+const isiOSAppOnMac: boolean
+```
+
+指示当前进程是否为运行在 macOS 上的 iPhone / iPad App（Mac Catalyst 或 iOS App on Mac）。
+
+---
+
+## Locale & Language
+
+### systemLocale
+
+```ts
+const systemLocale: string
+```
+
+当前系统 Locale，例如 `"en_US"`。
+
+---
+
+### preferredLanguages
+
+```ts
+const preferredLanguages: string[]
+```
+
+用户偏好的语言列表，例如：
+
+```ts
+["en-US", "zh-Hans-CN"]
+```
+
+---
+
+### systemLocales（已废弃）
+
+```ts
+const systemLocales: string[]
+```
+
+已废弃，请使用 `preferredLanguages`。
+
+---
+
+### systemLanguageTag
+
+```ts
+const systemLanguageTag: string
+```
+
+语言标签，例如 `"en-US"`。
+
+---
+
+### systemLanguageCode
+
+```ts
+const systemLanguageCode: string
+```
+
+语言代码，例如 `"en"`。
+
+---
+
+### systemCountryCode
+
+```ts
+const systemCountryCode: string | undefined
+```
+
+国家代码，例如 `"US"`。
+
+---
+
+### systemScriptCode
+
+```ts
+const systemScriptCode: string | undefined
+```
+
+书写系统代码，例如 `"Hans"`（简体中文）。
+
+---
+
+## Wake Lock
+
+### isWakeLockEnabled
+
+```ts
+const isWakeLockEnabled: Promise<boolean>
+```
+
+查询当前是否启用了屏幕唤醒锁定（防止设备自动锁屏）。
+
+---
+
+### setWakeLockEnabled
+
+```ts
+function setWakeLockEnabled(enabled: boolean): void
+```
+
+启用或禁用 Wake Lock。
+
+说明：
+
+* 仅在 **Scripting App** 内可用
+* 启用后可防止设备自动休眠
+
+---
+
+## Battery Listeners
+
+### addBatteryStateListener
+
+```ts
+function addBatteryStateListener(
+  callback: (state: BatteryState) => void
+): void
+```
+
+监听电池状态变化。
+
+---
+
+### removeBatteryStateListener
+
+```ts
+function removeBatteryStateListener(
+  callback?: (state: BatteryState) => void
+): void
+```
+
+移除电池状态监听器。
+
+* 未传入 `callback` 时将移除所有监听器
+
+---
+
+### addBatteryLevelListener
+
+```ts
+function addBatteryLevelListener(
+  callback: (level: number) => void
+): void
+```
+
+监听电量变化。
+
+---
+
+### removeBatteryLevelListener
+
+```ts
+function removeBatteryLevelListener(
+  callback?: (level: number) => void
+): void
+```
+
+移除电量监听器。
+
+---
+
+## Orientation Listeners
+
+### addOrientationListener
+
+```ts
+function addOrientationListener(
+  callback: (orientation: Orientation) => void
+): void
+```
+
+开始监听设备方向变化。
+
+注意事项：
+
+* 必须先调用该方法才能接收方向变化
+* 系统方向锁开启时不会生效
+
+---
+
+### removeOrientationListener
+
+```ts
+function removeOrientationListener(
+  callback?: (orientation: Orientation) => void
+): void
+```
+
+移除方向监听器。
+
+* 未传入 `callback` 时将停止所有方向监听并结束观察
+
+---
+
+## Proximity Listeners
+
+### addProximityStateListener
+
+```ts
+function addProximityStateListener(
+  callback: (state: boolean) => void
+): void
+```
+
+监听接近传感器状态变化。
+
+---
+
+### removeProximityStateListener
+
+```ts
+function removeProximityStateListener(
+  callback?: (state: boolean) => void
+): void
+```
+
+移除接近传感器监听器。
+
+---
+
+## Network
+
+### networkInterfaces
+
+```ts
+function networkInterfaces(): Record<string, NetworkInterface[]>
+```
+
+获取当前设备的网络接口信息。
+
+返回值说明：
+
+* Key：接口名称（如 `en0`、`lo0`）
+* Value：该接口对应的地址信息数组
+
+适用于网络诊断、本地 IP 获取、调试用途。

@@ -12,20 +12,253 @@
   },
   {
     "title": {
-      "zh": "API 调整与更新",
-      "en": "API Adjustments and Updates"
+      "zh": "更新日志",
+      "en": "Changelog"
     },
     "subtitle": {
-      "zh": "API 调整与更新",
-      "en": "API Adjustments and Updates"
+      "zh": "功能和 API 更新日志。",
+      "en": "New features and API changes."
     },
     "children": [
+      {
+        "title": {
+          "en": "2.4.7",
+          "zh": "2.4.7"
+        },
+        "children": [
+          {
+            "title": {
+              "en": "Device",
+              "zh": "设备"
+            },
+            "subtitle": {
+              "en": "Add proximityState、orientation and addProximityListener, etc.",
+              "zh": "新增 proximityState、orientation 属性以及 addProximityListener 等监听方法。"
+            }
+          },
+          {
+            "title": {
+              "en": "VideoRecorder",
+              "zh": "视频录制（VideoRecorder）"
+            },
+            "subtitle": {
+              "en": "Add cancelRecording method and autoConfigAudioSession parameters, and reset method now accepts an optional new configuration parameter.",
+              "zh": "新增 cancelRecording 方法和 autoConfigAudioSession 参数，以及 reset 方法现在可选传入一个新的配置对象。"
+            }
+          }
+        ]
+      },
+      {
+        "title": {
+          "en": "2.4.6",
+          "zh": "2.4.6"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "MediaComposer",
+              "zh": "音视频合成器（MediaComposer）"
+            },
+            "subtitle": {
+              "en": "This interface is used to combine video, image and audio timeline and export the final media file.",
+              "zh": "该接口用于组合视频、图片与音频时间线并导出最终媒体文件。"
+            },
+            "children": [
+              {
+                "title": {
+                  "en": "Quick Start",
+                  "zh": "快速开始"
+                },
+                "subtitle": {
+                  "en": "Quickly master the use of MediaComposer.",
+                  "zh": "快速掌握 MediaComposer 的使用。"
+                },
+                "readme": "media_composer/quick_start/"
+              },
+              {
+                "title": {
+                  "en": "MediaComposer Example",
+                  "zh": "MediaComposer 示例"
+                },
+                "subtitle": {
+                  "en": "This example shows how to use MediaComposer.",
+                  "zh": "该示例展示如何使用 MediaComposer。"
+                },
+                "readme": "media_composer/example/"
+              },
+              {
+                "title": {
+                  "en": "MediaTime",
+                  "zh": "MediaTime"
+                },
+                "subtitle": {
+                  "en": "This class represents a media time.",
+                  "zh": "该类表示媒体时间。"
+                },
+                "readme": "media_composer/media_time/"
+              }
+            ]
+          },
+          {
+            "title": {
+              "en": "onDrag and onDrop View Modifiers",
+              "zh": "onDrag 和 onDrop 修饰符"
+            },
+            "subtitle": {
+              "en": "These APIs enable views to act as drag sources, drop destinations, or both, supporting intra-app and cross-app drag-and-drop scenarios.",
+              "zh": "这些 API 允许视图作为拖动源、拖放目标或者同时，支持内部应用和跨应用拖拽。"
+            },
+            "readme": "view_modifiers/ondrag_and_ondrop/"
+          },
+          {
+            "title": {
+              "en": "onDropContent",
+              "zh": "接收外部拖拽内容"
+            },
+            "subtitle": {
+              "en": "New Observable support, perform function has been adjusted, return an array of ItemProvider objects for deferred loading data.",
+              "zh": "新增Observable支持，perform 函数有调整，返回一个 ItemProvider 对象的数组，用于延迟加载数据。"
+            },
+            "readme": "view_modifiers/on_drop_content/"
+          },
+          {
+            "title": {
+              "en": "ItemProvider",
+              "zh": "ItemProvider"
+            },
+            "subtitle": {
+              "en": "This class represents a deferred data provider.",
+              "zh": "该类表示一个延迟数据提供者。"
+            },
+            "readme": "item_provider/"
+          },
+          {
+            "title": {
+              "en": "Intent",
+              "zh": "Intent"
+            },
+            "subtitle": {
+              "en": "New Intent.image method for returning images to Shortcuts.",
+              "zh": "新增 Intent.image 方法，用于为快捷指令返回图像。"
+            },
+            "readme": "intent/quick_start/"
+          },
+          {
+            "title": {
+              "en": "SharedAudioSession",
+              "zh": "SharedAudioSession"
+            },
+            "subtitle": {
+              "en": "New outputVolume property and addOutputVolumeChangedListener and removeOutputVolumeChangedListener methods.",
+              "zh": "新增 outputVolume 属性，以及 addOutputVolumeChangedListener 和 removeOutputVolumeChangedListener 方法。"
+            },
+            "readme": "shared_audio_session/"
+          },
+          {
+            "title": {
+              "en": "VideoRecorder",
+              "zh": "视频录制（VideoRecorder）"
+            },
+            "subtitle": {
+              "en": "New displayZoomFactor property for displaying user-readable zoom factor.",
+              "zh": "新增 displayZoomFactor 属性，用于展示用户可读的缩放比例。"
+            },
+            "readme": "video_recorder/"
+          },
+          {
+            "title": {
+              "en": "Device",
+              "zh": "设备"
+            },
+            "subtitle": {
+              "en": "New networkInterfaces method.",
+              "zh": "新增 networkInterfaces 方法。"
+            },
+            "readme": "device/",
+            "example": "device/index"
+          }
+        ]
+      },
       {
         "title": {
           "en": "2.4.5",
           "zh": "2.4.5"
         },
         "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "Assistant",
+              "zh": "智能助手"
+            },
+            "subtitle": {
+              "en": "Request structured JSON data, or open a chat page.",
+              "zh": "请求结构化的 JSON 数据，或者唤起聊天页面。"
+            },
+            "children": [
+              {
+                "pro": true,
+                "title": {
+                  "en": "Assistant Quick Start",
+                  "zh": "快速了解智能助手"
+                },
+                "subtitle": {
+                  "en": "Quickly master the use of Assistant.",
+                  "zh": "快速掌握智能助手的使用。"
+                },
+                "readme": "assistant/quick_start/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "requestStructuredData",
+                  "zh": "请求结构化数据"
+                },
+                "subtitle": {
+                  "en": "Request structured JSON data.",
+                  "zh": "请求结构化的 JSON 数据。"
+                },
+                "readme": "assistant/request_structured_data/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "requestStreaming",
+                  "zh": "请求流式数据"
+                },
+                "subtitle": {
+                  "en": "Requests a streaming response from the Assistant.",
+                  "zh": "请求从智能助手获取流式响应。"
+                },
+                "readme": "assistant/request_streaming/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Assistant Conversation APIs",
+                  "zh": "智能助手会话 API"
+                },
+                "subtitle": {
+                  "en": "The Conversation APIs are used to start, control, and present a system-hosted Assistant chat session.",
+                  "zh": "会话 API 用于启动、控制和展示系统托管的智能助手聊天会话。"
+                },
+                "readme": "assistant/conversation/"
+              }
+            ]
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "VideoRecorder",
+              "zh": "视频录制（VideoRecorder）"
+            },
+            "subtitle": {
+              "en": "A high-level API for recording video with fine-grained control over camera configuration, audio capture, encoding, pause/resume behavior, and final file output.",
+              "zh": "提供对摄像头配置、音频捕获、编码、暂停/恢复行为以及最终文件输出的细粒度控制，以实现视频录制的高级 API。"
+            },
+            "readme": "video_recorder/"
+          },
           {
             "title": {
               "en": "NavigationStack with path",
@@ -84,6 +317,17 @@
           },
           {
             "title": {
+              "en": "LivePhotoView",
+              "zh": "LivePhotoView"
+            },
+            "subtitle": {
+              "en": "This component is intended for media-centric scenarios where Live Photo playback is required.",
+              "zh": "该组件适用于在界面中展示 Live Photo 的媒体中心场景。"
+            },
+            "readme": "views/live_photo_view/"
+          },
+          {
+            "title": {
               "en": "AVPlayerView",
               "zh": "视频播放组件(AVPlayerView)"
             },
@@ -92,6 +336,17 @@
               "zh": "该组件适用于需要原生播放行为、画中画、Now Playing 集成以及后台播放的媒体中心场景。"
             },
             "readme": "views/avplayer_view/"
+          },
+          {
+            "title": {
+              "en": "VideoPreviewView",
+              "zh": "视频预览视图（VideoPreviewView）"
+            },
+            "subtitle": {
+              "en": "A view that displays the live camera preview associated with a VideoRecorder instance.",
+              "zh": "显示与 VideoRecorder 实例关联的实时摄像头预览的视图。"
+            },
+            "readme": "views/video_preview_view/"
           },
           {
             "title": {
@@ -151,6 +406,51 @@
               "zh": "用于将 Date 类型格式化为字符串，或将字符串解析为 Date。"
             },
             "readme": "date_formatter/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "AppStore",
+              "zh": "AppStore"
+            },
+            "subtitle": {
+              "en": "This API is used to display the details of an app in the App Store, without leaving the Scripting app.",
+              "zh": "用于在不离开 Scripting 应用的情况下，展示 App Store 中某个应用的详情页面。"
+            },
+            "readme": "app_store/"
+          },
+          {
+            "title": {
+              "en": "WebViewController",
+              "zh": "WebView 控制器"
+            },
+            "subtitle": {
+              "en": "It is designed for use cases like custom in-app browsers, rendering dynamic HTML, or communicating with JavaScript running in a web context.",
+              "zh": "它允许你在脚本中加载 HTML、展示 Web 页面、执行 JavaScript 脚本，并与页面中的 JavaScript 进行消息通信。"
+            },
+            "readme": "webview_controller/"
+          },
+          {
+            "title": {
+              "en": "Photos",
+              "zh": "照片"
+            },
+            "subtitle": {
+              "en": "The interface that manages access and changes to the user’s photo library.",
+              "zh": "用于管理用户照片库的访问和变更的接口。"
+            },
+            "keywords": [
+              "save photo",
+              "pick photos",
+              "take photo",
+              "get latest photos",
+              "保存照片",
+              "选择照片",
+              "拍照",
+              "获取最新照片"
+            ],
+            "readme": "photos/",
+            "example": "photos/index"
           }
         ]
       },
@@ -2097,6 +2397,17 @@
       },
       {
         "title": {
+          "en": "LivePhotoView",
+          "zh": "LivePhotoView"
+        },
+        "subtitle": {
+          "en": "This component is intended for media-centric scenarios where Live Photo playback is required.",
+          "zh": "该组件适用于在界面中展示 Live Photo 的媒体中心场景。"
+        },
+        "readme": "views/live_photo_view/"
+      },
+      {
+        "title": {
           "en": "AVPlayerView",
           "zh": "视频播放组件(AVPlayerView)"
         },
@@ -2105,6 +2416,17 @@
           "zh": "该组件适用于需要原生播放行为、画中画、Now Playing 集成以及后台播放的媒体中心场景。"
         },
         "readme": "views/avplayer_view/"
+      },
+      {
+        "title": {
+          "en": "VideoPreviewView",
+          "zh": "视频预览视图（VideoPreviewView）"
+        },
+        "subtitle": {
+          "en": "A view that displays the live camera preview associated with a VideoRecorder instance.",
+          "zh": "显示与 VideoRecorder 实例关联的实时摄像头预览的视图。"
+        },
+        "readme": "views/video_preview_view/"
       }
     ]
   },
@@ -3101,6 +3423,17 @@
       },
       {
         "title": {
+          "en": "onDrag and onDrop View Modifiers",
+          "zh": "onDrag 和 onDrop 修饰符"
+        },
+        "subtitle": {
+          "en": "These APIs enable views to act as drag sources, drop destinations, or both, supporting intra-app and cross-app drag-and-drop scenarios.",
+          "zh": "这些 API 允许视图作为拖动源、拖放目标或者同时，支持内部应用和跨应用拖拽。"
+        },
+        "readme": "view_modifiers/ondrag_and_ondrop/"
+      },
+      {
+        "title": {
           "en": "onDropContent",
           "zh": "接收外部拖拽内容"
         },
@@ -3227,10 +3560,59 @@
       "zh": "智能助手"
     },
     "subtitle": {
-      "en": "Request structured JSON data from the assistant.",
-      "zh": "从智能助手请求结构化的 JSON 数据。"
+      "en": "Request structured JSON data, or open a chat page.",
+      "zh": "请求结构化的 JSON 数据，或者唤起聊天页面。"
     },
-    "readme": "assistant/"
+    "children": [
+      {
+        "pro": true,
+        "title": {
+          "en": "Assistant Quick Start",
+          "zh": "快速了解智能助手"
+        },
+        "subtitle": {
+          "en": "Quickly master the use of Assistant.",
+          "zh": "快速掌握智能助手的使用。"
+        },
+        "readme": "assistant/quick_start/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "requestStructuredData",
+          "zh": "请求结构化数据"
+        },
+        "subtitle": {
+          "en": "Request structured JSON data.",
+          "zh": "请求结构化的 JSON 数据。"
+        },
+        "readme": "assistant/request_structured_data/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "requestStreaming",
+          "zh": "请求流式数据"
+        },
+        "subtitle": {
+          "en": "Requests a streaming response from the Assistant.",
+          "zh": "请求从智能助手获取流式响应。"
+        },
+        "readme": "assistant/request_streaming/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "Assistant Conversation APIs",
+          "zh": "智能助手会话 API"
+        },
+        "subtitle": {
+          "en": "The Conversation APIs are used to start, control, and present a system-hosted Assistant chat session.",
+          "zh": "会话 API 用于启动、控制和展示系统托管的智能助手聊天会话。"
+        },
+        "readme": "assistant/conversation/"
+      }
+    ]
   },
   {
     "pro": true,
@@ -3745,6 +4127,17 @@
       },
       {
         "title": {
+          "en": "ItemProvider",
+          "zh": "ItemProvider"
+        },
+        "subtitle": {
+          "en": "This class represents a deferred data provider.",
+          "zh": "该类表示一个延迟数据提供者。"
+        },
+        "readme": "item_provider/"
+      },
+      {
+        "title": {
           "en": "App Events",
           "zh": "App事件"
         },
@@ -4126,6 +4519,18 @@
         "example": "speech_recognition/index"
       },
       {
+        "pro": true,
+        "title": {
+          "en": "VideoRecorder",
+          "zh": "视频录制（VideoRecorder）"
+        },
+        "subtitle": {
+          "en": "A high-level API for recording video with fine-grained control over camera configuration, audio capture, encoding, pause/resume behavior, and final file output.",
+          "zh": "提供对摄像头配置、音频捕获、编码、暂停/恢复行为以及最终文件输出的细粒度控制，以实现视频录制的高级 API。"
+        },
+        "readme": "video_recorder/"
+      },
+      {
         "title": {
           "en": "AudioRecorder",
           "zh": "录音"
@@ -4211,6 +4616,52 @@
         "readme": "media_player/"
       },
       {
+        "pro": true,
+        "title": {
+          "en": "MediaComposer",
+          "zh": "音视频合成器（MediaComposer）"
+        },
+        "subtitle": {
+          "en": "This interface is used to combine video, image and audio timeline and export the final media file.",
+          "zh": "该接口用于组合视频、图片与音频时间线并导出最终媒体文件。"
+        },
+        "children": [
+          {
+            "title": {
+              "en": "Quick Start",
+              "zh": "快速开始"
+            },
+            "subtitle": {
+              "en": "Quickly master the use of MediaComposer.",
+              "zh": "快速掌握 MediaComposer 的使用。"
+            },
+            "readme": "media_composer/quick_start/"
+          },
+          {
+            "title": {
+              "en": "MediaComposer Example",
+              "zh": "MediaComposer 示例"
+            },
+            "subtitle": {
+              "en": "This example shows how to use MediaComposer.",
+              "zh": "该示例展示如何使用 MediaComposer。"
+            },
+            "readme": "media_composer/example/"
+          },
+          {
+            "title": {
+              "en": "MediaTime",
+              "zh": "MediaTime"
+            },
+            "subtitle": {
+              "en": "This class represents a media time.",
+              "zh": "该类表示媒体时间。"
+            },
+            "readme": "media_composer/media_time/"
+          }
+        ]
+      },
+      {
         "title": {
           "en": "Weather",
           "zh": "天气"
@@ -4221,6 +4672,18 @@
         },
         "readme": "weather/",
         "example": "weather/index"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "AppStore",
+          "zh": "AppStore"
+        },
+        "subtitle": {
+          "en": "This API is used to display the details of an app in the App Store, without leaving the Scripting app.",
+          "zh": "用于在不离开 Scripting 应用的情况下，展示 App Store 中某个应用的详情页面。"
+        },
+        "readme": "app_store/"
       },
       {
         "pro": true,
