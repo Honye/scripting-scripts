@@ -27,7 +27,7 @@ import {
   SelectDateIntent,
   ChangeMonthIntent,
 } from './app_intents'
-import { Lunar } from './lunar_lib'
+import { lunar } from './lunar'
 import { fetchHolidays, getHolidayType } from './holidayUtils'
 
 async function WeeklyWidget() {
@@ -47,17 +47,14 @@ async function WeeklyWidget() {
 
   const weekNum = getWeekNumber(displayDate)
 
-  // Lunar Date (Always today)
-  const lunar = Lunar.fromDate(today)
-  const solarTerm = lunar.getJieQi() ? ` ${lunar.getJieQi()}` : ''
-
   const descDate = selectedDate || today
-  const lunarDesc = Lunar.fromDate(descDate)
+  const lunarDate = lunar(descDate)
+
   const dayDesc =
     `${formatMonthDay(descDate)}` +
     ` 第${getWeekNumber(descDate)}周` +
-    ` ${lunarDesc.getYearInGanZhi()}(${lunarDesc.getYearShengXiao()})年` +
-    ` ${lunarDesc.getMonthInChinese()}月${lunarDesc.getDayInChinese()}`
+    ` ${lunarDate.yearName}(${lunarDate.yearZodiac})年` +
+    ` ${lunarDate.monthName}月${lunarDate.dayName}`
 
   // Week Days (Sunday start) - Based on offset
   const startOfWeekDate = getStartOfWeek(displayDate)
@@ -83,12 +80,12 @@ async function WeeklyWidget() {
 
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
     const d = addDays(startOfWeekDate, i)
-    const l = Lunar.fromDate(d)
+    const lunarDate = lunar(d)
     return {
       date: d,
       weekDayName: getWeekDayName(d),
       dayNum: d.getDate(),
-      lunarDay: l.getDayInChinese(),
+      lunarDay: lunarDate.dayName,
       isToday: isSameDay(d, today),
       holidayType: getHolidayType(d),
       eventTitle: eventTitles[d.getDate()],
@@ -97,8 +94,8 @@ async function WeeklyWidget() {
 
   return (
     <VStack
-      frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
       padding={20}
+      frame={Widget.displaySize}
     >
       {/* Header: Year/Month and Week Number */}
       <HStack>
@@ -111,11 +108,11 @@ async function WeeklyWidget() {
             systemName='chevron.left'
             font={12}
             foregroundStyle='secondaryLabel'
-            widgetAccentable
+            widgetAccentedRenderingMode="accented"
           />
         </Button>
         <Button intent={ChangeWeekIntent('reset')} buttonStyle='plain'>
-          <Text font={24} foregroundStyle='label' widgetAccentable>
+          <Text font={24} foregroundStyle='label'>
             {formatYear(offset ? startOfWeekDate : today)}
             {offset ? startOfWeekDate.getMonth() + 1 : today.getMonth() + 1}月
           </Text>
@@ -153,6 +150,7 @@ async function WeeklyWidget() {
             <Text
               font={11}
               foregroundStyle={item.isToday ? 'red' : 'secondaryLabel'}
+              fontWeight="medium"
               multilineTextAlignment='center'
             >
               {item.weekDayName}
@@ -202,6 +200,7 @@ async function WeeklyWidget() {
                     }
                     widgetAccentable
                     multilineTextAlignment='center'
+                    fontWeight="medium"
                   >
                     {item.eventTitle || item.lunarDay}
                   </Text>
@@ -256,8 +255,8 @@ async function MonthlyWidget() {
   const year = today.getFullYear()
   const month = today.getMonth()
 
-  const lunar = Lunar.fromDate(today)
-  const lunarText = `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`
+  const lunarDate = lunar(today)
+  const lunarText = `${lunarDate.monthName}月${lunarDate.dayName}`
 
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
@@ -413,12 +412,12 @@ async function LargeMonthlyWidget() {
   const selectedDate = sd ? new Date(sd) : null
 
   const descDate = selectedDate || today
-  const lunarDesc = Lunar.fromDate(descDate)
+  const lunarDate = lunar(descDate)
   const dayDesc =
     `${formatMonthDay(descDate)}` +
     ` 第${getWeekNumber(descDate)}周` +
-    ` ${lunarDesc.getYearInGanZhi()}(${lunarDesc.getYearShengXiao()})年` +
-    ` ${lunarDesc.getMonthInChinese()}月${lunarDesc.getDayInChinese()}`
+    ` ${lunarDate.yearName}(${lunarDate.yearZodiac})年` +
+    ` ${lunarDate.monthName}月${lunarDate.dayName}`
 
   const displayDate = new Date(
     today.getFullYear(),
@@ -550,8 +549,8 @@ async function LargeMonthlyWidget() {
               }
               const isToday = isSameDay(date, today)
               const eventTitle = eventTitles[date.getDate()]
-              const lunar = Lunar.fromDate(date)
-              const lunarDay = lunar.getDayInChinese()
+              const lunarDate = lunar(date)
+              const lunarDay = lunarDate.dayName
               const holidayType = getHolidayType(date)
 
               return (
