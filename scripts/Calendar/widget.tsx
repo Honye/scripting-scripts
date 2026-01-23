@@ -12,6 +12,7 @@ import {
   Grid,
   GridRow,
   Color,
+  EnvironmentValuesReader
 } from 'scripting'
 import {
   getWeekNumber,
@@ -20,12 +21,12 @@ import {
   getWeekDayName,
   startOfWeek as getStartOfWeek,
   addDays,
-  isSameDay,
+  isSameDay
 } from './dateUtils'
 import {
   ChangeWeekIntent,
   SelectDateIntent,
-  ChangeMonthIntent,
+  ChangeMonthIntent
 } from './app_intents'
 import { lunar } from './lunar'
 import { fetchHolidays, getHolidayType } from './holidayUtils'
@@ -61,7 +62,7 @@ async function WeeklyWidget() {
 
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
-    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays',
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays'
   )
   let eventTitles: Record<number, string> = {}
 
@@ -88,54 +89,47 @@ async function WeeklyWidget() {
       lunarDay: lunarDate.dayName,
       isToday: isSameDay(d, today),
       holidayType: getHolidayType(d),
-      eventTitle: eventTitles[d.getDate()],
+      eventTitle: eventTitles[d.getDate()]
     }
   })
 
   return (
-    <VStack
-      padding={20}
-      frame={Widget.displaySize}
-    >
+    <VStack padding={20} frame={Widget.displaySize}>
       {/* Header: Year/Month and Week Number */}
       <HStack>
         <Button
           intent={ChangeWeekIntent('prev')}
-          buttonStyle='bordered'
-          tint='systemGray2'
+          buttonStyle="bordered"
+          tint="systemGray2"
         >
           <Image
-            systemName='chevron.left'
+            systemName="chevron.left"
             font={12}
-            foregroundStyle='secondaryLabel'
+            foregroundStyle="secondaryLabel"
             widgetAccentedRenderingMode="accented"
           />
         </Button>
-        <Button intent={ChangeWeekIntent('reset')} buttonStyle='plain'>
-          <Text font={24} foregroundStyle='label'>
+        <Button intent={ChangeWeekIntent('reset')} buttonStyle="plain">
+          <Text font={24} foregroundStyle="label">
             {formatYear(offset ? startOfWeekDate : today)}
             {offset ? startOfWeekDate.getMonth() + 1 : today.getMonth() + 1}月
           </Text>
         </Button>
         <Spacer />
-        <VStack alignment='trailing' spacing={2}>
-          {/* <Text font={12} foregroundStyle='secondaryLabel'>
-            {lunarYear}
-            {solarTerm}
-          </Text> */}
-          <Text font={14} foregroundStyle='secondaryLabel' widgetAccentable>
+        <VStack alignment="trailing" spacing={2}>
+          <Text font={14} foregroundStyle="secondaryLabel" widgetAccentable>
             第{weekNum}周
           </Text>
         </VStack>
         <Button
           intent={ChangeWeekIntent('next')}
-          buttonStyle='bordered'
-          tint='systemGray2'
+          buttonStyle="bordered"
+          tint="systemGray2"
         >
           <Image
-            systemName='chevron.right'
+            systemName="chevron.right"
             font={12}
-            foregroundStyle='secondaryLabel'
+            foregroundStyle="secondaryLabel"
             widgetAccentable
           />
         </Button>
@@ -151,14 +145,14 @@ async function WeeklyWidget() {
               font={11}
               foregroundStyle={item.isToday ? 'red' : 'secondaryLabel'}
               fontWeight="medium"
-              multilineTextAlignment='center'
+              multilineTextAlignment="center"
             >
               {item.weekDayName}
             </Text>
-            <ZStack frame={{ width: 40, height: 40 }} alignment='topTrailing'>
+            <ZStack frame={{ width: 40, height: 40 }} alignment="topTrailing">
               <Button
                 intent={SelectDateIntent(item.date.toISOString())}
-                buttonStyle='plain'
+                buttonStyle="plain"
               >
                 <VStack
                   frame={{ width: 40, height: 40 }}
@@ -166,17 +160,20 @@ async function WeeklyWidget() {
                     item.isToday
                       ? { style: 'red', shape: 'circle' }
                       : selectedDate && isSameDay(item.date, selectedDate)
-                      ? { style: 'secondarySystemBackground', shape: 'circle' }
-                      : undefined
+                        ? {
+                            style: 'secondarySystemBackground',
+                            shape: 'circle'
+                          }
+                        : undefined
                   }
                   background={
                     item.isToday ? (
-                      <Circle fill='red' opacity={0.2} />
+                      <Circle fill="red" opacity={0.2} />
                     ) : selectedDate && isSameDay(item.date, selectedDate) ? (
-                      <Circle fill='secondarySystemBackground' opacity={0.1} />
+                      <Circle fill="secondarySystemBackground" opacity={0.1} />
                     ) : undefined
                   }
-                  alignment='center'
+                  alignment="center"
                   spacing={0}
                 >
                   <Spacer />
@@ -184,7 +181,7 @@ async function WeeklyWidget() {
                     font={16}
                     foregroundStyle={item.isToday ? 'white' : 'label'}
                     widgetAccentable
-                    multilineTextAlignment='center'
+                    multilineTextAlignment="center"
                   >
                     {item.dayNum.toString()}
                   </Text>
@@ -199,7 +196,7 @@ async function WeeklyWidget() {
                           : 'secondaryLabel'
                     }
                     widgetAccentable
-                    multilineTextAlignment='center'
+                    multilineTextAlignment="center"
                     fontWeight="medium"
                   >
                     {item.eventTitle || item.lunarDay}
@@ -212,7 +209,7 @@ async function WeeklyWidget() {
                   frame={{ width: 14, height: 14 }}
                   widgetBackground={{
                     style: item.holidayType === 'work' ? 'red' : 'green',
-                    shape: 'circle',
+                    shape: 'circle'
                   }}
                 >
                   <Circle
@@ -223,7 +220,7 @@ async function WeeklyWidget() {
                     }
                     widgetAccentable
                   />
-                  <Text font={10} foregroundStyle='white' widgetAccentable>
+                  <Text font={10} foregroundStyle="white" widgetAccentable>
                     {item.holidayType === 'work' ? '班' : '休'}
                   </Text>
                 </ZStack>
@@ -235,13 +232,13 @@ async function WeeklyWidget() {
       <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
         <Capsule
           frame={{ width: 4, height: 16 }}
-          fill='rgba(255, 0, 0, 0.9)'
+          fill="rgba(255, 0, 0, 0.9)"
           widgetAccentable
         />
         <Text
           font={14}
-          foregroundStyle='label'
-          multilineTextAlignment='leading'
+          foregroundStyle="label"
+          multilineTextAlignment="leading"
         >
           {dayDesc}
         </Text>
@@ -265,7 +262,7 @@ async function MonthlyWidget() {
 
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
-    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays',
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays'
   )
   const dots: Record<number, Color> = {}
   let eventTitles: Record<number, string> = {}
@@ -310,12 +307,12 @@ async function MonthlyWidget() {
       padding={20}
     >
       {/* Header */}
-      <HStack alignment='center'>
-        <Text font={12} fontWeight='medium' foregroundStyle='red'>
+      <HStack alignment="center">
+        <Text font={12} fontWeight="medium" foregroundStyle="red">
           {month + 1}月
         </Text>
         <Spacer />
-        <Text font={12} fontWeight='medium' foregroundStyle='red'>
+        <Text font={12} fontWeight="medium" foregroundStyle="red">
           {lunarText}
         </Text>
       </HStack>
@@ -327,10 +324,10 @@ async function MonthlyWidget() {
             <Text
               key={i}
               font={10}
-              fontWeight='medium'
+              fontWeight="medium"
               foregroundStyle={i === 0 || i === 6 ? 'secondaryLabel' : 'label'}
               frame={{ maxWidth: 'infinity' }}
-              multilineTextAlignment='center'
+              multilineTextAlignment="center"
             >
               {name}
             </Text>
@@ -354,19 +351,19 @@ async function MonthlyWidget() {
                 <ZStack
                   key={j}
                   frame={{ maxWidth: 'infinity', height: 20 }}
-                  alignment='center'
+                  alignment="center"
                 >
                   {isToday && (
                     <Circle
                       frame={{ width: 20, height: 20 }}
                       widgetBackground={{ style: 'red', shape: 'circle' }}
-                      fill='rgba(255,0,0,0.2)'
+                      fill="rgba(255,0,0,0.2)"
                     />
                   )}
-                  <VStack spacing={0} alignment='center'>
+                  <VStack spacing={0} alignment="center">
                     <Text
                       font={11}
-                      fontWeight='medium'
+                      fontWeight="medium"
                       foregroundStyle={
                         isToday
                           ? 'white'
@@ -375,7 +372,7 @@ async function MonthlyWidget() {
                             : 'label'
                       }
                       widgetAccentable
-                      multilineTextAlignment='center'
+                      multilineTextAlignment="center"
                     >
                       {date.getDate().toString()}
                     </Text>
@@ -422,7 +419,7 @@ async function LargeMonthlyWidget() {
   const displayDate = new Date(
     today.getFullYear(),
     today.getMonth() + offset,
-    1,
+    1
   )
   const year = displayDate.getFullYear()
   const month = displayDate.getMonth()
@@ -436,7 +433,7 @@ async function LargeMonthlyWidget() {
 
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
-    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays',
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays'
   )
   let eventTitles: Record<number, string> = {}
 
@@ -464,13 +461,9 @@ async function LargeMonthlyWidget() {
   for (let i = 1; i <= daysInMonth; i++) {
     gridDays.push(new Date(year, month, i))
   }
-  // End padding
-  while (gridDays.length % 7 !== 0) {
-    gridDays.push(null)
-  }
 
   // Chunk into weeks
-  const weeks = []
+  const weeks: (Date | null)[][] = []
   for (let i = 0; i < gridDays.length; i += 7) {
     weeks.push(gridDays.slice(i, i + 7))
   }
@@ -478,196 +471,191 @@ async function LargeMonthlyWidget() {
   const weekDayNames = ['日', '一', '二', '三', '四', '五', '六']
 
   return (
-    <VStack
-      frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
-      padding={20}
-      widgetBackground='systemBackground'
-    >
-      {/* Header */}
-      <HStack alignment='center'>
-        <Button
-          intent={ChangeMonthIntent('prev')}
-          buttonStyle='bordered'
-          tint='systemGray2'
-        >
-          <Image
-            systemName='chevron.left'
-            font={12}
-            foregroundStyle='secondaryLabel'
-            widgetAccentable
-          />
-        </Button>
-        <Button intent={ChangeMonthIntent('reset')} buttonStyle='plain'>
-          <Text font={16} fontWeight='bold' foregroundStyle='label' widgetAccentable>
-            {year}年{month + 1}月
-          </Text>
-        </Button>
-        <Spacer />
-        <Button
-          intent={ChangeMonthIntent('next')}
-          buttonStyle='bordered'
-          tint='systemGray2'
-        >
-          <Image
-            systemName='chevron.right'
-            font={12}
-            foregroundStyle='secondaryLabel'
-            widgetAccentable
-          />
-        </Button>
-      </HStack>
-
-      <Spacer />
-
-      {/* Calendar Grid */}
-      <Grid verticalSpacing={4} horizontalSpacing={0}>
-        <GridRow>
-          {weekDayNames.map((name, i) => (
-            <Text
-              key={i}
-              font={12}
-              fontWeight='medium'
-              foregroundStyle={i === 0 || i === 6 ? 'secondaryLabel' : 'label'}
-              frame={{ maxWidth: 'infinity' }}
-              multilineTextAlignment='center'
+    <EnvironmentValuesReader keys={['widgetRenderingMode']}>
+      {({ widgetRenderingMode }) => (
+        <VStack padding={20} frame={Widget.displaySize}>
+          {/* Header */}
+          <HStack alignment="center">
+            <Button
+              intent={ChangeMonthIntent('prev')}
+              buttonStyle="bordered"
+              tint="systemGray2"
             >
-              {name}
-            </Text>
-          ))}
-        </GridRow>
-        {weeks.map((week, i) => (
-          <GridRow key={i}>
-            {week.map((date, j) => {
-              if (!date) {
-                // Empty cell
-                return (
-                  <ZStack
-                    key={j}
-                    frame={{ maxWidth: 'infinity', height: 40 }}
-                  />
-                )
-              }
-              const isToday = isSameDay(date, today)
-              const eventTitle = eventTitles[date.getDate()]
-              const lunarDate = lunar(date)
-              const lunarDay = lunarDate.dayName
-              const holidayType = getHolidayType(date)
+              <Image
+                systemName="chevron.left"
+                font={12}
+                foregroundStyle="secondaryLabel"
+              />
+            </Button>
+            <Button intent={ChangeMonthIntent('reset')} buttonStyle="plain">
+              <Text
+                font={16}
+                fontWeight="bold"
+                foregroundStyle="label"
+                widgetAccentable
+              >
+                {year}年{month + 1}月
+              </Text>
+            </Button>
+            <Spacer />
+            <Button
+              intent={ChangeMonthIntent('next')}
+              buttonStyle="bordered"
+              tint="systemGray2"
+            >
+              <Image
+                systemName="chevron.right"
+                font={12}
+                foregroundStyle="secondaryLabel"
+                widgetAccentable
+              />
+            </Button>
+          </HStack>
 
-              return (
-                <ZStack
-                  key={j}
-                  frame={{ maxWidth: 'infinity', height: 40 }}
-                  alignment='topTrailing'
+          <Spacer />
+
+          <Grid verticalSpacing={4} horizontalSpacing={0}>
+            <GridRow>
+              {weekDayNames.map((name, i) => (
+                <Text
+                  key={i}
+                  font={12}
+                  fontWeight="medium"
+                  foregroundStyle={
+                    i === 0 || i === 6 ? 'secondaryLabel' : 'label'
+                  }
+                  frame={{ maxWidth: 'infinity' }}
+                  multilineTextAlignment="center"
                 >
-                  <ZStack
-                    frame={{ maxWidth: 'infinity', height: 40 }}
-                    alignment='center'
-                  >
-                    <Button
-                      intent={SelectDateIntent(date.toISOString())}
-                      buttonStyle='plain'
-                    >
-                      <VStack
-                        frame={{ width: 40, height: 40 }}
-                        widgetBackground={
-                          isToday
-                            ? { style: 'red', shape: 'circle' }
-                            : undefined
-                        }
-                        background={
-                          isToday ? (
-                            <Circle
-                              fill='rgba(255, 0, 0, 0.3)'
-                              widgetAccentable
-                            />
-                          ) : selectedDate && isSameDay(date, selectedDate) ? (
-                            <Circle
-                              fill='secondarySystemBackground'
-                              opacity={0.5}
-                            />
-                          ) : undefined
-                        }
-                        alignment='center'
-                        spacing={0}
-                      >
-                        <Spacer />
-                        <Text
-                          font={14}
-                          fontWeight='medium'
-                          foregroundStyle={
-                            isToday
-                              ? 'white'
-                              : j === 0 || j === 6
-                                ? 'secondaryLabel'
-                                : 'label'
-                          }
-                          widgetAccentable
-                          multilineTextAlignment='center'
-                        >
-                          {date.getDate().toString()}
-                        </Text>
-                        <Text
-                          font={9}
-                          foregroundStyle={
-                            isToday
-                              ? 'white'
-                              : eventTitle
-                                ? 'red'
-                                : 'secondaryLabel'
-                          }
-                          widgetAccentable={isToday}
-                          lineLimit={1}
-                          multilineTextAlignment='center'
-                        >
-                          {eventTitle || lunarDay}
-                        </Text>
-                        <Spacer />
-                      </VStack>
-                    </Button>
-                  </ZStack>
-                  {holidayType && (
-                    <ZStack
-                      frame={{ width: 14, height: 14 }}
-                      widgetBackground={{
-                        style: holidayType === 'work' ? 'red' : 'green',
-                        shape: 'circle',
-                      }}
-                    >
-                      <Circle
-                        fill={
-                          holidayType === 'work'
-                            ? 'rgba(255, 0, 0, 0.3)'
-                            : 'rgba(0, 255, 0, 0.3)'
-                        }
-                        widgetAccentable
+                  {name}
+                </Text>
+              ))}
+            </GridRow>
+            {weeks.map((week, i) => (
+              <GridRow key={i}>
+                {week.map((date, j) => {
+                  if (!date) {
+                    // Empty cell
+                    return (
+                      <ZStack
+                        key={j}
+                        frame={{ maxWidth: 'infinity', height: 40 }}
                       />
-                      <Text font={10} foregroundStyle='white' widgetAccentable>
-                        {holidayType === 'work' ? '班' : '休'}
-                      </Text>
+                    )
+                  }
+                  const isToday = isSameDay(date, today)
+                  const eventTitle = eventTitles[date.getDate()]
+                  const lunarDate = lunar(date)
+                  const lunarDay = lunarDate.dayName
+                  const holidayType = getHolidayType(date)
+
+                  return (
+                    <ZStack
+                      key={j}
+                      frame={{ maxWidth: 'infinity', height: 40 }}
+                      alignment="topTrailing"
+                    >
+                      <Button
+                        intent={SelectDateIntent(date.toISOString())}
+                        buttonStyle="plain"
+                      >
+                        <VStack
+                          frame={{ width: 40, height: 40 }}
+                          background={
+                            isToday
+                              ? {
+                                  style:
+                                    widgetRenderingMode === 'accented'
+                                      ? 'rgba(255,0,0,0.3)'
+                                      : 'red',
+                                  shape: 'circle'
+                                }
+                              : selectedDate && isSameDay(date, selectedDate)
+                                ? {
+                                    style:
+                                      widgetRenderingMode === 'accented'
+                                        ? 'rgba(28,28,30,0.5)'
+                                        : 'secondarySystemBackground',
+                                    shape: 'circle'
+                                  }
+                                : undefined
+                          }
+                          alignment="center"
+                          spacing={0}
+                        >
+                          <Text
+                            font={14}
+                            fontWeight="medium"
+                            foregroundStyle={
+                              isToday
+                                ? 'white'
+                                : j === 0 || j === 6
+                                  ? 'secondaryLabel'
+                                  : 'label'
+                            }
+                            widgetAccentable
+                            multilineTextAlignment="center"
+                          >
+                            {date.getDate().toString()}
+                          </Text>
+                          <Text
+                            font={9}
+                            foregroundStyle={
+                              isToday
+                                ? 'white'
+                                : eventTitle
+                                  ? 'red'
+                                  : 'secondaryLabel'
+                            }
+                            widgetAccentable={isToday}
+                            lineLimit={1}
+                            multilineTextAlignment="center"
+                          >
+                            {eventTitle || lunarDay}
+                          </Text>
+                        </VStack>
+                      </Button>
+
+                      {holidayType && (
+                        <Text
+                          frame={{ width: 14, height: 14 }}
+                          font={10}
+                          background={{
+                            style: holidayType === 'work'
+                              ? (widgetRenderingMode === 'accented' ? 'rgba(255,0,0,0.3)' : 'red')
+                              : (widgetRenderingMode === 'accented' ? 'rgba(0,255,0,0.3)' : 'green'),
+                            shape: 'circle'
+                          }}
+                          foregroundStyle="white"
+                          widgetAccentable
+                        >
+                          {holidayType === 'work' ? '班' : '休'}
+                        </Text>
+                      )}
                     </ZStack>
-                  )}
-                </ZStack>
-              )
-            })}
-          </GridRow>
-        ))}
-      </Grid>
-      <Spacer />
-      <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-        <Capsule
-          frame={{ width: 4, height: 16 }}
-          fill='rgba(255, 0, 0, 0.9)'
-          widgetAccentable
-        />
-        <Text
-          font={14}
-          foregroundStyle='label'
-          multilineTextAlignment='leading'
-        >
-          {dayDesc}
-        </Text>
-      </HStack>
-    </VStack>
+                  )
+                })}
+              </GridRow>
+            ))}
+          </Grid>
+          <Spacer />
+          <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
+            <Capsule
+              frame={{ width: 4, height: 16 }}
+              fill="rgba(255, 0, 0, 0.9)"
+              widgetAccentable
+            />
+            <Text
+              font={14}
+              foregroundStyle="label"
+              multilineTextAlignment="leading"
+            >
+              {dayDesc}
+            </Text>
+          </HStack>
+        </VStack>
+      )}
+    </EnvironmentValuesReader>
   )
 }
 
