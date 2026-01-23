@@ -30,6 +30,7 @@ import {
 } from './app_intents'
 import { lunar } from './lunar'
 import { fetchHolidays, getHolidayType } from './holidayUtils'
+import SmallWidget from './widgets/SmallWidget'
 
 async function WeeklyWidget() {
   const val = Storage.get<string>('weekOffset') || '0'
@@ -252,20 +253,11 @@ async function MonthlyWidget() {
   const year = today.getFullYear()
   const month = today.getMonth()
 
-  const lunarDate = lunar(today)
-  const lunarText = `${lunarDate.monthName}月${lunarDate.dayName}`
-
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const daysInMonth = lastDay.getDate()
-  const startDayOfWeek = firstDay.getDay() // 0 is Sunday
-
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
     (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays'
   )
   const dots: Record<number, Color> = {}
-  let eventTitles: Record<number, string> = {}
 
   if (holidayCal) {
     const start = new Date(year, month, 1)
@@ -277,120 +269,12 @@ async function MonthlyWidget() {
     }
   }
 
-  // Generate grid cells
-  const gridDays: (Date | null)[] = []
-
-  // Start padding
-  for (let i = 0; i < startDayOfWeek; i++) {
-    gridDays.push(null)
-  }
-  // Dates
-  for (let i = 1; i <= daysInMonth; i++) {
-    gridDays.push(new Date(year, month, i))
-  }
-  // End padding
-  while (gridDays.length % 7 !== 0) {
-    gridDays.push(null)
-  }
-
-  // Chunk into weeks
-  const weeks = []
-  for (let i = 0; i < gridDays.length; i += 7) {
-    weeks.push(gridDays.slice(i, i + 7))
-  }
-
-  const weekDayNames = ['日', '一', '二', '三', '四', '五', '六']
-
   return (
-    <VStack
-      frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
-      padding={20}
-    >
-      {/* Header */}
-      <HStack alignment="center">
-        <Text font={12} fontWeight="medium" foregroundStyle="red">
-          {month + 1}月
-        </Text>
-        <Spacer />
-        <Text font={12} fontWeight="medium" foregroundStyle="red">
-          {lunarText}
-        </Text>
-      </HStack>
-      <Spacer />
-      {/* Calendar Grid */}
-      <Grid verticalSpacing={2} horizontalSpacing={0}>
-        <GridRow>
-          {weekDayNames.map((name, i) => (
-            <Text
-              key={i}
-              font={10}
-              fontWeight="medium"
-              foregroundStyle={i === 0 || i === 6 ? 'secondaryLabel' : 'label'}
-              frame={{ maxWidth: 'infinity' }}
-              multilineTextAlignment="center"
-            >
-              {name}
-            </Text>
-          ))}
-        </GridRow>
-        {weeks.map((week, i) => (
-          <GridRow key={i}>
-            {week.map((date, j) => {
-              if (!date) {
-                // Empty cell
-                return (
-                  <ZStack
-                    key={j}
-                    frame={{ maxWidth: 'infinity', height: 18 }}
-                  />
-                )
-              }
-              const isToday = isSameDay(date, today)
-              const dotColor = dots[date.getDate()]
-              return (
-                <ZStack
-                  key={j}
-                  frame={{ maxWidth: 'infinity', height: 20 }}
-                  alignment="center"
-                >
-                  {isToday && (
-                    <Circle
-                      frame={{ width: 20, height: 20 }}
-                      widgetBackground={{ style: 'red', shape: 'circle' }}
-                      fill="rgba(255,0,0,0.2)"
-                    />
-                  )}
-                  <VStack spacing={0} alignment="center">
-                    <Text
-                      font={11}
-                      fontWeight="medium"
-                      foregroundStyle={
-                        isToday
-                          ? 'white'
-                          : j === 0 || j === 6
-                            ? 'secondaryLabel'
-                            : 'label'
-                      }
-                      widgetAccentable
-                      multilineTextAlignment="center"
-                    >
-                      {date.getDate().toString()}
-                    </Text>
-                    {dotColor && (
-                      <Circle
-                        fill={dotColor}
-                        frame={{ width: 3, height: 3 }}
-                        widgetAccentable
-                      />
-                    )}
-                  </VStack>
-                </ZStack>
-              )
-            })}
-          </GridRow>
-        ))}
-      </Grid>
-    </VStack>
+    <EnvironmentValuesReader keys={['widgetRenderingMode']}>
+      {({ widgetRenderingMode }) => (
+        <SmallWidget {...{ widgetRenderingMode, dots }} />
+      )}
+    </EnvironmentValuesReader>
   )
 }
 
@@ -621,9 +505,14 @@ async function LargeMonthlyWidget() {
                           frame={{ width: 14, height: 14 }}
                           font={10}
                           background={{
-                            style: holidayType === 'work'
-                              ? (widgetRenderingMode === 'accented' ? 'rgba(255,0,0,0.3)' : 'red')
-                              : (widgetRenderingMode === 'accented' ? 'rgba(0,255,0,0.3)' : 'green'),
+                            style:
+                              holidayType === 'work'
+                                ? widgetRenderingMode === 'accented'
+                                  ? 'rgba(255,0,0,0.3)'
+                                  : 'red'
+                                : widgetRenderingMode === 'accented'
+                                  ? 'rgba(0,255,0,0.3)'
+                                  : 'green',
                             shape: 'circle'
                           }}
                           foregroundStyle="white"
