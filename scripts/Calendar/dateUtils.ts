@@ -24,10 +24,10 @@ export function getWeekDayName(date: Date): string {
   return map[date.getDay()];
 }
 
-export function startOfWeek(date: Date): Date {
+export function startOfWeek(date: Date, startDay: number = 0): Date {
   const d = new Date(date);
   const day = d.getDay(); // 0 is Sunday
-  const diff = d.getDate() - day; // adjust when day is sunday
+  const diff = d.getDate() - day + (day < startDay ? -7 : 0) + startDay;
   d.setDate(diff);
   return d;
 }

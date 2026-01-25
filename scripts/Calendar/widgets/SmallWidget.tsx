@@ -12,6 +12,7 @@ import {
 } from 'scripting'
 import { isSameDay } from '../dateUtils'
 import { lunar } from '../lunar'
+import { colors } from '../degisn'
 
 export default function SmallWidget({
   widgetRenderingMode,
@@ -30,7 +31,8 @@ export default function SmallWidget({
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
   const daysInMonth = lastDay.getDate()
-  const startDayOfWeek = firstDay.getDay() // 0 is Sunday
+  const firstDayOfWeek = parseInt(Storage.get<string>('firstDayOfWeek') || '0')
+  const startDayOfWeek = (firstDay.getDay() - firstDayOfWeek + 7) % 7
 
   // Generate grid cells
   const gridDays: (Date | null)[] = []
@@ -50,7 +52,10 @@ export default function SmallWidget({
     weeks.push(gridDays.slice(i, i + 7))
   }
 
-  const weekDayNames = ['日', '一', '二', '三', '四', '五', '六']
+  const weekDayNames =
+    firstDayOfWeek === 1
+      ? ['一', '二', '三', '四', '五', '六', '日']
+      : ['日', '一', '二', '三', '四', '五', '六']
 
   return (
     <VStack
@@ -59,11 +64,11 @@ export default function SmallWidget({
     >
       {/* Header */}
       <HStack alignment="center">
-        <Text font={12} fontWeight="medium" foregroundStyle="red">
+        <Text font={12} fontWeight="medium" foregroundStyle={colors.systemRed}>
           {month + 1}月
         </Text>
         <Spacer />
-        <Text font={12} fontWeight="medium" foregroundStyle="red">
+        <Text font={12} fontWeight="medium" foregroundStyle={colors.systemRed}>
           {lunarText}
         </Text>
       </HStack>
@@ -109,7 +114,7 @@ export default function SmallWidget({
                           style:
                             widgetRenderingMode === 'accented'
                               ? 'rgba(255,0,0,0.3)'
-                              : 'red',
+                              : colors.systemRed,
                           shape: 'circle'
                         }
                       : undefined

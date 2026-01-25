@@ -7,6 +7,7 @@ import {
   Navigation,
   NavigationLink,
   NavigationStack,
+  Picker,
   Script,
   Section,
   Spacer,
@@ -178,13 +179,29 @@ function WeekCalculator() {
     </NavigationStack>
   )
 }
-
 function App() {
+  const [firstDayOfWeek, setFirstDayOfWeek] = useState(Storage.get<string>('firstDayOfWeek') || '0')
+
   return (
     <NavigationStack>
       <List navigationTitle='Calendar'>
         <Section>
           <NavigationLink title='Week Calculator' destination={<WeekCalculator />} />
+        </Section>
+        <Section header={<Text>Settings</Text>}>
+          <Picker
+            value={firstDayOfWeek}
+            onChanged={(val: string) => {
+              setFirstDayOfWeek(val)
+              Storage.set('firstDayOfWeek', val)
+              Widget.reloadAll()
+            }}
+            pickerStyle="menu"
+            label={<Text>Start Week on</Text>}
+          >
+            <Text tag='0'>Sunday</Text>
+            <Text tag='1'>Monday</Text>
+          </Picker>
         </Section>
         <Section>
           <Button title='Preview Widget' action={() => Widget.preview()}></Button>

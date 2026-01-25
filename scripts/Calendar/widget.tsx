@@ -31,6 +31,7 @@ import {
 import { lunar } from './lunar'
 import { fetchHolidays, getHolidayType } from './holidayUtils'
 import SmallWidget from './widgets/SmallWidget'
+import { color, colors } from './degisn'
 
 async function WeeklyWidget() {
   const val = Storage.get<string>('weekOffset') || '0'
@@ -59,7 +60,8 @@ async function WeeklyWidget() {
     ` ${lunarDate.monthName}月${lunarDate.dayName}`
 
   // Week Days (Sunday start) - Based on offset
-  const startOfWeekDate = getStartOfWeek(displayDate)
+  const firstDayOfWeek = parseInt(Storage.get<string>('firstDayOfWeek') || '0')
+  const startOfWeekDate = getStartOfWeek(displayDate, firstDayOfWeek)
 
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
@@ -95,156 +97,165 @@ async function WeeklyWidget() {
   })
 
   return (
-    <VStack padding={20} frame={Widget.displaySize}>
-      {/* Header: Year/Month and Week Number */}
-      <HStack>
-        <Button
-          intent={ChangeWeekIntent('prev')}
-          buttonStyle="bordered"
-          tint="systemGray2"
-        >
-          <Image
-            systemName="chevron.left"
-            font={12}
-            foregroundStyle="secondaryLabel"
-            widgetAccentedRenderingMode="accented"
-          />
-        </Button>
-        <Button intent={ChangeWeekIntent('reset')} buttonStyle="plain">
-          <Text font={24} foregroundStyle="label">
-            {formatYear(offset ? startOfWeekDate : today)}
-            {offset ? startOfWeekDate.getMonth() + 1 : today.getMonth() + 1}月
-          </Text>
-        </Button>
-        <Spacer />
-        <VStack alignment="trailing" spacing={2}>
-          <Text font={14} foregroundStyle="secondaryLabel" widgetAccentable>
-            第{weekNum}周
-          </Text>
-        </VStack>
-        <Button
-          intent={ChangeWeekIntent('next')}
-          buttonStyle="bordered"
-          tint="systemGray2"
-        >
-          <Image
-            systemName="chevron.right"
-            font={12}
-            foregroundStyle="secondaryLabel"
-            widgetAccentable
-          />
-        </Button>
-      </HStack>
-
-      <Spacer />
-
-      {/* Calendar Week Row */}
-      <HStack spacing={4}>
-        {weekDays.map((item, index) => (
-          <VStack key={index} spacing={4} frame={{ maxWidth: 400 }}>
-            <Text
-              font={11}
-              foregroundStyle={item.isToday ? 'red' : 'secondaryLabel'}
-              fontWeight="medium"
-              multilineTextAlignment="center"
+    <EnvironmentValuesReader keys={['widgetRenderingMode']}>
+      {({ widgetRenderingMode }) => (
+        <VStack padding={20} frame={Widget.displaySize}>
+          {/* Header: Year/Month and Week Number */}
+          <HStack>
+            <Button
+              intent={ChangeWeekIntent('prev')}
+              buttonStyle="bordered"
+              tint="systemGray2"
             >
-              {item.weekDayName}
-            </Text>
-            <ZStack frame={{ width: 40, height: 40 }} alignment="topTrailing">
-              <Button
-                intent={SelectDateIntent(item.date.toISOString())}
-                buttonStyle="plain"
-              >
-                <VStack
-                  frame={{ width: 40, height: 40 }}
-                  widgetBackground={
-                    item.isToday
-                      ? { style: 'red', shape: 'circle' }
-                      : selectedDate && isSameDay(item.date, selectedDate)
-                        ? {
-                            style: 'secondarySystemBackground',
-                            shape: 'circle'
-                          }
-                        : undefined
+              <Image
+                systemName="chevron.left"
+                font={12}
+                foregroundStyle="secondaryLabel"
+                widgetAccentedRenderingMode="accented"
+              />
+            </Button>
+            <Button intent={ChangeWeekIntent('reset')} buttonStyle="plain">
+              <Text font={24} foregroundStyle="label">
+                {formatYear(offset ? startOfWeekDate : today)}
+                {offset ? startOfWeekDate.getMonth() + 1 : today.getMonth() + 1}
+                月
+              </Text>
+            </Button>
+            <Spacer />
+            <VStack alignment="trailing" spacing={2}>
+              <Text font={14} foregroundStyle="secondaryLabel" widgetAccentable>
+                第{weekNum}周
+              </Text>
+            </VStack>
+            <Button
+              intent={ChangeWeekIntent('next')}
+              buttonStyle="bordered"
+              tint="systemGray2"
+            >
+              <Image
+                systemName="chevron.right"
+                font={12}
+                foregroundStyle="secondaryLabel"
+                widgetAccentable
+              />
+            </Button>
+          </HStack>
+
+          <Spacer />
+
+          {/* Calendar Week Row */}
+          <HStack spacing={4}>
+            {weekDays.map((item, index) => (
+              <VStack key={index} spacing={4} frame={{ maxWidth: 400 }}>
+                <Text
+                  font={11}
+                  foregroundStyle={
+                    item.isToday ? colors.systemRed : 'secondaryLabel'
                   }
-                  background={
-                    item.isToday ? (
-                      <Circle fill="red" opacity={0.2} />
-                    ) : selectedDate && isSameDay(item.date, selectedDate) ? (
-                      <Circle fill="secondarySystemBackground" opacity={0.1} />
-                    ) : undefined
-                  }
-                  alignment="center"
-                  spacing={0}
+                  fontWeight="medium"
+                  multilineTextAlignment="center"
                 >
-                  <Spacer />
-                  <Text
-                    font={16}
-                    foregroundStyle={item.isToday ? 'white' : 'label'}
-                    widgetAccentable
-                    multilineTextAlignment="center"
-                  >
-                    {item.dayNum.toString()}
-                  </Text>
-                  <Text
-                    font={9}
-                    lineLimit={1}
-                    foregroundStyle={
-                      item.isToday
-                        ? 'white'
-                        : item.eventTitle
-                          ? 'red'
-                          : 'secondaryLabel'
-                    }
-                    widgetAccentable
-                    multilineTextAlignment="center"
-                    fontWeight="medium"
-                  >
-                    {item.eventTitle || item.lunarDay}
-                  </Text>
-                  <Spacer />
-                </VStack>
-              </Button>
-              {item.holidayType && (
+                  {item.weekDayName}
+                </Text>
                 <ZStack
-                  frame={{ width: 14, height: 14 }}
-                  widgetBackground={{
-                    style: item.holidayType === 'work' ? 'red' : 'green',
-                    shape: 'circle'
-                  }}
+                  frame={{ width: 40, height: 40 }}
+                  alignment="topTrailing"
                 >
-                  <Circle
-                    fill={
-                      item.holidayType === 'work'
-                        ? 'rgba(255, 0, 0, 0.3)'
-                        : 'rgba(0, 255, 0, 0.3)'
-                    }
-                    widgetAccentable
-                  />
-                  <Text font={10} foregroundStyle="white" widgetAccentable>
-                    {item.holidayType === 'work' ? '班' : '休'}
-                  </Text>
+                  <Button
+                    intent={SelectDateIntent(item.date.toISOString())}
+                    buttonStyle="plain"
+                  >
+                    <VStack
+                      frame={{ width: 40, height: 40 }}
+                      background={
+                        item.isToday ? (
+                          <Circle
+                            fill={colors.systemRed}
+                            opacity={
+                              widgetRenderingMode === 'accented' ? 0.2 : 1
+                            }
+                          />
+                        ) : selectedDate &&
+                          isSameDay(item.date, selectedDate) ? (
+                          <Circle
+                            fill="secondarySystemBackground"
+                            opacity={
+                              widgetRenderingMode === 'accented' ? 0.1 : 1
+                            }
+                          />
+                        ) : undefined
+                      }
+                      alignment="center"
+                      spacing={0}
+                    >
+                      <Spacer />
+                      <Text
+                        font={16}
+                        foregroundStyle={item.isToday ? 'white' : 'label'}
+                        widgetAccentable
+                        multilineTextAlignment="center"
+                      >
+                        {item.dayNum.toString()}
+                      </Text>
+                      <Text
+                        font={9}
+                        lineLimit={1}
+                        foregroundStyle={
+                          item.isToday
+                            ? 'white'
+                            : item.eventTitle
+                              ? colors.systemRed
+                              : 'secondaryLabel'
+                        }
+                        widgetAccentable
+                        multilineTextAlignment="center"
+                        fontWeight="medium"
+                      >
+                        {item.eventTitle || item.lunarDay}
+                      </Text>
+                      <Spacer />
+                    </VStack>
+                  </Button>
+                  {item.holidayType && (
+                    <Text
+                      frame={{ width: 14, height: 14 }}
+                      background={{
+                        style: color(
+                          item.holidayType === 'work'
+                            ? colors.systemRed
+                            : colors.systemGreen,
+                          widgetRenderingMode === 'accented' ? 0.3 : 1
+                        ),
+                        shape: 'circle'
+                      }}
+                      font={10}
+                      foregroundStyle="white"
+                      widgetAccentable
+                    >
+                      {item.holidayType === 'work' ? '班' : '休'}
+                    </Text>
+                  )}
                 </ZStack>
-              )}
-            </ZStack>
-          </VStack>
-        ))}
-      </HStack>
-      <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-        <Capsule
-          frame={{ width: 4, height: 16 }}
-          fill="rgba(255, 0, 0, 0.9)"
-          widgetAccentable
-        />
-        <Text
-          font={14}
-          foregroundStyle="label"
-          multilineTextAlignment="leading"
-        >
-          {dayDesc}
-        </Text>
-      </HStack>
-    </VStack>
+              </VStack>
+            ))}
+          </HStack>
+          <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
+            <Capsule
+              frame={{ width: 4, height: 16 }}
+              fill={color(colors.systemRed, 0.9)}
+              widgetAccentable
+            />
+            <Text
+              font={14}
+              foregroundStyle="label"
+              multilineTextAlignment="leading"
+            >
+              {dayDesc}
+            </Text>
+          </HStack>
+        </VStack>
+      )}
+    </EnvironmentValuesReader>
   )
 }
 
@@ -313,7 +324,8 @@ async function LargeMonthlyWidget() {
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
   const daysInMonth = lastDay.getDate()
-  const startDayOfWeek = firstDay.getDay() // 0 is Sunday
+  const firstDayOfWeek = parseInt(Storage.get<string>('firstDayOfWeek') || '0')
+  const startDayOfWeek = (firstDay.getDay() - firstDayOfWeek + 7) % 7
 
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
@@ -352,7 +364,10 @@ async function LargeMonthlyWidget() {
     weeks.push(gridDays.slice(i, i + 7))
   }
 
-  const weekDayNames = ['日', '一', '二', '三', '四', '五', '六']
+  const weekDayNames =
+    firstDayOfWeek === 1
+      ? ['一', '二', '三', '四', '五', '六', '日']
+      : ['日', '一', '二', '三', '四', '五', '六']
 
   return (
     <EnvironmentValuesReader keys={['widgetRenderingMode']}>
@@ -451,7 +466,7 @@ async function LargeMonthlyWidget() {
                                   style:
                                     widgetRenderingMode === 'accented'
                                       ? 'rgba(255,0,0,0.3)'
-                                      : 'red',
+                                      : colors.systemRed,
                                   shape: 'circle'
                                 }
                               : selectedDate && isSameDay(date, selectedDate)
@@ -488,7 +503,7 @@ async function LargeMonthlyWidget() {
                               isToday
                                 ? 'white'
                                 : eventTitle
-                                  ? 'red'
+                                  ? colors.systemRed
                                   : 'secondaryLabel'
                             }
                             widgetAccentable={isToday}
@@ -509,10 +524,10 @@ async function LargeMonthlyWidget() {
                               holidayType === 'work'
                                 ? widgetRenderingMode === 'accented'
                                   ? 'rgba(255,0,0,0.3)'
-                                  : 'red'
+                                  : colors.systemRed
                                 : widgetRenderingMode === 'accented'
                                   ? 'rgba(0,255,0,0.3)'
-                                  : 'green',
+                                  : colors.systemGreen,
                             shape: 'circle'
                           }}
                           foregroundStyle="white"
@@ -531,7 +546,7 @@ async function LargeMonthlyWidget() {
           <HStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
             <Capsule
               frame={{ width: 4, height: 16 }}
-              fill="rgba(255, 0, 0, 0.9)"
+              fill={color(colors.systemRed, 0.9)}
               widgetAccentable
             />
             <Text
