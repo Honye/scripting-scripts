@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       scripting-cli:
-        specifier: ^1.2.4
-        version: 1.2.4
+        specifier: ^1.2.5
+        version: 1.2.5
 
 packages:
 
@@ -412,8 +412,8 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-  scripting-cli@1.2.4:
-    resolution: {integrity: sha512-gwzr7SwXfZeKoiqroH64aMs7B0KU9f2bDvmyrUafjfQwLWobsj40Wm3ooiIXD37tnFyaoOSxw9gRLAe3t0mT3g==}
+  scripting-cli@1.2.5:
+    resolution: {integrity: sha512-x3LIC9UHydXcKPc4oT4YSB7dAqmEb2L7Zx1kN1iZymPSkhsksloBa1rVKql/kfrqWUEOBahaE+85fVlulXr4jA==}
     hasBin: true
 
   send@0.19.0:
@@ -959,7 +959,7 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  scripting-cli@1.2.4:
+  scripting-cli@1.2.5:
     dependencies:
       bonjour: 3.5.0
       chalk: 4.1.2

@@ -1,0 +1,39 @@
+{
+  "icon" : "square.2.layers.3d.fill",
+  "localizedNames" : {
+    "zh" : "",
+    "ru" : "",
+    "en" : "",
+    "es" : "",
+    "ja" : "",
+    "de" : "",
+    "pt" : "",
+    "it" : "",
+    "fr" : ""
+  },
+  "intentInputTypes" : [
+
+  ],
+  "version" : "1.0.0",
+  "iconImage" : null,
+  "color" : "rgba(28, 140, 255,1)",
+  "name" : "影视大全",
+  "contributors" : [
+
+  ],
+  "runInApp" : false,
+  "remoteResource" : null,
+  "description" : null,
+  "localizedDescriptions" : {
+    "zh" : "",
+    "ru" : "",
+    "en" : "",
+    "es" : "",
+    "ja" : "",
+    "de" : "",
+    "pt" : "",
+    "it" : "",
+    "fr" : ""
+  },
+  "author" : null
+}
