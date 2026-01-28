@@ -19,6 +19,7 @@ import { DetailView } from "./DetailView"
 export function HomeView() {
   const [selectedMainTab, setSelectedMainTab] = useState<Category>(CATEGORIES[0])
   const [selectedSubTabId, setSelectedSubTabId] = useState<number | string | undefined>(undefined)
+  const [searchText, setSearchText] = useState("")
 
   const [items, setItems] = useState<VideoItem[]>([])
   const [page, setPage] = useState(1)
@@ -34,48 +35,69 @@ export function HomeView() {
     }
   }, [selectedMainTab])
 
-  // Fetch data when tabs or page change
+  // Fetch data when tabs, page, or search text change
   useEffect(() => {
+    let ignore = false
+
     // Reset list if page is 1
     if (page === 1) {
       setItems([])
       setHasMore(true)
     }
-    fetchData()
-  }, [selectedMainTab, selectedSubTabId, page])
-
-  async function fetchData() {
-    if (loading) return
-
-    const typeId = selectedSubTabId
-    const hours = selectedMainTab.hours
-    if (!typeId && !hours) return
 
     setLoading(true)
-    try {
-      const res = await API.getList(typeId, page, hours)
-      if (page === 1) {
-        setItems(res.list)
-      } else {
-        setItems(prev => [...prev, ...res.list])
-      }
-      setHasMore(page < res.pagecount)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
+
+    const promise = searchText
+      ? API.getSearch(searchText, page)
+      : API.getList(selectedSubTabId, page, selectedMainTab.hours)
+
+    if ((!selectedSubTabId && !selectedMainTab.hours && !searchText)) {
+       setLoading(false)
+       return
     }
-  }
+
+    promise
+      .then(res => {
+        if (ignore) return
+        if (page === 1) {
+          setItems(res.list)
+        } else {
+          setItems(prev => [...prev, ...res.list])
+        }
+        setHasMore(page < res.pagecount)
+      })
+      .catch(e => {
+        if (ignore) return
+        console.error(e)
+      })
+      .finally(() => {
+        if (ignore) return
+        setLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [selectedMainTab, selectedSubTabId, page, searchText])
 
   const columns = [
-    { size: { type: 'flexible' as const }, spacing: 16 },
-    { size: { type: 'flexible' as const }, spacing: 16 },
-    { size: { type: 'flexible' as const }, spacing: 16 }
+    { size: { type: 'adaptive' as const, min: 90 }, spacing: 16 }
   ]
 
   return (
-    <VStack>
+    <VStack
+      searchable={{
+        value: searchText,
+        onChanged: (text) => {
+          setSearchText(text)
+          setPage(1)
+        },
+        prompt: "Search videos"
+      }}
+    >
       {/* Category Tabs */}
+      {!searchText && (
+      <>
       <Picker
         title="Category"
         value={selectedMainTab.name}
@@ -118,10 +140,12 @@ export function HomeView() {
           </HStack>
         </ScrollView>
       )}
+      </>
+      )}
 
       {/* Video Grid */}
       <ScrollView>
-        <LazyVGrid columns={columns} padding={16}>
+        <LazyVGrid columns={columns} padding={16} spacing={10}>
           {items.map(item => (
             <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
               <VideoGridItem item={item} />
@@ -136,7 +160,6 @@ export function HomeView() {
             <Text foregroundStyle="blue">Load More</Text>
           </Button>
         )}
-
         {!loading && !hasMore && items.length > 0 && (
            <Text foregroundStyle="secondaryLabel" padding>No more videos</Text>
         )}
