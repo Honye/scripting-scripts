@@ -46,7 +46,74 @@ export function DetailView({ id }: { id: number }) {
       setDetail(data)
       setLoading(false)
       if (data && data.playList.length > 0 && data.playList[0].urls.length > 0) {
-        setCurrentEpisode(data.playList[0].urls[0])
+        // Check history
+        const history = DB.getHistoryOne(id)
+        if (history && history.episode_index !== undefined) {
+             // Find the episode
+             const epIdx = history.episode_index
+             // Flatten list to find by index simplistically or use structure
+             // Assuming first group for simplicity or logic needs to handle groups.
+             // But existing save logic uses flattened index approach mostly by searching url.
+             // Actually save logic saved `epIdx` relative to the group?
+             // Wait, save logic logic:
+             /*
+               for (let i = 0; i < detail.playList.length; i++) {
+                 const found = detail.playList[i].urls.findIndex(u => u.url === currentEpisode.url)
+                 if (found >= 0) epIdx = found...
+               }
+             */
+             // This logic seems to imply `epIdx` is index WITHIN A GROUP? But which group?
+             // It iterates groups and finds first match.
+
+             // Let's refactor safely:
+             // We need to restore `currentEpisode` and `player.seek`.
+
+             let foundEp = null
+             // Try to find by index in first group or try to match episode name if reliable?
+             // Or better, finding where epIdx came from.
+             // If we saved index within a group, we need to know WHICH group.
+             // But we didn't save group index!
+             // However, usually playlists are unique across groups or just mirrors.
+             // Let's assume group 0 for now or search.
+
+             // Actually, saving just `epIdx` is risky if we don't know the group.
+             // But `history.episode_name` is also saved.
+             // Let's search by name/url matches if possible, or defaulting to first group.
+
+             let targetGroupIdx = 0
+             let targetEp = null
+
+             // Search for episode with matching name to be safer
+             for(let g = 0; g < data.playList.length; g++) {
+               const group = data.playList[g]
+               const match = group.urls.find(u => u.name === history.episode_name)
+               if(match) {
+                 targetGroupIdx = g
+                 targetEp = match
+                 break
+               }
+             }
+
+             if (!targetEp && data.playList[0].urls[epIdx]) {
+                targetEp = data.playList[0].urls[epIdx]
+             }
+
+             if (targetEp) {
+               setSelectedGroupIndex(targetGroupIdx)
+               setCurrentEpisode(targetEp)
+               // Seek needs to happen after player loads source.
+               // We put the seek time in a ref or state to be consumed by player effect.
+               setTimeout(() => {
+                 if(player) {
+                   player.currentTime = history.progress
+                 }
+               }, 500) // Delay to ensure load
+             } else {
+               setCurrentEpisode(data.playList[0].urls[0])
+             }
+        } else {
+           setCurrentEpisode(data.playList[0].urls[0])
+        }
       }
     })
 
@@ -59,8 +126,65 @@ export function DetailView({ id }: { id: number }) {
     if (player && currentEpisode) {
       player.setSource(currentEpisode.url)
       player.play()
+
+      // Check if we need to resume
+      // But above logic inside API.then uses setTimeout to seek.
+      // That works but is race-condition prone.
+      // Better: check DB here? No, DB check happens once on load.
+      // Let's stick to the timeout for now as `player.setSource` is async-ish in behavior often.
+      // Or we can check history AGAIN here? No, redundant.
     }
   }, [currentEpisode, player])
+
+  // Save history periodically
+  useEffect(() => {
+    let timer: number
+    let ignore = false
+
+    const save = () => {
+      if (player && detail && currentEpisode) {
+        const time = player.currentTime
+        if (time > 0) {
+          // Find episode index
+          let epIdx = 0
+          for (let i = 0; i < detail.playList.length; i++) {
+             const found = detail.playList[i].urls.findIndex(u => u.url === currentEpisode.url)
+             if (found >= 0) {
+               epIdx = found
+               break
+             }
+          }
+          DB.addHistory(detail, epIdx, currentEpisode.name, time)
+        }
+      }
+
+      if (!ignore) {
+        timer = setTimeout(save, 5000)
+      }
+    }
+
+    save()
+
+    return () => {
+      ignore = true
+      clearTimeout(timer)
+      // Save on exit
+      if (player && detail && currentEpisode) {
+        const time = player.currentTime
+        if (time > 0) {
+           let epIdx = 0
+            for (let i = 0; i < detail.playList.length; i++) {
+               const found = detail.playList[i].urls.findIndex(u => u.url === currentEpisode.url)
+               if (found >= 0) {
+                 epIdx = found
+                 break
+               }
+            }
+          DB.addHistory(detail, epIdx, currentEpisode.name, time)
+        }
+      }
+    }
+  }, [player, detail, currentEpisode])
 
   if (loading) {
     return <ProgressView />

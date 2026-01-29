@@ -2,6 +2,8 @@ import {
   NavigationLink,
   ScrollView,
   LazyVGrid,
+  LazyVStack,
+  Section,
   Text,
   VStack,
   HStack,
@@ -9,17 +11,19 @@ import {
   useState,
   useEffect,
   ProgressView,
-  Picker
+  Picker,
+  Image,
+  GridItem
 } from "scripting"
 import { API, CATEGORIES } from "../api"
 import { VideoItem, Category } from "../models"
 import { VideoGridItem } from "../components/VideoGridItem"
 import { DetailView } from "./DetailView"
+import { HistoryView } from "./HistoryView"
 
 export function HomeView() {
   const [selectedMainTab, setSelectedMainTab] = useState<Category>(CATEGORIES[0])
   const [selectedSubTabId, setSelectedSubTabId] = useState<number | string | undefined>(undefined)
-  const [searchText, setSearchText] = useState("")
 
   const [items, setItems] = useState<VideoItem[]>([])
   const [page, setPage] = useState(1)
@@ -47,11 +51,9 @@ export function HomeView() {
 
     setLoading(true)
 
-    const promise = searchText
-      ? API.getSearch(searchText, page)
-      : API.getList(selectedSubTabId, page, selectedMainTab.hours)
+    const promise = API.getList(selectedSubTabId, page, selectedMainTab.hours)
 
-    if ((!selectedSubTabId && !selectedMainTab.hours && !searchText)) {
+    if (!selectedSubTabId && !selectedMainTab.hours) {
        setLoading(false)
        return
     }
@@ -78,92 +80,123 @@ export function HomeView() {
     return () => {
       ignore = true
     }
-  }, [selectedMainTab, selectedSubTabId, page, searchText])
+  }, [selectedMainTab, selectedSubTabId, page])
 
-  const columns = [
-    { size: { type: 'adaptive' as const, min: 90 }, spacing: 16 }
+  const columns: GridItem[] = [
+    { size: { type: 'adaptive', min: 90 }, spacing: 16 }
   ]
+
+  // 渲染主分类选择器放到导航栏
+  const renderCategoryToolbar = () => (
+    <Picker
+      title="Category"
+      value={selectedMainTab.name}
+      onChanged={(name: string) => {
+        const cat = CATEGORIES.find(c => c.name === name)
+        if (cat) {
+          setSelectedMainTab(cat)
+          setPage(1)
+        }
+      }}
+      pickerStyle="segmented"
+    >
+      {CATEGORIES.map(cat => (
+        <Text key={cat.name} tag={cat.name}>
+          {cat.name}
+        </Text>
+      ))}
+    </Picker>
+  )
+
+  // 渲染子分类标签（显示在内容区域顶部）
+  const renderSubCategoryTabs = () => (
+    <ScrollView axes="horizontal" scrollIndicator="hidden" background="systemBackground">
+      <HStack padding={8} spacing={12}>
+        {selectedMainTab.subtabs?.map(sub => (
+          <Button
+            key={sub.name}
+            action={() => {
+              setSelectedSubTabId(sub.id)
+              setPage(1)
+            }}
+          >
+            <Text
+               foregroundStyle={selectedSubTabId === sub.id ? "blue" : "secondaryLabel"}
+               font="subheadline"
+            >
+              {sub.name}
+            </Text>
+          </Button>
+        ))}
+      </HStack>
+    </ScrollView>
+  )
 
   return (
     <VStack
-      searchable={{
-        value: searchText,
-        onChanged: (text) => {
-          setSearchText(text)
-          setPage(1)
-        },
-        prompt: "Search videos"
+      toolbarTitleDisplayMode="inline"
+      toolbar={{
+        principal: renderCategoryToolbar(),
+        topBarTrailing: (
+          <NavigationLink destination={<HistoryView />}>
+            <Image systemName="clock.fill" />
+          </NavigationLink>
+        )
       }}
     >
-      {/* Category Tabs */}
-      {!searchText && (
-      <>
-      <Picker
-        title="Category"
-        value={selectedMainTab.name}
-        onChanged={(name: string) => {
-          const cat = CATEGORIES.find(c => c.name === name)
-          if (cat) {
-            setSelectedMainTab(cat)
-            setPage(1)
-          }
-        }}
-        pickerStyle="segmented"
-      >
-        {CATEGORIES.map(cat => (
-          <Text key={cat.name} tag={cat.name}>
-            {cat.name}
-          </Text>
-        ))}
-      </Picker>
+      {/* 有子分类时使用吸顶布局 */}
+      {selectedMainTab.subtabs ? (
+        <ScrollView>
+          <LazyVStack pinnedViews="sectionHeaders">
+            <Section header={renderSubCategoryTabs()}>
+              <LazyVGrid columns={columns} padding={16} spacing={10}>
+                {items.map(item => (
+                  <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
+                    <VideoGridItem item={item} />
+                  </NavigationLink>
+                ))}
+              </LazyVGrid>
 
-      {/* Sub Category Tabs */}
-      {selectedMainTab.subtabs && (
-        <ScrollView axes="horizontal" scrollIndicator="hidden">
-          <HStack padding={8} spacing={12}>
-            {selectedMainTab.subtabs.map(sub => (
-              <Button
-                key={sub.name}
-                action={() => {
-                  setSelectedSubTabId(sub.id)
-                  setPage(1)
-                }}
-              >
-                <Text
-                   foregroundStyle={selectedSubTabId === sub.id ? "blue" : "secondaryLabel"}
-                   font="subheadline"
-                >
-                  {sub.name}
-                </Text>
-              </Button>
+              {loading && <ProgressView />}
+
+              {/* 自动加载下一页 */}
+              {!loading && hasMore && (
+                <ProgressView
+                  padding
+                  onAppear={() => setPage(page + 1)}
+                />
+              )}
+              {!loading && !hasMore && items.length > 0 && (
+                 <Text foregroundStyle="secondaryLabel" padding>No more videos</Text>
+              )}
+            </Section>
+          </LazyVStack>
+        </ScrollView>
+      ) : (
+        /* 无子分类时直接显示网格 */
+        <ScrollView>
+          <LazyVGrid columns={columns} padding={16} spacing={10}>
+            {items.map(item => (
+              <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
+                <VideoGridItem item={item} />
+              </NavigationLink>
             ))}
-          </HStack>
+          </LazyVGrid>
+
+          {loading && <ProgressView />}
+
+          {/* 自动加载下一页 */}
+          {!loading && hasMore && (
+            <ProgressView
+              padding
+              onAppear={() => setPage(page + 1)}
+            />
+          )}
+          {!loading && !hasMore && items.length > 0 && (
+             <Text foregroundStyle="secondaryLabel" padding>No more videos</Text>
+          )}
         </ScrollView>
       )}
-      </>
-      )}
-
-      {/* Video Grid */}
-      <ScrollView>
-        <LazyVGrid columns={columns} padding={16} spacing={10}>
-          {items.map(item => (
-            <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
-              <VideoGridItem item={item} />
-            </NavigationLink>
-          ))}
-        </LazyVGrid>
-
-        {loading && <ProgressView />}
-
-        {!loading && hasMore && (
-          <Button action={() => setPage(page + 1)} padding>
-            <Text foregroundStyle="blue">Load More</Text>
-          </Button>
-        )}
-        {!loading && !hasMore && items.length > 0 && (
-           <Text foregroundStyle="secondaryLabel" padding>No more videos</Text>
-        )}
-      </ScrollView>
     </VStack>
   )
 }

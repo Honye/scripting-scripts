@@ -1,17 +1,27 @@
-import { Text, VStack, Image, ZStack } from 'scripting'
+import { Text, VStack, Image, ZStack, GeometryReader } from 'scripting'
 import { VideoItem } from '../models'
 
 export function VideoGridItem({ item }: { item: VideoItem }) {
   return (
     <VStack alignment="leading" spacing={4}>
       <ZStack alignment="bottomTrailing">
-        <Image
-          imageUrl={item.pic}
-          resizable
-          aspectRatio={{ value: 5/7, contentMode: 'fill' }}
-          clipShape={{ type: 'rect', cornerRadius: 5 }}
+        <VStack
           frame={{ maxWidth: 'infinity' }}
-        />
+          aspectRatio={{ value: 5/7, contentMode: 'fit' }}
+          background='gray'
+          clipShape={{ type: 'rect', cornerRadius: 5 }}
+        >
+          <GeometryReader>
+            {({ size }) => (
+              <Image
+                imageUrl={item.pic}
+                resizable
+                scaleToFill
+                frame={{ width: size.width }}
+              />
+            )}
+          </GeometryReader>
+        </VStack>
         <Text font="caption" foregroundStyle="white" padding={4}>
           {item.remarks}
         </Text>
