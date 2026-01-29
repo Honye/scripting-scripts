@@ -8,16 +8,13 @@ import {
   useEffect,
   Spacer
 } from "scripting"
-import { VideoItem } from "../models"
-
-
 
 import { VideoGridItem } from "../components/VideoGridItem"
 import { DetailView } from "./DetailView"
 import { DB } from "../db"
 
 export function FavoritesView() {
-  const [items, setItems] = useState<VideoItem[]>([])
+  const [items, setItems] = useState<any[]>([])
 
   // Helper to refresh data
   const refresh = () => {
@@ -69,7 +66,7 @@ export function FavoritesView() {
         <ScrollView>
           <LazyVGrid columns={columns} padding={16} spacing={10}>
             {items.map(item => (
-              <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
+              <NavigationLink key={item.id} destination={<DetailView id={item.id} sourceId={item.source_id} />}>
                 <VideoGridItem item={item} />
               </NavigationLink>
             ))}

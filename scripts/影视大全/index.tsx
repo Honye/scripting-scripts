@@ -2,7 +2,7 @@ import { Device, Navigation, NavigationStack, Script, Tab, TabView, Text } from 
 import { HomeView } from "./views/HomeView"
 import { FavoritesView } from "./views/FavoritesView"
 import SearchView from "./views/SearchView"
-import { HistoryView } from "./views/HistoryView"
+import { SettingsView } from "./views/SettingsView"
 
 function App() {
   return (
@@ -17,9 +17,9 @@ function App() {
           <FavoritesView />
         </NavigationStack>
       </Tab>
-      <Tab title="" systemImage="clock.fill">
+      <Tab title="" systemImage="gear">
         <NavigationStack>
-          <HistoryView />
+          <SettingsView />
         </NavigationStack>
       </Tab>
       <Tab title="" systemImage="magnifyingglass" role={parseFloat(Device.systemVersion) >= 18 ? 'search' : undefined}>

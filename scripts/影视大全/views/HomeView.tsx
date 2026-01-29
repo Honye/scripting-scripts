@@ -14,16 +14,20 @@ import {
   Picker,
   Image,
   GridItem
-} from "scripting"
-import { API, CATEGORIES } from "../api"
-import { VideoItem, Category } from "../models"
-import { VideoGridItem } from "../components/VideoGridItem"
-import { DetailView } from "./DetailView"
-import { HistoryView } from "./HistoryView"
+} from 'scripting'
+import { API, CATEGORIES } from '../api'
+import { VideoItem, Category } from '../models'
+import { VideoGridItem } from '../components/VideoGridItem'
+import { DetailView } from './DetailView'
+import { HistoryView } from './HistoryView'
 
 export function HomeView() {
-  const [selectedMainTab, setSelectedMainTab] = useState<Category>(CATEGORIES[0])
-  const [selectedSubTabId, setSelectedSubTabId] = useState<number | string | undefined>(undefined)
+  const [selectedMainTab, setSelectedMainTab] = useState<Category>(
+    CATEGORIES[0]
+  )
+  const [selectedSubTabId, setSelectedSubTabId] = useState<
+    number | string | undefined
+  >(undefined)
 
   const [items, setItems] = useState<VideoItem[]>([])
   const [page, setPage] = useState(1)
@@ -32,6 +36,11 @@ export function HomeView() {
 
   // Initialize subtab when main tab changes
   useEffect(() => {
+    // 切换主分类时重置状态
+    setItems([])
+    setPage(1)
+    setHasMore(true)
+
     if (selectedMainTab.subtabs && selectedMainTab.subtabs.length > 0) {
       setSelectedSubTabId(selectedMainTab.subtabs[0].id)
     } else {
@@ -54,21 +63,21 @@ export function HomeView() {
     const promise = API.getList(selectedSubTabId, page, selectedMainTab.hours)
 
     if (!selectedSubTabId && !selectedMainTab.hours) {
-       setLoading(false)
-       return
+      setLoading(false)
+      return
     }
 
     promise
-      .then(res => {
+      .then((res) => {
         if (ignore) return
         if (page === 1) {
           setItems(res.list)
         } else {
-          setItems(prev => [...prev, ...res.list])
+          setItems((prev) => [...prev, ...res.list])
         }
         setHasMore(page < res.pagecount)
       })
-      .catch(e => {
+      .catch((e) => {
         if (ignore) return
         console.error(e)
       })
@@ -92,7 +101,7 @@ export function HomeView() {
       title="Category"
       value={selectedMainTab.name}
       onChanged={(name: string) => {
-        const cat = CATEGORIES.find(c => c.name === name)
+        const cat = CATEGORIES.find((c) => c.name === name)
         if (cat) {
           setSelectedMainTab(cat)
           setPage(1)
@@ -100,7 +109,7 @@ export function HomeView() {
       }}
       pickerStyle="segmented"
     >
-      {CATEGORIES.map(cat => (
+      {CATEGORIES.map((cat) => (
         <Text key={cat.name} tag={cat.name}>
           {cat.name}
         </Text>
@@ -110,19 +119,27 @@ export function HomeView() {
 
   // 渲染子分类标签（显示在内容区域顶部）
   const renderSubCategoryTabs = () => (
-    <ScrollView axes="horizontal" scrollIndicator="hidden" background="systemBackground">
+    <ScrollView
+      axes="horizontal"
+      scrollIndicator="hidden"
+      background="systemBackground"
+    >
       <HStack padding={8} spacing={12}>
-        {selectedMainTab.subtabs?.map(sub => (
+        {selectedMainTab.subtabs?.map((sub) => (
           <Button
             key={sub.name}
             action={() => {
+              setItems([])
               setSelectedSubTabId(sub.id)
               setPage(1)
+              setHasMore(true)
             }}
           >
             <Text
-               foregroundStyle={selectedSubTabId === sub.id ? "blue" : "secondaryLabel"}
-               font="subheadline"
+              foregroundStyle={
+                selectedSubTabId === sub.id ? 'blue' : 'secondaryLabel'
+              }
+              font="subheadline"
             >
               {sub.name}
             </Text>
@@ -150,8 +167,11 @@ export function HomeView() {
           <LazyVStack pinnedViews="sectionHeaders">
             <Section header={renderSubCategoryTabs()}>
               <LazyVGrid columns={columns} padding={16} spacing={10}>
-                {items.map(item => (
-                  <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
+                {items.map((item) => (
+                  <NavigationLink
+                    key={item.id}
+                    destination={<DetailView id={item.id} />}
+                  >
                     <VideoGridItem item={item} />
                   </NavigationLink>
                 ))}
@@ -161,13 +181,12 @@ export function HomeView() {
 
               {/* 自动加载下一页 */}
               {!loading && hasMore && (
-                <ProgressView
-                  padding
-                  onAppear={() => setPage(page + 1)}
-                />
+                <ProgressView padding onAppear={() => setPage(page + 1)} />
               )}
               {!loading && !hasMore && items.length > 0 && (
-                 <Text foregroundStyle="secondaryLabel" padding>No more videos</Text>
+                <Text foregroundStyle="secondaryLabel" padding>
+                  No more videos
+                </Text>
               )}
             </Section>
           </LazyVStack>
@@ -176,8 +195,11 @@ export function HomeView() {
         /* 无子分类时直接显示网格 */
         <ScrollView>
           <LazyVGrid columns={columns} padding={16} spacing={10}>
-            {items.map(item => (
-              <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
+            {items.map((item) => (
+              <NavigationLink
+                key={item.id}
+                destination={<DetailView id={item.id} />}
+              >
                 <VideoGridItem item={item} />
               </NavigationLink>
             ))}
@@ -187,13 +209,12 @@ export function HomeView() {
 
           {/* 自动加载下一页 */}
           {!loading && hasMore && (
-            <ProgressView
-              padding
-              onAppear={() => setPage(page + 1)}
-            />
+            <ProgressView padding onAppear={() => setPage(page + 1)} />
           )}
           {!loading && !hasMore && items.length > 0 && (
-             <Text foregroundStyle="secondaryLabel" padding>No more videos</Text>
+            <Text foregroundStyle="secondaryLabel" padding>
+              No more videos
+            </Text>
           )}
         </ScrollView>
       )}

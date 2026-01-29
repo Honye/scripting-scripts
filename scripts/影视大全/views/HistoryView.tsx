@@ -58,7 +58,7 @@ export function HistoryView() {
         <ScrollView>
           <LazyVGrid columns={columns} padding={16} spacing={10}>
             {items.map(item => (
-              <NavigationLink key={item.id} destination={<DetailView id={item.id} />}>
+              <NavigationLink key={item.id} destination={<DetailView id={item.id} sourceId={item.source_id} />}>
                 <VStack
                   spacing={4}
                   contextMenu={{

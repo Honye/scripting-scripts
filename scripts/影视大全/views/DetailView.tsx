@@ -18,7 +18,7 @@ import { API } from "../api"
 import { VideoDetail, Episode } from "../models"
 import { DB } from "../db"
 
-export function DetailView({ id }: { id: number }) {
+export function DetailView({ id, sourceId }: { id: number; sourceId?: number | null }) {
   const [detail, setDetail] = useState<VideoDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0)
@@ -29,6 +29,19 @@ export function DetailView({ id }: { id: number }) {
   const [player, setPlayer] = useState<AVPlayer | null>(null)
   const pipStatus = useObservable<PIPStatus>(null)
   const [isFavorited, setIsFavorited] = useState(false)
+
+  // 获取数据源 URL（优先使用传入的 sourceId，否则使用当前数据源）
+  const getSourceUrl = () => {
+    if (sourceId) {
+      return DB.getDataSourceUrlById(sourceId)
+    }
+    return null // 使用当前数据源
+  }
+
+  // 获取用于保存的 sourceId（优先使用传入的，否则使用当前数据源）
+  const getSaveSourceId = () => {
+    return sourceId ?? DB.getCurrentDataSourceId()
+  }
 
   useEffect(() => {
     // Initialize player in effect to avoid missing player error
@@ -42,7 +55,8 @@ export function DetailView({ id }: { id: number }) {
   }, [detail])
 
   useEffect(() => {
-    API.getDetail(id).then(data => {
+    const sourceUrl = getSourceUrl()
+    API.getDetail(id, sourceUrl ?? undefined).then(data => {
       setDetail(data)
       setLoading(false)
       if (data && data.playList.length > 0 && data.playList[0].urls.length > 0) {
@@ -125,6 +139,8 @@ export function DetailView({ id }: { id: number }) {
   useEffect(() => {
     if (player && currentEpisode) {
       player.setSource(currentEpisode.url)
+      // 应用用户设置的默认播放速度
+      player.rate = DB.getPlaybackRate()
       player.play()
 
       // Check if we need to resume
@@ -154,7 +170,7 @@ export function DetailView({ id }: { id: number }) {
                break
              }
           }
-          DB.addHistory(detail, epIdx, currentEpisode.name, time)
+          DB.addHistory(detail, epIdx, currentEpisode.name, time, getSaveSourceId())
         }
       }
 
@@ -180,7 +196,7 @@ export function DetailView({ id }: { id: number }) {
                  break
                }
             }
-          DB.addHistory(detail, epIdx, currentEpisode.name, time)
+          DB.addHistory(detail, epIdx, currentEpisode.name, time, getSaveSourceId())
         }
       }
     }
@@ -220,7 +236,7 @@ export function DetailView({ id }: { id: number }) {
                  DB.removeFavorite(detail.id)
                  setIsFavorited(false)
                } else {
-                 DB.addFavorite(detail)
+                 DB.addFavorite(detail, getSaveSourceId())
                  setIsFavorited(true)
                }
              }}>
