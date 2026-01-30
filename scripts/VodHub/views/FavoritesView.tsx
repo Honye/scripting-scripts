@@ -51,9 +51,7 @@ export function FavoritesView() {
   ]
 
   return (
-    <VStack>
-      <Text font="largeTitle" bold padding={{ horizontal: 16, top: 16, bottom: 8 }}>Favorites</Text>
-
+    <VStack navigationTitle="收藏">
       {items.length === 0 ? (
         <VStack spacing={16} padding={32} alignment="center">
           <Spacer />

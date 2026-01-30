@@ -122,7 +122,8 @@ export function HomeView() {
     <ScrollView
       axes="horizontal"
       scrollIndicator="hidden"
-      background="systemBackground"
+      glassEffect
+      padding={{ horizontal: true }}
     >
       <HStack padding={8} spacing={12}>
         {selectedMainTab.subtabs?.map((sub) => (
@@ -137,7 +138,7 @@ export function HomeView() {
           >
             <Text
               foregroundStyle={
-                selectedSubTabId === sub.id ? 'blue' : 'secondaryLabel'
+                selectedSubTabId === sub.id ? 'systemTeal' : 'secondaryLabel'
               }
               font="subheadline"
             >

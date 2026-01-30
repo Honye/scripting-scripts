@@ -59,7 +59,7 @@ function AddDataSourceView() {
           </Section>
           <Section>
             <Button action={() => handleSave(dismiss)}>
-              <Text foregroundStyle="blue">保存</Text>
+              <Text foregroundStyle="systemTeal">保存</Text>
             </Button>
           </Section>
         </List>
@@ -141,12 +141,12 @@ export function SettingsView() {
                 contentShape="rect"
                 onTapGesture={() => handleSelectSource(source)}
               >
-                <Text foregroundStyle={currentSourceUrl === source.url ? "blue" : "label"}>
+                <Text foregroundStyle={currentSourceUrl === source.url ? "systemTeal" : "label"}>
                   {source.name}
                 </Text>
                 <Spacer />
                 {currentSourceUrl === source.url && (
-                  <Text foregroundStyle="blue">✓</Text>
+                  <Text foregroundStyle="systemTeal">✓</Text>
                 )}
               </HStack>
             )
@@ -157,7 +157,7 @@ export function SettingsView() {
         />
 
         <NavigationLink destination={<AddDataSourceView />}>
-          <Text foregroundStyle="blue">+ 添加数据源</Text>
+          <Text foregroundStyle="systemTeal">+ 添加数据源</Text>
         </NavigationLink>
       </Section>
 
