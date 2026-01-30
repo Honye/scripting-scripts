@@ -46,8 +46,6 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
   useEffect(() => {
     // Initialize player in effect to avoid missing player error
     setPlayer(new AVPlayer())
-    SharedAudioSession.setCategory('playback', ['defaultToSpeaker'])
-    SharedAudioSession.setActive(true)
   }, [])
 
   useEffect(() => {
@@ -134,6 +132,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
     })
 
     return () => {
+      SharedAudioSession.setCategory('soloAmbient', [])
       player?.pause()
     }
   }, [id, player])
@@ -141,9 +140,11 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
   useEffect(() => {
     if (player && currentEpisode) {
       player.setSource(currentEpisode.url)
+      SharedAudioSession.setCategory('playback', [])
+      SharedAudioSession.setActive(true)
+      player.play()
       // 应用用户设置的默认播放速度
       player.rate = DB.getPlaybackRate()
-      player.play()
 
       // Check if we need to resume
       // But above logic inside API.then uses setTimeout to seek.
@@ -215,7 +216,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
   const currentGroup = detail.playList[selectedGroupIndex]
 
   return (
-    <VStack spacing={0}>
+    <VStack navigationBarTitleDisplayMode='inline' spacing={0}>
       {/* Video Player Area */}
       {player ? (
         <AVPlayerView
@@ -288,7 +289,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
           {/* Episodes Grid */}
           <VStack alignment="leading" padding={16}>
             <HStack>
-              <Text font="headline">Episodes</Text>
+              <Text font="headline">选集</Text>
               <Spacer />
               <Button action={() => setIsExpanded(prev => !prev)}>
                 <Text foregroundStyle="secondaryLabel" font="subheadline">
@@ -329,7 +330,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
                               <Text
                                 padding={8}
                                 background={episodeRangeIndex === idx ? "systemTeal" : "clear"}
-                                foregroundStyle={episodeRangeIndex === idx ? "label" : "secondaryLabel"}
+                                foregroundStyle={episodeRangeIndex === idx ? "white" : "secondaryLabel"}
                                 clipShape={{ type: "rect", cornerRadius: 6 }}
                                 font="caption"
                               >

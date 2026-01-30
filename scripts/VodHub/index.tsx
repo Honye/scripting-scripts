@@ -14,7 +14,7 @@ import { SettingsView } from './views/SettingsView'
 
 function App() {
   return parseFloat(Device.systemVersion) >= 18 ? (
-    <TabView>
+    <TabView tint="systemTeal">
       <Tab title="" systemImage="house">
         <NavigationStack>
           <HomeView />
@@ -37,7 +37,7 @@ function App() {
       </Tab>
     </TabView>
   ) : (
-    <TabView>
+    <TabView tint="systemTeal">
       <NavigationStack tabItem={<Label title="" systemImage="house" />}>
         <HomeView />
       </NavigationStack>

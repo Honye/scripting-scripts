@@ -44,7 +44,7 @@ function AddDataSourceView() {
   return (
     <EnvironmentValuesReader keys={["dismiss"]}>
       {({ dismiss }) => (
-        <List navigationTitle="添加数据源">
+        <List navigationTitle="添加数据源" navigationBarTitleDisplayMode='inline'>
           <Section>
             <TextField
               title="名称"

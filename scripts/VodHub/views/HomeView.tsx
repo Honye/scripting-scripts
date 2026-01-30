@@ -98,7 +98,7 @@ export function HomeView() {
   // 渲染主分类选择器放到导航栏
   const renderCategoryToolbar = () => (
     <Picker
-      title="Category"
+      title=""
       value={selectedMainTab.name}
       onChanged={(name: string) => {
         const cat = CATEGORIES.find((c) => c.name === name)
@@ -119,35 +119,40 @@ export function HomeView() {
 
   // 渲染子分类标签（显示在内容区域顶部）
   const renderSubCategoryTabs = () => (
-    <ScrollView
-      axes="horizontal"
-      scrollIndicator="hidden"
-      glassEffect
-      padding={{ horizontal: true }}
-    >
-      <HStack padding={8} spacing={12}>
-        {selectedMainTab.subtabs?.map((sub) => (
-          <Button
-            key={sub.name}
-            action={() => {
-              setItems([])
-              setSelectedSubTabId(sub.id)
-              setPage(1)
-              setHasMore(true)
-            }}
-          >
-            <Text
-              foregroundStyle={
-                selectedSubTabId === sub.id ? 'systemTeal' : 'secondaryLabel'
-              }
-              font="subheadline"
+    <HStack padding={{ horizontal: true }}>
+      <ScrollView
+        axes="horizontal"
+        scrollIndicator="hidden"
+        glassEffect={parseFloat(Device.systemVersion) >= 26}
+        background={parseFloat(Device.systemVersion) >= 26 ? undefined : {
+          style: 'thinMaterial',
+          shape: { type: 'rect', cornerRadius: 12 }
+        }}
+      >
+        <HStack padding={8} spacing={12}>
+          {selectedMainTab.subtabs?.map((sub) => (
+            <Button
+              key={sub.name}
+              action={() => {
+                setItems([])
+                setSelectedSubTabId(sub.id)
+                setPage(1)
+                setHasMore(true)
+              }}
             >
-              {sub.name}
-            </Text>
-          </Button>
-        ))}
-      </HStack>
-    </ScrollView>
+              <Text
+                foregroundStyle={
+                  selectedSubTabId === sub.id ? 'systemTeal' : 'secondaryLabel'
+                }
+                font="subheadline"
+              >
+                {sub.name}
+              </Text>
+            </Button>
+          ))}
+        </HStack>
+      </ScrollView>
+    </HStack>
   )
 
   return (
@@ -162,11 +167,12 @@ export function HomeView() {
         )
       }}
     >
-      {/* 有子分类时使用吸顶布局 */}
-      {selectedMainTab.subtabs ? (
-        <ScrollView>
+      <ScrollView>
+        {items.length > 0 ? (
           <LazyVStack pinnedViews="sectionHeaders">
-            <Section header={renderSubCategoryTabs()}>
+            <Section
+              header={selectedMainTab.subtabs && renderSubCategoryTabs()}
+            >
               <LazyVGrid columns={columns} padding={16} spacing={10}>
                 {items.map((item) => (
                   <NavigationLink
@@ -191,34 +197,16 @@ export function HomeView() {
               )}
             </Section>
           </LazyVStack>
-        </ScrollView>
-      ) : (
-        /* 无子分类时直接显示网格 */
-        <ScrollView>
-          <LazyVGrid columns={columns} padding={16} spacing={10}>
-            {items.map((item) => (
-              <NavigationLink
-                key={item.id}
-                destination={<DetailView id={item.id} />}
-              >
-                <VideoGridItem item={item} />
-              </NavigationLink>
-            ))}
-          </LazyVGrid>
-
-          {loading && <ProgressView />}
-
-          {/* 自动加载下一页 */}
-          {!loading && hasMore && (
-            <ProgressView padding onAppear={() => setPage(page + 1)} />
-          )}
-          {!loading && !hasMore && items.length > 0 && (
-            <Text foregroundStyle="secondaryLabel" padding>
-              No more videos
-            </Text>
-          )}
-        </ScrollView>
-      )}
+        ) : (
+          <VStack>
+            <Section
+              header={selectedMainTab.subtabs && renderSubCategoryTabs()}
+            >
+              {loading && <ProgressView />}
+            </Section>
+          </VStack>
+        )}
+      </ScrollView>
     </VStack>
   )
 }

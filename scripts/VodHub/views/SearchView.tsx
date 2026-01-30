@@ -74,7 +74,7 @@ export default function SearchView() {
           setSearchText(text)
           setPage(1)
         },
-        prompt: "Search videos"
+        prompt: "搜索"
       }}
     >
       <ScrollView>
