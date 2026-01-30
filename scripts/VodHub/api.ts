@@ -1,8 +1,10 @@
 declare const fetch: any
 
 import { VideoItem, VideoDetail, PaginatedResult, Category } from "./models"
+import { DB } from "./db"
 
-const BASE_URL = "https://api.ukuapi.com/api.php/provide/vod/"
+// 动态获取当前数据源 URL
+const getBaseUrl = () => DB.getCurrentDataSourceUrl()
 
 // Mapping from config.json
 export const CATEGORIES: Category[] = [
@@ -43,7 +45,7 @@ export const CATEGORIES: Category[] = [
 
 export const API = {
   async getList(typeId?: number | string, page: number = 1, hours?: string): Promise<PaginatedResult<VideoItem>> {
-    let url = `${BASE_URL}?ac=detail&pg=${page}`
+    let url = `${getBaseUrl()}?ac=detail&pg=${page}`
     if (typeId) {
       url += `&t=${typeId}`
     }
@@ -77,7 +79,7 @@ export const API = {
   },
 
   async getSearch(keyword: string, page: number = 1): Promise<PaginatedResult<VideoItem>> {
-    const url = `${BASE_URL}?ac=detail&wd=${encodeURIComponent(keyword)}&pg=${page}`
+    const url = `${getBaseUrl()}?ac=detail&wd=${encodeURIComponent(keyword)}&pg=${page}`
     try {
       const res = await fetch(url)
       const json = await res.json()
@@ -103,8 +105,9 @@ export const API = {
     }
   },
 
-  async getDetail(id: number): Promise<VideoDetail | null> {
-    const url = `${BASE_URL}?ac=detail&ids=${id}`
+  async getDetail(id: number, sourceUrl?: string): Promise<VideoDetail | null> {
+    const baseUrl = sourceUrl || getBaseUrl()
+    const url = `${baseUrl}?ac=detail&ids=${id}`
     try {
       const res = await fetch(url)
       const json = await res.json()

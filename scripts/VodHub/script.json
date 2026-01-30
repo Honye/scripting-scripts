@@ -1,0 +1,43 @@
+{
+  "remoteResource" : null,
+  "contributors" : [
+
+  ],
+  "runInApp" : false,
+  "author" : {
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "name" : "Jackie",
+    "email" : "Honye@github.com"
+  },
+  "icon" : "film",
+  "intentInputTypes" : [
+
+  ],
+  "description" : null,
+  "version" : "1.0.0",
+  "iconImage" : null,
+  "name" : "VodHub",
+  "localizedDescriptions" : {
+    "ja" : "",
+    "en" : "",
+    "de" : "",
+    "it" : "",
+    "es" : "",
+    "pt" : "",
+    "fr" : "",
+    "zh" : "",
+    "ru" : ""
+  },
+  "color" : "rgba(0, 198, 165,1)",
+  "localizedNames" : {
+    "de" : "",
+    "it" : "",
+    "pt" : "",
+    "zh" : "影视大全",
+    "fr" : "",
+    "ru" : "",
+    "ja" : "",
+    "en" : "VodHub",
+    "es" : ""
+  }
+}
