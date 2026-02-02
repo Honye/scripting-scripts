@@ -142,7 +142,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
       player.setSource(currentEpisode.url)
       SharedAudioSession.setCategory('playback', [])
       SharedAudioSession.setActive(true)
-      player.play()
+      player.play(DB.getPlaybackRate())
       // 应用用户设置的默认播放速度
       player.rate = DB.getPlaybackRate()
 
