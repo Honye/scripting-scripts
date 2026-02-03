@@ -1,28 +1,29 @@
-import { Text, VStack, Image, ZStack, GeometryReader } from 'scripting'
+import { Text, VStack, Image, ZStack, Rectangle } from 'scripting'
 import { VideoItem } from '../models'
 
 export function VideoGridItem({ item }: { item: VideoItem }) {
   return (
     <VStack alignment="leading" spacing={4}>
       <ZStack alignment="bottomTrailing">
-        <VStack
-          frame={{ maxWidth: 'infinity' }}
-          aspectRatio={{ value: 5/7, contentMode: 'fit' }}
-          background='gray'
+        <Rectangle
+          aspectRatio={{ value: 5 / 7, contentMode: 'fill' }}
+          fill="secondarySystemBackground"
+          overlay={
+            <Image
+              imageUrl={item.pic}
+              resizable
+              scaleToFill
+              transition={Transition.opacity()}
+            />
+          }
           clipShape={{ type: 'rect', cornerRadius: 5 }}
+        />
+        <Text
+          font="caption"
+          foregroundStyle="white"
+          padding={4}
+          shadow={{ color: 'black', radius: 1 }}
         >
-          <GeometryReader>
-            {({ size }) => (
-              <Image
-                imageUrl={item.pic}
-                resizable
-                scaleToFill
-                frame={{ width: size.width }}
-              />
-            )}
-          </GeometryReader>
-        </VStack>
-        <Text font="caption" foregroundStyle="white" padding={4}>
           {item.remarks}
         </Text>
       </ZStack>
