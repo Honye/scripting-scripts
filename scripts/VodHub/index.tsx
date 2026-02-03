@@ -14,41 +14,41 @@ import { SettingsView } from './views/SettingsView'
 
 function App() {
   return parseFloat(Device.systemVersion) >= 18 ? (
-    <TabView tint="systemTeal">
-      <Tab title="" systemImage="house">
+    <TabView tint="systemTeal" tabViewStyle="sidebarAdaptable">
+      <Tab title="首页" systemImage="house">
         <NavigationStack>
           <HomeView />
         </NavigationStack>
       </Tab>
-      <Tab title="" systemImage="heart.fill">
+      <Tab title="收藏" systemImage="heart.fill">
         <NavigationStack>
           <FavoritesView />
         </NavigationStack>
       </Tab>
-      <Tab title="" systemImage="gear">
+      <Tab title="设置" systemImage="gear">
         <NavigationStack>
           <SettingsView />
         </NavigationStack>
       </Tab>
-      <Tab title="" systemImage="magnifyingglass" role="search">
+      <Tab title="搜索" systemImage="magnifyingglass" role="search">
         <NavigationStack>
           <SearchView />
         </NavigationStack>
       </Tab>
     </TabView>
   ) : (
-    <TabView tint="systemTeal">
-      <NavigationStack tabItem={<Label title="" systemImage="house" />}>
+    <TabView tint="systemTeal" tabViewStyle="sidebarAdaptable">
+      <NavigationStack tabItem={<Label title="首页" systemImage="house" />}>
         <HomeView />
       </NavigationStack>
-      <NavigationStack tabItem={<Label title="" systemImage="heart.fill" />}>
+      <NavigationStack tabItem={<Label title="收藏" systemImage="heart.fill" />}>
         <FavoritesView />
       </NavigationStack>
-      <NavigationStack tabItem={<Label title="" systemImage="gear" />}>
+      <NavigationStack tabItem={<Label title="设置" systemImage="gear" />}>
         <SettingsView />
       </NavigationStack>
       <NavigationStack
-        tabItem={<Label title="" systemImage="magnifyingglass" />}
+        tabItem={<Label title="搜索" systemImage="magnifyingglass" />}
       >
         <SearchView />
       </NavigationStack>
