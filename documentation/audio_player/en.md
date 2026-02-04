@@ -1,25 +1,24 @@
-The `AVPlayer` class provides audio and video playback capabilities with support for playback control, looping, event callbacks, and metadata retrieval.
-You can use `setSource()` to set a media source (either a local file or a remote URL) and call `play()` to start playback.
+`AVPlayer` provides audio and video playback capabilities, including playback control, rate control, looping, playback state observation, and media metadata loading.
+
+You set a media source using `setSource()` (local file or remote URL), then start playback using `play()`.
 
 ---
 
 ## Getting Started
 
-Example usage of `AVPlayer`:
-
-```typescript
+```ts
 const player = new AVPlayer()
 
-// Set the media source (local file or remote URL)
 if (player.setSource("https://example.com/audio.mp3")) {
-    player.onReadyToPlay = () => {
-        player.play()
-    }
-    player.onEnded = () => {
-        console.log("Playback finished.")
-    }
+  player.onReadyToPlay = () => {
+    player.play()
+  }
+
+  player.onEnded = () => {
+    console.log("Playback finished")
+  }
 } else {
-    console.error("Failed to set media source.")
+  console.error("Failed to set media source")
 }
 ```
 
@@ -31,10 +30,11 @@ if (player.setSource("https://example.com/audio.mp3")) {
 
 #### `volume: number`
 
-Controls the playback volume, ranging from `0.0` (muted) to `1.0` (maximum).
+Controls the playback volume.
+Range: `0.0` (muted) to `1.0` (maximum).
 
-```typescript
-player.volume = 0.5 // Set to 50% volume
+```ts
+player.volume = 0.5
 ```
 
 ---
@@ -42,57 +42,83 @@ player.volume = 0.5 // Set to 50% volume
 #### `duration: DurationInSeconds`
 
 The total duration of the media in seconds.
-This value will be `0` until the media is fully loaded.
+This value is `0` until the media has finished loading.
 
-```typescript
-console.log(`Media duration: ${player.duration} seconds`)
+```ts
+console.log(player.duration)
 ```
 
 ---
 
 #### `currentTime: DurationInSeconds`
 
-The current playback time in seconds.
-You can set this value to seek to a specific time.
+The current playback position in seconds.
+You can assign a value to seek to a specific time.
 
-```typescript
-player.currentTime = 30 // Seek to 30 seconds
+```ts
+player.currentTime = 30
 ```
 
 ---
 
 #### `rate: number`
 
-Controls the playback speed.
-A value of `1.0` is normal speed; values below `1.0` slow down playback, and values above `1.0` speed it up.
+The **current playback rate**.
 
-```typescript
-player.rate = 1.5 // Play at 1.5× speed
+* `1.0` = normal speed
+* `< 1.0` = slower playback
+* `> 1.0` = faster playback
+
+This property reflects the actual playback speed while playing.
+
+```ts
+player.rate = 1.25
 ```
+
+---
+
+#### `defaultRate: number`
+
+The **default playback rate used when playback starts**.
+
+* Used when calling `play()` **without** specifying `atRate`
+* Changing `defaultRate` does **not** immediately affect an ongoing playback
+* Primarily intended to control the rate for the *next* playback start
+
+```ts
+player.defaultRate = 1.5
+```
+
+Typical use cases:
+
+* The user selects a preferred playback speed before pressing play
+* Playback automatically starts at that speed next time `play()` is called
 
 ---
 
 #### `timeControlStatus: TimeControlStatus`
 
-Indicates the current playback state.
-Possible values:
+Indicates the current playback state:
 
-* `paused`: playback is paused
-* `waitingToPlayAtSpecifiedRate`: waiting for conditions to start (e.g., buffering)
-* `playing`: currently playing
+* `paused`
+  Playback is paused or has not started
+* `waitingToPlayAtSpecifiedRate`
+  Waiting for playback conditions (e.g. buffering, network)
+* `playing`
+  Playback is in progress
 
 ---
 
 #### `numberOfLoops: number`
 
-Sets how many times the media will loop.
+Controls how many times the media will loop:
 
 * `0`: no looping
-* positive value: specific number of loops
-* negative value: infinite looping
+* positive value: loop a specific number of times
+* negative value: loop indefinitely
 
-```typescript
-player.numberOfLoops = -1 // Infinite looping
+```ts
+player.numberOfLoops = -1
 ```
 
 ---
@@ -102,29 +128,45 @@ player.numberOfLoops = -1 // Infinite looping
 #### `setSource(filePathOrURL: string): boolean`
 
 Sets the media source for playback.
-Accepts a local file path or a remote URL.
+
+Supports:
+
+* Local file paths
+* Remote URLs
 
 Returns:
 
-* `true` if successfully set
-* `false` if setting failed
+* `true` if the source was set successfully
+* `false` if it failed
 
 ---
 
-#### `play(): boolean`
+#### `play(atRate?: number): boolean`
 
 Starts playback of the current media.
+
+Playback rate resolution order:
+
+1. If `atRate` is provided, playback starts at that rate
+2. Otherwise, `defaultRate` is used
+
+During playback, you can still modify `rate` dynamically.
+
+```ts
+player.play()        // Uses defaultRate
+player.play(1.25)    // Starts playback at 1.25× speed
+```
 
 Returns:
 
 * `true` if playback started successfully
-* `false` if it failed to start
+* `false` otherwise
 
 ---
 
 #### `pause()`
 
-Pauses the current playback.
+Pauses playback.
 
 ---
 
@@ -136,45 +178,34 @@ Stops playback and resets the position to the beginning.
 
 #### `dispose()`
 
-Releases all player resources and removes observers.
-Call this method when the player is no longer needed to avoid memory leaks.
+Releases all player resources and removes internal observers.
+Must be called when the player is no longer needed to avoid resource leaks.
 
 ---
 
 #### `loadMetadata(): Promise<AVMetadataItem[] | null>`
 
-Loads detailed metadata for the current media file.
+Loads the full metadata of the current media.
 
 Returns:
 
-* An array of `AVMetadataItem` objects
-* `null` if no metadata is available or no source has been set
+* An array of `AVMetadataItem`
+* `null` if no source is set or metadata is unavailable
 
-Example:
-
-```typescript
+```ts
 const metadata = await player.loadMetadata()
-if (metadata) {
-  for (const item of metadata) {
-    console.log(item.key, await item.stringValue)
-  }
-}
 ```
 
 ---
 
 #### `loadCommonMetadata(): Promise<AVMetadataItem[] | null>`
 
-Loads the *common metadata* of the current media, where each `AVMetadataItem` provides a `commonKey` that can be used across media formats.
+Loads the *common metadata* of the current media.
 
-Example:
+Common metadata provides format-independent `commonKey` values, typically used for title, artist, album, etc.
 
-```typescript
-const commonMetadata = await player.loadCommonMetadata()
-if (commonMetadata) {
-  const titleItem = commonMetadata.find(i => i.commonKey === "title")
-  console.log("Title:", await titleItem?.stringValue)
-}
+```ts
+const common = await player.loadCommonMetadata()
 ```
 
 ---
@@ -189,7 +220,10 @@ Called when the media is ready for playback.
 
 #### `onTimeControlStatusChanged?: (status: TimeControlStatus) => void`
 
-Called when the playback state changes, such as from “waiting” to “playing.”
+Called whenever the playback state changes, such as:
+
+* waiting → playing
+* playing → paused
 
 ---
 
@@ -201,68 +235,70 @@ Called when playback finishes.
 
 #### `onError?: (message: string) => void`
 
-Called when an error occurs during playback.
-Receives an error message as an argument.
+Called when a playback error occurs.
+Receives a descriptive error message.
 
 ---
 
-## Audio Session Handling
+## Audio Session Notes
 
 `AVPlayer` relies on the system’s shared audio session.
-You can configure it using `SharedAudioSession` to ensure correct playback behavior.
+You should configure and activate it before playback.
 
-```typescript
+```ts
 await SharedAudioSession.setCategory('playback', ['mixWithOthers'])
 await SharedAudioSession.setActive(true)
 ```
 
-Handling interruptions (such as phone calls):
+Handling interruptions (e.g. phone calls):
 
-```typescript
-SharedAudioSession.addInterruptionListener((type) => {
-  if (type === 'began') player.pause()
-  else if (type === 'ended') player.play()
+```ts
+SharedAudioSession.addInterruptionListener(type => {
+  if (type === 'began') {
+    player.pause()
+  } else if (type === 'ended') {
+    player.play()
+  }
 })
 ```
 
 ---
 
-## Common Use Cases
+## Common Usage Examples
 
-### Play Remote Audio
+### Play Using the Default Rate
 
-```typescript
-player.setSource("https://example.com/audio.mp3")
-player.onReadyToPlay = () => player.play()
+```ts
+player.defaultRate = 1.5
+player.play()
 ```
 
 ---
 
-### Play Local File
+### Start Playback at a Specific Rate
 
-```typescript
-player.setSource("/path/to/audio.mp3")
-player.play()
+```ts
+player.play(2.0)
 ```
 
 ---
 
 ### Loop Playback
 
-```typescript
-player.numberOfLoops = 3 // Loop 3 times
+```ts
+player.numberOfLoops = 3
 player.play()
 ```
 
 ---
 
-### Retrieve Metadata
+### Read Common Metadata
 
-```typescript
+```ts
 const metadata = await player.loadCommonMetadata()
 if (metadata) {
-  const artist = metadata.find(i => i.commonKey === "artist")
-  console.log("Artist:", await artist?.stringValue)
+  const title = metadata.find(i => i.commonKey === 'title')
+  console.log(await title?.stringValue)
 }
 ```
 
@@ -270,49 +306,58 @@ if (metadata) {
 
 ## Best Practices
 
-1. **Resource Management**
-   Always call `dispose()` after playback to release system resources.
+1. **Differentiate `defaultRate` vs `rate`**
 
-2. **Error Handling**
-   Implement the `onError` callback to handle playback issues gracefully (e.g., network failures).
+   * `defaultRate` affects how playback *starts*
+   * `rate` reflects or controls the *current* playback speed
 
-3. **Interruption Management**
-   Use audio session interruption listeners to pause and resume playback smoothly.
+2. **Always Release Resources**
 
-4. **UI State Updates**
-   Use `onTimeControlStatusChanged` to update your UI when the playback state changes.
+   * Call `dispose()` when playback ends or the player is no longer needed
 
-5. **Metadata Usage**
-   Use `loadCommonMetadata()` to retrieve general information such as title, artist, or album artwork for display in your app’s UI.
+3. **Observe Playback State**
+
+   * Use `onTimeControlStatusChanged` to update loading or playing UI states
+
+4. **Configure Audio Session Before Playing**
+
+   * Prevent unexpected background, mute, or mixing behavior
+
+5. **Metadata Timing**
+
+   * Reading metadata after `onReadyToPlay` is more reliable
 
 ---
 
 ## Full Example
 
-```typescript
+```ts
 const player = new AVPlayer()
 
 await SharedAudioSession.setCategory('playback', ['mixWithOthers'])
 await SharedAudioSession.setActive(true)
 
+player.defaultRate = 1.25
+
 if (player.setSource("https://example.com/audio.mp3")) {
-  player.onReadyToPlay = () => player.play()
+  player.onReadyToPlay = () => {
+    player.play()
+  }
+
   player.onEnded = () => {
     console.log("Playback finished")
     player.dispose()
   }
-  player.onError = (message) => {
+
+  player.onError = message => {
     console.error("Playback error:", message)
     player.dispose()
   }
 
-  // Load metadata
-  const commonMetadata = await player.loadCommonMetadata()
-  if (commonMetadata) {
-    const titleItem = commonMetadata.find(i => i.commonKey === "title")
-    console.log("Title:", await titleItem?.stringValue)
+  const metadata = await player.loadCommonMetadata()
+  if (metadata) {
+    const title = metadata.find(i => i.commonKey === 'title')
+    console.log("Title:", await title?.stringValue)
   }
-} else {
-  console.error("Failed to set media source")
 }
 ```

@@ -27,24 +27,186 @@
         },
         "children": [
           {
+            "pro": true,
             "title": {
-              "en": "Device",
-              "zh": "设备"
+              "en": "SQLite",
+              "zh": "SQLite"
             },
             "subtitle": {
-              "en": "Add proximityState、orientation and addProximityListener, etc.",
-              "zh": "新增 proximityState、orientation 属性以及 addProximityListener 等监听方法。"
-            }
+              "zh": "SQLite 模块为 Scripting 提供了一套完整的本地数据库访问能力，适用于数据持久化、结构化查询、事务处理以及高并发读取等场景。",
+              "en": "This module provides a complete local database solution for Scripting."
+            },
+            "children": [
+              {
+                "pro": true,
+                "title": {
+                  "en": "Overview",
+                  "zh": "概述"
+                },
+                "subtitle": {
+                  "en": "Quickly master the use of SQLite.",
+                  "zh": "快速掌握SQLite的使用"
+                },
+                "readme": "sqlite/overview/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Database and Connection",
+                  "zh": "数据库和连接"
+                },
+                "subtitle": {
+                  "en": "Introduces SQLite database opening mode, connection configuration and behaviors related to connection lifecycle",
+                  "zh": "介绍 SQLite 数据库的打开方式、连接配置以及与连接生命周期相关的行为说明"
+                },
+                "readme": "sqlite/connection/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Executing SQL and Query",
+                  "zh": "执行 SQL 和查询"
+                },
+                "subtitle": {
+                  "en": "This section explains how to execute SQL statements, bind parameters, and query data using SQLite.",
+                  "zh": "介绍如何使用 SQLite 执行 SQL 语句、绑定参数以及查询数据。"
+                },
+                "readme": "sqlite/execute/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Transcation",
+                  "zh": "事务（Transcation）"
+                },
+                "subtitle": {
+                  "en": "This section describes the transaction model, transaction types.",
+                  "zh": "介绍了 SQLite 的事务模型以及事务类型。"
+                },
+                "readme": "sqlite/transcation/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Schema Management",
+                  "zh": "模式管理（Schema Management）"
+                },
+                "subtitle": {
+                  "en": "This section explains how to create, modify, and remove tables and indexes using SQLite’s structured schema APIs.",
+                  "zh": "介绍如何使用 SQLite 的结构化模式 API 创建、修改和删除表和索引。"
+                },
+                "readme": "sqlite/schema_management/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Schema Introspection",
+                  "zh": "模式探测（Schema Introspection）"
+                },
+                "subtitle": {
+                  "en": "This section explains how to inspect and analyze database structures using SQLite’s schema introspection APIs.",
+                  "zh": "介绍如何使用 SQLite 的模式探测 API 查询和分析数据库结构。"
+                },
+                "readme": "sqlite/schema_introspection/"
+              }
+            ]
           },
           {
+            "pro": true,
             "title": {
               "en": "VideoRecorder",
               "zh": "视频录制（VideoRecorder）"
             },
             "subtitle": {
-              "en": "Add cancelRecording method and autoConfigAudioSession parameters, and reset method now accepts an optional new configuration parameter.",
-              "zh": "新增 cancelRecording 方法和 autoConfigAudioSession 参数，以及 reset 方法现在可选传入一个新的配置对象。"
-            }
+              "en": "To improve the stability and ease of use of VideoRecorder, VideoRecorder has been refactored, and the relevant API has been significantly modified.",
+              "zh": "为了提升 VideoRecorder 的稳定性和易用性， VideoRecorder 已进行重构，相关的 API 已有重大调整。"
+            },
+            "children": [
+              {
+                "pro": true,
+                "title": {
+                  "en": "Quick Start",
+                  "zh": "快速掌握视频录制"
+                },
+                "subtitle": {
+                  "en": "Learn how to use VideoRecorder.",
+                  "zh": "了解VideoRecorder的API"
+                },
+                "readme": "video_recorder/quick_start/",
+                "example": "video_recorder/quick_start/index"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "VideoRecorderPreviewView",
+                  "zh": "视频预览"
+                },
+                "subtitle": {
+                  "en": "Learn how to use VideoRecorderPreviewView.",
+                  "zh": "使用 VideoRecorderPreviewView UI组件进行视频预览"
+                },
+                "readme": "video_recorder/preview_view/"
+              }
+            ]
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "AssistantTool User-Initiated Cancellation",
+              "zh": "处理用户主动取消智能助手工具"
+            },
+            "subtitle": {
+              "en": "To improve the user experience of long-running tools, AssistantTool introduces support for user-initiated cancellation.",
+              "zh": "为了提高用户使用长时间运行的工具的体验，智能助手工具引入了用户主动取消的支持。"
+            },
+            "readme": "assistant_tool/cancellation/"
+          },
+          {
+            "title": {
+              "en": "AVPlayer",
+              "zh": "音视频播放器"
+            },
+            "subtitle": {
+              "en": "Added defaultRate property, and added an optional rate parameter for play method.",
+              "zh": "新增 defaultRate 属性，以及 play 方法新增可选的 rate 参数。"
+            },
+            "keywords": [
+              "AVPlayer"
+            ],
+            "readme": "audio_player/"
+          },
+          {
+            "title": {
+              "en": "Widget API",
+              "zh": "小组件 API"
+            },
+            "subtitle": {
+              "en": "Widget.present method adds relevance parameter to control widget priority.",
+              "zh": "Widget.present 方法新增 relevance 参数，用于控制小组件的优先级。"
+            },
+            "readme": "widget_api/"
+          },
+          {
+            "title": {
+              "en": "Location",
+              "zh": "定位（Location）"
+            },
+            "subtitle": {
+              "en": "Add requestHeading、 addHeadingListener、removeHeadingListener, etc.",
+              "zh": "新增 requestHeading、 addHeadingListener、removeHeadingListener 等方法。"
+            },
+            "readme": "location/"
+          },
+          {
+            "title": {
+              "en": "Device",
+              "zh": "设备"
+            },
+            "subtitle": {
+              "en": "Add proximityState, orientation, supportedInterfaceOrientations and addProximityListener, etc.",
+              "zh": "新增 proximityState、orientation、supportedInterfaceOrientations 属性以及 addProximityListener 等监听方法。"
+            },
+            "readme": "device/"
           }
         ]
       },
@@ -157,17 +319,6 @@
           },
           {
             "title": {
-              "en": "VideoRecorder",
-              "zh": "视频录制（VideoRecorder）"
-            },
-            "subtitle": {
-              "en": "New displayZoomFactor property for displaying user-readable zoom factor.",
-              "zh": "新增 displayZoomFactor 属性，用于展示用户可读的缩放比例。"
-            },
-            "readme": "video_recorder/"
-          },
-          {
-            "title": {
               "en": "Device",
               "zh": "设备"
             },
@@ -248,18 +399,6 @@
             ]
           },
           {
-            "pro": true,
-            "title": {
-              "en": "VideoRecorder",
-              "zh": "视频录制（VideoRecorder）"
-            },
-            "subtitle": {
-              "en": "A high-level API for recording video with fine-grained control over camera configuration, audio capture, encoding, pause/resume behavior, and final file output.",
-              "zh": "提供对摄像头配置、音频捕获、编码、暂停/恢复行为以及最终文件输出的细粒度控制，以实现视频录制的高级 API。"
-            },
-            "readme": "video_recorder/"
-          },
-          {
             "title": {
               "en": "NavigationStack with path",
               "zh": "NavigationStack 配合 path"
@@ -336,17 +475,6 @@
               "zh": "该组件适用于需要原生播放行为、画中画、Now Playing 集成以及后台播放的媒体中心场景。"
             },
             "readme": "views/avplayer_view/"
-          },
-          {
-            "title": {
-              "en": "VideoPreviewView",
-              "zh": "视频预览视图（VideoPreviewView）"
-            },
-            "subtitle": {
-              "en": "A view that displays the live camera preview associated with a VideoRecorder instance.",
-              "zh": "显示与 VideoRecorder 实例关联的实时摄像头预览的视图。"
-            },
-            "readme": "views/video_preview_view/"
           },
           {
             "title": {
@@ -2416,17 +2544,6 @@
           "zh": "该组件适用于需要原生播放行为、画中画、Now Playing 集成以及后台播放的媒体中心场景。"
         },
         "readme": "views/avplayer_view/"
-      },
-      {
-        "title": {
-          "en": "VideoPreviewView",
-          "zh": "视频预览视图（VideoPreviewView）"
-        },
-        "subtitle": {
-          "en": "A view that displays the live camera preview associated with a VideoRecorder instance.",
-          "zh": "显示与 VideoRecorder 实例关联的实时摄像头预览的视图。"
-        },
-        "readme": "views/video_preview_view/"
       }
     ]
   },
@@ -3624,7 +3741,68 @@
       "en": "Custom tools for the assistant.",
       "zh": "自定义提供给智能助手使用的工具。"
     },
-    "readme": "assistant_tool/"
+    "children": [
+      {
+        "pro": true,
+        "title": {
+          "zh": "AssistantTool 总览与工作流",
+          "en": "Overview and Workflow"
+        },
+        "subtitle": {
+          "zh": "了解智能助手工具的概述和工作流程。",
+          "en": "Learn about the overview and workflow of AssistantTools."
+        },
+        "readme": "assistant_tool/quick_start/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "zh": "无需用户批准的 Assistant Tool",
+          "en": "Assistant Tool Without User Approval"
+        },
+        "subtitle": {
+          "zh": "掌握如何实现无需用户批准的智能助手工具。",
+          "en": "Learn how to implement an Assistant Tool without user approval."
+        },
+        "readme": "assistant_tool/without_approval/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "zh": "需要用户批准的 Assistant Tool",
+          "en": "Assistant Tool With User Approval"
+        },
+        "subtitle": {
+          "zh": "掌握如何实现需要用户批准的智能助手工具。",
+          "en": "Learn how to implement an Assistant Tool with user approval."
+        },
+        "readme": "assistant_tool/with_approval/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "zh": "ScriptEditorProvider 及编辑器相关类型详解",
+          "en": "ScriptEditorProvider and Editor Types"
+        },
+        "subtitle": {
+          "zh": "了解 ScriptEditorProvider 及编辑器相关类型。",
+          "en": "Learn about ScriptEditorProvider and Editor Types."
+        },
+        "readme": "assistant_tool/script_editor_provider/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "AssistantTool User-Initiated Cancellation",
+          "zh": "处理用户主动取消智能助手工具"
+        },
+        "subtitle": {
+          "en": "To improve the user experience of long-running tools, AssistantTool introduces support for user-initiated cancellation.",
+          "zh": "为了提高用户使用长时间运行的工具的体验，智能助手工具引入了用户主动取消的支持。"
+        },
+        "readme": "assistant_tool/cancellation/"
+      }
+    ]
   },
   {
     "title": {
@@ -4055,6 +4233,91 @@
               "zh": "该类表示一个活跃的 WebSocket 连接会话。"
             },
             "readme": "http_server/web_socket_session/"
+          }
+        ]
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "SQLite",
+          "zh": "SQLite"
+        },
+        "subtitle": {
+          "zh": "SQLite 模块为 Scripting 提供了一套完整的本地数据库访问能力，适用于数据持久化、结构化查询、事务处理以及高并发读取等场景。",
+          "en": "This module provides a complete local database solution for Scripting."
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "Overview",
+              "zh": "概述"
+            },
+            "subtitle": {
+              "en": "Quickly master the use of SQLite.",
+              "zh": "快速掌握SQLite的使用"
+            },
+            "readme": "sqlite/overview/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Database and Connection",
+              "zh": "数据库和连接"
+            },
+            "subtitle": {
+              "en": "Introduces SQLite database opening mode, connection configuration and behaviors related to connection lifecycle",
+              "zh": "介绍 SQLite 数据库的打开方式、连接配置以及与连接生命周期相关的行为说明"
+            },
+            "readme": "sqlite/connection/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Executing SQL and Query",
+              "zh": "执行 SQL 和查询"
+            },
+            "subtitle": {
+              "en": "This section explains how to execute SQL statements, bind parameters, and query data using SQLite.",
+              "zh": "介绍如何使用 SQLite 执行 SQL 语句、绑定参数以及查询数据。"
+            },
+            "readme": "sqlite/execute/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Transcation",
+              "zh": "事务（Transcation）"
+            },
+            "subtitle": {
+              "en": "This section describes the transaction model, transaction types.",
+              "zh": "介绍了 SQLite 的事务模型以及事务类型。"
+            },
+            "readme": "sqlite/transcation/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Schema Management",
+              "zh": "模式管理（Schema Management）"
+            },
+            "subtitle": {
+              "en": "This section explains how to create, modify, and remove tables and indexes using SQLite’s structured schema APIs.",
+              "zh": "介绍如何使用 SQLite 的结构化模式 API 创建、修改和删除表和索引。"
+            },
+            "readme": "sqlite/schema_management/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Schema Introspection",
+              "zh": "模式探测（Schema Introspection）"
+            },
+            "subtitle": {
+              "en": "This section explains how to inspect and analyze database structures using SQLite’s schema introspection APIs.",
+              "zh": "介绍如何使用 SQLite 的模式探测 API 查询和分析数据库结构。"
+            },
+            "readme": "sqlite/schema_introspection/"
           }
         ]
       },
@@ -4528,7 +4791,33 @@
           "en": "A high-level API for recording video with fine-grained control over camera configuration, audio capture, encoding, pause/resume behavior, and final file output.",
           "zh": "提供对摄像头配置、音频捕获、编码、暂停/恢复行为以及最终文件输出的细粒度控制，以实现视频录制的高级 API。"
         },
-        "readme": "video_recorder/"
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "VideoRecorder",
+              "zh": "快速掌握视频录制"
+            },
+            "subtitle": {
+              "en": "Learn how to use VideoRecorder.",
+              "zh": "了解VideoRecorder的API"
+            },
+            "readme": "video_recorder/quick_start/",
+            "example": "video_recorder/quick_start/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "VideoRecorderPreviewView",
+              "zh": "视频预览"
+            },
+            "subtitle": {
+              "en": "Learn how to use VideoRecorderPreviewView.",
+              "zh": "使用 VideoRecorderPreviewView UI组件进行视频预览"
+            },
+            "readme": "video_recorder/preview_view/"
+          }
+        ]
       },
       {
         "title": {
@@ -4554,12 +4843,12 @@
       },
       {
         "title": {
-          "en": "Audio Player",
-          "zh": "音频播放器"
+          "en": "AVPlayer",
+          "zh": "音视频播放器"
         },
         "subtitle": {
-          "en": "The interface allows for playback of both local and network audio sources, and offers controls such as play, pause, stop, volume, and more.",
-          "zh": "该接口允许播放本地和网络音源，并提供播放、暂停、停止、音量控制等功能。"
+          "en": "The interface for playing audio or video resources, supporting playback control, rate control, loop playback, playback status listening, and media metadata reading.",
+          "zh": "该接口用于播放音频或视频资源，支持播放控制、速率控制、循环播放、播放状态监听以及媒体元数据读取等能力。"
         },
         "keywords": [
           "AVPlayer"

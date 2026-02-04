@@ -119,7 +119,7 @@ function MyWidget() {
 
 ### 示例 3: 带有自定义视图的切换
 ```tsx
-import { Toggle, View } from 'scripting'
+import { Toggle, HStack } from 'scripting'
 
 function MyComponent() {
   const [isEnabled, setIsEnabled] = useState(false)
@@ -129,10 +129,10 @@ function MyComponent() {
       value={isEnabled} 
       onChanged={newValue => setIsEnabled(newValue)}
     >
-      <View>
+      <HStack>
         <Text>启用功能</Text>
         <Image imageUrl="https://example.com/feature-icon.png" />
-      </View>
+      </HStack>
     </Toggle>
   )
 }

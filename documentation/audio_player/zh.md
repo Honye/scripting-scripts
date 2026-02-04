@@ -1,24 +1,24 @@
-`AVPlayer` 提供播放音频或视频的能力，并支持播放控制、循环播放、回调事件和元数据读取等功能。你可以通过 `setSource()` 设置媒体源（本地文件或远程 URL），然后使用 `play()` 开始播放。
+`AVPlayer` 用于播放音频或视频资源，支持播放控制、速率控制、循环播放、播放状态监听以及媒体元数据读取等能力。
+
+你可以通过 `setSource()` 设置媒体源（本地文件或远程 URL），然后使用 `play()` 开始播放。
 
 ---
 
 ## 入门指南
 
-以下示例展示了 `AVPlayer` 的基本用法：
-
-```typescript
+```ts
 const player = new AVPlayer()
 
-// 设置媒体源（本地文件或远程 URL）
 if (player.setSource("https://example.com/audio.mp3")) {
-    player.onReadyToPlay = () => {
-        player.play()
-    }
-    player.onEnded = () => {
-        console.log("播放完成。")
-    }
+  player.onReadyToPlay = () => {
+    player.play()
+  }
+
+  player.onEnded = () => {
+    console.log("播放完成")
+  }
 } else {
-    console.error("设置媒体源失败。")
+  console.error("设置媒体源失败")
 }
 ```
 
@@ -30,64 +30,92 @@ if (player.setSource("https://example.com/audio.mp3")) {
 
 #### `volume: number`
 
-控制播放音量，范围为 `0.0`（静音）到 `1.0`（最大音量）。
+控制播放音量，取值范围为 `0.0`（静音）到 `1.0`（最大音量）。
 
-```typescript
-player.volume = 0.5 // 设置为 50% 音量
+```ts
+player.volume = 0.5
 ```
 
 ---
 
 #### `duration: DurationInSeconds`
 
-媒体总时长（单位：秒）。在媒体加载完成前，该值为 `0`。
+媒体的总时长（秒）。
+在媒体尚未加载完成前，该值为 `0`。
 
-```typescript
-console.log(`媒体时长：${player.duration} 秒`)
+```ts
+console.log(player.duration)
 ```
 
 ---
 
 #### `currentTime: DurationInSeconds`
 
-当前播放时间（单位：秒）。可通过设置该值跳转播放位置。
+当前播放时间（秒）。
+可通过设置该值来跳转播放位置。
 
-```typescript
-player.currentTime = 30 // 跳转到第 30 秒
+```ts
+player.currentTime = 30
 ```
 
 ---
 
 #### `rate: number`
 
-控制播放速率。`1.0` 为正常速度，值小于 `1.0` 为减速播放，大于 `1.0` 为加速播放。
+当前实际播放速率。
 
-```typescript
-player.rate = 1.5 // 以 1.5 倍速播放
+* `1.0` 表示正常速度
+* 小于 `1.0` 表示慢速播放
+* 大于 `1.0` 表示快速播放
+
+```ts
+player.rate = 1.25
 ```
+
+---
+
+#### `defaultRate: number`
+
+默认播放速率，用于**开始播放时**的速率选择。
+
+* 当调用 `play()` 且未传入 `atRate` 参数时，会使用 `defaultRate`
+* 修改 `defaultRate` **不会立即影响当前正在播放的速率**
+* 常用于控制「下次开始播放」时的速率
+
+```ts
+player.defaultRate = 1.5
+```
+
+典型使用场景：
+
+* 用户在播放前选择了一个“默认倍速”
+* 下次调用 `play()` 时自动使用该倍速
 
 ---
 
 #### `timeControlStatus: TimeControlStatus`
 
-指示播放状态。可取值：
+指示播放器当前的播放状态：
 
-* `paused`: 暂停中
-* `waitingToPlayAtSpecifiedRate`: 正在等待可播放状态（如网络缓冲）
-* `playing`: 正在播放
+* `paused`
+  播放器已暂停或尚未开始播放
+* `waitingToPlayAtSpecifiedRate`
+  等待满足播放条件（例如网络缓冲）
+* `playing`
+  正在播放
 
 ---
 
 #### `numberOfLoops: number`
 
-设置循环播放次数。
+设置循环播放次数：
 
 * `0`：不循环
-* 正数：指定循环次数
+* 正整数：循环指定次数
 * 负数：无限循环
 
-```typescript
-player.numberOfLoops = -1 // 无限循环播放
+```ts
+player.numberOfLoops = -1
 ```
 
 ---
@@ -96,42 +124,54 @@ player.numberOfLoops = -1 // 无限循环播放
 
 #### `setSource(filePathOrURL: string): boolean`
 
-设置播放源，可以是本地文件路径或远程 URL。
+设置媒体播放源，支持：
 
-返回：
+* 本地文件路径
+* 远程 URL
 
-* `true`: 设置成功
-* `false`: 设置失败
+返回值：
+
+* `true`：设置成功
+* `false`：设置失败
 
 ---
 
-#### `play(): boolean`
+#### `play(atRate?: number): boolean`
 
-开始播放媒体。
+开始播放当前媒体。
 
-返回：
+* 若传入 `atRate`，则以该速率开始播放
+* 若未传入 `atRate`，则使用 `defaultRate`
+* 播放过程中可通过修改 `rate` 动态调整速率
 
-* `true`: 成功开始播放
-* `false`: 失败
+```ts
+player.play()        // 使用 defaultRate
+player.play(1.25)    // 以 1.25 倍速开始播放
+```
+
+返回值：
+
+* `true`：成功开始播放
+* `false`：播放失败
 
 ---
 
 #### `pause()`
 
-暂停播放。
+暂停当前播放。
 
 ---
 
 #### `stop()`
 
-停止播放并重置到起始位置。
+停止播放，并将播放位置重置到起始位置。
 
 ---
 
 #### `dispose()`
 
-释放播放器资源、移除观察者。
-应在播放器不再使用时调用以避免资源泄露。
+释放播放器占用的所有资源，并移除内部观察者。
+当播放器不再使用时必须调用，以避免资源泄露。
 
 ---
 
@@ -141,34 +181,23 @@ player.numberOfLoops = -1 // 无限循环播放
 
 返回：
 
-* 一个包含 `AVMetadataItem` 对象的数组
-* 若媒体未加载或无元数据，则返回 `null`
+* `AVMetadataItem[]`
+* 若未设置媒体源或无元数据，则返回 `null`
 
-示例：
-
-```typescript
+```ts
 const metadata = await player.loadMetadata()
-if (metadata) {
-  for (const item of metadata) {
-    console.log(item.key, await item.stringValue)
-  }
-}
 ```
 
 ---
 
 #### `loadCommonMetadata(): Promise<AVMetadataItem[] | null>`
 
-加载当前媒体的通用元数据（common metadata），这些元数据的 `commonKey` 属性提供跨格式可识别的键名。
+加载当前媒体的通用元数据（Common Metadata）。
 
-示例：
+这些元数据提供跨格式统一的 `commonKey`，常用于获取标题、艺术家、专辑等信息。
 
-```typescript
-const commonMetadata = await player.loadCommonMetadata()
-if (commonMetadata) {
-  const titleItem = commonMetadata.find(i => i.commonKey === "title")
-  console.log("标题：", await titleItem?.stringValue)
-}
+```ts
+const common = await player.loadCommonMetadata()
 ```
 
 ---
@@ -177,84 +206,90 @@ if (commonMetadata) {
 
 #### `onReadyToPlay?: () => void`
 
-媒体准备就绪、可播放时触发。
+当媒体已准备好并可开始播放时触发。
 
 ---
 
 #### `onTimeControlStatusChanged?: (status: TimeControlStatus) => void`
 
-播放状态变更时触发，例如从“等待中”到“播放中”。
+当播放状态发生变化时触发，例如：
+
+* 等待缓冲 → 播放中
+* 播放中 → 暂停
 
 ---
 
 #### `onEnded?: () => void`
 
-媒体播放完成时触发。
+当媒体播放完成时触发。
 
 ---
 
 #### `onError?: (message: string) => void`
 
-播放过程中发生错误时触发，参数为错误信息。
+播放过程中发生错误时触发，参数为错误描述信息。
 
 ---
 
-## 使用音频会话
+## 音频会话说明
 
-`AVPlayer` 依赖系统的共享音频会话。你可以通过 `SharedAudioSession` 进行配置，以确保播放行为符合预期。
+`AVPlayer` 依赖系统的共享音频会话。
+在播放前应正确配置并激活音频会话。
 
-```typescript
+```ts
 await SharedAudioSession.setCategory('playback', ['mixWithOthers'])
 await SharedAudioSession.setActive(true)
 ```
 
-处理系统中断（如电话）：
+处理中断（如来电）：
 
-```typescript
-SharedAudioSession.addInterruptionListener((type) => {
-  if (type === 'began') player.pause()
-  else if (type === 'ended') player.play()
+```ts
+SharedAudioSession.addInterruptionListener(type => {
+  if (type === 'began') {
+    player.pause()
+  } else if (type === 'ended') {
+    player.play()
+  }
 })
 ```
 
 ---
 
-## 常见用例
+## 常见用法示例
 
-### 播放远程音频
+### 使用默认倍速播放
 
-```typescript
-player.setSource("https://example.com/audio.mp3")
-player.onReadyToPlay = () => player.play()
+```ts
+player.defaultRate = 1.5
+player.play()
 ```
 
 ---
 
-### 播放本地文件
+### 临时指定倍速播放
 
-```typescript
-player.setSource("/path/to/audio.mp3")
-player.play()
+```ts
+player.play(2.0)
 ```
 
 ---
 
 ### 循环播放
 
-```typescript
-player.numberOfLoops = 3 // 循环播放 3 次
+```ts
+player.numberOfLoops = 3
 player.play()
 ```
 
 ---
 
-### 获取元数据
+### 读取通用元数据
 
-```typescript
+```ts
 const metadata = await player.loadCommonMetadata()
 if (metadata) {
-  const artist = metadata.find(i => i.commonKey === "artist")
-  console.log("演唱者：", await artist?.stringValue)
+  const title = metadata.find(i => i.commonKey === 'title')
+  console.log(await title?.stringValue)
 }
 ```
 
@@ -262,49 +297,58 @@ if (metadata) {
 
 ## 最佳实践
 
-1. **资源管理**
-   使用完毕后务必调用 `dispose()` 释放资源。
+1. **区分 defaultRate 与 rate**
 
-2. **错误处理**
-   实现 `onError` 回调，优雅地处理播放错误。
+   * `defaultRate` 用于“开始播放时”
+   * `rate` 用于“当前播放过程中”
 
-3. **中断管理**
-   通过音频会话监听中断事件，自动暂停或恢复播放。
+2. **始终释放资源**
 
-4. **UI 状态更新**
-   使用 `onTimeControlStatusChanged` 更新播放状态显示。
+   * 播放结束或不再使用时调用 `dispose()`
 
-5. **元数据使用**
-   通过 `loadCommonMetadata()` 获取通用信息，如标题、艺术家、封面等，用于显示在 UI 上。
+3. **处理播放状态**
+
+   * 使用 `onTimeControlStatusChanged` 更新 UI（加载中 / 播放中）
+
+4. **播放前配置音频会话**
+
+   * 避免后台、静音或混音行为不符合预期
+
+5. **元数据读取时机**
+
+   * 在 `onReadyToPlay` 之后读取元数据更稳定
 
 ---
 
 ## 完整示例
 
-```typescript
+```ts
 const player = new AVPlayer()
 
 await SharedAudioSession.setCategory('playback', ['mixWithOthers'])
 await SharedAudioSession.setActive(true)
 
+player.defaultRate = 1.25
+
 if (player.setSource("https://example.com/audio.mp3")) {
-  player.onReadyToPlay = () => player.play()
+  player.onReadyToPlay = () => {
+    player.play()
+  }
+
   player.onEnded = () => {
     console.log("播放完成")
     player.dispose()
   }
-  player.onError = (message) => {
+
+  player.onError = message => {
     console.error("播放错误：", message)
     player.dispose()
   }
 
-  // 读取元数据
-  const commonMetadata = await player.loadCommonMetadata()
-  if (commonMetadata) {
-    const titleItem = commonMetadata.find(i => i.commonKey === "title")
-    console.log("标题：", await titleItem?.stringValue)
+  const metadata = await player.loadCommonMetadata()
+  if (metadata) {
+    const title = metadata.find(i => i.commonKey === 'title')
+    console.log("标题：", await title?.stringValue)
   }
-} else {
-  console.error("设置媒体源失败")
 }
 ```

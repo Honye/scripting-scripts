@@ -44,7 +44,18 @@ This is useful for customizing widget content dynamically based on user-defined 
 
 ### Methods
 
-#### `Widget.present(element: VirtualNode, reloadPolicy?: WidgetReloadPolicy): void`
+#### `Widget.present(element, options?): void`
+
+##### Type Definition
+
+```ts
+Widget.present(element: VirtualNode, reloadPolicy?: WidgetReloadPolicy): void
+
+Widget.present(element: VirtualNode, optoins?: {
+  reloadPolicy?: WidgetReloadPolicy
+  relevance?: WidgetRelevance
+}): void
+```
 
 Renders the widget UI using a React-like virtual node (`JSX.Element`).
 You can optionally specify a reload policy to instruct the system when to request an updated timeline.
@@ -53,6 +64,7 @@ You can optionally specify a reload policy to instruct the system when to reques
 
 * `element` (`VirtualNode`) – A JSX element representing the widget UI tree.
 * `reloadPolicy` (`WidgetReloadPolicy`, optional) – Specifies when WidgetKit should request a new timeline. Defaults to `atEnd`.
+* `relevance` (`WidgetRelevance`, optional) – Specifies the relevance of the widget, which affects its display priority.
 
 ##### Example
 
@@ -170,6 +182,19 @@ An object specifying when WidgetKit should request a new timeline:
 type WidgetReloadPolicy =
   | { policy: "atEnd" } // Reload after the timeline ends (default)
   | { policy: "after", date: Date } // Reload after a specific date
+```
+
+---
+
+### `WidgetRelevance`
+
+An object specifying the relevance of a widget:
+
+```ts
+type WidgetRelevance = {
+  score: number // A score used to determine widget priority
+  duration?: number // Optional duration in seconds
+}
 ```
 
 ---

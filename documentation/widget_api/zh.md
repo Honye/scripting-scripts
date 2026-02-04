@@ -44,7 +44,18 @@
 
 ### 静态方法
 
-#### `Widget.present(element: VirtualNode, reloadPolicy?: WidgetReloadPolicy): void`
+#### `Widget.present(element, options?): void`
+
+##### 类型定义
+
+```ts
+Widget.present(element: VirtualNode, reloadPolicy?: WidgetReloadPolicy): void
+
+Widget.present(element: VirtualNode, optoins?: {
+  reloadPolicy?: WidgetReloadPolicy
+  relevance?: WidgetRelevance
+}): void
+```
 
 用于在小组件上渲染 UI。传入一个 React 风格的 JSX 节点（即 VirtualNode）作为渲染内容。可选地传入刷新策略以控制 WidgetKit 请求新时间线的时机。
 
@@ -52,6 +63,7 @@
 
 * `element` (`VirtualNode`) – 小组件 UI 的 JSX 树。
 * `reloadPolicy` (`WidgetReloadPolicy`，可选) – 控制 WidgetKit 请求新时间线的策略，默认为 `atEnd`。
+* `relevance` (`WidgetRelevance`，可选) – 小组件的相关性，用于决定小组件的展示优先级。
 
 ##### 示例
 
@@ -174,6 +186,19 @@ type WidgetReloadPolicy =
 
 ---
 
+### `WidgetRelevance`
+
+定义小组件的相关性级别：
+
+```ts
+type WidgetRelevance = {
+  score: number // 分数，用于让系统决定小组件的展示优先级
+  duration?: DurationInSeconds // 持续时间，单位为秒
+}
+```
+
+---
+
 ## 使用说明
 
 * `Widget.present` 应在 `widget.tsx` 中调用，用于定义和显示小组件实际内容。
@@ -181,6 +206,3 @@ type WidgetReloadPolicy =
 * 使用 `Widget.parameter` 时，若参数为结构化数据（如对象），需使用 `JSON.parse()` 解析。
 * 脚本结束后应调用 `Script.exit()` 以确保小组件正常退出。
 
----
-
-如需导出为 Markdown 文档或用于帮助中心，请告诉我，我可以为你生成格式化版本。

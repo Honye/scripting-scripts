@@ -116,7 +116,7 @@ See `Interactive Widget and LiveActivity` documentation for more information abo
 
 ### Example 3: Toggle with Custom View
 ```tsx
-import { Toggle, View } from 'scripting'
+import { Toggle, HStack } from 'scripting'
 
 function MyComponent() {
   const [isEnabled, setIsEnabled] = useState(false)
@@ -126,10 +126,10 @@ function MyComponent() {
       value={isEnabled} 
       onChanged={newValue => setIsEnabled(newValue)}
     >
-      <View>
+      <HStack>
         <Text>Enable Feature</Text>
         <Image imageUrl="https://example.com/feature-icon.png" />
-      </View>
+      </HStack>
     </Toggle>
   )
 }
