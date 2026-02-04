@@ -13,7 +13,8 @@ import {
   ProgressView,
   Picker,
   Image,
-  GridItem
+  GridItem,
+  useCallback
 } from 'scripting'
 import { API, CATEGORIES } from '../api'
 import { VideoItem, Category } from '../models'
@@ -124,10 +125,14 @@ export function HomeView() {
         axes="horizontal"
         scrollIndicator="hidden"
         glassEffect={parseFloat(Device.systemVersion) >= 26}
-        background={parseFloat(Device.systemVersion) >= 26 ? undefined : {
-          style: 'thinMaterial',
-          shape: { type: 'rect', cornerRadius: 12 }
-        }}
+        background={
+          parseFloat(Device.systemVersion) >= 26
+            ? undefined
+            : {
+                style: 'thinMaterial',
+                shape: { type: 'rect', cornerRadius: 12 }
+              }
+        }
       >
         <HStack padding={8} spacing={12}>
           {selectedMainTab.subtabs?.map((sub) => (
@@ -154,6 +159,10 @@ export function HomeView() {
       </ScrollView>
     </HStack>
   )
+
+  const loadmore = useCallback(() => {
+    !loading && setPage(page + 1)
+  }, [loading, page])
 
   return (
     <VStack
@@ -183,12 +192,12 @@ export function HomeView() {
                   </NavigationLink>
                 ))}
               </LazyVGrid>
-
-              {loading && <ProgressView />}
-
               {/* 自动加载下一页 */}
-              {!loading && hasMore && (
-                <ProgressView padding onAppear={() => setPage(page + 1)} />
+              {hasMore && (
+                <ProgressView
+                  padding
+                  onAppear={loadmore}
+                />
               )}
               {!loading && !hasMore && items.length > 0 && (
                 <Text foregroundStyle="secondaryLabel" padding>

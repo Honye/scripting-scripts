@@ -218,18 +218,21 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
   return (
     <VStack navigationBarTitleDisplayMode='inline' spacing={0}>
       {/* Video Player Area */}
-      {player ? (
-        <AVPlayerView
-          player={player}
-          pipStatus={pipStatus}
-          frame={{ height: 240 }}
-          allowsPictureInPicturePlayback
-          canStartPictureInPictureAutomaticallyFromInline
-        />
-      ) : <ProgressView frame={{ height: 240 }} />}
+      <VStack frame={{ height: 240 }} background="secondarySystemBackground">
+        {!!player && (
+          <AVPlayerView
+            player={player}
+            pipStatus={pipStatus}
+            frame={{ height: 240 }}
+            allowsPictureInPicturePlayback
+            canStartPictureInPictureAutomaticallyFromInline
+            background="secondarySystemBackground"
+          />
+        )}
+      </VStack>
 
       <ScrollView>
-        <VStack spacing={16}>
+        <VStack alignment="leading" spacing={16}>
 
           {/* Title and Stats */}
           <VStack alignment="leading" padding={16} spacing={8}>
@@ -346,22 +349,21 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
                   {isExpanded ? (
                     <LazyVGrid
                       columns={[
-                        { size: { type: 'adaptive', min: 80 } }
+                        { size: { type: 'adaptive', min: 100 }, spacing: 12 }
                       ]}
-                      spacing={12}
                     >
                       {currentEpisodes.map((ep) => (
                         <Button
                           key={ep.url}
+                          frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
                           action={() => setCurrentEpisode(ep)}
+                          background={currentEpisode?.url === ep.url ? "systemTeal" : 'secondarySystemBackground'}
+                          clipShape={{ type: "rect", cornerRadius: 6 }}
                         >
                           <Text
                             padding={12}
-                            background={currentEpisode?.url === ep.url ? "systemTeal" : 'secondarySystemBackground'}
                             foregroundStyle={currentEpisode?.url === ep.url ? "white" : "label"}
-                            clipShape={{ type: "rect", cornerRadius: 6 }}
-                            frame={{ maxWidth: 'infinity' }}
-                            lineLimit={1}
+                            lineLimit={2}
                             font="caption"
                           >
                             {ep.name}
@@ -382,7 +384,6 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
                               background={currentEpisode?.url === ep.url ? "systemTeal" : 'secondarySystemBackground'}
                               foregroundStyle={currentEpisode?.url === ep.url ? "white" : "label"}
                               clipShape={{ type: "rect", cornerRadius: 6 }}
-                              frame={{ width: 80 }}
                               lineLimit={1}
                               font="caption"
                             >

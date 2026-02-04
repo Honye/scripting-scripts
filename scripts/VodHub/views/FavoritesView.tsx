@@ -7,11 +7,11 @@ import {
   useState,
   useEffect,
   Spacer
-} from "scripting"
+} from 'scripting'
 
-import { VideoGridItem } from "../components/VideoGridItem"
-import { DetailView } from "./DetailView"
-import { DB } from "../db"
+import { VideoGridItem } from '../components/VideoGridItem'
+import { DetailView } from './DetailView'
+import { DB } from '../db'
 
 export function FavoritesView() {
   const [items, setItems] = useState<any[]>([])
@@ -56,15 +56,20 @@ export function FavoritesView() {
         <VStack spacing={16} padding={32} alignment="center">
           <Spacer />
           <Text foregroundStyle="secondaryLabel" font="title3">
-            No favorites yet.
+            暂无收藏
           </Text>
           <Spacer />
         </VStack>
       ) : (
         <ScrollView>
           <LazyVGrid columns={columns} padding={16} spacing={10}>
-            {items.map(item => (
-              <NavigationLink key={item.id} destination={<DetailView id={item.id} sourceId={item.source_id} />}>
+            {items.map((item) => (
+              <NavigationLink
+                key={item.id}
+                destination={
+                  <DetailView id={item.id} sourceId={item.source_id} />
+                }
+              >
                 <VideoGridItem item={item} />
               </NavigationLink>
             ))}
