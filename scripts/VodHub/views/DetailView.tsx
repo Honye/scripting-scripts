@@ -31,16 +31,16 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
   const [isFavorited, setIsFavorited] = useState(false)
 
   // 获取数据源 URL（优先使用传入的 sourceId，否则使用当前数据源）
-  const getSourceUrl = () => {
+  const getSourceUrl = async () => {
     if (sourceId) {
-      return DB.getDataSourceUrlById(sourceId)
+      return await DB.getDataSourceUrlById(sourceId)
     }
     return null // 使用当前数据源
   }
 
   // 获取用于保存的 sourceId（优先使用传入的，否则使用当前数据源）
-  const getSaveSourceId = () => {
-    return sourceId ?? DB.getCurrentDataSourceId()
+  const getSaveSourceId = async () => {
+    return sourceId ?? await DB.getCurrentDataSourceId()
   }
 
   useEffect(() => {
@@ -49,87 +49,91 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
   }, [])
 
   useEffect(() => {
-    if (detail) {
-      setIsFavorited(DB.isFavorited(detail.id))
-    }
+    (async () => {
+      if (detail) {
+        setIsFavorited(await DB.isFavorited(detail.id))
+      }
+    })()
   }, [detail])
 
   useEffect(() => {
-    const sourceUrl = getSourceUrl()
-    API.getDetail(id, sourceUrl ?? undefined).then(data => {
-      setDetail(data)
-      setLoading(false)
-      if (data && data.playList.length > 0 && data.playList[0].urls.length > 0) {
-        // Check history
-        const history = DB.getHistoryOne(id)
-        if (history && history.episode_index !== undefined) {
-          // Find the episode
-          const epIdx = history.episode_index
-          // Flatten list to find by index simplistically or use structure
-          // Assuming first group for simplicity or logic needs to handle groups.
-          // But existing save logic uses flattened index approach mostly by searching url.
-          // Actually save logic saved `epIdx` relative to the group?
-          // Wait, save logic logic:
-          /*
-            for (let i = 0; i < detail.playList.length; i++) {
-              const found = detail.playList[i].urls.findIndex(u => u.url === currentEpisode.url)
-              if (found >= 0) epIdx = found...
-            }
-          */
-          // This logic seems to imply `epIdx` is index WITHIN A GROUP? But which group?
-          // It iterates groups and finds first match.
-
-          // Let's refactor safely:
-          // We need to restore `currentEpisode` and `player.seek`.
-
-          let foundEp = null
-          // Try to find by index in first group or try to match episode name if reliable?
-          // Or better, finding where epIdx came from.
-          // If we saved index within a group, we need to know WHICH group.
-          // But we didn't save group index!
-          // However, usually playlists are unique across groups or just mirrors.
-          // Let's assume group 0 for now or search.
-
-          // Actually, saving just `epIdx` is risky if we don't know the group.
-          // But `history.episode_name` is also saved.
-          // Let's search by name/url matches if possible, or defaulting to first group.
-
-          let targetGroupIdx = 0
-          let targetEp = null
-
-          // Search for episode with matching name to be safer
-          for (let g = 0; g < data.playList.length; g++) {
-            const group = data.playList[g]
-            const match = group.urls.find(u => u.name === history.episode_name)
-            if (match) {
-              targetGroupIdx = g
-              targetEp = match
-              break
-            }
-          }
-
-          if (!targetEp && data.playList[0].urls[epIdx]) {
-            targetEp = data.playList[0].urls[epIdx]
-          }
-
-          if (targetEp) {
-            setSelectedGroupIndex(targetGroupIdx)
-            setCurrentEpisode(targetEp)
-            // Seek needs to happen after player loads source.
-            // We put the seek time in a ref or state to be consumed by player effect.
-            setTimeout(() => {
-              if (player) {
-                player.currentTime = history.progress
+    (async () => {
+      const sourceUrl = await getSourceUrl()
+      API.getDetail(id, sourceUrl ?? undefined).then(async (data) => {
+        setDetail(data)
+        setLoading(false)
+        if (data && data.playList.length > 0 && data.playList[0].urls.length > 0) {
+          // Check history
+          const history = await DB.getHistoryOne(id)
+          if (history && history.episode_index !== undefined) {
+            // Find the episode
+            const epIdx = history.episode_index
+            // Flatten list to find by index simplistically or use structure
+            // Assuming first group for simplicity or logic needs to handle groups.
+            // But existing save logic uses flattened index approach mostly by searching url.
+            // Actually save logic saved `epIdx` relative to the group?
+            // Wait, save logic logic:
+            /*
+              for (let i = 0; i < detail.playList.length; i++) {
+                const found = detail.playList[i].urls.findIndex(u => u.url === currentEpisode.url)
+                if (found >= 0) epIdx = found...
               }
-            }, 500) // Delay to ensure load
+            */
+            // This logic seems to imply `epIdx` is index WITHIN A GROUP? But which group?
+            // It iterates groups and finds first match.
+  
+            // Let's refactor safely:
+            // We need to restore `currentEpisode` and `player.seek`.
+  
+            let foundEp = null
+            // Try to find by index in first group or try to match episode name if reliable?
+            // Or better, finding where epIdx came from.
+            // If we saved index within a group, we need to know WHICH group.
+            // But we didn't save group index!
+            // However, usually playlists are unique across groups or just mirrors.
+            // Let's assume group 0 for now or search.
+  
+            // Actually, saving just `epIdx` is risky if we don't know the group.
+            // But `history.episode_name` is also saved.
+            // Let's search by name/url matches if possible, or defaulting to first group.
+  
+            let targetGroupIdx = 0
+            let targetEp = null
+  
+            // Search for episode with matching name to be safer
+            for (let g = 0; g < data.playList.length; g++) {
+              const group = data.playList[g]
+              const match = group.urls.find(u => u.name === history.episode_name)
+              if (match) {
+                targetGroupIdx = g
+                targetEp = match
+                break
+              }
+            }
+  
+            if (!targetEp && data.playList[0].urls[epIdx]) {
+              targetEp = data.playList[0].urls[epIdx]
+            }
+  
+            if (targetEp) {
+              setSelectedGroupIndex(targetGroupIdx)
+              setCurrentEpisode(targetEp)
+              // Seek needs to happen after player loads source.
+              // We put the seek time in a ref or state to be consumed by player effect.
+              setTimeout(() => {
+                if (player) {
+                  player.currentTime = history.progress
+                }
+              }, 500) // Delay to ensure load
+            } else {
+              setCurrentEpisode(data.playList[0].urls[0])
+            }
           } else {
             setCurrentEpisode(data.playList[0].urls[0])
           }
-        } else {
-          setCurrentEpisode(data.playList[0].urls[0])
         }
-      }
-    })
+      })
+    })()
 
     return () => {
       SharedAudioSession.setCategory('soloAmbient', [])
@@ -142,9 +146,12 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
       player.setSource(currentEpisode.url)
       SharedAudioSession.setCategory('playback', [])
       SharedAudioSession.setActive(true)
-      player.play(DB.getPlaybackRate())
-      // 应用用户设置的默认播放速度
-      player.rate = DB.getPlaybackRate()
+      ;(async () => {
+        const rate = await DB.getPlaybackRate()
+        player.play(rate)
+        // 应用用户设置的默认播放速度
+        player.rate = rate
+      })()
 
       // Check if we need to resume
       // But above logic inside API.then uses setTimeout to seek.
@@ -160,7 +167,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
     let timer: number
     let ignore = false
 
-    const save = () => {
+    const save = async () => {
       if (player && detail && currentEpisode) {
         const time = player.currentTime
         if (time > 0) {
@@ -173,7 +180,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
               break
             }
           }
-          DB.addHistory(detail, epIdx, currentEpisode.name, time, getSaveSourceId())
+          await DB.addHistory(detail, epIdx, currentEpisode.name, time, await getSaveSourceId())
         }
       }
 
@@ -184,7 +191,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
 
     save()
 
-    return () => {
+    return async () => {
       ignore = true
       clearTimeout(timer)
       // Save on exit
@@ -199,7 +206,7 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
               break
             }
           }
-          DB.addHistory(detail, epIdx, currentEpisode.name, time, getSaveSourceId())
+          await DB.addHistory(detail, epIdx, currentEpisode.name, time, await getSaveSourceId())
         }
       }
     }
@@ -239,12 +246,12 @@ export function DetailView({ id, sourceId }: { id: number; sourceId?: number | n
             <HStack>
               <Text font="title2" bold>{detail.name}</Text>
               <Spacer />
-              <Button action={() => {
+              <Button action={async () => {
                 if (isFavorited) {
-                  DB.removeFavorite(detail.id)
+                  await DB.removeFavorite(detail.id)
                   setIsFavorited(false)
                 } else {
-                  DB.addFavorite(detail, getSaveSourceId())
+                  await DB.addFavorite(detail, await getSaveSourceId())
                   setIsFavorited(true)
                 }
               }}>

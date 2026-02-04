@@ -10,7 +10,8 @@ import {
   TextField,
   Spacer,
   EnvironmentValuesReader,
-  ForEach
+  ForEach,
+  useEffect
 } from 'scripting'
 import { DB } from '../db'
 import { HistoryView } from './HistoryView'
@@ -34,9 +35,9 @@ function AddDataSourceView() {
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
 
-  const handleSave = (dismiss: () => void) => {
+  const handleSave = async (dismiss: () => void) => {
     if (name.trim() && url.trim()) {
-      DB.addDataSource(name.trim(), url.trim())
+      await DB.addDataSource(name.trim(), url.trim())
       dismiss()
     }
   }
@@ -68,18 +69,27 @@ function AddDataSourceView() {
 }
 
 export function SettingsView() {
-  const [playbackRate, setPlaybackRate] = useState(() => DB.getPlaybackRate())
-  const [dataSources, setDataSources] = useState<DataSource[]>(() =>
-    DB.getDataSources()
-  )
-  const [currentSourceUrl, setCurrentSourceUrl] = useState(() =>
-    DB.getCurrentDataSourceUrl()
-  )
+  const [playbackRate, setPlaybackRate] = useState(0)
+  const [dataSources, setDataSources] = useState<DataSource[]>([])
+  const [currentSourceUrl, setCurrentSourceUrl] = useState('')
+
+  useEffect(() => {
+    ;(async () => {
+      const rate = await DB.getPlaybackRate()
+      setPlaybackRate(rate)
+
+      const sources = await DB.getDataSources()
+      setDataSources(sources)
+
+      const sourceUrl = await DB.getCurrentDataSourceUrl()
+      setCurrentSourceUrl(sourceUrl)
+    })()
+  }, [])
 
   // 刷新数据源列表
-  const refreshDataSources = () => {
-    const sources = DB.getDataSources()
-    const currentUrl = DB.getCurrentDataSourceUrl()
+  const refreshDataSources = async () => {
+    const sources = await DB.getDataSources()
+    const currentUrl = await DB.getCurrentDataSourceUrl()
 
     setDataSources(sources)
 
@@ -90,33 +100,33 @@ export function SettingsView() {
     } else if (sources.length > 0) {
       // 如果当前 URL 不在列表中，选择第一个
       setCurrentSourceUrl(sources[0].url)
-      DB.setCurrentDataSourceUrl(sources[0].url)
+      await DB.setCurrentDataSourceUrl(sources[0].url)
     }
   }
 
-  const handlePlaybackRateChange = (label: string) => {
+  const handlePlaybackRateChange = async (label: string) => {
     const rate = PLAYBACK_RATES.find((r) => r.label === label)
     if (rate) {
       setPlaybackRate(rate.value)
-      DB.setPlaybackRate(rate.value)
+      await DB.setPlaybackRate(rate.value)
     }
   }
 
-  const handleSelectSource = (source: DataSource) => {
+  const handleSelectSource = async (source: DataSource) => {
     setCurrentSourceUrl(source.url)
-    DB.setCurrentDataSourceUrl(source.url)
+    await DB.setCurrentDataSourceUrl(source.url)
   }
 
-  const handleDeleteSource = (index: number) => {
+  const handleDeleteSource = async (index: number) => {
     const source = dataSources[index]
-    DB.deleteDataSource(source.id)
+    await DB.deleteDataSource(source.id)
     const updatedSources = dataSources.filter((_, i) => i !== index)
     setDataSources(updatedSources)
 
     // 如果删除的是当前选中的数据源，切换到第一个
     if (source.url === currentSourceUrl && updatedSources.length > 0) {
       setCurrentSourceUrl(updatedSources[0].url)
-      DB.setCurrentDataSourceUrl(updatedSources[0].url)
+      await DB.setCurrentDataSourceUrl(updatedSources[0].url)
     }
   }
 

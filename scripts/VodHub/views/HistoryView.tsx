@@ -22,8 +22,8 @@ export function HistoryView() {
     let timer: number
     let ignore = false
 
-    const poll = () => {
-      const history = DB.getHistory()
+    const poll = async () => {
+      const history = await DB.getHistory()
       setItems(history)
       if (!ignore) {
         timer = setTimeout(poll, 1000)
@@ -67,8 +67,8 @@ export function HistoryView() {
                   contextMenu={{
                     menuItems: (
                       <Button
-                        action={() => {
-                          DB.removeHistory(item.id)
+                        action={async () => {
+                          await DB.removeHistory(item.id)
                           setItems((prev) =>
                             prev.filter((i: any) => i.id !== item.id)
                           )

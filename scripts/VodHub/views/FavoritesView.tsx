@@ -17,8 +17,8 @@ export function FavoritesView() {
   const [items, setItems] = useState<any[]>([])
 
   // Helper to refresh data
-  const refresh = () => {
-    const favs = DB.getFavorites()
+  const refresh = async () => {
+    const favs = await DB.getFavorites()
     // Simple comparison to avoid unnecessary re-renders if deep comparison were cheap,
     // but here we just set it. React handles reference check.
     // To ensure UI updates when removing an item, we might need to be careful.

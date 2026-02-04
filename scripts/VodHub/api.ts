@@ -4,7 +4,7 @@ import { VideoItem, VideoDetail, PaginatedResult, Category } from "./models"
 import { DB } from "./db"
 
 // 动态获取当前数据源 URL
-const getBaseUrl = () => DB.getCurrentDataSourceUrl()
+const getBaseUrl = async () => await DB.getCurrentDataSourceUrl()
 
 // Mapping from config.json
 export const CATEGORIES: Category[] = [
@@ -45,7 +45,7 @@ export const CATEGORIES: Category[] = [
 
 export const API = {
   async getList(typeId?: number | string, page: number = 1, hours?: string): Promise<PaginatedResult<VideoItem>> {
-    let url = `${getBaseUrl()}?ac=detail&pg=${page}`
+    let url = `${await getBaseUrl()}?ac=detail&pg=${page}`
     if (typeId) {
       url += `&t=${typeId}`
     }
@@ -79,7 +79,7 @@ export const API = {
   },
 
   async getSearch(keyword: string, page: number = 1): Promise<PaginatedResult<VideoItem>> {
-    const url = `${getBaseUrl()}?ac=detail&wd=${encodeURIComponent(keyword)}&pg=${page}`
+    const url = `${await getBaseUrl()}?ac=detail&wd=${encodeURIComponent(keyword)}&pg=${page}`
     try {
       const res = await fetch(url)
       const json = await res.json()
@@ -106,7 +106,7 @@ export const API = {
   },
 
   async getDetail(id: number, sourceUrl?: string): Promise<VideoDetail | null> {
-    const baseUrl = sourceUrl || getBaseUrl()
+    const baseUrl = sourceUrl || await getBaseUrl()
     const url = `${baseUrl}?ac=detail&ids=${id}`
     try {
       const res = await fetch(url)
