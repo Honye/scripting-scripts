@@ -1,0 +1,39 @@
+{
+  "name": "Life Quartets",
+  "icon": "ipad.case",
+  "author": {
+    "email": "Honye@github.com",
+    "name": "Jackie",
+    "homepage": "https:\/\/t.me\/iiMarkr"
+  },
+  "version": "1.0.0",
+  "color": "rgba(102, 196, 235,1)",
+  "localizedNames": {
+    "de": "",
+    "ru": "",
+    "ja": "",
+    "zh": "生活四重奏",
+    "fr": "",
+    "en": "Life Quartets",
+    "it": "",
+    "pt": "",
+    "es": ""
+  },
+  "contributors": [],
+  "description": null,
+  "iconImage": null,
+  "runInApp": false,
+  "intentInputTypes": [],
+  "remoteResource": null,
+  "localizedDescriptions": {
+    "es": "",
+    "en": "",
+    "pt": "",
+    "ru": "",
+    "it": "",
+    "zh": "",
+    "fr": "",
+    "ja": "",
+    "de": ""
+  }
+}
