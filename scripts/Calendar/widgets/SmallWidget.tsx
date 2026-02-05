@@ -81,7 +81,13 @@ export default function SmallWidget({
               key={i}
               font={10}
               fontWeight="medium"
-              foregroundStyle={i === 0 || i === 6 ? 'secondaryLabel' : 'label'}
+              foregroundStyle={
+                (firstDayOfWeek === 1
+                  ? i === 5 || i === 6
+                  : i === 0 || i === 6)
+                  ? 'secondaryLabel'
+                  : 'label'
+              }
               frame={{ maxWidth: 'infinity' }}
               multilineTextAlignment="center"
             >
@@ -126,7 +132,7 @@ export default function SmallWidget({
                     foregroundStyle={
                       isToday
                         ? 'white'
-                        : j === 0 || j === 6
+                        : date.getDay() === 0 || date.getDay() === 6
                           ? 'secondaryLabel'
                           : 'label'
                     }

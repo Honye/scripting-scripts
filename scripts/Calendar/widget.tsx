@@ -421,7 +421,11 @@ async function LargeMonthlyWidget() {
                   font={12}
                   fontWeight="medium"
                   foregroundStyle={
-                    i === 0 || i === 6 ? 'secondaryLabel' : 'label'
+                    (firstDayOfWeek === 1
+                      ? i === 5 || i === 6
+                      : i === 0 || i === 6)
+                      ? 'secondaryLabel'
+                      : 'label'
                   }
                   frame={{ maxWidth: 'infinity' }}
                   multilineTextAlignment="center"
@@ -488,9 +492,9 @@ async function LargeMonthlyWidget() {
                             foregroundStyle={
                               isToday
                                 ? 'white'
-                                : j === 0 || j === 6
-                                  ? 'secondaryLabel'
-                                  : 'label'
+                                  : date.getDay() === 0 || date.getDay() === 6
+                                    ? 'secondaryLabel'
+                                    : 'label'
                             }
                             widgetAccentable
                             multilineTextAlignment="center"
