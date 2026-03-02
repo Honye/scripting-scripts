@@ -58,7 +58,7 @@ const user = await db.fetchOne<{ name: string }>(
 ### Using Transactions
 
 ```ts
-await db.transcation([
+await db.transaction([
   { sql: "INSERT INTO user (name, age) VALUES (?, ?)", args: ["Tom", 18] },
   { sql: "INSERT INTO user (name, age) VALUES (?, ?)", args: ["Lucy", 20] }
 ])

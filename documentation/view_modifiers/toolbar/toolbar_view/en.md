@@ -2,7 +2,7 @@ In Scripting, views can populate their navigation bar or toolbar area using eith
 
 ---
 
-# Overview
+## Overview
 
 The `toolbar` property can be used in two ways:
 
@@ -25,7 +25,7 @@ When using the component-based API, all toolbar content is declared inside a `<T
 
 ---
 
-# Toolbar
+## Toolbar
 
 The `<Toolbar>` component serves as a container for toolbar content. It does not define placement itself; instead, `ToolbarItem` and `ToolbarItemGroup` determine where items go.
 
@@ -50,7 +50,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
 ---
 
-# ToolbarItem
+## ToolbarItem
 
 `ToolbarItem` represents a single toolbar element placed at a specific position.
 
@@ -73,7 +73,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
 ---
 
-# ToolbarItemGroup
+## ToolbarItemGroup
 
 `ToolbarItemGroup` allows multiple toolbar items to be grouped together in a single placement.
 
@@ -97,7 +97,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
 ---
 
-# ToolbarSpacer
+## ToolbarSpacer
 
 `ToolbarSpacer` inserts empty space in a toolbar. It can be used to fine-tune layout between items.
 
@@ -131,7 +131,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
 ---
 
-# DefaultToolbarItem
+## DefaultToolbarItem
 
 `DefaultToolbarItem` inserts system-provided toolbar items, such as the sidebar toggle button or search button.
 
@@ -152,7 +152,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
 ---
 
-# Complete Example
+## Complete Example
 
 ```tsx
 <NavigationStack>
@@ -192,7 +192,7 @@ The `<Toolbar>` component serves as a container for toolbar content. It does not
 
 ---
 
-# Relationship with ToolBarProps
+## Relationship with ToolBarProps
 
 | Method                                    | Description                                              |
 | ----------------------------------------- | -------------------------------------------------------- |

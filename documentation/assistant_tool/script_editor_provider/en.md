@@ -142,6 +142,25 @@ Semantics:
 
 ---
 
+### `ScriptEditorReplaceInstruction`
+
+```ts
+type ScriptEditorReplaceInstruction = {
+  existingBlock: string
+  newBlock: string
+  contextBefore?: string
+  contextAfter?: string
+  startLineHint?: number
+}
+```
+
+Semantics:
+
+* `existingBlock` is the text to replace
+* `newBlock` is the replacement text
+* `contextBefore` and `contextAfter` are optional context strings to be included in the diff
+* `startLineHint` is an optional hint for the starting line number
+
 ### Inserting Content
 
 ```ts
@@ -171,7 +190,7 @@ Typical use cases:
 ```ts
 replaceInFile(
   relativePath: string,
-  operations: ScriptEditorFileOperation[]
+  instructions: ScriptEditorReplaceInstruction[]
 ): Promise<boolean>
 ```
 
@@ -212,7 +231,25 @@ Recommended usage:
 
 ```ts
 type ScriptLintError = {
+  /**
+   * The line number where the error occurred.
+   */
   line: number
+  /**
+   * The column number where the error occurred.
+   */
+  column: number
+  /**
+   * The range start of characters where the error occurred.
+   */
+  from: number
+  /**
+   * The range end of characters where the error occurred.
+   */
+  to: number
+  /**
+   * A message describing the linting issue.
+   */
   message: string
 }
 ```

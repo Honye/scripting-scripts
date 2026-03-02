@@ -53,6 +53,12 @@ The `Slider` component allows users to select a value from a bounded linear rang
 - **maxValueLabel** (`VirtualNode`):  
   - The label that describes the maximum value of the slider.
 
+## Other Properties
+
+- **sliderThumbVisibility** (`Visibility`):
+  - Sets the visibility of the slider's thumb.
+  - iOS 26+ only.
+
 ## Usage Example
 
 Here’s an example of using the `Slider` component:

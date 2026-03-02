@@ -72,6 +72,9 @@ type DynamicImageSource<T> = {
 * **`resizable`** *(ImageResizable, 可选)*
   设置图像的缩放方式。
 
+* **`onError`** *((error) => void, 可选)*
+  图片加载失败时的回调函数。
+
 ### `FileImageProps`
 
 * **`filePath`** *(string | DynamicImageSource\<string\>, 必填)*

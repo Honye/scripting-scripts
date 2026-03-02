@@ -143,6 +143,7 @@ Steps:
 | `Intent.file(path)`            | `IntentFileValue`           | `Intent.file("/path/to/file.txt")`     |
 | `Intent.fileURL(path)`         | `IntentFileURLValue`        | `Intent.fileURL("/path/to/file.pdf")`  |
 | `Intent.image(UIImage)`        | `IntentImageValue`          | `Intent.image(uiImage)` |
+| `Intent.view(node, value?)`    | `IntentViewValue`           | `Intent.view(<View />)` |
 
 ---
 

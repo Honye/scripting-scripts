@@ -3,7 +3,7 @@
 
 ---
 
-# 一、类型说明
+## 一、类型说明
 
 ## EventParticipant
 
@@ -78,7 +78,7 @@
 
 ---
 
-# 二、EventAlarm（事件提醒）
+## 二、EventAlarm（事件提醒）
 
 CalendarEvent 支持添加多个 `EventAlarm`，包括：
 
@@ -90,7 +90,7 @@ CalendarEvent 支持添加多个 `EventAlarm`，包括：
 
 ---
 
-# 三、CalendarEvent 类
+## 三、CalendarEvent 类
 
 ## 构造函数
 
@@ -102,7 +102,7 @@ new(): CalendarEvent
 
 ---
 
-# 四、属性说明
+## 四、属性说明
 
 ## 基本信息
 
@@ -235,7 +235,7 @@ new(): CalendarEvent
 
 ---
 
-# 五、实例方法
+## 五、实例方法
 
 ## 1. 提醒管理
 
@@ -286,7 +286,7 @@ new(): CalendarEvent
 
 ---
 
-# 六、静态方法
+## 六、静态方法
 
 ## `getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
 
@@ -306,7 +306,7 @@ new(): CalendarEvent
 
 ---
 
-# 七、使用示例
+## 七、使用示例
 
 ## 1. 创建并保存事件
 
@@ -394,7 +394,7 @@ console.log("事件已移除")
 
 ---
 
-# 八、补充说明
+## 八、补充说明
 
 ### 时区处理
 

@@ -2,7 +2,7 @@
 
 ---
 
-# Schema Introspection
+## Schema Introspection
 
 本章节介绍如何使用 SQLite 提供的 Schema Introspection API 来查询和分析数据库结构。
 

@@ -13,7 +13,7 @@ It is not a data-returning Intent; it is exclusively for UI rendering in Shortcu
 
 ---
 
-# 2. System Requirements
+## 2. System Requirements
 
 **SnippetIntent requires iOS 26 or later.**
 
@@ -26,7 +26,7 @@ On iOS versions earlier than 26:
 
 ---
 
-# 3. Registering a SnippetIntent (app_intents.tsx)
+## 3. Registering a SnippetIntent (app_intents.tsx)
 
 Example:
 
@@ -60,7 +60,7 @@ Requirements:
 
 ---
 
-# 4. Wrapping SnippetIntent Return Values — `Intent.snippetIntent`
+## 4. Wrapping SnippetIntent Return Values — `Intent.snippetIntent`
 
 A SnippetIntent cannot be passed directly to `Script.exit()`.
 It must be wrapped in a `IntentSnippetIntentValue`.
@@ -94,7 +94,7 @@ This wrapper makes the return value compatible with the Shortcuts “Show Snippe
 
 ---
 
-# 5. Snippet Confirmation UI — `Intent.requestConfirmation`
+## 5. Snippet Confirmation UI — `Intent.requestConfirmation`
 
 iOS 26 Snippet Framework provides built-in confirmation UI driven by SnippetIntent.
 
@@ -142,7 +142,7 @@ Execution behavior:
 
 ---
 
-# 6. The “Show Snippet Intent” Action in Shortcuts (iOS 26+)
+## 6. The “Show Snippet Intent” Action in Shortcuts (iOS 26+)
 
 iOS 26 adds a new Shortcuts action:
 
@@ -167,7 +167,7 @@ This action is the only correct way to display SnippetIntent UI.
 
 ---
 
-# 7. IntentMemoryStorage — Cross-Intent State Store
+## 7. IntentMemoryStorage — Cross-Intent State Store
 
 ## Why It Exists
 
@@ -224,7 +224,7 @@ IntentMemoryStorage should be treated as **temporary, lightweight state**.
 
 ---
 
-# 8. Full Example Combining All Features (iOS 26+)
+## 8. Full Example Combining All Features (iOS 26+)
 
 ## app_intents.tsx
 
@@ -293,7 +293,7 @@ runIntent()
 
 ---
 
-# 9. Summary
+## 9. Summary
 
 This document introduces all **new** Scripting features added for iOS 26+:
 

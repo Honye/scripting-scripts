@@ -14,25 +14,25 @@ SQLite 的事务 API 采用**基于步骤（step-based）**的声明式模型，
 
 ---
 
-## transcation
+## transaction
 
 ```ts
-db.transcation(
-  steps: TranscationStep[],
+db.transaction(
+  steps: TransactionStep[],
   options?: {
     kind?: "deferred" | "immediate" | "exclusive"
   }
 ): Promise<void>
 ```
 
-`transcation` 用于执行一个事务，该事务由一组有序的 SQL 步骤组成。
+`transaction` 用于执行一个事务，该事务由一组有序的 SQL 步骤组成。
 
 ---
 
-## 事务步骤（TranscationStep）
+## 事务步骤（TransactionStep）
 
 ```ts
-type TranscationStep = {
+type TransactionStep = {
   sql: string
   args?: Arguments | null
 }
@@ -46,7 +46,7 @@ type TranscationStep = {
 示例：
 
 ```ts
-await db.transcation([
+await db.transaction([
   {
     sql: "INSERT INTO user (name, age) VALUES (?, ?)",
     args: ["Tom", 18]
@@ -111,7 +111,7 @@ SQLite 将自动回滚整个事务，并抛出错误。
 
 ```ts
 try {
-  await db.transcation([
+  await db.transaction([
     { sql: "INSERT INTO user (id, name) VALUES (1, 'Tom')" },
     { sql: "INSERT INTO user (id, name) VALUES (1, 'Lucy')" }
   ])

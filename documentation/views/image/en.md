@@ -74,6 +74,9 @@ Used for adapting the image resource for light/dark modes. Supported in:
 * **`resizable`** *(ImageResizable, optional)*
   Configures how the image is resized to fit its allocated space.
 
+* **`onError`** *((error) => void, optional)*
+  A callback invoked when the image fails to load.
+
 ### `FileImageProps`
 
 * **`filePath`** *(string | DynamicImageSource\<string\>, required)*

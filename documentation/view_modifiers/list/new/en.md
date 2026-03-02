@@ -1,4 +1,4 @@
-# Overview of Properties
+## Overview of Properties
 
 | Property                     | Type          | Availability | Description                                                    |           |                                                                    |
 | ---------------------------- | ------------- | ------------ | -------------------------------------------------------------- | --------- | ------------------------------------------------------------------ |
@@ -9,7 +9,7 @@
 
 ---
 
-# 1. listSectionIndexVisibility
+## 1. listSectionIndexVisibility
 
 ```ts
 /**
@@ -49,7 +49,7 @@ Possible values:
 
 ---
 
-# 2. listSectionMargins
+## 2. listSectionMargins
 
 ```ts
 /**
@@ -118,7 +118,7 @@ Equivalent to SwiftUI:
 
 ---
 
-# 3. sectionIndexLabel
+## 3. sectionIndexLabel
 
 ```ts
 /**
@@ -146,7 +146,7 @@ Sets the character or text displayed in the right-side section index for this se
 
 ---
 
-# 4. sectionActions
+## 4. sectionActions
 
 ```ts
 /**
@@ -192,7 +192,7 @@ Adds custom UI elements such as buttons or menus to the section header’s trail
 
 ---
 
-# Full Example
+## Full Example
 
 ```tsx
 <List listSectionIndexVisibility="visible">

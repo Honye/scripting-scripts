@@ -6,7 +6,7 @@ This makes environment access predictable, explicit, and optimized.
 
 ---
 
-# EnvironmentValues Type
+## EnvironmentValues Type
 
 ```ts
 type EnvironmentValues = {
@@ -31,7 +31,7 @@ Below are the descriptions of each field.
 
 ---
 
-# Field Descriptions
+## Field Descriptions
 
 ### 1. colorScheme
 
@@ -131,7 +131,7 @@ The current TabView bottom accessory placement, similar to SwiftUI's `tabViewBot
 
 ---
 
-# EnvironmentValuesReader Component
+## EnvironmentValuesReader Component
 
 ```ts
 type EnvironmentValuesReaderProps = {
@@ -148,7 +148,7 @@ type EnvironmentValuesReaderProps = {
 
 ---
 
-# Props Description
+## Props Description
 
 ### keys
 
@@ -165,7 +165,7 @@ A rendering callback that receives the requested environment values and returns 
 
 ---
 
-# Component Definition
+## Component Definition
 
 ```ts
 declare const EnvironmentValuesReader: FunctionComponent<EnvironmentValuesReaderProps>;
@@ -173,7 +173,7 @@ declare const EnvironmentValuesReader: FunctionComponent<EnvironmentValuesReader
 
 ---
 
-# Usage Examples
+## Usage Examples
 
 ## Example 1 — Reading colorScheme and displayScale
 
@@ -224,7 +224,7 @@ function View() {
 
 ---
 
-# Behavior Notes
+## Behavior Notes
 
 1. **Only the explicitly listed keys are read**. All other environment values will not be included in the callback.
 2. When any of the requested environment values change, the `children()` callback re-renders automatically.

@@ -22,6 +22,94 @@
     "children": [
       {
         "title": {
+          "en": "2.4.9",
+          "zh": "2.4.9"
+        },
+        "children": [
+          {
+            "title": {
+              "en": "Script Minimization and Resume",
+              "zh": "Script 最小化与恢复"
+            },
+            "subtitle": {
+              "en": "These APIs allow a script running on iPhone to hide its UI without terminating the script instance, and to listen for resume or re-trigger events while the instance remains alive.",
+              "zh": "用于在 iPhone 端支持“UI 可收起但脚本实例不终止”的运行模式，以及在脚本实例存活期间对恢复与再次触发行为进行监听。"
+            },
+            "keywords": [
+              "Script.minimize()",
+              "Script.onResume()"
+            ],
+            "readme": "script/minimize_and_resume/"
+          }
+        ]
+      },
+      {
+        "title": {
+          "en": "2.4.8",
+          "zh": "2.4.8"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "LanguageModelSession",
+              "zh": "LanguageModelSession"
+            },
+            "subtitle": {
+              "en": "It allows scripts to perform on-device AI tasks such as text generation, structured JSON output, and streaming responses.",
+              "zh": "用于调用 iOS Foundation Models 执行文本生成、结构化输出、流式响应等任务。"
+            },
+            "readme": "language_model_session/"
+          },
+          {
+            "title": {
+              "en": "Rich Text",
+              "zh": "富文本"
+            },
+            "subtitle": {
+              "en": "Added StyledText.paragraphStyle property.",
+              "zh": "新增 StyledText.paragraphStyle 属性。"
+            },
+            "readme": "views/displaying_text/rich_text/"
+          },
+          {
+            "title": {
+              "en": "Intent",
+              "zh": "Intent"
+            },
+            "subtitle": {
+              "en": "New Intent.view method for returning custom UI to Shortcuts.",
+              "zh": "新增 Intent.view 方法，用于在 Shortcuts 中返回并展示自定义UI。"
+            },
+            "readme": "intent/quick_start/"
+          },
+          {
+            "title": {
+              "en": "Reminder",
+              "zh": "提醒事项"
+            },
+            "subtitle": {
+              "en": "Adjusted Reminder.calendar property, which may be null if the user's device has not set a default calendar for reminders. It is recommended to specify a calendar when creating a Reminder instance.",
+              "zh": "调整了Reminder.calendar属性，在通过new Reminder创建实例时该值可能因为用户的设备没有为Reminder设置默认日历而为空，建议在创建时指定日历。"
+            },
+            "readme": "reminder/"
+          },
+          {
+            "title": {
+              "en": "Slider",
+              "zh": "滑块控件"
+            },
+            "subtitle": {
+              "en": "Added sliderThumbVisibility property.",
+              "zh": "新增sliderThumbVisibility属性，用于控制滑块的显示状态。"
+            },
+            "example": "views/controls/slider/index",
+            "readme": "views/controls/slider/"
+          }
+        ]
+      },
+      {
+        "title": {
           "en": "2.4.7",
           "zh": "2.4.7"
         },
@@ -76,14 +164,14 @@
               {
                 "pro": true,
                 "title": {
-                  "en": "Transcation",
-                  "zh": "事务（Transcation）"
+                  "en": "Transaction",
+                  "zh": "事务（Transaction）"
                 },
                 "subtitle": {
                   "en": "This section describes the transaction model, transaction types.",
                   "zh": "介绍了 SQLite 的事务模型以及事务类型。"
                 },
-                "readme": "sqlite/transcation/"
+                "readme": "sqlite/Transaction/"
               },
               {
                 "pro": true,
@@ -1212,8 +1300,31 @@
           "富文本",
           "标签"
         ],
-        "readme": "views/displaying_text/",
-        "example": "views/displaying_text/index"
+        "children": [
+          {
+            "title": {
+              "en": "Quick Start",
+              "zh": "快速了解"
+            },
+            "subtitle": {
+              "en": "Quickly master the use of text views.",
+              "zh": "快速掌握文本视图的使用。"
+            },
+            "readme": "views/displaying_text/quick_start/",
+            "example": "views/displaying_text/quick_start/index"
+          },
+          {
+            "title": {
+              "en": "Rich Text",
+              "zh": "富文本"
+            },
+            "subtitle": {
+              "en": "Display rich text.",
+              "zh": "显示富文本。"
+            },
+            "readme": "views/displaying_text/rich_text/"
+          }
+        ]
       },
       {
         "title": {
@@ -3810,12 +3921,39 @@
       "zh": "Script"
     },
     "subtitle": {
-      "en": "This API allows you to build reusable script logic, trigger automation via custom URL schemes, and manage inter-script communication in a structured and efficient manner.",
-      "zh": "你可以通过该接口访问当前脚本的运行信息、终止脚本并返回结果、在脚本之间调用、以及生成 URL Scheme 以打开或运行脚本。"
+      "en": "You can access the current script's runtime information, minimize scripts, terminate scripts and return results, and call scripts between scripts, and generate URL schemes to open or run scripts.",
+      "zh": "你可以通过该接口访问当前脚本的运行信息、最小化脚本、终止脚本并返回结果、在脚本之间调用、以及生成 URL Scheme 以打开或运行脚本。"
     },
-    "readme": "script/",
-    "keywords": [
-      "URL Scheme"
+    "children": [
+      {
+        "title": {
+          "en": "Script",
+          "zh": "Script"
+        },
+        "subtitle": {
+          "en": "Basic APIs.",
+          "zh": "基本的API说明。"
+        },
+        "readme": "script/api/",
+        "keywords": [
+          "URL Scheme"
+        ]
+      },
+      {
+        "title": {
+          "en": "Script Minimization and Resume",
+          "zh": "Script 最小化与恢复"
+        },
+        "subtitle": {
+          "en": "These APIs allow a script running on iPhone to hide its UI without terminating the script instance, and to listen for resume or re-trigger events while the instance remains alive.",
+          "zh": "用于在 iPhone 端支持“UI 可收起但脚本实例不终止”的运行模式，以及在脚本实例存活期间对恢复与再次触发行为进行监听。"
+        },
+        "keywords": [
+          "Script.minimize()",
+          "Script.onResume()"
+        ],
+        "readme": "script/minimize_and_resume/"
+      }
     ]
   },
   {
@@ -4286,14 +4424,14 @@
           {
             "pro": true,
             "title": {
-              "en": "Transcation",
-              "zh": "事务（Transcation）"
+              "en": "Transaction",
+              "zh": "事务（Transaction）"
             },
             "subtitle": {
               "en": "This section describes the transaction model, transaction types.",
               "zh": "介绍了 SQLite 的事务模型以及事务类型。"
             },
-            "readme": "sqlite/transcation/"
+            "readme": "sqlite/Transaction/"
           },
           {
             "pro": true,
@@ -5322,6 +5460,18 @@
             "readme": "health/health_statistics_collection/"
           }
         ]
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "LanguageModelSession",
+          "zh": "LanguageModelSession"
+        },
+        "subtitle": {
+          "en": "It allows scripts to perform on-device AI tasks such as text generation, structured JSON output, and streaming responses.",
+          "zh": "用于调用 iOS Foundation Models 执行文本生成、结构化输出、流式响应等任务。"
+        },
+        "readme": "language_model_session/"
       },
       {
         "title": {

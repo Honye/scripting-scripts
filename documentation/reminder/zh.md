@@ -9,15 +9,16 @@
 
 ---
 
-# 一、属性说明
+## 一、属性说明
 
 ### identifier: string
 
 唯一标识符，由系统分配（只读）。
 
-### calendar: Calendar
+### calendar: Calendar | null
 
 提醒所属的日历。必须为有效的日历对象。
+`calendar`的值可能为 `null`，表示提醒未关联任何日历，但你不能将 `calendar` 设置为 `null`。
 
 ### title: string
 
@@ -136,7 +137,7 @@
 
 ---
 
-# 二、实例方法
+## 二、实例方法
 
 ### addAlarm(alarm: EventAlarm): void
 
@@ -169,7 +170,7 @@
 
 ---
 
-# 三、静态方法
+## 三、静态方法
 
 ### `Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>`
 
@@ -214,7 +215,7 @@
 
 ---
 
-# 四、示例
+## 四、示例
 
 ## 使用 DateComponents 设置提醒
 
@@ -297,7 +298,7 @@ await reminder.remove()
 
 ---
 
-# 五、补充说明
+## 五、补充说明
 
 ### 日期管理
 

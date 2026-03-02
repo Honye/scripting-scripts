@@ -4,7 +4,7 @@ These properties are designed to match SwiftUI’s Live Activity customization o
 
 ---
 
-# Modifier Definitions
+## Modifier Definitions
 
 ```ts
 /**
@@ -27,7 +27,7 @@ activitySystemActionForegroundColor?: Color | {
 
 ---
 
-# Usage Constraints
+## Usage Constraints
 
 These modifiers **can only be applied to the `content` view** of the Live Activity UI.
 
@@ -41,7 +41,7 @@ Only the **full-size Lock Screen presentation** (the `content` region) supports 
 
 ---
 
-# Modifier Details
+## Modifier Details
 
 ## 1. activityBackgroundTint
 
@@ -73,7 +73,7 @@ Specifies the foreground (text/icon) color of the system’s auxiliary action bu
 
 ---
 
-# Usage Example (Content Only)
+## Usage Example (Content Only)
 
 These modifiers must be applied to the **content** view inside your Live Activity UI builder:
 
@@ -99,7 +99,7 @@ function ActivityView() {
 
 ---
 
-# Additional Notes
+## Additional Notes
 
 1. These modifiers affect only the Lock Screen presentation of the Live Activity.
 2. They do not modify the compact or minimal variants shown in the Dynamic Island.

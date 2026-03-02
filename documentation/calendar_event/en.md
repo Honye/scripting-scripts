@@ -3,7 +3,7 @@ Developers can configure event details such as title, time, location, participan
 
 ---
 
-# 1. Types
+## 1. Types
 
 ## EventParticipant
 
@@ -76,7 +76,7 @@ Describes how a location alarm triggers:
 
 ---
 
-# 2. EventAlarm
+## 2. EventAlarm
 
 `CalendarEvent` supports attaching one or more `EventAlarm` instances.
 Alarms may be:
@@ -89,7 +89,7 @@ See the EventAlarm documentation for detailed information.
 
 ---
 
-# 3. CalendarEvent Class
+## 3. CalendarEvent Class
 
 ## Constructor
 
@@ -102,7 +102,7 @@ Call `save()` to persist it into the calendar.
 
 ---
 
-# 4. Properties
+## 4. Properties
 
 ## General Information
 
@@ -233,7 +233,7 @@ Indicates whether the event or any nested objects contain unsaved changes.
 
 ---
 
-# 5. Instance Methods
+## 5. Instance Methods
 
 ## Alarm Management
 
@@ -284,7 +284,7 @@ Displays the system event-editing interface and resolves with:
 
 ---
 
-# 6. Static Methods
+## 6. Static Methods
 
 ### `CalendarEvent.getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
 
@@ -304,7 +304,7 @@ Displays the system interface for creating a new event.
 
 ---
 
-# 7. Usage Examples
+## 7. Usage Examples
 
 ## Creating and Saving an Event
 
@@ -392,7 +392,7 @@ console.log("Event removed")
 
 ---
 
-# 8. Additional Notes
+## 8. Additional Notes
 
 ### Time Zone Considerations
 

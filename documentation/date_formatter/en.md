@@ -3,7 +3,7 @@ This API wraps iOS-native date formatting behavior and supports multiple calenda
 
 ---
 
-# Enums and Type Definitions
+## Enums and Type Definitions
 
 ## DateFormatterStyle
 
@@ -73,7 +73,7 @@ If a string is used, it must be a valid time-zone identifier such as:
 
 ---
 
-# Class: DateFormatter
+## Class: DateFormatter
 
 ## Initialization
 
@@ -83,7 +83,7 @@ Creates a new date formatter instance.
 
 ---
 
-# Static Methods
+## Static Methods
 
 ## `DateFormatter.localizedString(date, options)`
 
@@ -118,7 +118,7 @@ If `locale` is omitted, the system locale is used.
 
 ---
 
-# Instance Methods
+## Instance Methods
 
 ## `string(date: Date): string`
 
@@ -144,7 +144,7 @@ Generates a localized format string from the template and assigns it to `dateFor
 
 ---
 
-# Properties
+## Properties
 
 ## Core Formatting Properties
 
@@ -267,7 +267,7 @@ Only works with certain date styles (e.g., medium and long).
 
 ---
 
-# Code Examples
+## Code Examples
 
 ---
 

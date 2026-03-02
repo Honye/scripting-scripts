@@ -16,25 +16,25 @@ SQLite guarantees consistency and isolation internally. JavaScript code does not
 
 ---
 
-## transcation
+## transaction
 
 ```ts
-db.transcation(
-  steps: TranscationStep[],
+db.transaction(
+  steps: TransactionStep[],
   options?: {
     kind?: "deferred" | "immediate" | "exclusive"
   }
 ): Promise<void>
 ```
 
-`transcation` executes a transaction defined by an ordered list of SQL steps.
+`transaction` executes a transaction defined by an ordered list of SQL steps.
 
 ---
 
 ## Transaction Steps
 
 ```ts
-type TranscationStep = {
+type TransactionStep = {
   sql: string
   args?: Arguments | null
 }
@@ -48,7 +48,7 @@ Each transaction step consists of:
 Example:
 
 ```ts
-await db.transcation([
+await db.transaction([
   {
     sql: "INSERT INTO user (name, age) VALUES (?, ?)",
     args: ["Tom", 18]
@@ -113,7 +113,7 @@ Example:
 
 ```ts
 try {
-  await db.transcation([
+  await db.transaction([
     { sql: "INSERT INTO user (id, name) VALUES (1, 'Tom')" },
     { sql: "INSERT INTO user (id, name) VALUES (1, 'Lucy')" }
   ])

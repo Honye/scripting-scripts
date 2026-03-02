@@ -245,12 +245,22 @@ function Page() {
   useEffect(() => {
     Device.supportedInterfaceOrientations = ["all"]
     return () => {
-      Device.supportedInterfaceOrientations = ["portrait"]
+      Device.supportedInterfaceOrientations = Device.userConfiguredInterfaceOrientations
     }
   }, [])
   return <VStack>...</VStack>
 }
 ```
+
+---
+
+### userConfiguredInterfaceOrientations
+
+```ts
+const userConfiguredInterfaceOrientations: InterfaceOrientation[]
+```
+
+The list of interface orientations configured by the user. You can use this value to set `supportedInterfaceOrientations` to restore the default interface orientations.
 
 ---
 

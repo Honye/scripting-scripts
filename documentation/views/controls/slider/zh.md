@@ -53,6 +53,14 @@
 - **maxValueLabel** (`VirtualNode`): 
   - 用于描述最大值的标签。
 
+
+## 其他可用属性
+
+- **sliderThumbVisibility** (`Visibility`):
+  - 设置滑动条的缩略图可见性。
+  - **可选**，默认为 `visible`。
+  - iOS 26+
+
 ## 使用示例
 
 以下是一个使用 `Slider` 组件的简单示例：

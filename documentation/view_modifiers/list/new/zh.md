@@ -1,4 +1,4 @@
-# 属性概览
+## 属性概览
 
 | 属性名                          | 类型                                                              | 系统要求      | 说明                         |
 | ---------------------------- | --------------------------------------------------------------- | --------- | -------------------------- |
@@ -9,7 +9,7 @@
 
 ---
 
-# 1. listSectionIndexVisibility
+## 1. listSectionIndexVisibility
 
 ```ts
 /**
@@ -49,7 +49,7 @@ listSectionIndexVisibility?: Visibility
 
 ---
 
-# 2. listSectionMargins
+## 2. listSectionMargins
 
 ```ts
 /**
@@ -112,7 +112,7 @@ listSectionMargins={{
 
 ---
 
-# 3. sectionIndexLabel
+## 3. sectionIndexLabel
 
 ```ts
 /**
@@ -140,7 +140,7 @@ sectionIndexLabel?: string
 
 ---
 
-# 4. sectionActions
+## 4. sectionActions
 
 ```ts
 /**
@@ -186,7 +186,7 @@ sectionActions?: VirtualNode
 
 ---
 
-# 完整示例
+## 完整示例
 
 ```tsx
 <List listSectionIndexVisibility="visible">

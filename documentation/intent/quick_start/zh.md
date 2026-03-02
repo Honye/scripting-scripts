@@ -141,6 +141,7 @@ run()
 | `Intent.file(filePath)`        | `IntentFileValue`           | `Intent.file("/path/to/file.txt")`    |
 | `Intent.fileURL(filePath)`     | `IntentFileURLValue`        | `Intent.fileURL("/path/to/file.pdf")` |
 | `Intent.image(UIImage)`        | `IntentImageValue`          | `Intent.image(uiImage)` |
+| `Intent.view(node, value?)`    | `IntentViewValue`           | `Intent.view(<View />)` |
 
 ---
 

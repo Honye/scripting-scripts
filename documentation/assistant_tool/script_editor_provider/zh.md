@@ -142,6 +142,27 @@ type ScriptEditorFileOperation = {
 
 ---
 
+### `ScriptEditorReplaceInstruction`
+
+```ts
+type ScriptEditorReplaceInstruction = {
+  existingBlock: string
+  newBlock: string
+  contextBefore?: string
+  contextAfter?: string
+  startLineHint?: number
+}
+```
+
+语义说明：
+
+* `existingBlock`：要替换的代码块
+* `newBlock`：替换后的代码块
+* `contextBefore` 和 `contextAfter` 为上下文，可选，用于帮助定位
+* `startLineHint` 为 `existingBlock` 的起始行，可选，用于定位
+
+---
+
 ### 插入内容
 
 ```ts
@@ -169,7 +190,7 @@ insertContent(
 ```ts
 replaceInFile(
   relativePath: string,
-  operations: ScriptEditorFileOperation[]
+  instructions: ScriptEditorReplaceInstruction[]
 ): Promise<boolean>
 ```
 
@@ -209,11 +230,20 @@ openDiffEditor(relativePath: string, content: string): void
 ```ts
 type ScriptLintError = {
   line: number
+  column: number
+  from: number
+  to: number
   message: string
 }
 ```
 
 表示脚本中的一个 lint 或语法错误。
+
+- `line`：**基于 1 的行号**
+- `column`：**基于 1 的列号**
+- `from`：**基于 0 的字符偏移量**
+- `to`：**基于 0 的字符偏移量**
+- `message`：错误信息
 
 ---
 

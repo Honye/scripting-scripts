@@ -245,12 +245,24 @@ function Page() {
   useEffect(() => {
     Device.supportedInterfaceOrientations = ["all"]
     return () => {
-      Device.supportedInterfaceOrientations = ["portrait"]
+      Device.supportedInterfaceOrientations = Device.userConfiguredInterfaceOrientations
     }
   }, [])
   return <VStack>...</VStack>
 }
 ```
+
+---
+
+### userConfiguredInterfaceOrientations
+
+```ts
+const userConfiguredInterfaceOrientations: InterfaceOrientation[]
+```
+
+获取用户配置的旋转方向。你可以使用这个值的来设置`supportedInterfaceOrientations`以恢复为默认的旋转方向。
+
+---
 
 ## Appearance & Environment
 

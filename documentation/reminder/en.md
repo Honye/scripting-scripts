@@ -4,22 +4,22 @@ This API is suitable for a wide range of task and schedule reminder scenarios.
 
 ---
 
-# 1. Class: `Reminder`
+## 1. Class: `Reminder`
 
 The `Reminder` class represents an individual reminder item and provides properties and methods to read and modify its data.
 
 ---
 
-# 2. Properties
+## 2. Properties
 
 ### identifier: string
 
 A unique identifier assigned by the system (read-only).
 
-### calendar: Calendar
+### calendar: Calendar | null
 
 The calendar to which the reminder belongs.
-Each reminder must be associated with a calendar.
+The calendar can be null if the reminder is not associated with a calendarm, but you must do not set the calendar to null.
 
 ### title: string
 
@@ -138,7 +138,7 @@ Indicates whether the reminder or any of its nested objects contains unsaved cha
 
 ---
 
-# 3. Instance Methods
+## 3. Instance Methods
 
 ### addAlarm(alarm: EventAlarm): void
 
@@ -172,7 +172,7 @@ Deletes the reminder from the calendar.
 
 ---
 
-# 4. Static Methods
+## 4. Static Methods
 
 ### `Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>`
 
@@ -216,7 +216,7 @@ Options:
 
 ---
 
-# 5. Usage Examples
+## 5. Usage Examples
 
 ## Creating a Reminder with DateComponents
 
@@ -299,7 +299,7 @@ await reminder.remove()
 
 ---
 
-# 6. Additional Notes
+## 6. Additional Notes
 
 ### Date Management
 

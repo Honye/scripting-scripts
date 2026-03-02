@@ -2,7 +2,7 @@ The **ScrollViewReader** component equivalent to SwiftUI’s ScrollViewReader, a
 
 ---
 
-# ScrollViewProxy
+## ScrollViewProxy
 
 `ScrollViewProxy` represents the programmatic interface for controlling scrolling. It is provided by `ScrollViewReader` during rendering.
 
@@ -46,7 +46,7 @@ type Point = {
 
 ---
 
-# ScrollViewReader Component
+## ScrollViewReader Component
 
 ```ts
 type ScrollViewReaderProps = {
@@ -63,7 +63,7 @@ declare const ScrollViewReader: FunctionComponent<ScrollViewReaderProps>;
 
 ---
 
-# Behavior and Usage Notes
+## Behavior and Usage Notes
 
 1. ScrollViewReader must wrap a `List`, `ScrollView`, or another scrollable container.
 2. The `proxy` is created once during rendering. Use `useRef` if you need to store it.
@@ -73,7 +73,7 @@ declare const ScrollViewReader: FunctionComponent<ScrollViewReaderProps>;
 
 ---
 
-# Example Usage
+## Example Usage
 
 ```tsx
 import {
@@ -158,7 +158,7 @@ run()
 
 ---
 
-# How `key` Works in Scripting
+## How `key` Works in Scripting
 
 Scripting does not support `.id()` as in SwiftUI.
 Instead:
@@ -173,7 +173,7 @@ Instead:
 
 ---
 
-# Animation Support
+## Animation Support
 
 Scroll operations can be wrapped in `withAnimation` to enable smooth transitions:
 
@@ -187,7 +187,7 @@ The animation behavior follows SwiftUI’s animation engine.
 
 ---
 
-# Important Notes
+## Important Notes
 
 1. Every scroll target must have a unique `key`.
 2. `scrollTo` will not work without a matching `key`.

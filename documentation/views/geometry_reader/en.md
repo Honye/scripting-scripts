@@ -4,7 +4,7 @@ This component is essential for building responsive layouts that depend on the p
 
 ---
 
-# GeometryProxy
+## GeometryProxy
 
 When `GeometryReader` constructs its child content, it injects a `GeometryProxy` instance into the `children` callback. This proxy exposes real-time layout information about the container.
 
@@ -31,7 +31,7 @@ interface GeometryProxy {
 
 ---
 
-# GeometryProxy Properties
+## GeometryProxy Properties
 
 ## 1. size
 
@@ -100,7 +100,7 @@ If the platform does not support it, the value will be `null`.
 
 ---
 
-# GeometryReader Component
+## GeometryReader Component
 
 ```ts
 type GeometryReaderProps = {
@@ -117,7 +117,7 @@ declare const GeometryReader: FunctionComponent<GeometryReaderProps>;
 
 ---
 
-# Behavior
+## Behavior
 
 1. GeometryReader occupies the available space in its parent.
 2. During layout, it computes size, safe-area insets, and corner insets.
@@ -128,7 +128,7 @@ This behavior matches SwiftUI’s GeometryReader model.
 
 ---
 
-# Example: Centered Content
+## Example: Centered Content
 
 ```tsx
 import { GeometryReader, Text, VStack } from "scripting"
@@ -158,7 +158,7 @@ function View() {
 
 ---
 
-# Example: Adjusting Layout by Safe Area
+## Example: Adjusting Layout by Safe Area
 
 ```tsx
 <GeometryReader>
@@ -177,7 +177,7 @@ function View() {
 
 ---
 
-# Example (iOS 26+): Using containerCornerInsets
+## Example (iOS 26+): Using containerCornerInsets
 
 ```tsx
 <GeometryReader>
@@ -195,7 +195,7 @@ function View() {
 
 ---
 
-# Best Practices
+## Best Practices
 
 * Use GeometryReader only when needed, as it creates a flexible layout container.
 * Prefer using it for adaptive, responsive layouts where container size matters.
