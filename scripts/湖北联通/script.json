@@ -1,0 +1,39 @@
+{
+  "icon": "iphone.gen3",
+  "localizedNames": {
+    "it": "",
+    "en": "UniCom",
+    "zh": "湖北联通",
+    "es": "",
+    "ru": "",
+    "ja": "",
+    "fr": "",
+    "de": "",
+    "pt": ""
+  },
+  "description": "",
+  "contributors": [],
+  "intentInputTypes": [],
+  "author": {
+    "name": "Jackie",
+    "email": "Honye@github.com",
+    "homepage": "https://t.me/iiMarkr"
+  },
+  "version": "1.0.0",
+  "name": "湖北联通",
+  "runInApp": false,
+  "remoteResource": null,
+  "iconImage": null,
+  "localizedDescriptions": {
+    "ja": "",
+    "fr": "",
+    "ru": "",
+    "it": "",
+    "pt": "",
+    "en": "",
+    "de": "",
+    "zh": "湖北联通公众号接口",
+    "es": ""
+  },
+  "color": "rgba(230,0,39,1)"
+}
