@@ -1,0 +1,39 @@
+{
+  "icon": "chevron.left.forwardslash.chevron.right",
+  "localizedDescriptions": {
+    "fr": "",
+    "it": "",
+    "zh": "",
+    "ja": "",
+    "es": "",
+    "de": "",
+    "ru": "",
+    "pt": "",
+    "en": ""
+  },
+  "description": null,
+  "version": "1.0.0",
+  "remoteResource": null,
+  "localizedNames": {
+    "fr": "",
+    "it": "",
+    "zh": "",
+    "ja": "",
+    "es": "",
+    "de": "",
+    "ru": "",
+    "pt": "",
+    "en": ""
+  },
+  "name": "Scripts Repos",
+  "runInApp": false,
+  "contributors": [],
+  "author": {
+    "email": "Honye@github.com",
+    "homepage": "https:\/\/t.me\/iiMarkr",
+    "name": "Jackie"
+  },
+  "iconImage": null,
+  "color": "rgba(0, 0, 0, 1.00)",
+  "intentInputTypes": []
+}
