@@ -1,0 +1,44 @@
+{
+  "version" : "1.0.0",
+  "icon" : "square.2.layers.3d.fill",
+  "description" : null,
+  "iconImage" : null,
+  "intentInputTypes" : [
+
+  ],
+  "contributors" : [
+
+  ],
+  "author" : {
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "email" : "Honye@github.com",
+    "name" : "Jackie"
+  },
+  "remoteResource" : null,
+  "localizedNames" : {
+    "en" : "Epical",
+    "ja" : "Epical",
+    "it" : "Epical",
+    "es" : "Epical",
+    "ru" : "Epical",
+    "pt" : "Epical",
+    "zh" : "追剧日历",
+    "de" : "Epical",
+    "fr" : "Epical"
+  },
+  "entry" : "index.tsx",
+  "localizedDescriptions" : {
+    "en" : "Track your shows on a weekly calendar.",
+    "ja" : "週間カレンダーで番組を管理。",
+    "it" : "Tieni traccia delle tue serie su un calendario settimanale.",
+    "es" : "Sigue tus series en un calendario semanal.",
+    "ru" : "Отслеживайте сериалы по расписанию недели.",
+    "pt" : "Acompanhe suas séries num calendário semanal.",
+    "zh" : "在周历上追踪你正在追的剧。",
+    "de" : "Verfolge deine Serien in einem Wochenkalender.",
+    "fr" : "Suivez vos séries dans un calendrier hebdomadaire."
+  },
+  "name" : "Epical",
+  "color" : "rgba(192,133,82,1)",
+  "runInApp" : false
+}
