@@ -1,6 +1,7 @@
 import {
   Button,
   HStack,
+  Image,
   ProgressView,
   RoundedRectangle,
   Spacer,
@@ -12,18 +13,64 @@ import type { Color } from 'scripting'
 import type { Schedule, Show } from './types'
 import { theme, tintedBg } from './theme'
 
-/** Compact poster: a tall rounded rect with diagonal gradient and the title's first 2 chars. */
+/** Compact poster: a remote cover image when available, otherwise a tall rounded rect with diagonal gradient and the title's first 2 chars. */
 export function Poster({
   show,
   size = 50
 }: {
-  show: Show | { title: string; color: string }
+  show: Show | { title: string; color: string; coverUrl?: string }
   size?: number
 }) {
   const initials = show.title.slice(0, 2)
   const w = size
   const h = Math.round(size * 1.4)
   const fontSize = Math.round(size * 0.28)
+  const fallback = (
+    <ZStack
+      frame={{ width: w, height: h }}
+      background={
+        <RoundedRectangle
+          cornerRadius={8}
+          fill={{
+            colors: [`${show.color}cc` as Color, `${show.color}55` as Color],
+            startPoint: 'topLeading',
+            endPoint: 'bottomTrailing'
+          }}
+        />
+      }
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+    >
+      <Text
+        font={fontSize}
+        fontWeight="bold"
+        foregroundStyle="rgba(255,255,255,0.9)"
+        kerning={0.3}
+      >
+        {initials}
+      </Text>
+    </ZStack>
+  )
+  if (show.coverUrl) {
+    return (
+      <Image
+        imageUrl={show.coverUrl}
+        placeholder={fallback}
+        resizable
+        scaleToFill
+        frame={{ width: w, height: h }}
+        clipShape={{ type: 'rect', cornerRadius: 8 }}
+        overlay={
+          <RoundedRectangle
+            cornerRadius={8}
+            stroke={{
+              shapeStyle: theme.divider,
+              strokeStyle: { lineWidth: 1 }
+            }}
+          />
+        }
+      />
+    )
+  }
   return (
     <ZStack
       frame={{ width: w, height: h }}
@@ -209,6 +256,7 @@ export function PrimaryButton({
     <Button action={action} buttonStyle="plain">
       <HStack
         alignment="center"
+        padding={{ horizontal: 24 }}
         frame={{ maxWidth: 'infinity', height }}
         background={{
           style: {
@@ -224,6 +272,7 @@ export function PrimaryButton({
           y: 4
         }}
       >
+        <Spacer />
         <Text
           font={16}
           fontWeight="semibold"
@@ -231,6 +280,7 @@ export function PrimaryButton({
         >
           {title}
         </Text>
+        <Spacer />
       </HStack>
     </Button>
   )

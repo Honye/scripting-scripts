@@ -15,4 +15,6 @@ export type Show = {
   schedules: Schedule[]
   totalEps: number
   watchedEps: number
+  /** Optional remote poster URL (e.g. from Douban). When absent the gradient + initials fallback is used. */
+  coverUrl?: string
 }

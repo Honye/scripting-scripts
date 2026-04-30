@@ -44,12 +44,26 @@ function StepperButton({
 export function DetailView({
   show,
   onClose,
-  onSave
+  onSave,
+  onDelete
 }: {
   show: Show
   onClose: () => void
   onSave: (id: number, watched: number, total: number) => void
+  onDelete: (id: number) => void
 }) {
+  const confirmDelete = async () => {
+    const ok = await Dialog.confirm({
+      title: '删除追剧',
+      message: `确定要从追剧列表中删除《${show.title}》吗？此操作无法撤销。`,
+      cancelLabel: '取消',
+      confirmLabel: '删除'
+    })
+    if (ok) {
+      onDelete(show.id)
+      onClose()
+    }
+  }
   const [watched, setWatched] = useState(show.watchedEps)
   const [total, setTotal] = useState(show.totalEps)
   const safeTotal = Math.max(total, watched)
@@ -104,6 +118,7 @@ export function DetailView({
             <StepperButton
               systemName="minus"
               action={() => setWatched(Math.max(0, watched - 1))}
+              tint={tintColor}
             />
             <VStack spacing={2} frame={{ minWidth: 60 }}>
               <Text
@@ -161,7 +176,6 @@ export function DetailView({
         </VStack>
 
         <VStack spacing={6} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-          <SectionLabel>更新时间</SectionLabel>
           {show.schedules.map((sc, i) => (
             <HStack
               key={i}
@@ -201,6 +215,28 @@ export function DetailView({
             onClose()
           }}
         />
+
+        <Button action={confirmDelete} buttonStyle="plain">
+          <HStack
+            spacing={6}
+            alignment="center"
+            frame={{ maxWidth: 'infinity', height: 44 }}
+          >
+            <Image
+              systemName="trash"
+              font={14}
+              fontWeight="semibold"
+              foregroundStyle="systemRed"
+            />
+            <Text
+              font={14}
+              fontWeight="semibold"
+              foregroundStyle="systemRed"
+            >
+              删除追剧
+            </Text>
+          </HStack>
+        </Button>
       </VStack>
     </ScrollView>
   )

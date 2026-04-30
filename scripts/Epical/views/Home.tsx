@@ -2,6 +2,7 @@ import {
   Button,
   HStack,
   Image,
+  NavigationStack,
   ScrollView,
   Text,
   VStack,
@@ -82,7 +83,7 @@ function DaySelector({
                 </Text>
               ) : (
                 <Text font={9} foregroundStyle="clear">
-                  ·
+                 ·
                 </Text>
               )}
             </VStack>
@@ -143,8 +144,6 @@ export function HomeView({
 
   return (
     <VStack
-      spacing={0}
-      frame={{ maxWidth: 'infinity', maxHeight: 'infinity', alignment: 'top' }}
       background={theme.bg}
       navigationTitle="追剧日历"
       navigationSubtitle={`${dateLabel} · ${DAYS_FULL[today]}`}
@@ -178,7 +177,6 @@ export function HomeView({
         <VStack
           spacing={10}
           padding={{ horizontal: 20, top: 8, bottom: 20 }}
-          frame={{ maxWidth: 'infinity', alignment: 'top' }}
         >
           {todaysShows.length === 0 ? (
             <EmptyState day={selectedDay} />

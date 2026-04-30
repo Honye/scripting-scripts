@@ -1,8 +1,11 @@
 import {
   Button,
+  DatePicker,
   HStack,
   Image,
+  NavigationStack,
   Picker,
+  ProgressView,
   RoundedRectangle,
   ScrollView,
   Spacer,
@@ -10,113 +13,52 @@ import {
   TextField,
   VStack,
   useState,
-  useMemo
+  useEffect
 } from 'scripting'
 import type { Color } from 'scripting'
 import type { Show } from '../types'
 import {
   DAYS_CN,
-  SEARCH_POOL,
-  TIME_OPTIONS,
   nextColor
 } from '../data'
+import { searchShows, type SearchItem } from '../api'
 import { theme } from '../theme'
-import { GenrePill, Poster, PrimaryButton, SectionLabel, ShowPreviewCard } from '../components'
+import { GenrePill, Poster, PrimaryButton, ShowPreviewCard } from '../components'
 
-type Candidate = { title: string; genre: string; color: string }
+type Candidate = {
+  title: string
+  genre: string
+  color: string
+  coverUrl?: string
+}
 type UpdateMode = 'weekly' | 'daily'
 
-function NavBar({
-  title,
-  onBack
-}: {
-  title: string
-  onBack: () => void
-}) {
-  return (
-    <HStack
-      spacing={12}
-      padding={{ horizontal: 16, top: 8, bottom: 16 }}
-      frame={{ maxWidth: 'infinity', alignment: 'leading' }}
-    >
-      <Button action={onBack} buttonStyle="plain">
-        <Image
-          systemName="chevron.left"
-          font={18} fontWeight="semibold"
-          foregroundStyle={theme.textSecondary}
-          frame={{ width: 28, height: 28 }}
-        />
-      </Button>
-      <Text
-        font={17}
-        fontWeight="semibold"
-        foregroundStyle={theme.text}
-      >
-        {title}
-      </Text>
-      <Spacer />
-    </HStack>
-  )
+function defaultTimeAt(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number)
+  const d = new Date()
+  d.setHours(h, m, 0, 0)
+  return d.getTime()
 }
 
-function SearchBar({
-  query,
-  setQuery
-}: {
-  query: string
-  setQuery: (s: string) => void
-}) {
-  return (
-    <HStack
-      spacing={10}
-      padding={{ horizontal: 16, vertical: 12 }}
-      background={{
-        style: theme.surfaceAlt2,
-        shape: { type: 'rect', cornerRadius: 14 }
-      }}
-      overlay={
-        <RoundedRectangle
-          cornerRadius={14}
-          stroke={{
-            shapeStyle: theme.divider,
-            strokeStyle: { lineWidth: 1 }
-          }}
-        />
-      }
-    >
-      <Image
-        systemName="magnifyingglass"
-        font={14}
-        foregroundStyle={theme.text35}
-      />
-      <TextField
-        title=""
-        prompt="搜索影视名称…"
-        value={query}
-        onChanged={setQuery}
-        textFieldStyle="plain"
-        foregroundStyle={theme.text}
-        font={15}
-        frame={{ maxWidth: 'infinity' }}
-      />
-      {query.length > 0 ? (
-        <Button action={() => setQuery('')} buttonStyle="plain">
-          <Image
-            systemName="xmark.circle.fill"
-            font={14}
-            foregroundStyle={theme.textTertiary}
-          />
-        </Button>
-      ) : null}
-    </HStack>
-  )
+function tsToHHMM(ts: number): string {
+  const d = new Date(ts)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+/** Stable color from a string id so the same Douban subject lands on the same accent. */
+function colorFromId(id: string): string {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0
+  return nextColor(Math.abs(h))
 }
 
 function ResultRow({
-  show,
+  item,
+  color,
   onTap
 }: {
-  show: Candidate
+  item: SearchItem
+  color: string
   onTap: () => void
 }) {
   return (
@@ -138,22 +80,63 @@ function ResultRow({
           />
         }
       >
-        <Poster show={show} size={42} />
-        <VStack alignment="leading" spacing={4}>
+        <Poster
+          show={{ title: item.title, color, coverUrl: item.coverUrl }}
+          size={42}
+        />
+        <VStack
+          alignment="leading"
+          spacing={4}
+          frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+        >
           <Text
             font={15}
             fontWeight="semibold"
             foregroundStyle={theme.text}
             lineLimit={1}
+            truncationMode="tail"
           >
-            {show.title}
+            {item.title}
           </Text>
-          <GenrePill genre={show.genre} color={show.color} />
+          <HStack spacing={6}>
+            <GenrePill genre={item.typeName || item.genre} color={color} />
+            {item.year ? (
+              <Text font={11} foregroundStyle={theme.textTertiary}>
+                {item.year}
+              </Text>
+            ) : null}
+            {item.rating > 0 ? (
+              <HStack spacing={2}>
+                <Image
+                  systemName="star.fill"
+                  font={9}
+                  foregroundStyle={theme.brandEnd}
+                />
+                <Text
+                  font={11}
+                  fontWeight="semibold"
+                  foregroundStyle={theme.brandEnd}
+                >
+                  {item.rating.toFixed(1)}
+                </Text>
+              </HStack>
+            ) : null}
+          </HStack>
+          {item.cardSubtitle ? (
+            <Text
+              font={11}
+              foregroundStyle={theme.textQuaternary}
+              lineLimit={1}
+              truncationMode="tail"
+            >
+              {item.cardSubtitle}
+            </Text>
+          ) : null}
         </VStack>
-        <Spacer />
         <Image
           systemName="chevron.right"
-          font={12} fontWeight="semibold"
+          font={12}
+          fontWeight="semibold"
           foregroundStyle={theme.textDisabled}
         />
       </HStack>
@@ -163,31 +146,31 @@ function ResultRow({
 
 function SearchStep({
   query,
-  setQuery,
   results,
+  loading,
+  error,
   onSelect,
   customGenre,
   setCustomGenre
 }: {
   query: string
-  setQuery: (s: string) => void
-  results: Candidate[]
+  results: SearchItem[]
+  loading: boolean
+  error: string | null
   onSelect: (c: Candidate) => void
   customGenre: string
   setCustomGenre: (s: string) => void
 }) {
   const trimmed = query.trim()
-  const hasExact = SEARCH_POOL.some((s) => s.title === trimmed)
-  const showCustom = trimmed.length > 0 && !hasExact
+  const hasExact = results.some((s) => s.title === trimmed)
+  const showCustom = trimmed.length > 0 && !loading && !hasExact
 
   return (
     <VStack
       spacing={14}
-      padding={{ horizontal: 20, top: 36 }}
+      padding={{ horizontal: 20, top: 12, bottom: 20 }}
       frame={{ maxWidth: 'infinity', alignment: 'top' }}
     >
-      <SearchBar query={query} setQuery={setQuery} />
-
       {showCustom ? (
         <VStack
           spacing={10}
@@ -252,23 +235,53 @@ function SearchStep({
         </VStack>
       ) : null}
 
-      <Text
-        font={12}
-        fontWeight="medium"
-        foregroundStyle={theme.textQuaternary}
-        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
-      >
-        {query.length > 0 ? '搜索结果' : '热门推荐'}
-      </Text>
+      <HStack spacing={8} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
+        <Text
+          font={12}
+          fontWeight="medium"
+          foregroundStyle={theme.textQuaternary}
+        >
+          {trimmed.length === 0
+            ? '输入剧名开始搜索'
+            : loading
+              ? '搜索中…'
+              : error
+                ? '搜索失败'
+                : `搜索结果 · ${results.length}`}
+        </Text>
+        <Spacer />
+        {loading ? <ProgressView progressViewStyle="circular" /> : null}
+      </HStack>
+
+      {error ? (
+        <Text
+          font={12}
+          foregroundStyle={theme.textTertiary}
+          frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+        >
+          {error}
+        </Text>
+      ) : null}
 
       <VStack spacing={8} frame={{ maxWidth: 'infinity', alignment: 'top' }}>
-        {results.map((show, i) => (
-          <ResultRow
-            key={`${show.title}-${i}`}
-            show={show}
-            onTap={() => onSelect(show)}
-          />
-        ))}
+        {results.map((item) => {
+          const color = colorFromId(item.id)
+          return (
+            <ResultRow
+              key={item.id}
+              item={item}
+              color={color}
+              onTap={() =>
+                onSelect({
+                  title: item.title,
+                  genre: item.genre,
+                  color,
+                  coverUrl: item.coverUrl || undefined
+                })
+              }
+            />
+          )
+        })}
       </VStack>
     </VStack>
   )
@@ -281,52 +294,17 @@ function ModeToggle({
   mode: UpdateMode
   setMode: (m: UpdateMode) => void
 }) {
-  const opts: Array<{ id: UpdateMode; label: string }> = [
-    { id: 'weekly', label: '每周更新' },
-    { id: 'daily', label: '每日更新' }
-  ]
   return (
-    <HStack
-      spacing={3}
-      padding={3}
-      background={{
-        style: theme.surfaceAlt2,
-        shape: { type: 'rect', cornerRadius: 12 }
-      }}
+    <Picker
+      title="更新方式"
+      value={mode}
+      onChanged={(v) => setMode(v as UpdateMode)}
+      pickerStyle="segmented"
+      tint={theme.brandEnd}
     >
-      {opts.map((opt) => {
-        const active = mode === opt.id
-        return (
-          <Button key={opt.id} action={() => setMode(opt.id)} buttonStyle="plain">
-            <HStack
-              alignment="center"
-              padding={{ vertical: 9 }}
-              frame={{ maxWidth: 'infinity', height: 38 }}
-              background={
-                active
-                  ? {
-                      style: {
-                        colors: [theme.brandStart, theme.brandEnd],
-                        startPoint: 'topLeading',
-                        endPoint: 'bottomTrailing'
-                      },
-                      shape: { type: 'rect', cornerRadius: 10 }
-                    }
-                  : undefined
-              }
-            >
-              <Text
-                font={14}
-                fontWeight={active ? 'semibold' : 'regular'}
-                foregroundStyle={active ? ('white' as Color) : theme.textTertiary}
-              >
-                {opt.label}
-              </Text>
-            </HStack>
-          </Button>
-        )
-      })}
-    </HStack>
+      <Text tag="weekly">每周更新</Text>
+      <Text tag="daily">每日更新</Text>
+    </Picker>
   )
 }
 
@@ -338,10 +316,10 @@ function DayPicker({
   toggle: (d: number) => void
 }) {
   return (
-    <HStack spacing={6} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-      {DAYS_CN.map((label, di) => {
+    <HStack spacing={0} frame={{ maxWidth: 'infinity' }}>
+      {DAYS_CN.flatMap((label, di) => {
         const sel = selected.includes(di)
-        return (
+        const btn = (
           <Button key={di} action={() => toggle(di)} buttonStyle="plain">
             <Text
               font={13}
@@ -379,6 +357,7 @@ function DayPicker({
             </Text>
           </Button>
         )
+        return di === 0 ? [btn] : [<Spacer key={`s${di}`} />, btn]
       })}
     </HStack>
   )
@@ -388,23 +367,19 @@ function TimePicker({
   value,
   onChanged
 }: {
-  value: string
-  onChanged: (v: string) => void
+  value: number
+  onChanged: (v: number) => void
 }) {
   return (
-    <Picker
+    <DatePicker
       title="更新时间"
       value={value}
       onChanged={onChanged}
-      pickerStyle="menu"
+      displayedComponents={['hourAndMinute']}
+      datePickerStyle="compact"
       tint={theme.brandEnd}
-    >
-      {TIME_OPTIONS.map((t) => (
-        <Text key={t} tag={t}>
-          {t}
-        </Text>
-      ))}
-    </Picker>
+      labelsHidden
+    />
   )
 }
 
@@ -481,12 +456,12 @@ function ScheduleStep({
   setMode: (m: UpdateMode) => void
   weeklyDays: number[]
   toggleWeekly: (d: number) => void
-  weeklyTime: string
-  setWeeklyTime: (s: string) => void
+  weeklyTime: number
+  setWeeklyTime: (s: number) => void
   weeklyEps: number
   setWeeklyEps: (n: number) => void
-  dailyTime: string
-  setDailyTime: (s: string) => void
+  dailyTime: number
+  setDailyTime: (s: number) => void
   dailyEps: number
   setDailyEps: (n: number) => void
   onConfirm: () => void
@@ -506,13 +481,9 @@ function ScheduleStep({
     >
       <ShowPreviewCard show={selected} />
 
-      <VStack spacing={10} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-        <SectionLabel>更新方式</SectionLabel>
-        <ModeToggle mode={mode} setMode={setMode} />
-      </VStack>
+      <ModeToggle mode={mode} setMode={setMode} />
 
-      <VStack spacing={10} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-        <SectionLabel>更新时间</SectionLabel>
+      <VStack frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
         <VStack
           spacing={14}
           padding={14}
@@ -565,7 +536,7 @@ function ScheduleStep({
                 font={12}
                 foregroundStyle={theme.textQuaternary}
               >
-                将在每{weeklyHint} {weeklyTime} 更新 {weeklyEps} 集
+                将在每{weeklyHint} {tsToHHMM(weeklyTime)} 更新 {weeklyEps} 集
               </Text>
             </>
           ) : (
@@ -594,14 +565,19 @@ function ScheduleStep({
                 font={12}
                 foregroundStyle={theme.textQuaternary}
               >
-                将在每天 {dailyTime} 更新 {dailyEps} 集
+                将在每天 {tsToHHMM(dailyTime)} 更新 {dailyEps} 集
               </Text>
             </>
           )}
         </VStack>
       </VStack>
 
-      <PrimaryButton title="添加到追剧日历" action={onConfirm} height={52} />
+      <VStack
+        padding={{ top: 12 }}
+        frame={{ maxWidth: 'infinity' }}
+      >
+        <PrimaryButton title="添加" action={onConfirm} height={52} />
+      </VStack>
     </VStack>
   )
 }
@@ -619,17 +595,44 @@ export function AddShowView({
   const [selected, setSelected] = useState<Candidate | null>(null)
   const [mode, setMode] = useState<UpdateMode>('weekly')
   const [weeklyDays, setWeeklyDays] = useState<number[]>([1])
-  const [weeklyTime, setWeeklyTime] = useState('20:00')
+  const [weeklyTime, setWeeklyTime] = useState(() => defaultTimeAt('20:00'))
   const [weeklyEps, setWeeklyEps] = useState(1)
-  const [dailyTime, setDailyTime] = useState('20:00')
+  const [dailyTime, setDailyTime] = useState(() => defaultTimeAt('20:00'))
   const [dailyEps, setDailyEps] = useState(1)
 
-  const results = useMemo(() => {
+  const [results, setResults] = useState<SearchItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
     const trimmed = query.trim()
-    if (trimmed.length > 0) {
-      return SEARCH_POOL.filter((s) => s.title.includes(trimmed)).slice(0, 5)
+    if (trimmed.length === 0) {
+      setResults([])
+      setLoading(false)
+      setError(null)
+      return
     }
-    return SEARCH_POOL.slice(0, 6)
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    const handle = setTimeout(() => {
+      searchShows(trimmed, { count: 20 })
+        .then((items) => {
+          if (cancelled) return
+          setResults(items)
+          setLoading(false)
+        })
+        .catch((e: unknown) => {
+          if (cancelled) return
+          setResults([])
+          setLoading(false)
+          setError(e instanceof Error ? e.message : '网络异常，请重试')
+        })
+    }, 350)
+    return () => {
+      cancelled = true
+      clearTimeout(handle)
+    }
   }, [query])
 
   const toggleWeekly = (d: number) => {
@@ -653,12 +656,12 @@ export function AddShowView({
       mode === 'daily'
         ? Array.from({ length: 7 }, (_, d) => ({
             day: d,
-            time: dailyTime,
+            time: tsToHHMM(dailyTime),
             episodes: dailyEps
           }))
         : weeklyDays.map((d) => ({
             day: d,
-            time: weeklyTime,
+            time: tsToHHMM(weeklyTime),
             episodes: weeklyEps
           }))
     onAdd({
@@ -666,6 +669,7 @@ export function AddShowView({
       title: selected.title,
       genre: selected.genre,
       color: selected.color,
+      coverUrl: selected.coverUrl,
       schedules,
       totalEps: 0,
       watchedEps: 0
@@ -674,44 +678,72 @@ export function AddShowView({
   }
 
   return (
-    <VStack
-      spacing={0}
-      frame={{ maxWidth: 'infinity', maxHeight: 'infinity', alignment: 'top' }}
-      background={theme.bg}
-    >
-      {step === 'schedule' && (
-        <NavBar title="设置更新时间" onBack={() => setStep('search')} />
-      )}
-      <ScrollView>
-        {step === 'search' && (
-          <SearchStep
-            query={query}
-            setQuery={setQuery}
-            results={results}
-            onSelect={handleSelect}
-            customGenre={customGenre}
-            setCustomGenre={setCustomGenre}
-          />
-        )}
-        {step === 'schedule' && selected && (
-          <ScheduleStep
-            selected={selected}
-            mode={mode}
-            setMode={setMode}
-            weeklyDays={weeklyDays}
-            toggleWeekly={toggleWeekly}
-            weeklyTime={weeklyTime}
-            setWeeklyTime={setWeeklyTime}
-            weeklyEps={weeklyEps}
-            setWeeklyEps={setWeeklyEps}
-            dailyTime={dailyTime}
-            setDailyTime={setDailyTime}
-            dailyEps={dailyEps}
-            setDailyEps={setDailyEps}
-            onConfirm={handleConfirm}
-          />
-        )}
-      </ScrollView>
-    </VStack>
+    <NavigationStack>
+      {step === 'search' ? (
+        <VStack
+          spacing={0}
+          frame={{ maxWidth: 'infinity', maxHeight: 'infinity', alignment: 'top' }}
+          background={theme.bg}
+          navigationBarTitleDisplayMode="inline"
+          searchable={{
+            value: query,
+            onChanged: setQuery,
+            prompt: '搜索影视名称…',
+            placement: 'navigationBarDrawerAutomaticDisplay'
+          }}
+        >
+          <ScrollView>
+            <SearchStep
+              query={query}
+              results={results}
+              loading={loading}
+              error={error}
+              onSelect={handleSelect}
+              customGenre={customGenre}
+              setCustomGenre={setCustomGenre}
+            />
+          </ScrollView>
+        </VStack>
+      ) : selected ? (
+        <VStack
+          spacing={0}
+          frame={{ maxWidth: 'infinity', maxHeight: 'infinity', alignment: 'top' }}
+          background={theme.bg}
+          navigationTitle="设置更新时间"
+          navigationBarTitleDisplayMode="inline"
+          toolbar={{
+            topBarLeading: (
+              <Button action={() => setStep('search')} buttonStyle="plain">
+                <Image
+                  systemName="chevron.left"
+                  font={17}
+                  fontWeight="semibold"
+                  foregroundStyle={theme.brandEnd}
+                />
+              </Button>
+            )
+          }}
+        >
+          <ScrollView>
+            <ScheduleStep
+              selected={selected}
+              mode={mode}
+              setMode={setMode}
+              weeklyDays={weeklyDays}
+              toggleWeekly={toggleWeekly}
+              weeklyTime={weeklyTime}
+              setWeeklyTime={setWeeklyTime}
+              weeklyEps={weeklyEps}
+              setWeeklyEps={setWeeklyEps}
+              dailyTime={dailyTime}
+              setDailyTime={setDailyTime}
+              dailyEps={dailyEps}
+              setDailyEps={setDailyEps}
+              onConfirm={handleConfirm}
+            />
+          </ScrollView>
+        </VStack>
+      ) : null}
+    </NavigationStack>
   )
 }

@@ -36,6 +36,10 @@ function App() {
       )
     )
   }
+  const handleDelete = (id: number) => {
+    setShows(shows.filter((s) => s.id !== id))
+    setDetailId(null)
+  }
 
   return (
     <VStack
@@ -75,6 +79,7 @@ function App() {
                 show={detailShow}
                 onClose={() => setDetailId(null)}
                 onSave={handleSaveDetail}
+                onDelete={handleDelete}
               />
             </VStack>
           ) : (
