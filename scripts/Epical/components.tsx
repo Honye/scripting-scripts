@@ -18,13 +18,15 @@ export function Poster({
   show,
   size = 50
 }: {
-  show: Show | { title: string; color: string; coverUrl?: string }
+  show: Show | { title: string; color: string; coverUrl?: string; playUrl?: string }
   size?: number
 }) {
   const initials = show.title.slice(0, 2)
   const w = size
   const h = Math.round(size * 1.4)
   const fontSize = Math.round(size * 0.28)
+  const playIconSize = Math.round(size * 0.5)
+
   const fallback = (
     <ZStack
       frame={{ width: w, height: h }}
@@ -50,28 +52,26 @@ export function Poster({
       </Text>
     </ZStack>
   )
-  if (show.coverUrl) {
-    return (
-      <Image
-        imageUrl={show.coverUrl}
-        placeholder={fallback}
-        resizable
-        scaleToFill
-        frame={{ width: w, height: h }}
-        clipShape={{ type: 'rect', cornerRadius: 8 }}
-        overlay={
-          <RoundedRectangle
-            cornerRadius={8}
-            stroke={{
-              shapeStyle: theme.divider,
-              strokeStyle: { lineWidth: 1 }
-            }}
-          />
-        }
-      />
-    )
-  }
-  return (
+
+  const base = show.coverUrl ? (
+    <Image
+      imageUrl={show.coverUrl}
+      placeholder={fallback}
+      resizable
+      scaleToFill
+      frame={{ width: w, height: h }}
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+      overlay={
+        <RoundedRectangle
+          cornerRadius={8}
+          stroke={{
+            shapeStyle: theme.divider,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+    />
+  ) : (
     <ZStack
       frame={{ width: w, height: h }}
       background={
@@ -103,6 +103,34 @@ export function Poster({
       >
         {initials}
       </Text>
+    </ZStack>
+  )
+
+  if (!show.playUrl) {
+    return base
+  }
+
+  const playUrl = show.playUrl
+  return (
+    <ZStack
+      frame={{ width: w, height: h }}
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+      onTapGesture={() => {
+        Safari.openURL(playUrl)
+      }}
+    >
+      {base}
+      <RoundedRectangle
+        cornerRadius={8}
+        fill={'rgba(0,0,0,0.18)' as Color}
+        frame={{ width: w, height: h }}
+      />
+      <Image
+        systemName="play.circle.fill"
+        font={playIconSize}
+        foregroundStyle="white"
+        shadow={{ color: 'rgba(0,0,0,0.35)' as Color, radius: 4 }}
+      />
     </ZStack>
   )
 }
@@ -145,81 +173,81 @@ export function EpisodeCard({
   const lastEp = nextEp + schedule.episodes - 1
   const ratio = show.totalEps > 0 ? show.watchedEps / show.totalEps : 0
   return (
-    <Button action={onTap} buttonStyle="plain">
-      <HStack
-        alignment="center"
-        spacing={14}
-        padding={{ horizontal: 16, vertical: 14 }}
-        background={{
-          style: theme.card,
-          shape: { type: 'rect', cornerRadius: 16 }
-        }}
-        overlay={
-          <RoundedRectangle
-            cornerRadius={16}
-            stroke={{
-              shapeStyle: theme.cardBorder,
-              strokeStyle: { lineWidth: 1 }
-            }}
-          />
-        }
+    <HStack
+      alignment="center"
+      spacing={14}
+      padding={{ horizontal: 16, vertical: 14 }}
+      background={{
+        style: theme.card,
+        shape: { type: 'rect', cornerRadius: 16 }
+      }}
+      overlay={
+        <RoundedRectangle
+          cornerRadius={16}
+          stroke={{
+            shapeStyle: theme.cardBorder,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+      contentShape={{ type: 'rect' }}
+      onTapGesture={onTap}
+    >
+      <Poster show={show} size={50} />
+      <VStack
+        alignment="leading"
+        spacing={3}
+        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
       >
-        <Poster show={show} size={50} />
-        <VStack
-          alignment="leading"
-          spacing={3}
-          frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+        <Text
+          font={15}
+          fontWeight="semibold"
+          foregroundStyle={theme.text}
+          lineLimit={1}
+          truncationMode="tail"
         >
+          {show.title}
+        </Text>
+        <HStack spacing={6}>
+          <GenrePill genre={show.genre} color={show.color} />
           <Text
-            font={15}
-            fontWeight="semibold"
-            foregroundStyle={theme.text}
+            font={12}
+            foregroundStyle={theme.textTertiary}
             lineLimit={1}
-            truncationMode="tail"
           >
-            {show.title}
+            今日更新第 {nextEp}–{lastEp} 集
           </Text>
-          <HStack spacing={6}>
-            <GenrePill genre={show.genre} color={show.color} />
-            <Text
-              font={12}
-              foregroundStyle={theme.textTertiary}
-              lineLimit={1}
-            >
-              今日更新第 {nextEp}–{lastEp} 集
-            </Text>
-          </HStack>
-          <HStack spacing={8} padding={{ top: 5 }}>
-            <ProgressView
-              value={ratio}
-              total={1}
-              tint={show.color as Color}
-            />
-            <Text
-              font={11}
-              foregroundStyle={theme.textQuaternary}
-            >
-              {show.watchedEps}/{show.totalEps}集
-            </Text>
-          </HStack>
-        </VStack>
-        <VStack alignment="trailing" spacing={4}>
-          <Text
-            font={15}
-            fontWeight="semibold"
-            foregroundStyle={theme.text80}
-          >
-            {schedule.time}
-          </Text>
+        </HStack>
+        <HStack spacing={8} padding={{ top: 5 }}>
+          <ProgressView
+            value={ratio}
+            total={1}
+            tint={show.color as Color}
+          />
           <Text
             font={11}
             foregroundStyle={theme.textQuaternary}
           >
-            更新{schedule.episodes}集
+            {show.watchedEps}/{show.totalEps}集
           </Text>
-        </VStack>
-      </HStack>
-    </Button>
+        </HStack>
+      </VStack>
+      <VStack alignment="trailing" spacing={4}>
+        <Text
+          font={15}
+          fontWeight="semibold"
+          foregroundStyle={theme.text80}
+        >
+          {schedule.time}
+        </Text>
+        <Text
+          font={11}
+          foregroundStyle={theme.textQuaternary}
+        >
+          更新{schedule.episodes}集
+        </Text>
+      </VStack>
+    </HStack>
   )
 }
 

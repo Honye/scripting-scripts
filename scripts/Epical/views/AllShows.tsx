@@ -1,5 +1,4 @@
 import {
-  Button,
   HStack,
   Image,
   ProgressView,
@@ -23,55 +22,55 @@ function ShowRow({
 }) {
   const ratio = show.totalEps > 0 ? show.watchedEps / show.totalEps : 0
   return (
-    <Button action={onTap} buttonStyle="plain">
-      <HStack
-        spacing={14}
-        padding={14}
-        background={{
-          style: theme.card,
-          shape: { type: 'rect', cornerRadius: 16 }
-        }}
-        overlay={
-          <RoundedRectangle
-            cornerRadius={16}
-            stroke={{
-              shapeStyle: theme.cardBorder,
-              strokeStyle: { lineWidth: 1 }
-            }}
-          />
-        }
+    <HStack
+      spacing={14}
+      padding={14}
+      background={{
+        style: theme.card,
+        shape: { type: 'rect', cornerRadius: 16 }
+      }}
+      overlay={
+        <RoundedRectangle
+          cornerRadius={16}
+          stroke={{
+            shapeStyle: theme.cardBorder,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+      contentShape={{ type: 'rect' }}
+      onTapGesture={onTap}
+    >
+      <Poster show={show} size={50} />
+      <VStack
+        alignment="leading"
+        spacing={6}
+        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
       >
-        <Poster show={show} size={50} />
-        <VStack
-          alignment="leading"
-          spacing={6}
-          frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+        <Text
+          font={15}
+          fontWeight="semibold"
+          foregroundStyle={theme.text}
+          lineLimit={1}
+          truncationMode="tail"
         >
-          <Text
-            font={15}
-            fontWeight="semibold"
-            foregroundStyle={theme.text}
-            lineLimit={1}
-            truncationMode="tail"
-          >
-            {show.title}
-          </Text>
-          <GenrePill genre={show.genre} color={show.color} />
-          <ProgressView value={ratio} total={1} tint={show.color as Color} />
-          <Text
-            font={11}
-            foregroundStyle={theme.textQuaternary}
-          >
-            {show.watchedEps}/{show.totalEps} 集
-          </Text>
-        </VStack>
-        <VStack alignment="trailing" spacing={3}>
-          {show.schedules.slice(0, 3).map((sc, i) => (
-            <DayChip key={i} day={sc.day} />
-          ))}
-        </VStack>
-      </HStack>
-    </Button>
+          {show.title}
+        </Text>
+        <GenrePill genre={show.genre} color={show.color} />
+        <ProgressView value={ratio} total={1} tint={show.color as Color} />
+        <Text
+          font={11}
+          foregroundStyle={theme.textQuaternary}
+        >
+          {show.watchedEps}/{show.totalEps} 集
+        </Text>
+      </VStack>
+      <VStack alignment="trailing" spacing={3}>
+        {show.schedules.slice(0, 3).map((sc, i) => (
+          <DayChip key={i} day={sc.day} />
+        ))}
+      </VStack>
+    </HStack>
   )
 }
 

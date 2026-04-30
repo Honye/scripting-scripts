@@ -449,6 +449,8 @@ function ScheduleStep({
   setDailyTime,
   dailyEps,
   setDailyEps,
+  playUrl,
+  setPlayUrl,
   onConfirm
 }: {
   selected: Candidate
@@ -464,6 +466,8 @@ function ScheduleStep({
   setDailyTime: (s: number) => void
   dailyEps: number
   setDailyEps: (n: number) => void
+  playUrl: string
+  setPlayUrl: (s: string) => void
   onConfirm: () => void
 }) {
   const weeklyHint =
@@ -573,6 +577,31 @@ function ScheduleStep({
       </VStack>
 
       <VStack
+        alignment="leading"
+        spacing={8}
+        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+      >
+        <Text
+          font={12}
+          foregroundStyle={theme.text35}
+        >
+          播放地址（可选）
+        </Text>
+        <TextField
+          title=""
+          prompt="粘贴播放链接，留空则不设置"
+          value={playUrl}
+          onChanged={setPlayUrl}
+          textFieldStyle="roundedBorder"
+          keyboardType="URL"
+          textInputAutocapitalization="never"
+          autocorrectionDisabled
+          foregroundStyle={theme.text}
+          font={14}
+        />
+      </VStack>
+
+      <VStack
         padding={{ top: 12 }}
         frame={{ maxWidth: 'infinity' }}
       >
@@ -599,6 +628,7 @@ export function AddShowView({
   const [weeklyEps, setWeeklyEps] = useState(1)
   const [dailyTime, setDailyTime] = useState(() => defaultTimeAt('20:00'))
   const [dailyEps, setDailyEps] = useState(1)
+  const [playUrl, setPlayUrl] = useState('')
 
   const [results, setResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -664,12 +694,14 @@ export function AddShowView({
             time: tsToHHMM(weeklyTime),
             episodes: weeklyEps
           }))
+    const trimmedPlayUrl = playUrl.trim()
     onAdd({
       id: Date.now(),
       title: selected.title,
       genre: selected.genre,
       color: selected.color,
       coverUrl: selected.coverUrl,
+      playUrl: trimmedPlayUrl.length > 0 ? trimmedPlayUrl : undefined,
       schedules,
       totalEps: 0,
       watchedEps: 0
@@ -739,6 +771,8 @@ export function AddShowView({
               setDailyTime={setDailyTime}
               dailyEps={dailyEps}
               setDailyEps={setDailyEps}
+              playUrl={playUrl}
+              setPlayUrl={setPlayUrl}
               onConfirm={handleConfirm}
             />
           </ScrollView>
