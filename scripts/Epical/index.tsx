@@ -19,7 +19,13 @@ import { DetailView } from './views/Detail'
 function App() {
   const [shows, setShows] = useState<Show[]>(() => loadShows())
   const [showAdd, setShowAdd] = useState(false)
+  const [addNonce, setAddNonce] = useState(0)
   const [detailId, setDetailId] = useState<number | null>(null)
+
+  const openAdd = () => {
+    setAddNonce((n) => n + 1)
+    setShowAdd(true)
+  }
 
   useEffect(() => {
     saveShows(shows)
@@ -50,17 +56,20 @@ function App() {
         {
           isPresented: showAdd,
           onChanged: setShowAdd,
-          content: (
+          content: showAdd ? (
             <VStack
               frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
               background={theme.bg}
               presentationDragIndicator="visible"
             >
               <AddShowView
+                key={addNonce}
                 onClose={() => setShowAdd(false)}
                 onAdd={handleAdd}
               />
             </VStack>
+          ) : (
+            <VStack />
           )
         },
         {
@@ -93,7 +102,7 @@ function App() {
           <NavigationStack>
             <HomeView
               shows={shows}
-              onAddPress={() => setShowAdd(true)}
+              onAddPress={openAdd}
               onShowDetail={(s) => setDetailId(s.id)}
             />
           </NavigationStack>
