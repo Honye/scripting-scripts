@@ -19,7 +19,9 @@ export interface AppItem {
   name: string
   icon: string
   iconType?: 'symbol' | 'image' | 'transparent_image'
+  mode?: 'url' | 'bundleId'
   url: string
+  bundleId?: string
   color: string
 }
 
