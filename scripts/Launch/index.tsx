@@ -36,6 +36,7 @@ import {
   FILE_PATH,
   getIconCachePath
 } from './constants'
+import { ITunesApp, SearchSheet } from './SearchSheet'
 
 function AppEditor({
   item,
@@ -53,12 +54,61 @@ function AppEditor({
     'symbol' | 'image' | 'transparent_image'
   >(item?.iconType ?? 'symbol')
   const [color, setColor] = useState<Color>((item?.color ?? '#007AFF') as Color)
+  const [searchOpen, setSearchOpen] = useState(false)
   const dismiss = Navigation.useDismiss()
 
+  const handleSelectApp = (app: ITunesApp) => {
+    setName(app.trackName)
+    setBundleId(app.bundleId)
+    const artwork =
+      app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60 || ''
+    if (artwork) {
+      setIcon(artwork)
+      setIconType('image')
+    }
+    setSearchOpen(false)
+  }
+
   return (
-    <Form navigationTitle={item ? 'Edit App' : 'Add App'}>
+    <Form
+      navigationTitle={item ? 'Edit App' : 'Add App'}
+      sheet={{
+        isPresented: searchOpen,
+        onChanged: setSearchOpen,
+        content: searchOpen ? (
+          <VStack
+            frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
+            presentationDragIndicator="visible"
+            presentationDetents={['medium', 'large']}
+          >
+            <SearchSheet
+              initialQuery={name}
+              onClose={() => setSearchOpen(false)}
+              onSelect={handleSelectApp}
+            />
+          </VStack>
+        ) : (
+          <VStack />
+        )
+      }}
+    >
       <Section header={<Text>Basic Info</Text>}>
-        <TextField title="Name" value={name} onChanged={setName} />
+        <HStack>
+          <TextField title="Name" value={name} onChanged={setName} />
+          <Button action={() => setSearchOpen(true)} buttonStyle="plain">
+            <Image
+              systemName="magnifyingglass"
+              font={14}
+              fontWeight="semibold"
+              foregroundStyle={'white' as Color}
+              frame={{ width: 28, height: 28 }}
+              background={{
+                style: '#0A84FF' as Color,
+                shape: 'circle'
+              }}
+            />
+          </Button>
+        </HStack>
         <Picker
           title="Launch Mode"
           value={mode}
