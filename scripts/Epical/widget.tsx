@@ -14,6 +14,7 @@ import type { Show } from './types'
 import { getTodayIndex } from './data'
 import { loadShows } from './store'
 import { theme } from './theme'
+import { rpt } from './utils'
 
 function loadTodaysShows(): Show[] {
   const today = getTodayIndex()
@@ -26,13 +27,14 @@ function loadTodaysShows(): Show[] {
 
 function PosterImage({ show, w, h }: { show: Show; w: number; h: number }) {
   const initials = show.title.slice(0, 2)
-  const fontSize = Math.max(12, Math.round(w * 0.28))
+  const fontSize = Math.max(rpt(12), Math.round(w * 0.28))
+  const radius = rpt(8)
   const fallback = (
     <ZStack
       frame={{ width: w, height: h }}
       background={
         <RoundedRectangle
-          cornerRadius={8}
+          cornerRadius={radius}
           fill={{
             colors: [`${show.color}cc` as Color, `${show.color}55` as Color],
             startPoint: 'topLeading',
@@ -40,7 +42,7 @@ function PosterImage({ show, w, h }: { show: Show; w: number; h: number }) {
           }}
         />
       }
-      clipShape={{ type: 'rect', cornerRadius: 8 }}
+      clipShape={{ type: 'rect', cornerRadius: radius }}
     >
       <Text
         font={fontSize}
@@ -62,10 +64,10 @@ function PosterImage({ show, w, h }: { show: Show; w: number; h: number }) {
         resizable
         scaleToFill
         frame={{ width: w, height: h }}
-        clipShape={{ type: 'rect', cornerRadius: 8 }}
+        clipShape={{ type: 'rect', cornerRadius: radius }}
         overlay={
           <RoundedRectangle
-            cornerRadius={8}
+            cornerRadius={radius}
             stroke={{
               shapeStyle: 'rgba(255,255,255,0.18)' as Color,
               strokeStyle: { lineWidth: 1 }
@@ -93,17 +95,17 @@ function EmptyView() {
   return (
     <VStack
       frame={Widget.displaySize}
-      spacing={8}
+      spacing={rpt(8)}
       widgetBackground={theme.bg}
     >
       <Spacer />
       <Image
         systemName="moon.zzz"
-        font={28}
+        font={rpt(28)}
         foregroundStyle={theme.text35}
       />
       <Text
-        font={12}
+        font={rpt(12)}
         foregroundStyle={theme.textTertiary}
         multilineTextAlignment="center"
       >
@@ -117,10 +119,10 @@ function EmptyView() {
 function SmallView({ shows, count }: { shows: Show[]; count: number }) {
   const stack = shows.slice(0, 3)
   const front = stack[0]
-  const pSize = 52
+  const pSize = rpt(52)
   const pHeight = Math.round(pSize * 1.42)
-  const offStepX = 12
-  const offStepY = 3
+  const offStepX = rpt(12)
+  const offStepY = rpt(3)
   const stackW = pSize + (stack.length - 1) * offStepX
   const stackH = pHeight + (stack.length - 1) * offStepY
 
@@ -131,19 +133,19 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
   return (
     <VStack
       frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
-      padding={{ horizontal: 6 }}
+      padding={{ horizontal: rpt(6) }}
       spacing={0}
       alignment="leading"
       widgetBackground={theme.surface}
     >
-      <HStack alignment="center" spacing={4}>
+      <HStack alignment="center" spacing={rpt(4)}>
         <Image
           systemName="play.circle.fill"
-          font={11}
+          font={rpt(11)}
           foregroundStyle={theme.brandEnd}
         />
         <Text
-          font={10}
+          font={rpt(10)}
           fontWeight="bold"
           foregroundStyle={theme.textSecondary}
           kerning={0.2}
@@ -153,7 +155,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
         </Text>
         <Spacer />
         <Text
-          font={9}
+          font={rpt(9)}
           fontWeight="semibold"
           foregroundStyle={theme.textTertiary}
           kerning={0.3}
@@ -165,11 +167,11 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
 
       <HStack
         alignment="lastTextBaseline"
-        spacing={3}
-        padding={{ top: 2 }}
+        spacing={rpt(3)}
+        padding={{ top: rpt(2) }}
       >
         <Text
-          font={26}
+          font={rpt(26)}
           fontWeight="black"
           foregroundStyle={theme.text}
           kerning={-1}
@@ -177,7 +179,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
           {count}
         </Text>
         <Text
-          font={10}
+          font={rpt(10)}
           fontWeight="semibold"
           foregroundStyle={theme.textTertiary}
         >
@@ -187,8 +189,8 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
 
       <HStack
         alignment="bottom"
-        spacing={6}
-        padding={{ top: 8 }}
+        spacing={rpt(6)}
+        padding={{ top: rpt(8) }}
         frame={{ maxWidth: 'infinity' }}
       >
         <ZStack
@@ -212,8 +214,8 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
                   scaleEffect={{ x: scale, y: scale, anchor: 'bottomLeading' }}
                   shadow={{
                     color: 'rgba(0,0,0,0.22)' as Color,
-                    radius: 3,
-                    y: 2
+                    radius: rpt(3),
+                    y: rpt(2)
                   }}
                 >
                   <PosterImage show={s} w={pSize} h={pHeight} />
@@ -231,25 +233,25 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
 
         <VStack
           alignment="trailing"
-          spacing={3}
+          spacing={rpt(3)}
           frame={{ maxWidth: 'infinity', alignment: 'bottomTrailing' }}
         >
           <Text
-            font={8}
+            font={rpt(8)}
             fontWeight="bold"
             foregroundStyle={theme.textTertiary}
             kerning={0.4}
             lineLimit={1}
-            padding={{ horizontal: 5, vertical: 1 }}
+            padding={{ horizontal: rpt(5), vertical: rpt(1) }}
             background={{
               style: theme.surfaceAlt,
-              shape: { type: 'rect', cornerRadius: 4 }
+              shape: { type: 'rect', cornerRadius: rpt(4) }
             }}
           >
             {front.genre}
           </Text>
           <Text
-            font={10}
+            font={rpt(10)}
             fontWeight="bold"
             foregroundStyle={theme.text}
             lineLimit={2}
@@ -264,13 +266,14 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
 }
 
 function MediumView({ shows, count }: { shows: Show[]; count: number }) {
-  const padH = 14
-  const colSpacing = 8
+  const padH = rpt(14)
+  const colSpacing = rpt(8)
   const w = Math.floor(
     (Widget.displaySize.width - padH * 2 - colSpacing * 3) / 4
   )
   const h = Math.round(w * 1.4)
   const playBadge = Math.round(w * 0.42)
+  const cardRadius = rpt(8)
 
   const date = new Date()
   const dateLabel = `${date.getMonth() + 1}月${date.getDate()}日`
@@ -278,13 +281,13 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
   return (
     <VStack
       frame={Widget.displaySize}
-      padding={{ top: 24, bottom: 12, leading: padH, trailing: padH }}
-      spacing={8}
+      padding={{ top: rpt(24), bottom: rpt(12), leading: padH, trailing: padH }}
+      spacing={rpt(8)}
       widgetBackground={theme.bg}
     >
       <HStack padding={{ horizontal: padH }}>
         <Text
-          font={11}
+          font={rpt(11)}
           fontWeight="semibold"
           foregroundStyle={theme.brandEnd}
         >
@@ -292,7 +295,7 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
         </Text>
         <Spacer />
         <Text
-          font={11}
+          font={rpt(11)}
           foregroundStyle={theme.textQuaternary}
         >
           {dateLabel}
@@ -307,13 +310,13 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
           const card = (
             <ZStack
               frame={{ width: w, height: h }}
-              clipShape={{ type: 'rect', cornerRadius: 8 }}
+              clipShape={{ type: 'rect', cornerRadius: cardRadius }}
             >
               <PosterImage show={s} w={w} h={h} />
               {s.playUrl ? (
                 <ZStack frame={{ width: w, height: h }}>
                   <RoundedRectangle
-                    cornerRadius={8}
+                    cornerRadius={cardRadius}
                     fill={'rgba(0,0,0,0.22)' as Color}
                     frame={{ width: w, height: h }}
                   />
@@ -323,10 +326,10 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
             </ZStack>
           )
           return (
-            <VStack key={s.id} spacing={4} frame={{ width: w }}>
+            <VStack key={s.id} spacing={rpt(4)} frame={{ width: w }}>
               {s.playUrl ? <Link url={s.playUrl}>{card}</Link> : card}
               <Text
-                font={10}
+                font={rpt(10)}
                 fontWeight="medium"
                 foregroundStyle={theme.text80}
                 lineLimit={1}
