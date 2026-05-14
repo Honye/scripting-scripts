@@ -45,7 +45,9 @@ function AppEditor({
   onSave: (item: AppItem) => void
 }) {
   const [name, setName] = useState(item?.name ?? '')
+  const [mode, setMode] = useState<'url' | 'bundleId'>(item?.mode ?? 'url')
   const [url, setUrl] = useState(item?.url ?? '')
+  const [bundleId, setBundleId] = useState(item?.bundleId ?? '')
   const [icon, setIcon] = useState(item?.icon ?? 'app')
   const [iconType, setIconType] = useState<
     'symbol' | 'image' | 'transparent_image'
@@ -57,7 +59,23 @@ function AppEditor({
     <Form navigationTitle={item ? 'Edit App' : 'Add App'}>
       <Section header={<Text>Basic Info</Text>}>
         <TextField title="Name" value={name} onChanged={setName} />
-        <TextField title="URL Scheme" value={url} onChanged={setUrl} />
+        <Picker
+          title="Launch Mode"
+          value={mode}
+          onChanged={(v: string) => setMode(v as 'url' | 'bundleId')}
+        >
+          <Text tag="url">URL Scheme</Text>
+          <Text tag="bundleId">Bundle ID</Text>
+        </Picker>
+        {mode === 'bundleId' ? (
+          <TextField
+            title="Bundle ID"
+            value={bundleId}
+            onChanged={setBundleId}
+          />
+        ) : (
+          <TextField title="URL Scheme" value={url} onChanged={setUrl} />
+        )}
       </Section>
 
       <Section header={<Text>Appearance</Text>}>
@@ -126,7 +144,9 @@ function AppEditor({
             onSave({
               id: item?.id ?? Math.random().toString(36).slice(2),
               name,
+              mode,
               url,
+              bundleId,
               icon,
               iconType,
               color: color as unknown as string
@@ -406,7 +426,9 @@ function App() {
                   <VStack alignment="leading">
                     <Text font={16}>{item.name}</Text>
                     <Text font={12} opacity={0.6} lineLimit={1}>
-                      {item.url}
+                      {item.mode === 'bundleId'
+                        ? (item.bundleId ?? '')
+                        : item.url}
                     </Text>
                   </VStack>
                 </HStack>

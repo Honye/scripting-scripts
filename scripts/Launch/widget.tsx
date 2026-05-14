@@ -1,4 +1,5 @@
 import {
+  Button,
   Color,
   HStack,
   Image,
@@ -19,13 +20,14 @@ import {
   FILE_PATH,
   getIconCachePath
 } from './constants'
+import { OpenAppIntent } from './app_intents'
 
 function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
   const size = config?.iconSize || DEFAULT_CONFIG.iconSize
   const radius = config?.shape === 'circle' ? size / 2 : size * 0.225
-  return (
-    <Link url={item.url} buttonStyle="plain">
-      <ZStack>
+  const useBundleId = item.mode === 'bundleId' && !!item.bundleId
+  const iconContent = (
+    <ZStack>
         {item.iconType === 'image' ? (
           <ZStack
             frame={{ width: size, height: size }}
@@ -119,6 +121,19 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
           </Fragment>
         )}
       </ZStack>
+  )
+
+  if (useBundleId) {
+    return (
+      <Button intent={OpenAppIntent(item.bundleId!)} buttonStyle="plain">
+        {iconContent}
+      </Button>
+    )
+  }
+
+  return (
+    <Link url={item.url} buttonStyle="plain">
+      {iconContent}
     </Link>
   )
 }
