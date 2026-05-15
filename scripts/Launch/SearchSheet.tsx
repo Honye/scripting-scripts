@@ -8,8 +8,8 @@ import {
   NavigationStack,
   ProgressView,
   ScrollView,
-  Spacer,
   Text,
+  TextField,
   VStack,
   ZStack,
   useEffect,
@@ -346,8 +346,8 @@ function SheetError({ onRetry }: { onRetry: () => void }) {
 function RegionPill({ region }: { region: Region }) {
   return (
     <HStack
-      spacing={6}
-      padding={{ leading: 12, trailing: 14, vertical: 8 }}
+      spacing={4}
+      padding={{ leading: 10, trailing: 10, vertical: 8 }}
       background={{
         style: PILL_BG as Color,
         shape: 'capsule'
@@ -355,15 +355,15 @@ function RegionPill({ region }: { region: Region }) {
     >
       <Text font={15}>{region.flag}</Text>
       <Text
-        font={14}
-        fontWeight="medium"
+        font={13}
+        fontWeight="semibold"
         foregroundStyle={'label' as Color}
       >
-        {region.name}
+        {region.code.toUpperCase()}
       </Text>
       <Image
         systemName="chevron.up.chevron.down"
-        font={11}
+        font={10}
         fontWeight="semibold"
         foregroundStyle={SECONDARY as Color}
       />
@@ -472,7 +472,6 @@ export function SearchSheet({
     initialQuery.trim() ? 'loading' : 'empty'
   )
   const [results, setResults] = useState<ITunesApp[]>([])
-  const [searchPresented, setSearchPresented] = useState(false)
   const [region, setRegion] = useState<string>(() => {
     try {
       return Storage.get<string>(REGION_STORAGE_KEY) || DEFAULT_REGION
@@ -481,11 +480,6 @@ export function SearchSheet({
     }
   })
   const reqIdRef = useRef(0)
-
-  useEffect(() => {
-    const handle = setTimeout(() => setSearchPresented(true), 50)
-    return () => clearTimeout(handle)
-  }, [])
 
   const runSearch = (q: string, countryCode: string) => {
     const trimmed = q.trim()
@@ -553,39 +547,55 @@ export function SearchSheet({
             <Button title="Cancel" action={onClose} />
           ]
         }}
-        searchable={{
-          value: query,
-          onChanged: setQuery,
-          prompt: 'App name',
-          placement: 'navigationBarDrawerAlwaysDisplay',
-          presented: {
-            value: searchPresented,
-            onChanged: setSearchPresented
-          }
-        }}
       >
-        <ScrollView>
+        <HStack
+          spacing={8}
+          padding={{ horizontal: 16, top: 10, bottom: 8 }}
+          frame={{ maxWidth: 'infinity', alignment: 'center' }}
+        >
+          <NavigationLink
+            destination={
+              <RegionPicker selected={region} onSelect={handleRegionChange} />
+            }
+          >
+            <HStack padding={{ vertical: 4 }} contentShape="rect">
+              <RegionPill region={current} />
+            </HStack>
+          </NavigationLink>
           <HStack
-            padding={{ horizontal: 12, top: 4, bottom: 0 }}
+            spacing={6}
+            padding={{ horizontal: 8, vertical: 7 }}
+            background={{
+              style: PILL_BG as Color,
+              shape: { type: 'rect', cornerRadius: 10 }
+            }}
             frame={{ maxWidth: 'infinity', alignment: 'leading' }}
           >
-            <NavigationLink
-              destination={
-                <RegionPicker
-                  selected={region}
-                  onSelect={handleRegionChange}
+            <Image
+              systemName="magnifyingglass"
+              font={15}
+              foregroundStyle={SECONDARY as Color}
+            />
+            <TextField
+              title=""
+              prompt="App name"
+              value={query}
+              onChanged={setQuery}
+              textFieldStyle="plain"
+              autofocus
+            />
+            {query ? (
+              <Button action={() => setQuery('')} buttonStyle="plain">
+                <Image
+                  systemName="xmark.circle.fill"
+                  font={16}
+                  foregroundStyle={'rgba(60,60,67,0.4)' as Color}
                 />
-              }
-            >
-              <HStack
-                padding={{ horizontal: 6, vertical: 6 }}
-                contentShape="rect"
-              >
-                <RegionPill region={current} />
-              </HStack>
-            </NavigationLink>
-            <Spacer />
+              </Button>
+            ) : null}
           </HStack>
+        </HStack>
+        <ScrollView>
           {state === 'empty' ? <SheetEmpty /> : null}
           {state === 'loading' ? <SheetLoading /> : null}
           {state === 'results' ? (
