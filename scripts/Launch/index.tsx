@@ -60,8 +60,7 @@ function AppEditor({
   const handleSelectApp = (app: ITunesApp) => {
     setName(app.trackName)
     setBundleId(app.bundleId)
-    const artwork =
-      app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60 || ''
+    const artwork = app.artworkUrl100 || app.artworkUrl60 || ''
     if (artwork) {
       setIcon(artwork)
       setIconType('image')

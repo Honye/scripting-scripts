@@ -3,9 +3,12 @@ import {
   Divider,
   HStack,
   Image,
+  Navigation,
+  NavigationLink,
   NavigationStack,
   ProgressView,
   ScrollView,
+  Spacer,
   Text,
   VStack,
   ZStack,
@@ -27,11 +30,43 @@ export interface ITunesApp {
 
 type SearchState = 'empty' | 'loading' | 'results' | 'noresults' | 'error'
 
+interface Region {
+  code: string
+  name: string
+  flag: string
+}
+
 const TINT_BLUE = '#0A84FF'
 const TINT_BLUE_BG = 'rgba(10,132,255,0.12)'
 const SECONDARY = 'rgba(60,60,67,0.6)'
+const TERTIARY = 'rgba(60,60,67,0.3)'
+const PILL_BG = 'rgba(118,118,128,0.12)'
 const ERROR_BG = 'rgba(255,59,48,0.10)'
 const ERROR_RED = '#FF3B30'
+
+const REGIONS: Region[] = [
+  { code: 'us', name: 'United States', flag: '🇺🇸' },
+  { code: 'cn', name: 'China', flag: '🇨🇳' },
+  { code: 'jp', name: 'Japan', flag: '🇯🇵' },
+  { code: 'gb', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'kr', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'de', name: 'Germany', flag: '🇩🇪' },
+  { code: 'fr', name: 'France', flag: '🇫🇷' },
+  { code: 'ca', name: 'Canada', flag: '🇨🇦' },
+  { code: 'au', name: 'Australia', flag: '🇦🇺' },
+  { code: 'in', name: 'India', flag: '🇮🇳' },
+  { code: 'hk', name: 'Hong Kong', flag: '🇭🇰' },
+  { code: 'tw', name: 'Taiwan', flag: '🇹🇼' },
+  { code: 'sg', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'br', name: 'Brazil', flag: '🇧🇷' }
+]
+
+const DEFAULT_REGION = 'us'
+const REGION_STORAGE_KEY = 'launch_search_region'
+
+function regionFor(code: string): Region {
+  return REGIONS.find((r) => r.code === code) || REGIONS[0]
+}
 
 function pickArtwork(app: ITunesApp): string | undefined {
   return app.artworkUrl100 || app.artworkUrl60
@@ -308,6 +343,121 @@ function SheetError({ onRetry }: { onRetry: () => void }) {
   )
 }
 
+function RegionPill({ region }: { region: Region }) {
+  return (
+    <HStack
+      spacing={6}
+      padding={{ leading: 12, trailing: 14, vertical: 8 }}
+      background={{
+        style: PILL_BG as Color,
+        shape: 'capsule'
+      }}
+    >
+      <Text font={15}>{region.flag}</Text>
+      <Text
+        font={14}
+        fontWeight="medium"
+        foregroundStyle={'label' as Color}
+      >
+        {region.name}
+      </Text>
+      <Image
+        systemName="chevron.up.chevron.down"
+        font={11}
+        fontWeight="semibold"
+        foregroundStyle={SECONDARY as Color}
+      />
+    </HStack>
+  )
+}
+
+function RegionPicker({
+  selected,
+  onSelect
+}: {
+  selected: string
+  onSelect: (code: string) => void
+}) {
+  const dismiss = Navigation.useDismiss()
+  return (
+    <ScrollView frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}>
+      <VStack
+        spacing={0}
+        alignment="leading"
+        padding={{ horizontal: 16, top: 12, bottom: 24 }}
+        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+      >
+        <Text
+          font={13}
+          foregroundStyle={SECONDARY as Color}
+          padding={{ horizontal: 16, bottom: 8 }}
+        >
+          APP STORE STOREFRONT
+        </Text>
+        <VStack
+          spacing={0}
+          background={{
+            style: 'systemBackground' as Color,
+            shape: { type: 'rect', cornerRadius: 14 }
+          }}
+          clipShape={{ type: 'rect', cornerRadius: 14 }}
+          frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+        >
+          {REGIONS.map((r, i) => (
+            <VStack key={r.code} spacing={0}>
+              <Button
+                action={() => {
+                  onSelect(r.code)
+                  dismiss()
+                }}
+                buttonStyle="plain"
+              >
+                <HStack
+                  spacing={12}
+                  padding={{ horizontal: 16, vertical: 11 }}
+                  frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+                  contentShape="rect"
+                >
+                  <Text font={22}>{r.flag}</Text>
+                  <Text
+                    font={17}
+                    foregroundStyle={'label' as Color}
+                    frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+                  >
+                    {r.name}
+                  </Text>
+                  <Text font={13} foregroundStyle={TERTIARY as Color}>
+                    {r.code.toUpperCase()}
+                  </Text>
+                  {r.code === selected ? (
+                    <Image
+                      systemName="checkmark"
+                      font={16}
+                      fontWeight="semibold"
+                      foregroundStyle={TINT_BLUE as Color}
+                    />
+                  ) : null}
+                </HStack>
+              </Button>
+              {i < REGIONS.length - 1 ? (
+                <Divider padding={{ leading: 50 }} />
+              ) : null}
+            </VStack>
+          ))}
+        </VStack>
+        <Text
+          font={13}
+          foregroundStyle={SECONDARY as Color}
+          padding={{ horizontal: 16, top: 8 }}
+        >
+          Results come from the selected country's App Store. Switch regions to
+          find apps that aren't published in your storefront.
+        </Text>
+      </VStack>
+    </ScrollView>
+  )
+}
+
 export function SearchSheet({
   initialQuery,
   onClose,
@@ -323,6 +473,13 @@ export function SearchSheet({
   )
   const [results, setResults] = useState<ITunesApp[]>([])
   const [searchPresented, setSearchPresented] = useState(false)
+  const [region, setRegion] = useState<string>(() => {
+    try {
+      return Storage.get<string>(REGION_STORAGE_KEY) || DEFAULT_REGION
+    } catch {
+      return DEFAULT_REGION
+    }
+  })
   const reqIdRef = useRef(0)
 
   useEffect(() => {
@@ -330,7 +487,7 @@ export function SearchSheet({
     return () => clearTimeout(handle)
   }, [])
 
-  const runSearch = (q: string) => {
+  const runSearch = (q: string, countryCode: string) => {
     const trimmed = q.trim()
     if (!trimmed) {
       setState('empty')
@@ -341,7 +498,7 @@ export function SearchSheet({
     const reqId = ++reqIdRef.current
     const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
       trimmed
-    )}&entity=software&country=us&limit=10`
+    )}&entity=software&country=${countryCode}&limit=10`
     fetch(url)
       .then((r) => r.json())
       .then((data: { resultCount: number; results: ITunesApp[] }) => {
@@ -369,9 +526,20 @@ export function SearchSheet({
       setResults([])
       return
     }
-    const handle = setTimeout(() => runSearch(trimmed), 350)
+    const handle = setTimeout(() => runSearch(trimmed, region), 350)
     return () => clearTimeout(handle)
-  }, [query])
+  }, [query, region])
+
+  const handleRegionChange = (code: string) => {
+    setRegion(code)
+    try {
+      Storage.set(REGION_STORAGE_KEY, code)
+    } catch (e) {
+      console.error('Failed to save region', e)
+    }
+  }
+
+  const current = regionFor(region)
 
   return (
     <NavigationStack>
@@ -397,6 +565,27 @@ export function SearchSheet({
         }}
       >
         <ScrollView>
+          <HStack
+            padding={{ horizontal: 12, top: 4, bottom: 0 }}
+            frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+          >
+            <NavigationLink
+              destination={
+                <RegionPicker
+                  selected={region}
+                  onSelect={handleRegionChange}
+                />
+              }
+            >
+              <HStack
+                padding={{ horizontal: 6, vertical: 6 }}
+                contentShape="rect"
+              >
+                <RegionPill region={current} />
+              </HStack>
+            </NavigationLink>
+            <Spacer />
+          </HStack>
           {state === 'empty' ? <SheetEmpty /> : null}
           {state === 'loading' ? <SheetLoading /> : null}
           {state === 'results' ? (
@@ -406,7 +595,7 @@ export function SearchSheet({
             <SheetNoResults query={query} onUseManual={onClose} />
           ) : null}
           {state === 'error' ? (
-            <SheetError onRetry={() => runSearch(query)} />
+            <SheetError onRetry={() => runSearch(query, region)} />
           ) : null}
         </ScrollView>
       </VStack>
