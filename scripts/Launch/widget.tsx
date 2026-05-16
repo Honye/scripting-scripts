@@ -18,6 +18,8 @@ import {
   DEFAULT_APPS,
   DEFAULT_CONFIG,
   FILE_PATH,
+  FOLDERS_PATH,
+  Folder,
   getIconCachePath
 } from './constants'
 import { OpenAppIntent } from './app_intents'
@@ -165,6 +167,19 @@ export function LauncherWidget({
 
   if (!apps) {
     apps = DEFAULT_APPS
+  }
+
+  const folderParam = Widget.parameter?.trim()
+  if (folderParam) {
+    try {
+      const foldersData: Folder[] = FileManager.existsSync(FOLDERS_PATH)
+        ? JSON.parse(FileManager.readAsStringSync(FOLDERS_PATH))
+        : []
+      const folder = foldersData.find(f => f.name === folderParam)
+      apps = folder ? apps.filter(a => a.folderId === folder.id) : []
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   if (!propConfig) {

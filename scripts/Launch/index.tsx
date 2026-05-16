@@ -16,6 +16,8 @@ import {
   Section,
   Spacer,
   Stepper,
+  Tab,
+  TabView,
   Text,
   TextField,
   VStack,
@@ -34,15 +36,201 @@ import {
   DEFAULT_APPS,
   DEFAULT_CONFIG,
   FILE_PATH,
+  FOLDERS_PATH,
+  Folder,
   getIconCachePath
 } from './constants'
 import { ITunesApp, SearchSheet } from './SearchSheet'
 
+function FolderNameEditor({
+  folder,
+  onSave
+}: {
+  folder?: Folder
+  onSave: (name: string) => void
+}) {
+  const [name, setName] = useState(folder?.name ?? '')
+  const dismiss = Navigation.useDismiss()
+
+  return (
+    <Form navigationTitle={folder ? 'Rename Folder' : 'New Folder'}>
+      <Section>
+        <TextField title="Folder Name" value={name} onChanged={setName} />
+      </Section>
+      <Section>
+        <Button
+          title="Save"
+          action={() => {
+            if (name.trim()) {
+              onSave(name.trim())
+              dismiss()
+            }
+          }}
+        />
+      </Section>
+    </Form>
+  )
+}
+
+function AddExistingAppView({
+  apps,
+  onAdd
+}: {
+  apps: AppItem[]
+  onAdd: (item: AppItem) => void
+}) {
+  const dismiss = Navigation.useDismiss()
+
+  return (
+    <List navigationTitle="Add Apps">
+      <Section>
+        {apps.map(item => (
+          <Button
+            key={item.id}
+            action={() => {
+              onAdd(item)
+              dismiss()
+            }}
+            buttonStyle="plain"
+          >
+            <HStack>
+              <AppIconView
+                icon={item.icon}
+                iconType={item.iconType}
+                color={item.color}
+              />
+              <Text font={16}>{item.name}</Text>
+            </HStack>
+          </Button>
+        ))}
+      </Section>
+    </List>
+  )
+}
+
+function FolderDetail({
+  folder,
+  allApps,
+  folders,
+  onUpdateApp,
+  onDeleteFolder,
+  onRenameFolder
+}: {
+  folder: Folder
+  allApps: AppItem[]
+  folders: Folder[]
+  onUpdateApp: (item: AppItem) => void
+  onDeleteFolder: (id: string) => void
+  onRenameFolder: (id: string, name: string) => void
+}) {
+  const folderApps = allApps.filter(a => a.folderId === folder.id)
+  const otherApps = allApps.filter(a => a.folderId !== folder.id)
+  const dismiss = Navigation.useDismiss()
+
+  return (
+    <List
+      navigationTitle={folder.name}
+      toolbar={{
+        topBarTrailing: [
+          <NavigationLink
+            key="rename"
+            destination={
+              <FolderNameEditor
+                folder={folder}
+                onSave={(name) => onRenameFolder(folder.id, name)}
+              />
+            }
+          >
+            <Image systemName="pencil" />
+          </NavigationLink>,
+          <Button
+            key="delete"
+            title="Delete"
+            systemImage="trash"
+            action={() => {
+              onDeleteFolder(folder.id)
+              dismiss()
+            }}
+          />
+        ]
+      }}
+    >
+      <Section>
+        {folderApps.map(item => (
+          <NavigationLink
+            key={item.id}
+            destination={
+              <AppEditor item={item} folders={folders} onSave={onUpdateApp} />
+            }
+          >
+            <HStack>
+              <AppIconView
+                icon={item.icon}
+                iconType={item.iconType}
+                color={item.color}
+              />
+              <VStack alignment="leading">
+                <Text font={16}>{item.name}</Text>
+                <Text font={12} opacity={0.6} lineLimit={1}>
+                  {item.mode === 'bundleId' ? (item.bundleId ?? '') : item.url}
+                </Text>
+              </VStack>
+            </HStack>
+          </NavigationLink>
+        ))}
+        <NavigationLink
+          destination={
+            <AppEditor
+              folders={folders}
+              initialFolderId={folder.id}
+              onSave={(item) => onUpdateApp({ ...item, folderId: folder.id })}
+            />
+          }
+        >
+          <HStack>
+            <Image
+              systemName="plus.circle.fill"
+              foregroundStyle={'systemGreen' as Color}
+            />
+            <Text>Add New App</Text>
+          </HStack>
+        </NavigationLink>
+      </Section>
+      {otherApps.length > 0 && (
+        <Section>
+          <NavigationLink
+            destination={
+              <AddExistingAppView
+                apps={otherApps}
+                onAdd={(item) =>
+                  onUpdateApp({ ...item, folderId: folder.id })
+                }
+              />
+            }
+          >
+            <HStack>
+              <Image
+                systemName="plus.square.on.square"
+                foregroundStyle={'systemBlue' as Color}
+              />
+              <Text>Add Existing App</Text>
+            </HStack>
+          </NavigationLink>
+        </Section>
+      )}
+    </List>
+  )
+}
+
 function AppEditor({
   item,
+  folders = [],
+  initialFolderId,
   onSave
 }: {
   item?: AppItem
+  folders?: Folder[]
+  initialFolderId?: string
   onSave: (item: AppItem) => void
 }) {
   const [name, setName] = useState(item?.name ?? '')
@@ -54,6 +242,9 @@ function AppEditor({
     'symbol' | 'image' | 'transparent_image'
   >(item?.iconType ?? 'symbol')
   const [color, setColor] = useState<Color>((item?.color ?? '#007AFF') as Color)
+  const [folderId, setFolderId] = useState<string | undefined>(
+    item?.folderId ?? initialFolderId
+  )
   const [searchOpen, setSearchOpen] = useState(false)
   const dismiss = Navigation.useDismiss()
 
@@ -189,6 +380,21 @@ function AppEditor({
         </ColorPicker>
       </Section>
 
+      {folders.length > 0 && (
+        <Section header={<Text>Folder</Text>}>
+          <Picker
+            title="Folder"
+            value={folderId ?? ''}
+            onChanged={(v: string) => setFolderId(v || undefined)}
+          >
+            <Text tag="">No Folder</Text>
+            {folders.map(f => (
+              <Text key={f.id} tag={f.id}>{f.name}</Text>
+            ))}
+          </Picker>
+        </Section>
+      )}
+
       <Section>
         <Button
           title="Save"
@@ -201,7 +407,8 @@ function AppEditor({
               bundleId,
               icon,
               iconType,
-              color: color as unknown as string
+              color: color as unknown as string,
+              folderId
             })
             dismiss()
           }}
@@ -246,6 +453,7 @@ function AppIconView({
 
 function App() {
   const apps = useObservable<AppItem[]>([])
+  const [folders, setFolders] = useState<Folder[]>([])
   const [shape, setShape] = useState<'rounded' | 'circle'>(DEFAULT_CONFIG.shape)
   const [iconSize, setIconSize] = useState(DEFAULT_CONFIG.iconSize)
   const [spacing, setSpacing] = useState(DEFAULT_CONFIG.spacing)
@@ -255,7 +463,6 @@ function App() {
   const [isLoaded, setIsLoaded] = useState(false)
   const dismiss = Navigation.useDismiss()
 
-  // Load data
   useEffect(() => {
     try {
       if (FileManager.existsSync(FILE_PATH)) {
@@ -267,6 +474,10 @@ function App() {
           FileManager.createDirectory(BASE_PATH)
         }
         FileManager.writeAsStringSync(FILE_PATH, JSON.stringify(DEFAULT_APPS))
+      }
+
+      if (FileManager.existsSync(FOLDERS_PATH)) {
+        setFolders(JSON.parse(FileManager.readAsStringSync(FOLDERS_PATH)))
       }
 
       if (FileManager.existsSync(CONFIG_PATH)) {
@@ -286,7 +497,6 @@ function App() {
     }
   }, [])
 
-  // Persist apps data
   useEffect(() => {
     if (!isLoaded) return
     try {
@@ -299,6 +509,19 @@ function App() {
       console.error(e)
     }
   }, [apps.value, isLoaded])
+
+  useEffect(() => {
+    if (!isLoaded) return
+    try {
+      if (!FileManager.existsSync(BASE_PATH)) {
+        FileManager.createDirectory(BASE_PATH)
+      }
+      FileManager.writeAsStringSync(FOLDERS_PATH, JSON.stringify(folders))
+      Widget.reloadAll()
+    } catch (e) {
+      console.error(e)
+    }
+  }, [folders, isLoaded])
 
   function saveConfig(
     s: 'rounded' | 'circle',
@@ -338,7 +561,6 @@ function App() {
     }
 
     try {
-      // If it looks like a URL, try to download it
       if (item.icon.startsWith('http')) {
         const image = await UIImage.fromURL(item.icon)
         if (image) {
@@ -367,137 +589,208 @@ function App() {
     cacheAppIcon(item)
   }
 
+  function addFolder(name: string) {
+    setFolders([
+      ...folders,
+      { id: Math.random().toString(36).slice(2), name }
+    ])
+  }
+
+  function deleteFolder(id: string) {
+    setFolders(folders.filter(f => f.id !== id))
+    apps.setValue(
+      apps.value.map(a => (a.folderId === id ? { ...a, folderId: undefined } : a))
+    )
+  }
+
+  function renameFolder(id: string, name: string) {
+    setFolders(folders.map(f => (f.id === id ? { ...f, name } : f)))
+  }
+
   return (
-    <NavigationStack>
-      <List
-        navigationTitle="Launch"
-        toolbar={{
-          topBarLeading: [
-            <Button title="Close" systemImage="xmark" action={dismiss} />
-          ],
-          confirmationAction: [
-            <EditButton />,
-            <NavigationLink
-              destination={
-                <AppEditor
-                  onSave={(item) => {
-                    updateApp(item)
-                  }}
-                />
-              }
-            >
-              <Image systemName="plus" />
-            </NavigationLink>
-          ]
-        }}
-      >
-        <Section header={<Text>Settings</Text>}>
-          <Picker
-            title="Icon Shape"
-            value={shape}
-            onChanged={(v: string) =>
-              saveConfig(
-                v as 'rounded' | 'circle',
-                iconSize,
-                spacing,
-                accentedMode
-              )
-            }
-          >
-            <Text tag="rounded">Rounded Rectangle</Text>
-            <Text tag="circle">Circle</Text>
-          </Picker>
-          <Stepper
-            onIncrement={() => {
-              if (iconSize < 100)
-                saveConfig(shape, iconSize + 1, spacing, accentedMode)
-            }}
-            onDecrement={() => {
-              if (iconSize > 20)
-                saveConfig(shape, iconSize - 1, spacing, accentedMode)
+    <TabView>
+      <Tab title="Apps" systemImage="square.grid.2x2">
+        <NavigationStack>
+          <List
+            navigationTitle="Apps"
+            toolbar={{
+              topBarLeading: [
+                <Button title="Close" systemImage="xmark" action={dismiss} />
+              ],
+              confirmationAction: [
+                <EditButton />,
+                <NavigationLink
+                  destination={
+                    <AppEditor
+                      folders={folders}
+                      onSave={(item) => updateApp(item)}
+                    />
+                  }
+                >
+                  <Image systemName="plus" />
+                </NavigationLink>
+              ]
             }}
           >
-            <HStack>
-              <Text>Icon Size</Text>
-              <Spacer />
-              <Text opacity={0.5}>{iconSize.toString()}</Text>
-            </HStack>
-          </Stepper>
+            <Section>
+              <ForEach
+                data={apps}
+                editActions="all"
+                builder={(item) => (
+                  <NavigationLink
+                    key={item.id}
+                    destination={
+                      <AppEditor item={item} folders={folders} onSave={updateApp} />
+                    }
+                  >
+                    <HStack>
+                      <AppIconView
+                        icon={item.icon}
+                        iconType={item.iconType}
+                        color={item.color}
+                      />
+                      <VStack alignment="leading">
+                        <Text font={16}>{item.name}</Text>
+                        <HStack spacing={4}>
+                          <Text font={12} opacity={0.6} lineLimit={1}>
+                            {item.mode === 'bundleId'
+                              ? (item.bundleId ?? '')
+                              : item.url}
+                          </Text>
+                          {item.folderId ? (
+                            <Text font={11} foregroundStyle={'systemBlue' as Color}>
+                              {folders.find(f => f.id === item.folderId)?.name ?? ''}
+                            </Text>
+                          ) : null}
+                        </HStack>
+                      </VStack>
+                    </HStack>
+                  </NavigationLink>
+                )}
+              />
+            </Section>
+          </List>
+        </NavigationStack>
+      </Tab>
 
-          <Stepper
-            onIncrement={() => {
-              if (spacing < 50)
-                saveConfig(shape, iconSize, spacing + 1, accentedMode)
-            }}
-            onDecrement={() => {
-              if (spacing > 0)
-                saveConfig(shape, iconSize, spacing - 1, accentedMode)
-            }}
-          >
-            <HStack>
-              <Text>Spacing</Text>
-              <Spacer />
-              <Text opacity={0.5}>{spacing.toString()}</Text>
-            </HStack>
-          </Stepper>
-
-          <Picker
-            title="Icon Rendering Mode"
-            value={accentedMode}
-            onChanged={(v: string) =>
-              saveConfig(
-                shape,
-                iconSize,
-                spacing,
-                v as Config['widgetAccentedRenderingMode']
-              )
-            }
-          >
-            <Text tag="fullColor">Full Color</Text>
-            <Text tag="accented">Accented</Text>
-            <Text tag="desaturated">Desaturated</Text>
-            <Text tag="accentedDesaturated">Accented & Desaturated</Text>
-          </Picker>
-        </Section>
-
-        <Section header={<Text>Apps</Text>}>
-          <ForEach
-            data={apps}
-            editActions="all"
-            builder={(item) => (
-              <NavigationLink
-                key={item.id}
-                destination={<AppEditor item={item} onSave={updateApp} />}
-              >
-                <HStack>
-                  <AppIconView
-                    icon={item.icon}
-                    iconType={item.iconType}
-                    color={item.color}
-                  />
-                  <VStack alignment="leading">
-                    <Text font={16}>{item.name}</Text>
-                    <Text font={12} opacity={0.6} lineLimit={1}>
-                      {item.mode === 'bundleId'
-                        ? (item.bundleId ?? '')
-                        : item.url}
+      <Tab title="Folders" systemImage="folder">
+        <NavigationStack>
+          <List navigationTitle="Folders">
+            <Section>
+              {folders.map(folder => (
+                <NavigationLink
+                  key={folder.id}
+                  destination={
+                    <FolderDetail
+                      folder={folder}
+                      allApps={apps.value}
+                      folders={folders}
+                      onUpdateApp={updateApp}
+                      onDeleteFolder={deleteFolder}
+                      onRenameFolder={renameFolder}
+                    />
+                  }
+                >
+                  <HStack>
+                    <Image
+                      systemName="folder.fill"
+                      foregroundStyle={'systemBlue' as Color}
+                    />
+                    <Text>{folder.name}</Text>
+                    <Spacer />
+                    <Text opacity={0.5}>
+                      {apps.value
+                        .filter(a => a.folderId === folder.id)
+                        .length.toString()}
                     </Text>
-                  </VStack>
+                  </HStack>
+                </NavigationLink>
+              ))}
+              <NavigationLink destination={<FolderNameEditor onSave={addFolder} />}>
+                <HStack>
+                  <Image
+                    systemName="folder.badge.plus"
+                    foregroundStyle={'systemBlue' as Color}
+                  />
+                  <Text>Add Folder</Text>
                 </HStack>
               </NavigationLink>
-            )}
-          />
-        </Section>
-        <Section>
-          <Button
-            title="Preview Widget"
-            action={async () => {
-              await Widget.preview({ family: 'systemMedium' })
-            }}
-          />
-        </Section>
-      </List>
-    </NavigationStack>
+            </Section>
+          </List>
+        </NavigationStack>
+      </Tab>
+
+      <Tab title="Settings" systemImage="gear">
+        <NavigationStack>
+          <List navigationTitle="Settings">
+            <Section>
+              <Picker
+                title="Icon Shape"
+                value={shape}
+                onChanged={(v: string) =>
+                  saveConfig(v as 'rounded' | 'circle', iconSize, spacing, accentedMode)
+                }
+              >
+                <Text tag="rounded">Rounded Rectangle</Text>
+                <Text tag="circle">Circle</Text>
+              </Picker>
+              <Stepper
+                onIncrement={() => {
+                  if (iconSize < 100)
+                    saveConfig(shape, iconSize + 1, spacing, accentedMode)
+                }}
+                onDecrement={() => {
+                  if (iconSize > 20)
+                    saveConfig(shape, iconSize - 1, spacing, accentedMode)
+                }}
+              >
+                <HStack>
+                  <Text>Icon Size</Text>
+                  <Spacer />
+                  <Text opacity={0.5}>{iconSize.toString()}</Text>
+                </HStack>
+              </Stepper>
+              <Stepper
+                onIncrement={() => {
+                  if (spacing < 50)
+                    saveConfig(shape, iconSize, spacing + 1, accentedMode)
+                }}
+                onDecrement={() => {
+                  if (spacing > 0)
+                    saveConfig(shape, iconSize, spacing - 1, accentedMode)
+                }}
+              >
+                <HStack>
+                  <Text>Spacing</Text>
+                  <Spacer />
+                  <Text opacity={0.5}>{spacing.toString()}</Text>
+                </HStack>
+              </Stepper>
+              <Picker
+                title="Icon Rendering Mode"
+                value={accentedMode}
+                onChanged={(v: string) =>
+                  saveConfig(shape, iconSize, spacing, v as Config['widgetAccentedRenderingMode'])
+                }
+              >
+                <Text tag="fullColor">Full Color</Text>
+                <Text tag="accented">Accented</Text>
+                <Text tag="desaturated">Desaturated</Text>
+                <Text tag="accentedDesaturated">Accented & Desaturated</Text>
+              </Picker>
+            </Section>
+            <Section>
+              <Button
+                title="Preview Widget"
+                action={async () => {
+                  await Widget.preview({ family: 'systemMedium' })
+                }}
+              />
+            </Section>
+          </List>
+        </NavigationStack>
+      </Tab>
+    </TabView>
   )
 }
 
