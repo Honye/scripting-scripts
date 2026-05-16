@@ -7,6 +7,7 @@ export const BASE_PATH = Path.join(
 export const FILE_PATH = Path.join(BASE_PATH, 'launcher_apps.json')
 export const CONFIG_PATH = Path.join(BASE_PATH, 'launcher_config.json')
 export const CACHE_PATH = Path.join(BASE_PATH, 'cache')
+export const FOLDERS_PATH = Path.join(BASE_PATH, 'launcher_folders.json')
 
 export function getIconCachePath(url: string) {
   if (!url) return ''
@@ -23,6 +24,12 @@ export interface AppItem {
   url: string
   bundleId?: string
   color: string
+  folderId?: string
+}
+
+export interface Folder {
+  id: string
+  name: string
 }
 
 export interface Config {
