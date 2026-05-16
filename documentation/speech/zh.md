@@ -7,6 +7,7 @@
 - **文本转语音**：将文本转换为语音，可自定义语速、音调和音量等选项。
 - **语音管理**：根据语言或语音标识符来选择系统中的可用语音。
 - **Markdown 支持**：将文本作为 Markdown 解析以进行基本格式化。
+- **SSML 支持**：通过 SSML 精细控制停顿、韵律和发音（iOS 16+）。
 - **音频会话管理**：与其他音频源无缝衔接，控制音频会话。
 - **事件监听器**：对语音合成过程中的生命周期事件做出响应。
 
@@ -42,7 +43,8 @@
 
 ### `SpeechSynthesisOptions`
 自定义语音合成的选项：
-- `isMarkdown`（可选）: 将文本视为 Markdown 解析。
+- `isMarkdown`（可选）: 将文本视为 Markdown 解析。与 `isSSML` 互斥。
+- `isSSML`（可选）: 将文本视为 SSML（Speech Synthesis Markup Language）文档解析，必须使用 `<speak>...</speak>` 作为根元素，仅 iOS 16+ 支持。与 `isMarkdown` 互斥。
 - `pitch`, `rate`, `volume`: 用于覆盖全局 `Speech` 设置中的音调、语速和音量。
 - `preUtteranceDelay`, `postUtteranceDelay`: 控制每句开始前与结束后的延迟。
 - `voiceIdentifier`, `voiceLanguage`: 用于覆盖全局语音设置。
@@ -182,5 +184,27 @@ Speech.addListener("progress", (details) => {
 await Speech.speak("Event listening example.")
 Speech.removeListener("progress", listener)
 ```
+
+### 朗读 SSML（iOS 16+）
+
+SSML 允许在文本中嵌入停顿、韵律、发音替换等标记。需要把内容包裹在单个 `<speak>` 根元素内，并传入 `isSSML: true`。
+
+SSML 内联标签（如 `<prosody>`、`<voice>`、`<break>`）优先生效；utterance 级的 `voice` / `rate` / `pitch` / `volume` 选项仍会作为 fallback 应用到未被内联标签覆盖的部分。
+
+如果 SSML 解析失败，Promise 会以 `"Failed to parse SSML representation."` 错误 reject。同时设置 `isMarkdown: true` 与 `isSSML: true` 也会立即 reject 并提示用法错误。
+
+```ts
+await Speech.speak(
+  `<speak>
+     Hello
+     <break time="500ms" />
+     <prosody rate="150%">nice to meet you!</prosody>
+     <sub alias="World Wide Web Consortium">W3C</sub>
+   </speak>`,
+  { isSSML: true }
+)
+```
+
+支持的 SSML 标签包括 `<speak>`、`<break>`、`<prosody>`、`<sub>`、`<phoneme>` 等，详见 Apple 的 [`AVSpeechUtterance.init(ssmlRepresentation:)`](https://developer.apple.com/documentation/avfaudio/avspeechutterance/init(ssmlrepresentation:)) 文档。
 
 通过这些 API，你可以在脚本中实现功能强大的语音合成操作，包括基础的文本转语音、播放控制以及事件回调，为开发者提供灵活且丰富的 TTS 功能。

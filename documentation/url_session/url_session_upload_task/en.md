@@ -36,7 +36,7 @@ Possible values:
 
 ```ts
 if (task.state === "running") {
-  console.log("Upload in progress…")
+  console.log("Upload in progress...")
 }
 ```
 

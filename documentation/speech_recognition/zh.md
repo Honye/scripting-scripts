@@ -26,7 +26,39 @@
 ### `SpeechRecognitionResult`
 表示语音识别的结果：
 - `isFinal`: 表示该转录结果是否完整且最终。
-- `text`: 转录内容，为置信度最高的可展示文本。
+- `text`: `bestTranscription.formattedString` 的便捷别名，为兼容旧代码而保留。
+- `bestTranscription`: 置信度最高的转录（类型为 `SpeechTranscription`）。
+- `transcriptions`: 该段音频的所有候选转录，按置信度从高到低排序（类型为 `SpeechTranscription[]`）。
+- `metadata`: 整段语音的汇总指标。仅在最终结果中提供（iOS 14.5+），类型为 `SpeechRecognitionMetadata`。
+
+---
+
+### `SpeechTranscription`
+一段识别后的转录：
+- `formattedString`: 整段转录拼接为单一、可直接展示的字符串。
+- `segments`: 组成该转录的逐词/逐句片段（类型为 `SpeechTranscriptionSegment[]`）。
+
+> 说话速度（speakingRate）和平均停顿（averagePauseDuration）改由 `SpeechRecognitionResult.metadata` 提供，且仅在最终结果中可用。
+
+---
+
+### `SpeechTranscriptionSegment`
+转录中的单个片段，通常对应一个词：
+- `substring`: 该片段的文本内容。
+- `substringRange`: `substring` 在父转录 `formattedString` 中的 UTF-16 字符范围（`{ location: number, length: number }`）。
+- `timestamp`: 该片段在音频中开始时间的秒数偏移（相对音频起点）。
+- `duration`: 该片段在音频中持续的秒数。
+- `confidence`: 该片段识别结果的置信度，范围 `[0.0, 1.0]`。仅最终结果有意义，中间结果通常为 `0`。
+- `alternativeSubstrings`: 识别器为该片段考虑过的备选词。
+
+---
+
+### `SpeechRecognitionMetadata`
+最终识别结果的汇总语音指标：
+- `speakingRate`: 说话速度（每分钟词数）。
+- `averagePauseDuration`: 词间平均停顿时长（秒）。
+- `speechStartTimestamp`: 用户开始说话在音频中的秒数偏移。
+- `speechDuration`: 实际说话内容的总时长（秒）。
 
 ---
 
@@ -53,6 +85,10 @@
 - `requestOnDeviceRecognition`: 是否将音频数据留在本地进行识别（默认为 `false`）。
 - `taskHint`: 指定识别任务类型（`'confirmation'`, `'dictation'`, `'search'`, `'unspecified'`）。
 - `useDefaultAudioSessionSettings`: 是否使用默认的音频会话设置（默认为 `true`）。
+- `preferredInput`: 首选输入端口。`'auto'`（默认）让系统自动选择；`'builtInMic'` 强制使用
+  设备内置麦克风——即便此时连接了蓝牙耳机也不走耳机麦。配合默认音频会话设置，可以做到
+  「无线耳机播放 + 内置麦克风录音」的分离 I/O，避开蓝牙 HFP 链路对麦克风音质的降级。
+  当设备没有 `builtInMic` 可用时，会静默退回到系统默认输入。
 - `onResult`: 用于处理识别结果的回调函数（参数类型为 `SpeechRecognitionResult`）。
 - `onSoundLevelChanged`: 音量变化时触发的回调函数（可选）。
 
@@ -136,6 +172,41 @@ await SpeechRecognition.recognizeFile({
   }
 })
 ```
+
+### 查看逐词时间戳与候选词
+```ts
+await SpeechRecognition.recognizeFile({
+  filePath: FileManager.join(FileManager.documentDirectory, "audio.m4a"),
+  partialResults: false,
+  onResult: (result) => {
+    if (!result.isFinal) return
+
+    for (const segment of result.bestTranscription.segments) {
+      console.log(
+        `[${segment.timestamp.toFixed(2)}s + ${segment.duration.toFixed(2)}s] `
+          + `${segment.substring}（置信度 ${segment.confidence.toFixed(2)}）`
+      )
+      if (segment.alternativeSubstrings.length > 0) {
+        console.log("  备选：", segment.alternativeSubstrings.join("、"))
+      }
+    }
+
+    if (result.metadata) {
+      console.log("说话速度（每分钟词数）：", result.metadata.speakingRate)
+      console.log("说话总时长（秒）：", result.metadata.speechDuration)
+    }
+
+    if (result.transcriptions.length > 1) {
+      console.log("候选转录：")
+      for (const t of result.transcriptions.slice(1)) {
+        console.log(" -", t.formattedString)
+      }
+    }
+  }
+})
+```
+
+---
 
 ### 停止正在进行的识别
 ```ts

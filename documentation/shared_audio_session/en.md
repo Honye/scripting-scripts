@@ -192,7 +192,99 @@ await SharedAudioSession.setPrefersNoInterruptionsFromSystemAlerts(true)
 
 ---
 
-### 9. **Systemwide Output Volume**
+### 9. **Audio Routing**
+
+iOS chooses input and output audio routes independently. The APIs below let you list available
+input ports, force the recording input to a specific port (typically `builtInMic`), and override
+the output to the device speaker — useful when you want to record from the phone microphone while
+keeping a Bluetooth headset for playback (avoiding the lower-quality bidirectional Bluetooth HFP
+link).
+
+> `setPreferredInput` and `overrideOutputAudioPort` only work after the session is active. Always
+> call `setActive(true)` first.
+
+#### `availableInputs`
+
+The list of input ports the system currently exposes for this session. Bluetooth, USB, and headset
+microphones only appear when the active category options allow them (e.g. `allowBluetoothHFP`).
+
+```typescript
+const inputs = await SharedAudioSession.availableInputs
+for (const port of inputs) {
+  console.log(port.portType, port.portName, port.uid)
+}
+```
+
+#### `currentRoute`
+
+The currently selected input and output ports.
+
+```typescript
+const route = await SharedAudioSession.currentRoute
+console.log('input:', route.inputs[0]?.portType)
+console.log('output:', route.outputs[0]?.portType)
+```
+
+#### `setPreferredInput(input: AudioSessionPort | null)`
+
+Pick a specific input port. Pass `null` to clear the preference. The argument is matched against
+`availableInputs` first by `uid`, then by `portType`. Rejects with `Cannot setPreferredInput before
+setActive(true).` if the session is not active.
+
+```typescript
+await SharedAudioSession.setActive(true)
+const inputs = await SharedAudioSession.availableInputs
+const builtIn = inputs.find(p => p.portType === 'builtInMic')
+if (builtIn) {
+  await SharedAudioSession.setPreferredInput(builtIn)
+}
+```
+
+#### `overrideOutputAudioPort(port: 'speaker' | 'none')`
+
+Force the output to the device speaker, or remove the override. Independent from input selection.
+
+```typescript
+await SharedAudioSession.overrideOutputAudioPort('speaker')
+// later
+await SharedAudioSession.overrideOutputAudioPort('none')
+```
+
+#### `setPrefersBuiltInMicWhenAvailable(enabled: boolean)`
+
+Enable an in-process switch that automatically steers the input back to `builtInMic` whenever it
+becomes available, even after a Bluetooth headset, USB mic, or wired headset is plugged in. The
+output route is left untouched, which is what enables clean I/O separation: built-in mic for input,
+wireless headphones (A2DP) for playback.
+
+The switch is **not persisted** across launches, but it does affect every script running inside the
+host app while the host process is alive. Manual `setPreferredInput` calls (route change reason
+`override`) are not overwritten by the switch.
+
+Enabling the switch immediately attempts to apply the preference once.
+
+```typescript
+await SharedAudioSession.setActive(true)
+await SharedAudioSession.setPrefersBuiltInMicWhenAvailable(true)
+
+// Later, query state:
+const enabled = await SharedAudioSession.prefersBuiltInMicWhenAvailable
+```
+
+#### Route change events
+
+```typescript
+SharedAudioSession.addRouteChangeListener((reason, current) => {
+  console.log('route changed:', reason)
+  console.log('inputs now:', current.inputs.map(p => p.portType))
+})
+```
+
+`reason` is one of `'newDeviceAvailable' | 'oldDeviceUnavailable' | 'categoryChange' | 'override' | 'wakeFromSleep' | 'noSuitableRouteForCategory' | 'routeConfigurationChange' | 'unknown'`.
+
+---
+
+### 10. **Systemwide Output Volume**
 
 #### `outputVolume: number`
 

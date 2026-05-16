@@ -237,7 +237,7 @@ at?: MediaTime
 volume?: number
 ```
 
-* Per-clip gain (0…1)
+* Per-clip gain (0...1)
 * Default: `1`
 
 ---

@@ -131,7 +131,7 @@ Since TSX cannot define SwiftUI property wrappers, Scripting provides:
 
 ```tsx
 <NamespaceReader>
-  {namespace => (…)}
+  {namespace => (...)}
 </NamespaceReader>
 ```
 
@@ -208,7 +208,7 @@ Therefore Scripting provides:
 
 ```tsx
 <NamespaceReader>
-  {namespace => (…)}
+  {namespace => (...)}
 </NamespaceReader>
 ```
 

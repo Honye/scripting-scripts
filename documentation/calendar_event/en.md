@@ -286,7 +286,11 @@ Displays the system event-editing interface and resolves with:
 
 ## 6. Static Methods
 
-### `CalendarEvent.getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
+## `get(identifier: string): Promise<CalendarEvent | null>`
+
+Fetches a calendar event by its identifier.
+
+### `getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
 
 Fetches calendar events within a given date range.
 
@@ -295,7 +299,7 @@ Fetches calendar events within a given date range.
 
 ---
 
-### `CalendarEvent.presentCreateView(): Promise<CalendarEvent | null>`
+### `presentCreateView(): Promise<CalendarEvent | null>`
 
 Displays the system interface for creating a new event.
 

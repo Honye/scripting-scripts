@@ -132,6 +132,72 @@ textInputAutocapitalization?: TextInputAutocapitalization
 
 ---
 
+## `textContentType`
+
+Sets the semantic meaning expected for the text input. The system can use it for autofill and keyboard suggestions.
+
+### Type
+
+```ts
+textContentType?: TextContentType
+```
+
+### Options
+
+* `"cellularEID"`
+* `"cellularIMEI"`
+* `"URL"`
+* `"namePrefix"`
+* `"name"`
+* `"nameSuffix"`
+* `"givenName"`
+* `"middleName"`
+* `"familyName"`
+* `"nickname"`
+* `"organizationName"`
+* `"jobTitle"`
+* `"location"`
+* `"fullStreetAddress"`
+* `"streetAddressLine1"`
+* `"streetAddressLine2"`
+* `"addressCity"`
+* `"addressCityAndState"`
+* `"addressState"`
+* `"postalCode"`
+* `"sublocality"`
+* `"countryName"`
+* `"username"`
+* `"password"`
+* `"newPassword"`
+* `"oneTimeCode"`
+* `"emailAddress"`
+* `"telephoneNumber"`
+* `"creditCardNumber"`
+* `"creditCardExpiration"`
+* `"creditCardExpirationMonth"`
+* `"creditCardExpirationYear"`
+* `"creditCardSecurityCode"`
+* `"creditCardType"`
+* `"creditCardName"`
+* `"creditCardGivenName"`
+* `"creditCardMiddleName"`
+* `"creditCardFamilyName"`
+* `"birthdate"`
+* `"birthdateDay"`
+* `"birthdateMonth"`
+* `"birthdateYear"`
+* `"dateTime"`
+* `"flightNumber"`
+* `"shipmentTrackingNumber"`
+
+### Example
+
+```tsx
+<TextField textContentType="oneTimeCode" />
+```
+
+---
+
 ## `submitScope`
 
 Prevents submission triggers from this view from propagating upward to parent views with submission handlers.

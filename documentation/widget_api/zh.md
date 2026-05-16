@@ -144,6 +144,24 @@ console.log("Widget preview dismissed")
 
 ---
 
+#### `Widget.openApp(bundleID: string): void`
+
+打开指定 bundle ID 对应的 App。此 API 需要 Scripting PRO 权限。
+
+##### 参数说明
+
+* `bundleID` (`string`) – 要打开的 App 的 bundle ID，例如 `"com.apple.MobileSMS"`。
+
+##### 示例
+
+```ts
+Widget.openApp("com.apple.MobileSMS")
+```
+
+> **返回值：** `void`
+
+---
+
 ## 相关类型
 
 ### `WidgetFamily`
@@ -205,4 +223,3 @@ type WidgetRelevance = {
 * `Widget.preview` 仅用于 `index.tsx` 中测试和预览小组件，不会被系统实际渲染。
 * 使用 `Widget.parameter` 时，若参数为结构化数据（如对象），需使用 `JSON.parse()` 解析。
 * 脚本结束后应调用 `Script.exit()` 以确保小组件正常退出。
-

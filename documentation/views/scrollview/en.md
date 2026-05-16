@@ -257,6 +257,110 @@ This modifier configures the scroll behavior, such as paging and alignment strat
 
 ---
 
+## `scrollPosition`
+
+Two-way binds the **id of the leading visible item** in a `ScrollView` to JS state. Mirrors SwiftUI's `.scrollPosition(id:anchor:)` — no `ScrollViewReader` wrapper required.
+
+### Type
+
+```ts
+scrollPosition?:
+  | Observable<string>
+  | Observable<number>
+  | Observable<string | null>
+  | Observable<number | null>
+  | { value: Observable<string | number | null>; anchor?: KeywordPoint | Point }
+  | {
+      value: string | number | null
+      onChanged: (newValue: string | number | null) => void
+      anchor?: KeywordPoint | Point
+    }
+```
+
+### Setup
+
+1. The container directly under the `ScrollView` (typically `LazyVStack` / `LazyHStack` / `VStack`) needs `scrollTargetLayout`.
+2. Each child you want to be a scroll target needs a `key="..."` prop — the bridge maps it to SwiftUI's `.id()`.
+3. Bind `scrollPosition` to a state — `Observable` form or `{ value, onChanged }` form.
+
+### Example
+
+```tsx
+const [visibleId, setVisibleId] = useState<string | null>(null)
+
+<ScrollView
+  scrollPosition={{ value: visibleId, onChanged: setVisibleId, anchor: "top" }}
+>
+  <LazyVStack scrollTargetLayout>
+    {items.map(it => (
+      <HStack key={it.id}>{/* row content */}</HStack>
+    ))}
+  </LazyVStack>
+</ScrollView>
+```
+
+* `id` may be `string` or `number`. Pick the type when initialising the state and stick with it — the bridge dispatches on the runtime type.
+* Setting the state to `null` lets SwiftUI manage the scroll position; setting it to a known id scrolls that item to the anchor.
+* `anchor` is a `UnitPoint`: a string keyword (`"top"` / `"center"` / `"leading"` / ...) or `{ x, y }`.
+
+### Pitfalls
+
+* **Forgetting `scrollTargetLayout`.** Without it, SwiftUI doesn't know which subview is the "current" scroll target — the binding silently does nothing.
+* **Mixing id types.** A `Observable<number>` won't bind against a child whose `key` was rendered as a string. Keep both sides consistent.
+* **Type changes mid-flight.** Initialise the observable with a real value (e.g. `useState<string|null>("first")`) so the bridge can detect the type at modifier time. A purely-`null`-initial observable defaults to the string path.
+* **ScrollViewReader vs scrollPosition.** Don't bind both to the same scroll view — the imperative `scrollTo(id:)` and declarative `scrollPosition` will fight each other. Pick one.
+
+---
+
+## `onScrollTargetVisibilityChange`
+
+iOS 18+. Reports the **set of currently-visible scroll target ids** whenever it changes (filtered by `threshold`). Mirrors SwiftUI's `.onScrollTargetVisibilityChange(idType:threshold:_:)`.
+
+### Type
+
+```ts
+onScrollTargetVisibilityChange?: {
+  idType: "string" | "number"
+  threshold?: number   // 0.0 - 1.0, default 0.5
+  onChanged: (ids: string[] | number[]) => void
+}
+```
+
+### Setup
+
+Same as `scrollPosition`:
+
+1. The layout container needs `scrollTargetLayout`.
+2. Children must be marked with `key="..."` or `key={123}`.
+3. **`idType` must match the runtime type of the keys.** The SwiftUI API is generic, and the bridge has to dispatch statically at modifier-creation time — there's no way to recover the ID type from `[AnyHashable]` at runtime. Use `"string"` for string keys, `"number"` for number keys.
+
+### Example
+
+```tsx
+const [visibleIds, setVisibleIds] = useState<string[]>([])
+
+<ScrollView
+  onScrollTargetVisibilityChange={{
+    idType: "string",
+    threshold: 0.5,
+    onChanged: (ids) => setVisibleIds(ids as string[]),
+  }}
+>
+  <LazyVStack scrollTargetLayout>
+    {items.map(it => <Row key={it.id} />)}
+  </LazyVStack>
+</ScrollView>
+```
+
+### Pitfalls
+
+* **iOS 17 fallback.** On iOS 17 the bridge logs an `API deprecated` warning and skips the modifier — content passes through. Other modifiers are unaffected.
+* **`threshold` semantics.** `0.5` = the view must be at least 50% within the viewport to count as visible. `0` = any pixel triggers; `1` = the entire view must be visible.
+* **Callback frequency.** During scrolling the callback is invoked on the main thread inline (no throttling). A list with ~30 items where ~5 are visible is fine; for very dense lists with rapid scrolling, keep the callback body cheap.
+* **Compatible with `scrollPosition`.** They serve different purposes — `scrollPosition` gives you the leading id, `onScrollTargetVisibilityChange` gives you the entire visible set. Using both on the same scroll view is safe.
+
+---
+
 ## `scrollContentBackground`
 
 Specifies the visibility of the background for scrollable views, such as `ScrollView`, within the current view context.
@@ -308,4 +412,6 @@ This example removes the default background from the scroll view, making it full
 | `defaultScrollAnchor`      | Sets the initial or persistent scroll anchor point in the content          |
 | `scrollTargetLayout`       | Marks a container (like `LazyHStack`) as the scroll target for alignment   |
 | `scrollTargetBehavior`     | Determines how content aligns and scrolls within the scroll view           |
+| `scrollPosition`           | Two-way binds the leading visible item's id to JS state                    |
+| `onScrollTargetVisibilityChange` | iOS 18+, subscribes to the visible id set                            |
 | `scrollContentBackground`  | Sets the visibility of the scroll view’s default background                |

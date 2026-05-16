@@ -51,9 +51,9 @@ Accepted values include:
 
 Examples:
 
-- `"set"` → “Do you want to set…?”
-- `"buy"` → “Do you want to buy…?”
-- `"toggle"` → “Do you want to toggle…?”
+- `"set"` → “Do you want to set...?”
+- `"buy"` → “Do you want to buy...?”
+- `"toggle"` → “Do you want to toggle...?”
 
 Choosing the correct semantic verb improves the clarity of the user-facing dialog.
 

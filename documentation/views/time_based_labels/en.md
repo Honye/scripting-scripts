@@ -10,12 +10,19 @@ Displays a dynamic label representing a single point in time using a specified s
 
 ```ts
 type DateLabelProps = {
+  date: Date
+  style: 'date' | 'time' | 'timer' | 'relative' | 'offset'
+} | {
+  /**
+   * @deprecated Use `date` instead
+   */
   timestamp: number
   style: 'date' | 'time' | 'timer' | 'relative' | 'offset'
 }
 ```
 
-- `timestamp`: A UNIX timestamp in milliseconds representing the date to be 
+- `date`: A `Date` object representing the date to be displayed.
+- `timestamp`: A UNIX timestamp in milliseconds representing the date to be , deprecated, use `date` instead.
 
 - `style`: The display style. Can be: 
   - `"date"`: e.g. `"June 3, 2019"`
@@ -29,12 +36,12 @@ type DateLabelProps = {
 
 ```tsx
 <DateLabel
-  timestamp={Date.now()}
+  date={new Date}
   style="date"
 />
 
 <DateLabel
-  timestamp={Date.now()}
+  date={new Date}
   style="timer"
 />
 ```

@@ -140,7 +140,7 @@ const components = DateComponents.forMonthly(new Date())
 
 * `weekOfYear`：当前年份中的第几周
 
-* `weekday`：星期几（1 = 星期日，2 = 星期一，…，7 = 星期六）
+* `weekday`：星期几（1 = 星期日，2 = 星期一，...，7 = 星期六）
 
 * `weekdayOrdinal`：某星期几在当前月中第几次出现
 

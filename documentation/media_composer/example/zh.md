@@ -263,7 +263,7 @@ exportOptions: {
   是否启用 ducking，默认 `true`
 
 * **duckedVolume**
-  被压低后的外部音频音量（0…1）
+  被压低后的外部音频音量（0...1）
 
 * **attackSeconds**
   在视频原音开始前，音量下降的过渡时间

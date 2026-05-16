@@ -829,13 +829,13 @@ type AVPlayerViewProps = {
  */
 declare const AVPlayerView: FunctionComponent<AVPlayerViewProps>;
 
-type AppIntent<T, R, P> = {
+type AppIntent<T, P = AppIntentProtocol> = {
     script: string;
     name: string;
     protocol: P;
     params: T;
 };
-type AppIntentFactory<T, R, P = AppIntentProtocol> = (params: T) => AppIntent<T, R, P>;
+type AppIntentFactory<T, P = AppIntentProtocol> = (params: T) => AppIntent<T, P>;
 type AppIntentPerform<T, R = void> = (params: T) => Promise<R>;
 declare enum AppIntentProtocol {
     AppIntent = 0,
@@ -870,12 +870,12 @@ declare class AppIntentManager {
         name: string;
         protocol: AppIntentProtocol.AppIntent | AppIntentProtocol.AudioPlaybackIntent | AppIntentProtocol.AudioRecordingIntent | AppIntentProtocol.LiveActivityIntent;
         perform: AppIntentPerform<T, R>;
-    }): AppIntentFactory<T, R>;
+    }): AppIntentFactory<T, AppIntentProtocol>;
     static register<T>(options: {
         name: string;
         protocol: AppIntentProtocol.SnippetIntent;
         perform: AppIntentPerform<T, VirtualNode>;
-    }): AppIntentFactory<T, RangeError, AppIntentProtocol.SnippetIntent>;
+    }): AppIntentFactory<T, AppIntentProtocol.SnippetIntent>;
     private static hasRegistered;
     private static perform;
 }
@@ -898,7 +898,7 @@ type ButtonProps = ({
     /**
      * The AppIntent to execute. AppIntent is only available for `Widget` or `LiveActivity`.
      */
-    intent: AppIntent<any, any, AppIntentProtocol>;
+    intent: AppIntent<any, AppIntentProtocol>;
 } | {
     /**
      * The action to perform when the user triggers the button.
@@ -920,6 +920,135 @@ type ChartScrollPosition<T> = {
     value: T;
     onChanged: (newValue: T) => void;
 };
+/**
+ * Snap scroll deceleration to chart-data boundaries. Mirrors SwiftUI Charts'
+ * `chartScrollTargetBehavior(.valueAligned(unit:matching:majorAlignment:))`.
+ *
+ * The two stop-step forms are mutually exclusive — pick `unit` for numeric axes,
+ * `matching` for date axes. `majorAlignment` controls the secondary "page" snap point
+ * (e.g. snap by day, but page by month).
+ *
+ * @example
+ * ```ts
+ * // Numeric axis: snap every 1 unit, page-align in chunks
+ * chartScrollTargetBehavior={{ unit: 1, majorAlignment: 'page' }}
+ *
+ * // Date axis: snap by day, major-align by month
+ * chartScrollTargetBehavior={{
+ *   matching: new DateComponents({ day: 1 }),
+ *   majorAlignment: { matching: new DateComponents({ month: 1 }) },
+ * }}
+ * ```
+ */
+type ChartScrollTargetBehavior = {
+    /** Numeric stop step. Each scroll deceleration snaps to a multiple of `unit`. */
+    unit?: number;
+    /** Date stop step. Each scroll deceleration snaps to a date matching these components. */
+    matching?: DateComponents;
+    /**
+     * Major alignment, the secondary "page" snap point.
+     * - `'page'` snaps to viewport pages.
+     * - `'unit'` snaps to the same `unit` / `matching` step (i.e. no separate page).
+     * - `{ unit: number }` snaps pages every N numeric units.
+     * - `{ matching: DateComponents }` snaps pages on those calendar boundaries.
+     *
+     * Defaults to `'unit'` if omitted.
+     */
+    majorAlignment?: 'page' | 'unit' | {
+        unit: number;
+    } | {
+        matching: DateComponents;
+    };
+};
+/**
+ * Bridge view of SwiftUI Charts' `ChartProxy`. Use it inside `<ChartOverlay>{(proxy) => ...}</ChartOverlay>`
+ * to convert between screen coordinates and chart data values for hit-testing, custom tooltips,
+ * or computed overlays.
+ *
+ * All methods are synchronous and return `null` when the type token does not match the chart's
+ * actual axis data type (no crash, silent fallback).
+ */
+interface ChartProxy {
+    /**
+     * Reverse-lookup a data value at a given screen point along an axis.
+     * Pass either `atX` or `atY` (relative to the chart's plot area), and a type token telling
+     * the bridge how to decode the underlying `Plottable` value.
+     */
+    value(args: {
+        atX?: number;
+        atY?: number;
+        as: 'string' | 'number' | 'date';
+    }): string | number | Date | null;
+    /**
+     * Forward-lookup the screen coordinate for a data value.
+     * Pass exactly one of `x` / `y` (the plottable value) and the bridge returns the matching
+     * coordinate within the plot area, or `null` when out of range.
+     */
+    position(args: {
+        x?: string | number | Date;
+        y?: string | number | Date;
+    }): {
+        x: number;
+        y: number;
+    } | null;
+    /**
+     * Size of the chart's plot area in points.
+     */
+    readonly plotAreaSize: {
+        width: number;
+        height: number;
+    };
+    /**
+     * Frame of the chart's plot area relative to the chart view's coordinate space.
+     * Resolved by the bridge through a `GeometryReader` so the closure receives a concrete
+     * rect rather than a SwiftUI `Anchor`.
+     */
+    readonly plotAreaFrame: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    /**
+     * Programmatically set the X-axis range selection from screen-space pixel coordinates.
+     * Pair with `chartXSelection({ valueType, from, to, onChanged })` to receive the bound
+     * data values through the binding. Typically called inside a `<ChartGesture>{(proxy) => ...}`
+     * closure, e.g. `proxy.selectXRange({ from: v.startLocation.x, to: v.location.x })`.
+     *
+     * NOTE: `from` / `to` are **screen pixels** along the chart's coordinate space, not data values.
+     */
+    selectXRange(args: {
+        from: number;
+        to: number;
+    }): void;
+    /**
+     * Programmatically set the Y-axis range selection from screen-space pixel coordinates.
+     */
+    selectYRange(args: {
+        from: number;
+        to: number;
+    }): void;
+    /**
+     * Programmatically set the single X-axis selection from a screen-space pixel coordinate.
+     * Pair with `chartXSelection({ valueType, value, onChanged })`.
+     */
+    selectXValue(args: {
+        at: number;
+    }): void;
+    /**
+     * Programmatically set the single Y-axis selection from a screen-space pixel coordinate.
+     */
+    selectYValue(args: {
+        at: number;
+    }): void;
+    /**
+     * Programmatically set the angle selection (pie / donut charts) from an angle in radians.
+     * Pair with `chartAngleSelection`.
+     */
+    selectAngleValue(args: {
+        atRadians: number;
+    }): void;
+}
 type ChartStringSelection = {
     valueType: 'string';
 } & ({
@@ -937,6 +1066,65 @@ type ChartNumberSelection = {
     value: Observable<number | null>;
 });
 type ChartSelection = ChartStringSelection | ChartNumberSelection;
+/**
+ * Range selection on a chart axis. Provide a `string` / `number` / `date` type token plus a
+ * `from` and `to` initial bound, and the bridge wires the selection to SwiftUI Charts'
+ * `chartXSelection(range:)` / `chartYSelection(range:)`. The `onChanged` callback fires whenever
+ * the selection changes; it receives `null` when the selection is cleared.
+ *
+ * Mutually exclusive with the single-value form (`ChartSelection`).
+ *
+ * NOTE: SwiftUI Charts' **default range gestures** (two-finger tap on iOS, drag on macOS) only
+ * respond on **continuous axes** (number / date). On categorical String axes the binding itself
+ * is valid, but the default gesture won't fire — drive it manually with `<ChartGesture>` +
+ * `proxy.selectXRange(...)` instead.
+ */
+type ChartStringRangeSelection = {
+    valueType: 'string';
+} & ({
+    from: string | undefined | null;
+    to: string | undefined | null;
+    onChanged: (newValue: {
+        from: string;
+        to: string;
+    } | null) => void;
+} | {
+    value: Observable<{
+        from: string;
+        to: string;
+    } | null>;
+});
+type ChartNumberRangeSelection = {
+    valueType: 'number';
+} & ({
+    from: number | undefined | null;
+    to: number | undefined | null;
+    onChanged: (newValue: {
+        from: number;
+        to: number;
+    } | null) => void;
+} | {
+    value: Observable<{
+        from: number;
+        to: number;
+    } | null>;
+});
+type ChartDateRangeSelection = {
+    valueType: 'date';
+} & ({
+    from: Date | undefined | null;
+    to: Date | undefined | null;
+    onChanged: (newValue: {
+        from: Date;
+        to: Date;
+    } | null) => void;
+} | {
+    value: Observable<{
+        from: Date;
+        to: Date;
+    } | null>;
+});
+type ChartRangeSelection = ChartStringRangeSelection | ChartNumberRangeSelection | ChartDateRangeSelection;
 type ClosedRange<T> = {
     from: T;
     to: T;
@@ -1014,6 +1202,180 @@ type AnnotationOverflowResolutionStrategy = 'automatic' | 'fit' | 'fitToPlot' | 
  *  - `timeZone`: Identifier for the time zone unit.
  */
 type CalendarComponent = "era" | "year" | "month" | "day" | "hour" | "minute" | "second" | "weekday" | "weekdayOrdinal" | "quarter" | "weekOfMonth" | "weekOfYear" | "yearForWeekOfYear" | "nanosecond" | "calendar" | "timeZone";
+/**
+ * Position of axis marks within the chart.
+ *  - `automatic`: System-chosen position.
+ *  - `leading` / `trailing`: For Y axis.
+ *  - `top` / `bottom`: For X axis.
+ */
+type AxisMarkPosition = 'automatic' | 'leading' | 'trailing' | 'top' | 'bottom';
+/**
+ * Visual presentation preset of axis marks.
+ *  - `automatic`: System-chosen preset.
+ *  - `aligned`: Axis aligns at the plot edge.
+ *  - `extended`: Axis extends past the plot edge.
+ *  - `inset`: Axis sits inside the plot region.
+ */
+type AxisMarkPreset = 'automatic' | 'aligned' | 'extended' | 'inset';
+/**
+ * Orientation of an axis value label.
+ */
+type AxisMarkOrientation = 'automatic' | 'horizontal' | 'vertical' | 'verticalReversed';
+/**
+ * Strategy used when axis value labels collide.
+ *  - `automatic`: System default (currently `greedy`).
+ *  - `greedy`: Hide later labels that overlap earlier ones.
+ *  - `truncate`: Truncate the label text.
+ *  - `disabled`: Allow overlap.
+ */
+type AxisValueLabelCollisionResolution = 'automatic' | 'greedy' | 'truncate' | 'disabled';
+/**
+ * Format token for an axis value label. Maps 1-1 to a SwiftUI format style on the bridge side.
+ *  - `number` → numeric default.
+ *  - `percent` → percent style.
+ *  - `currency` → currency (uses device locale).
+ *  - `date` / `time` / `dateTime` → date format styles.
+ */
+type AxisLabelFormat = 'number' | 'percent' | 'currency' | 'date' | 'time' | 'dateTime' | ChartAxisLabelFormat;
+/**
+ * Where the axis marks should be placed.
+ *  - `'automatic'`: Default automatic distribution.
+ *  - `{ type: 'automatic', desiredCount?, roundLowerBound?, roundUpperBound? }`: Automatic with hints.
+ *  - `{ type: 'stride', by, count? }`: Numeric stride for `Double` data.
+ *  - `{ type: 'strideDate', by, count? }`: Calendar-component stride for `Date` data.
+ *  - `{ type: 'values', values }`: Explicit list of values.
+ */
+type AxisMarkValues = 'automatic' | {
+    type: 'automatic';
+    desiredCount?: number;
+    roundLowerBound?: boolean;
+    roundUpperBound?: boolean;
+} | {
+    type: 'stride';
+    by: number;
+    count?: number;
+} | {
+    type: 'strideDate';
+    by: CalendarComponent;
+    count?: number;
+} | {
+    type: 'values';
+    values: number[] | string[] | Date[];
+};
+/**
+ * Configuration for an axis grid line. `true` means use the default grid line; `false` means hide it; an object enables fine-grained control.
+ */
+type AxisGridLineConfig = boolean | {
+    /**
+     * Centers the grid line on the data value.
+     */
+    centered?: boolean;
+    /**
+     * Stroke style of the grid line.
+     */
+    stroke?: StrokeStyle;
+};
+/**
+ * Configuration for an axis tick. `true` means use the default tick; `false` means hide it; an object enables fine-grained control.
+ */
+type AxisTickConfig = boolean | {
+    /**
+     * Centers the tick on the data value.
+     */
+    centered?: boolean;
+    /**
+     * Length of the tick line.
+     */
+    length?: number;
+    /**
+     * Stroke style of the tick line.
+     */
+    stroke?: StrokeStyle;
+};
+/**
+ * Configuration for axis value labels. Several forms are accepted:
+ *  - `false` → hide value labels.
+ *  - `true` → use defaults.
+ *  - `string` → use a literal string for every label (rarely useful, but supported).
+ *  - object → fine-grained control. Set `content` to a `VirtualNode` to render a custom view per tick (note: each tick re-renders).
+ */
+type AxisValueLabelConfig = boolean | string | {
+    /**
+     * Format token applied to the data value. Mutually exclusive with `content`.
+     */
+    format?: AxisLabelFormat;
+    /**
+     * Centers the label on the data value.
+     */
+    centered?: boolean;
+    /**
+     * Anchor used to align the label relative to its tick.
+     */
+    anchor?: 'topLeading' | 'top' | 'topTrailing' | 'leading' | 'center' | 'trailing' | 'bottomLeading' | 'bottom' | 'bottomTrailing';
+    /**
+     * Horizontal spacing between the label and its tick.
+     */
+    horizontalSpacing?: number;
+    /**
+     * Vertical spacing between the label and its tick.
+     */
+    verticalSpacing?: number;
+    /**
+     * Strategy when adjacent labels overlap.
+     */
+    collisionResolution?: AxisValueLabelCollisionResolution;
+    /**
+     * If `true`, the labels affect the layout offset of marks.
+     */
+    offsetsMarks?: boolean;
+    /**
+     * Orientation of the label text.
+     */
+    orientation?: AxisMarkOrientation;
+    /**
+     * Alignment of the label container, mirroring SwiftUI Charts' `AxisValueLabel(multiLabelAlignment:)`.
+     * Accepts the full 9-direction `Alignment` (e.g. `'leading' / 'center' / 'topTrailing'`).
+     */
+    multiLabelAlignment?: Alignment;
+    /**
+     * Custom content for the label. When set, `format` is ignored. Be aware: the content view is re-rendered for every tick.
+     */
+    content?: VirtualNode;
+};
+/**
+ * A declarative description of `chartXAxis(content:)` / `chartYAxis(content:)` content,
+ * mapped to SwiftUI Charts' `AxisMarks` + `AxisGridLine` + `AxisTick` + `AxisValueLabel` on the bridge side.
+ */
+type AxisMarksConfig = {
+    /**
+     * Where the axis sits relative to the plot region.
+     */
+    position?: AxisMarkPosition;
+    /**
+     * Visual presentation preset.
+     */
+    preset?: AxisMarkPreset;
+    /**
+     * Where to place axis marks. Defaults to `'automatic'` if omitted.
+     */
+    values?: AxisMarkValues;
+    /**
+     * Default stroke applied to grid line and tick when each of them does not specify its own stroke.
+     */
+    stroke?: StrokeStyle;
+    /**
+     * Grid line configuration. Defaults to `true` (use the default grid line) when omitted.
+     */
+    gridLine?: AxisGridLineConfig;
+    /**
+     * Tick configuration. Defaults to `true` (use the default tick) when omitted.
+     */
+    tick?: AxisTickConfig;
+    /**
+     * Value label configuration. Defaults to `true` when omitted.
+     */
+    valueLabel?: AxisValueLabelConfig;
+};
 
 /**
  * Hex string: `#FF0033` or `#333`
@@ -1647,17 +2009,72 @@ type SymbolVariants = 'none' | 'circle' | 'square' | 'rectangle' | 'fill' | 'sla
  *  - `palette`: A mode that renders symbols as multiple layers, with different styles applied to the layers.
  */
 type SymbolRenderingMode = 'hierarchical' | 'monochrome' | 'multicolor' | 'palette';
-type SymbolEffect = "appear" | "appearByLayer" | "appearDown" | "appearUp" | "appearWholeSymbol" | "disppear" | "disappearByLayer" | "disappearDown" | "disappearUp" | "disappearWholeSymbol" | "scale" | "scaleByLayer" | "scaleDown" | "scaleUp" | "scaleWholeSymbol" | {
-    /**
-     * A symbol effect to add to the view. Existing effects added by ancestors of the view are preserved, but may be overridden by the new effect. Added effects will be applied to the `Image` views contained by the child view.
-     */
+/**
+ * Trigger-style symbol effects. These are activated by an `isActive` boolean —
+ * flipping it false→true plays the effect once, and (where applicable) true→false
+ * plays the reverse animation.
+ *
+ * - `appear*` / `disappear*` / `scale*`: iOS 17+
+ * - `drawOn*` / `drawOff*`: iOS 26+ (SF Symbols 7). Silently no-ops on earlier iOS.
+ */
+type TriggerSymbolEffect = "appear" | "appearByLayer" | "appearDown" | "appearUp" | "appearWholeSymbol" | "disappear" | "disappearByLayer" | "disappearDown" | "disappearUp" | "disappearWholeSymbol"
+/** @deprecated Typo retained for backward compatibility — prefer `disappear`. */
+ | "disppear" | "scale" | "scaleByLayer" | "scaleDown" | "scaleUp" | "scaleWholeSymbol" | "drawOn" | "drawOnByLayer" | "drawOnWholeSymbol" | "drawOnIndividually" | "drawOff" | "drawOffByLayer" | "drawOffWholeSymbol" | "drawOffIndividually";
+/**
+ * Discrete symbol effects bound to a value — the animation replays each time
+ * the value changes.
+ */
+type DiscreteSymbolEffect = "bounce" | "bounceByLayer" | "bounceDown" | "bounceUp" | "bounceWholeSymbol" | "breathe" | "breatheByLayer" | "breathePlain" | "breathePulse" | "breatheWholeSymbol" | "pulse" | "pulseByLayer" | "pulseWholeSymbol" | "rotate" | "rotateByLayer" | "rotateClockwise" | "rotateCounterClockwise" | "rotateWholeSymbol" | "variableColor" | "variableColorCumulative" | "variableColorDimInactiveLayers" | "variableColorHideInactiveLayers" | "variableColorIterative" | "variableColorNonReversing" | "variableColorReversing" | "wiggle" | "wiggleRight" | "wiggleLeft" | "wiggleBackward" | "wiggleByLayer" | "wiggleClockwise" | "wiggleCounterClockwise" | "wiggleDown" | "wiggleForward" | "wiggleUp" | "wiggleWholeSymbol";
+/**
+ * Options that customize the timing & repetition of a symbol effect.
+ *
+ * Mirrors SwiftUI's `SymbolEffectOptions`. Maps to a builder chain on the
+ * native side (`.default → .speed(...) → (.repeat(...) | .nonRepeating)`).
+ *
+ * - `speed`: Animation speed multiplier. `2` = twice as fast.
+ * - `nonRepeating`: Force a one-shot animation. Mutually exclusive with `repeat`;
+ *   if both are set, `nonRepeating` wins and a warning is emitted.
+ * - `repeat`: Repetition policy.
+ *   - `"continuous"`: Loop forever (iOS 18+; on iOS 17 falls back to `.repeating`).
+ *   - `{ count, delay? }`: Repeat `count` times with optional `delay` (seconds) between cycles
+ *     (iOS 18 `RepeatBehavior.periodic`; on iOS 17 falls back to count-only).
+ *   - `{ delay }`: Periodic with a delay only.
+ */
+type SymbolEffectOptions = {
+    speed?: number;
+    nonRepeating?: boolean;
+    repeat?: "continuous" | {
+        count: number;
+        delay?: number;
+    } | {
+        delay: number;
+        count?: number;
+    };
+};
+type SymbolEffect = "appear" | "appearByLayer" | "appearDown" | "appearUp" | "appearWholeSymbol" | "disappear" | "disappearByLayer" | "disappearDown" | "disappearUp" | "disappearWholeSymbol"
+/** @deprecated Typo retained for backward compatibility — prefer `disappear`. */
+ | "disppear" | "scale" | "scaleByLayer" | "scaleDown" | "scaleUp" | "scaleWholeSymbol"
+/**
+ * Value-bound discrete effect. The animation replays each time `value` changes.
+ */
+ | {
     effect: DiscreteSymbolEffect;
     /**
-     * The value to monitor for changes, the animation is triggered each time the value changes.
+     * The value to monitor for changes. The animation is triggered each time the value changes.
      */
     value: string | number | boolean;
+    options?: SymbolEffectOptions;
+}
+/**
+ * Trigger effect. Animation runs when `isActive` flips false→true (and reverses on
+ * true→false where the effect supports it). Use this form for `drawOn` / `drawOff`
+ * (iOS 26+) and as an alternative to the no-arg form for `appear` / `disappear` / `scale`.
+ */
+ | {
+    effect: TriggerSymbolEffect;
+    isActive: boolean;
+    options?: SymbolEffectOptions;
 };
-type DiscreteSymbolEffect = "bounce" | "bounceByLayer" | "bounceDown" | "bounceUp" | "bounceWholeSymbol" | "breathe" | "breatheByLayer" | "breathePlain" | "breathePulse" | "breatheWholeSymbol" | "pulse" | "pulseByLayer" | "pulseWholeSymbol" | "rotate" | "rotateByLayer" | "rotateClockwise" | "rotateCounterClockwise" | "rotateWholeSymbol" | "variableColor" | "variableColorCumulative" | "variableColorDimInactiveLayers" | "variableColorHideInactiveLayers" | "variableColorIterative" | "wiggle" | "wiggleRight" | "wiggleLeft" | "wiggleBackward" | "wiggleByLayer" | "wiggleClockwise" | "wiggleCounterClockwise" | "wiggleDown" | "wiggleForward" | "wiggleUp" | "wiggleWholeSymbol";
 
 type Font = "largeTitle" | "title" | "title2" | "title3" | "headline" | "subheadline" | "body" | "callout" | "footnote" | "caption" | "caption2";
 type FontWeight = "ultraLight" | "thin" | "light" | "regular" | "medium" | "semibold" | "bold" | "heavy" | "black";
@@ -1684,6 +2101,7 @@ type KeyboardType = 'default' | 'numberPad' | 'phonePad' | 'namePhonePad' | 'URL
  *  - `words`: Defines an autocapitalizing behavior that will capitalize the first letter of every word.
  */
 type TextInputAutocapitalization = "never" | "characters" | "sentences" | "words";
+type TextContentType = "cellularEID" | "cellularIMEI" | "URL" | "namePrefix" | "name" | "nameSuffix" | "givenName" | "middleName" | "familyName" | "nickname" | "organizationName" | "jobTitle" | "location" | "fullStreetAddress" | "streetAddressLine1" | "streetAddressLine2" | "addressCity" | "addressCityAndState" | "addressState" | "postalCode" | "sublocality" | "countryName" | "username" | "password" | "newPassword" | "oneTimeCode" | "emailAddress" | "telephoneNumber" | "creditCardNumber" | "creditCardExpiration" | "creditCardExpirationMonth" | "creditCardExpirationYear" | "creditCardSecurityCode" | "creditCardType" | "creditCardName" | "creditCardGivenName" | "creditCardMiddleName" | "creditCardFamilyName" | "birthdate" | "birthdateDay" | "birthdateMonth" | "birthdateYear" | "dateTime" | "flightNumber" | "shipmentTrackingNumber";
 /**
  * A type that defines various triggers that result in the firing of a submission action.
  *  - `search`: Defines triggers originating from search fields constructed from `searchable` modifiers.
@@ -2027,6 +2445,19 @@ type ChartMarkProps = {
          */
         label: string;
     };
+    /**
+     * VoiceOver-spoken label for this mark. Overrides the SDK's default label (which is
+     * synthesized from the mark's data values). Mirrors SwiftUI's `.accessibilityLabel(_:)`.
+     */
+    accessibilityLabel?: string;
+    /**
+     * VoiceOver-spoken value for this mark. Mirrors SwiftUI's `.accessibilityValue(_:)`.
+     */
+    accessibilityValue?: string;
+    /**
+     * If `true`, this mark is excluded from VoiceOver. Mirrors SwiftUI's `.accessibilityHidden(_:)`.
+     */
+    accessibilityHidden?: boolean;
 };
 type BarChartProps = {
     /**
@@ -2231,6 +2662,79 @@ declare const DonutChart: FunctionComponent<{
         angularInset?: number;
     } & ChartMarkProps>;
 }>;
+/** Single-variable function form: `y = fn(x)` over `domain`. */
+type LinePlotFunctionProps = {
+    /** X-axis label. */
+    x: string;
+    /** Y-axis label. */
+    y: string;
+    /** Optional `[from, to]` x range; defaults to chart's visible domain. */
+    domain?: [number, number];
+    /** Function evaluated at each sample x. Must be pure — no setState inside. */
+    fn: (x: number) => number;
+} & ChartMarkProps;
+/** Parametric form: `(x, y) = fn(t)` over `domain`. */
+type LinePlotParametricProps = {
+    x: string;
+    y: string;
+    /** Parameter axis label. */
+    t: string;
+    /** Required `[from, to]` t range. */
+    domain: [number, number];
+    /** Function evaluated at each sample t. Must be pure — no setState inside. */
+    fn: (t: number) => {
+        x: number;
+        y: number;
+    };
+} & ChartMarkProps;
+/**
+ * Plots a smooth curve from a JS function. Mirrors SwiftUI Charts' `LinePlot(...)`
+ * function-form initializers (iOS 18+). On iOS 17 the bridge logs an API-deprecated
+ * warning and renders nothing for this mark.
+ *
+ * Two forms, dispatched on whether `t` is present:
+ * - `{ x, y, domain?, fn: (x) => y }` — single-variable `y = fn(x)`
+ * - `{ x, y, t, domain, fn: (t) => ({ x, y }) }` — parametric curve
+ *
+ * @example
+ * ```tsx
+ * <Chart>
+ *   <LinePlot x="X" y="Y" domain={[0, 10]}
+ *             fn={(x) => Math.sin(x)} />
+ *   <LinePlot x="X" y="Y" t="t" domain={[0, 6.283]}
+ *             fn={(t) => ({ x: Math.cos(t), y: Math.sin(t) })} />
+ * </Chart>
+ * ```
+ *
+ * Performance note: SwiftUI Charts re-samples the function on every layout pass
+ * (≈ viewport-width samples). Each sample is a JSCore call (~5µs). Keep `fn`
+ * cheap — direct `Math.*` is fine, heavy work or large captures will stutter on
+ * scroll / zoom.
+ */
+declare const LinePlot: FunctionComponent<LinePlotFunctionProps | LinePlotParametricProps>;
+/** Area between two y values: `(yStart, yEnd) = fn(x)` over `domain`. */
+type AreaPlotProps = {
+    x: string;
+    yStart: string;
+    yEnd: string;
+    domain?: [number, number];
+    /** Function evaluated at each sample x. Must be pure — no setState inside. */
+    fn: (x: number) => {
+        yStart: number;
+        yEnd: number;
+    };
+} & ChartMarkProps;
+/**
+ * Plots a smooth filled area from a JS function returning `(yStart, yEnd)` per x.
+ * Mirrors SwiftUI Charts' `AreaPlot(x:yStart:yEnd:domain:function:)` (iOS 18+).
+ *
+ * @example
+ * ```tsx
+ * <AreaPlot x="X" yStart="lo" yEnd="hi" domain={[0, 10]}
+ *           fn={(x) => ({ yStart: Math.sin(x) - 0.5, yEnd: Math.sin(x) + 0.5 })} />
+ * ```
+ */
+declare const AreaPlot: FunctionComponent<AreaPlotProps>;
 /**
  * A view that displays a chart.
  *
@@ -2399,31 +2903,31 @@ type DateLabelProps = {
  *  ```tsx
  *  // A style displaying a date, example output: `June 3, 2019`
  *  <DateLabel
- *    timestamp={new Date}
+ *    date={new Date}
  *    style="date"
  *  />
  *
  *  // A style displaying only the time component for a date, example output: `11:23PM`
  *  <DateLabel
- *    timestamp={new Date}
+ *    date={new Date}
  *    style="time"
  *  />
  *
  *  // A style displaying a date as timer counting from now, example output: `2:32`, `36:59:01`
  *  <DateLabel
- *    timestamp={new Date}
+ *    date={new Date}
  *    style="timer"
  *  />
  *
  *  // A style displaying a date as relative to now, example ouput: `2 hours, 23 minutes`,  `1 year, 1 month`
  *  <DateLabel
- *    timestamp={new Date}
+ *    date={new Date}
  *    style="relative"
  *  />
  *
  *  // A style displaying a date as offset from now, example output: `+2 hours`, `-3 months`
  *  <DateLabel
- *    timestamp={new Date}
+ *    date={new Date}
  *    style="offset"
  *  />
  * ```
@@ -3140,6 +3644,10 @@ type TextFieldViewProps = {
      */
     textInputAutocapitalization?: TextInputAutocapitalization;
     /**
+     * Sets the text content type for this view, which the system uses to offer suggestions while the user enters text on an iOS or tvOS device.
+     */
+    textContentType?: TextContentType;
+    /**
      * Sets the keyboard type for this view.
      */
     keyboardType?: KeyboardType;
@@ -3305,13 +3813,13 @@ type ShapeViewProps = {
 
 type ChartViewProps = {
     /**
-     * Sets the visibility of the x axis.
+     * Configures the x axis. Pass a `Visibility` to toggle, or an `AxisMarksConfig` object to fully customize axis marks (grid lines, ticks, value labels, stride/values).
      */
-    chartXAxis?: Visibility;
+    chartXAxis?: Visibility | AxisMarksConfig;
     /**
-     * Sets the visibility of the y axis.
+     * Configures the y axis. Pass a `Visibility` to toggle, or an `AxisMarksConfig` object to fully customize axis marks (grid lines, ticks, value labels, stride/values).
      */
-    chartYAxis?: Visibility;
+    chartYAxis?: Visibility | AxisMarksConfig;
     /**
      * Adds x axis label for charts in the view.
      */
@@ -3399,8 +3907,16 @@ type ChartViewProps = {
      * The set of chart axes to enable scrolling.
      */
     chartScrollableAxes?: AxisSet;
-    chartXSelection?: ChartSelection;
-    chartYSelection?: ChartSelection;
+    /**
+     * X-axis selection. Pass a `ChartSelection` for single-value selection (tap / press) or a
+     * `ChartRangeSelection` for range selection (drag-select). The two forms are mutually exclusive
+     * — the bridge dispatches based on the presence of `from` / `to`.
+     */
+    chartXSelection?: ChartSelection | ChartRangeSelection;
+    /**
+     * Y-axis selection. See `chartXSelection`.
+     */
+    chartYSelection?: ChartSelection | ChartRangeSelection;
     chartAngleSelection?: ChartSelection;
     /**
      * The length of the visible domain measured in data units. For categorical data, this should be the number of visible categories.
@@ -3422,6 +3938,13 @@ type ChartViewProps = {
      * Sets the initial scroll position along the y-axis if you provide a `string`, `number` or `Date` value. Once the user scrolls the scroll view, the value provided to this modifier will have no effect. Specify an object with `value` and `onChange` will associate a binding to be updated when the chart scrolls along the y-axis.
      */
     chartScrollPositionY?: number | string | Date | ChartScrollPosition<string> | ChartScrollPosition<number> | ChartScrollPosition<Date> | Observable<number> | Observable<string> | Observable<Date>;
+    /**
+     * Snap scroll deceleration to chart-data boundaries. Mirrors SwiftUI Charts'
+     * `chartScrollTargetBehavior(.valueAligned(...))`. Pair with `chartScrollableAxes`
+     * (otherwise no scrolling, no snapping). Only the `valueAligned` behavior is bridged
+     * — pick `unit` for numeric axes and `matching` for date axes.
+     */
+    chartScrollTargetBehavior?: ChartScrollTargetBehavior;
 };
 
 /**
@@ -3612,11 +4135,68 @@ type ScrollProps = {
     /**
      * Apply this modifier to layout containers like `LazyHStack` or `VStack` within a `ScrollView` that contain the main repeating content of your `ScrollView`.
      */
-    scrollTargetlayout?: boolean;
+    scrollTargetLayout?: boolean;
     /**
      * Sets the scroll behavior of views scrollable in the provided axes.
      */
     scrollTargetBehavior?: ScrollTargetBehavior;
+    /**
+     * Two-way binds the leading visible item's id to a state. Mirrors SwiftUI's
+     * `.scrollPosition(id:anchor:)`. Requires the scroll content to mark items with
+     * `.id` and the container with `scrollTargetLayout`.
+     *
+     * Forms:
+     * - `Observable<string | number>` — direct binding, `anchor` defaults to leading.
+     * - `{ value, onChanged, anchor? }` — explicit value/callback pair.
+     * - `{ value: Observable<...>, anchor? }` — observable + custom anchor.
+     *
+     * @example
+     * ```tsx
+     * const visibleId = useObservable<string | null>(null)
+     * <ScrollView scrollPosition={visibleId} scrollTargetLayout>
+     *   {ids.map(id => <Item id={id} key={id} />)}
+     * </ScrollView>
+     * ```
+     */
+    scrollPosition?: Observable<string> | Observable<number> | Observable<string | null> | Observable<number | null> | {
+        value: Observable<string> | Observable<number> | Observable<string | null> | Observable<number | null>;
+        anchor?: KeywordPoint | Point;
+    } | {
+        value: string | number | null;
+        onChanged: (newValue: string | number | null) => void;
+        anchor?: KeywordPoint | Point;
+    };
+    /**
+     * Triggers a callback when the set of scroll targets that meet the visibility
+     * threshold changes. Mirrors SwiftUI's `.onScrollTargetVisibilityChange(idType:threshold:_:)`.
+     * Requires iOS 18+. Children must be marked with `key=` (mapped to SwiftUI `.id()`)
+     * and the layout container must enable `scrollTargetLayout`.
+     *
+     * @available iOS 18.0+
+     *
+     * @example
+     * ```tsx
+     * <ScrollView
+     *   onScrollTargetVisibilityChange={{
+     *     idType: "string",
+     *     threshold: 0.5,
+     *     onChanged: (ids) => console.log("visible:", ids),
+     *   }}
+     * >
+     *   <LazyVStack scrollTargetLayout>
+     *     {items.map(it => <Row key={it.id} />)}
+     *   </LazyVStack>
+     * </ScrollView>
+     * ```
+     */
+    onScrollTargetVisibilityChange?: {
+        /** Discriminator for the underlying `key` type. JS `key={...}` of strings → "string"; of numbers → "number". */
+        idType: "string" | "number";
+        /** Fraction of the view's bounds that must be visible to count as "visible". 0.0 to 1.0, default 0.5. */
+        threshold?: number;
+        /** Called with the array of currently-visible ids whenever the visibility set changes. */
+        onChanged: (ids: string[] | number[]) => void;
+    };
     /**
      * Specifies the visibility of the background for scrollable views within this view.
      */
@@ -4805,7 +5385,54 @@ type DragDropProps = {
     };
 };
 
-type CommonViewProps = DialogProps & GesturesProps & FrameSizeProps & ForeAndBackgroundProps & PaddingAndBorderProps & ViewVisibilityProps & ImageViewProps & ViewStyleProps & TextFieldViewProps & TextViewProps & ShapeViewProps & ChartViewProps & ScrollProps & ToolbarsProps & SafeAreaProps & WidgetProps & ExtensionProps & ViewAppearProps & GridViewProps & ModalPresentationViewProps & TransformAndEffectProps & NavigationProps & ListViewProps & EditActionsProps & SymbolProps & TransitionProps & SearchableProps & ViewAnimationProps & LiveActivityProps & EnvironmentsProps & GlassProps & ScreenshotProps & PiPProps & DragDropProps & {
+type StandardKeyboardShortcut = "defaultAction" | "cancelAction";
+type KeyEquivalent = "return" | "tab" | "escape" | "space" | "delete" | "deleteForward" | "home" | "end" | "pageUp" | "pageDown" | "leftArrow" | "rightArrow" | "upArrow" | "downArrow" | "clear";
+type SingleCharacterKeyEquivalent = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+type KeyboardshortcutEventModifier = "all" | "shift" | "command" | "option" | "control" | "capsLock" | "numberPad";
+type KeyboardShortcut = {
+    key: KeyEquivalent | SingleCharacterKeyEquivalent;
+    modifiers: KeyboardshortcutEventModifier[];
+};
+type KeyPressResult = "handled" | "ignored";
+type KeyPressAction = () => KeyPressResult;
+type KeyboardShortcutProps = {
+    /**
+     * The keyboard shortcut to use.
+     * @example
+     * ```tsx
+     * <Button
+     *   title="Sign in"
+     *   action={signIn}
+     *   keyboardShortcut={{
+     *     key: "return",
+     *     modifiers: ["all"]
+     *   }}
+     * />
+     * ```
+     */
+    keyboardShortcut?: StandardKeyboardShortcut | KeyboardShortcut;
+    /**
+     * The key and action to use for the keyboard shortcut.
+     * @example
+     * ```tsx
+     * <Text
+     *   onKeyPress={{
+     *     key: "return",
+     *     action: () => {
+     *       // do something
+     *       return "handled"
+     *     }
+     *   }}
+     * >Content</Text>
+     * ```
+     */
+    onKeyPress?: KeyPressAction | {
+        key: KeyEquivalent | SingleCharacterKeyEquivalent;
+        action: KeyPressAction;
+    };
+};
+
+type CommonViewProps = DialogProps & GesturesProps & FrameSizeProps & ForeAndBackgroundProps & PaddingAndBorderProps & ViewVisibilityProps & ImageViewProps & ViewStyleProps & TextFieldViewProps & TextViewProps & ShapeViewProps & ChartViewProps & ScrollProps & ToolbarsProps & SafeAreaProps & WidgetProps & ExtensionProps & ViewAppearProps & GridViewProps & ModalPresentationViewProps & TransformAndEffectProps & NavigationProps & ListViewProps & EditActionsProps & SymbolProps & TransitionProps & SearchableProps & ViewAnimationProps & LiveActivityProps & EnvironmentsProps & GlassProps & ScreenshotProps & PiPProps & DragDropProps & KeyboardShortcutProps & {
     disabled?: boolean;
     /**
      * A value that indicates the visibility of the non-transient system views overlaying the app.
@@ -4921,9 +5548,12 @@ declare class ViewModifiers {
     progressViewStyle(value: CommonViewProps["progressViewStyle"]): this;
     autocorrectionDisabled(value?: CommonViewProps["autocorrectionDisabled"]): this;
     textInputAutocapitalization(value: CommonViewProps["textInputAutocapitalization"]): this;
+    textContentType(value: CommonViewProps["textContentType"]): this;
     allowsHitTesting(value: CommonViewProps["allowsHitTesting"]): this;
     textFieldStyle(value: CommonViewProps["textFieldStyle"]): this;
     keyboardType(value: CommonViewProps["keyboardType"]): this;
+    keyboardShortcut(value: CommonViewProps["keyboardShortcut"]): this;
+    onKeyPress(value: CommonViewProps["onKeyPress"]): this;
     contentShape(value: CommonViewProps["contentShape"]): this;
     colorConvert(value?: CommonViewProps["colorConvert"]): this;
     clipShape(value: CommonViewProps["clipShape"]): this;
@@ -4967,6 +5597,7 @@ declare class ViewModifiers {
     chartYVisibleDomain(value: CommonViewProps["chartYVisibleDomain"]): this;
     chartScrollPositionX(value: CommonViewProps["chartScrollPositionX"]): this;
     chartScrollPositionY(value: CommonViewProps["chartScrollPositionY"]): this;
+    chartScrollTargetBehavior(value: CommonViewProps["chartScrollTargetBehavior"]): this;
     onSubmit(value: CommonViewProps["onSubmit"]): this;
     submitScope(value?: CommonViewProps["submitScope"]): this;
     submitLabel(value: CommonViewProps["submitLabel"]): this;
@@ -4983,8 +5614,10 @@ declare class ViewModifiers {
     scrollClipDisabled(value?: CommonViewProps["scrollClipDisabled"]): this;
     scrollDismissesKeyboard(value: CommonViewProps["scrollDismissesKeyboard"]): this;
     defaultScrollAnchor(value: CommonViewProps["defaultScrollAnchor"]): this;
-    scrollTargetlayout(value?: CommonViewProps["scrollTargetlayout"]): this;
+    scrollTargetLayout(value?: CommonViewProps["scrollTargetLayout"]): this;
     scrollTargetBehavior(value: CommonViewProps["scrollTargetBehavior"]): this;
+    scrollPosition(value: CommonViewProps["scrollPosition"]): this;
+    onScrollTargetVisibilityChange(value: CommonViewProps["onScrollTargetVisibilityChange"]): this;
     scrollContentBackground(value: CommonViewProps["scrollContentBackground"]): this;
     interactiveDismissDisabled(value?: CommonViewProps["interactiveDismissDisabled"]): this;
     safeAreaPadding(value: CommonViewProps["safeAreaPadding"]): this;
@@ -6163,6 +6796,155 @@ type ScrollViewReaderProps = {
 };
 declare const ScrollViewReader: FunctionComponent<ScrollViewReaderProps>;
 
+/**
+ * Reader-style child of `<Chart>` that gives custom content access to a `ChartProxy`
+ * for hit-testing, custom tooltips, and value↔coordinate conversion. Mirrors SwiftUI Charts'
+ * `chartOverlay(alignment:content:) { proxy in ... }`.
+ *
+ * Place it as a direct child of `<Chart>`. The bridge lifts it out of the children list
+ * and applies it as a `.chartOverlay { proxy in ... }` modifier on the underlying SwiftUI Chart.
+ *
+ * The proxy is injected by the native bridge. On the very first synchronous render (before
+ * SwiftUI has built the chart), `proxy` is `null` and the overlay falls back to `EmptyView`.
+ */
+type ChartOverlayProps = {
+    /**
+     * Alignment of the overlay content within the chart's plot area. Defaults to `'center'`.
+     */
+    alignment?: Alignment;
+    /**
+     * Render function. Receives a non-null `ChartProxy` once SwiftUI has built the chart.
+     */
+    children: (proxy: ChartProxy) => VirtualNode;
+};
+declare const ChartOverlay: FunctionComponent<ChartOverlayProps>;
+
+/**
+ * Reader-style child of `<Chart>` that attaches a custom gesture to the chart and exposes
+ * a `ChartProxy` whose `select*` methods can drive the chart's selection state. Mirrors
+ * SwiftUI Charts' `chartGesture(_:) { proxy in ... }` modifier.
+ *
+ * Use this to implement single-finger range selection on a categorical (String) axis, or
+ * any other custom interaction the default chart gestures don't cover.
+ *
+ * @example
+ * ```tsx
+ * <Chart chartXSelection={{ valueType: "string", from, to, onChanged }}>
+ *   ...marks...
+ *   <ChartGesture>
+ *     {(proxy) =>
+ *       DragGesture({ minDistance: 0 }).onChanged(v => {
+ *         proxy.selectXRange(v.startLocation.x, v.location.x)
+ *       })
+ *     }
+ *   </ChartGesture>
+ * </Chart>
+ * ```
+ */
+type ChartGestureProps = {
+    /**
+     * Builder function. Called every time SwiftUI Charts re-evaluates the chart's gesture closure.
+     * Must return a `GestureInfo` (i.e. the result of `DragGesture()`, `TapGesture()`, etc.).
+     * The returned gesture is wired up via `chartGesture` on the underlying SwiftUI Chart.
+     */
+    children: (proxy: ChartProxy) => GestureInfo<any, any>;
+};
+declare const ChartGesture: FunctionComponent<ChartGestureProps>;
+
+type PlotOp = {
+    kind: string;
+    args?: any;
+};
+/**
+ * Builder-style proxy mirroring SwiftUI Charts' `ChartPlotContent`. Each chained call returns
+ * a new immutable `ChartPlotProxy` whose accumulated `ops` are sent to the bridge and replayed
+ * on the real `ChartPlotContent` view inside `chartPlotStyle { plot in plot.... }`.
+ *
+ * Available modifiers cover the most common 90% of chart-plot styling needs. For anything not
+ * listed here, file a request — we'll add the corresponding op rather than expose a fully
+ * unrestricted view-builder (which would require parsing arbitrary view trees on the Swift side).
+ */
+declare class ChartPlotProxy {
+    private readonly ops;
+    constructor(ops?: PlotOp[]);
+    private push;
+    /** Plot-area background. Pass a color string, a `Material` token, or a dict mixing both with `opacity`. */
+    background(args: Color | Material | {
+        color?: Color;
+        material?: Material;
+        opacity?: number;
+    }): ChartPlotProxy;
+    /** Stroke a border around the plot area. */
+    border(args: {
+        color?: Color;
+        width?: number;
+    }): ChartPlotProxy;
+    /** Constrain the plot area's frame. */
+    frame(args: {
+        width?: number;
+        height?: number;
+    }): ChartPlotProxy;
+    /** Pad the plot area. Pass a number (uniform), an `EdgeInsets`-shaped dict, or no args (default padding). */
+    padding(args?: number | EdgeInsets | {
+        horizontal?: number;
+        vertical?: number;
+    }): ChartPlotProxy;
+    /** Round the corners of the plot area's clip shape. */
+    cornerRadius(radius: number): ChartPlotProxy;
+    /** Multiply the plot area's opacity. */
+    opacity(value: number): ChartPlotProxy;
+    /** Drop-shadow on the plot area. */
+    shadow(args: {
+        color?: Color;
+        radius?: number;
+        x?: number;
+        y?: number;
+    }): ChartPlotProxy;
+    /** Clip the plot area to a shape. `'capsule'` / `'rect'` / `{ rounded: <radius> }`. */
+    clipShape(args: "capsule" | "rect" | {
+        rounded: number;
+    }): ChartPlotProxy;
+    /** Read-only access to the accumulated ops list (used by the bridge serializer). */
+    toJson(): {
+        ops: PlotOp[];
+    };
+}
+/**
+ * Reader-style child of `<Chart>` that styles the chart's plot area. Mirrors SwiftUI Charts'
+ * `chartPlotStyle { plot in plot.background(...).border(...) }` modifier.
+ *
+ * The closure receives a `ChartPlotProxy` and must return a `ChartPlotProxy` (i.e. the result of
+ * any number of chained calls on the input). The bridge then replays those ops on the real
+ * `ChartPlotContent` view on the Swift side.
+ *
+ * @example
+ * ```tsx
+ * <Chart>
+ *   <BarChart marks={...} />
+ *   <ChartPlotStyle>
+ *     {(plot) =>
+ *       plot
+ *         .background({ color: "gray", opacity: 0.1 })
+ *         .border({ color: "gray", width: 1 })
+ *         .frame({ height: 240 })
+ *     }
+ *   </ChartPlotStyle>
+ * </Chart>
+ * ```
+ *
+ * Like `<ChartOverlay>` and `<ChartGesture>`, only the FIRST `<ChartPlotStyle>` child of a chart
+ * is honored. The closure body must remain pure — any `setState` calls inside will trigger an
+ * infinite chart-rebuild loop. Use it as a pure builder.
+ */
+type ChartPlotStyleProps = {
+    /**
+     * Builder function. Receives an empty `ChartPlotProxy` and must return a (possibly transformed)
+     * `ChartPlotProxy` whose accumulated ops describe the desired plot-area style.
+     */
+    children: (plot: ChartPlotProxy) => ChartPlotProxy;
+};
+declare const ChartPlotStyle: FunctionComponent<ChartPlotStyleProps>;
+
 type SectionProps = {
     /**
      * The section’s content.
@@ -6719,7 +7501,7 @@ type ToggleProps = ({
     /**
      * The AppIntent to execute. AppIntent is only available for `Widget` or `LiveActivity`.
      */
-    intent: AppIntent<any, any, AppIntentProtocol>;
+    intent: AppIntent<any, AppIntentProtocol>;
     onChanged?: never;
 } | {
     value: Observable<boolean>;
@@ -6844,6 +7626,46 @@ type VideoRecorderPreviewViewProps = {
  * A view that displays the VideoRecorder preview.
  */
 declare const VideoRecorderPreviewView: FunctionComponent<VideoRecorderPreviewViewProps>;
+
+type CaptureVideoPreviewViewProps = {
+    /**
+     * The capture session to render. Must already have a video input attached
+     * to actually display frames.
+     */
+    session: AVCaptureSession;
+    /**
+     * Optional device backing the input. Passing it enables iOS 17+
+     * `AVCaptureDevice.RotationCoordinator`, so the preview rotates with the
+     * device. Without it the preview keeps the connection's default orientation.
+     */
+    videoDevice?: AVCaptureDevice;
+    /**
+     * The video gravity. Defaults to `resizeAspectFill`.
+     */
+    videoGravity?: 'resizeAspect' | 'resizeAspectFill' | 'resize';
+    /**
+     * Whether the video is mirrored.
+     */
+    isVideoMirrored?: boolean;
+    /**
+     * The radius to use when drawing rounded corners for the view’s background.
+     * Setting the radius to a value greater than 0 causes the view to begin
+     * drawing rounded corners on its background. Setting `masksToBounds` to
+     * true causes the content to be clipped to the rounded corners.
+     * The default value of this property is 0.
+     */
+    cornerRadius?: number;
+    /**
+     * Whether the view clips to its bounds.
+     */
+    masksToBounds?: boolean;
+};
+/**
+ * A view that renders the live preview of any `AVCaptureSession` you have
+ * built. Drop-in alternative to `VideoRecorderPreviewView` when you assemble
+ * your own pipeline.
+ */
+declare const CaptureVideoPreviewView: FunctionComponent<CaptureVideoPreviewViewProps>;
 
 type VStackProps = {
     /**
@@ -7170,7 +7992,7 @@ type ControlWidgetButtonProps = {
     /**
      * The intent to execute when the button is tapped.
      */
-    intent: AppIntent<any, any, AppIntentProtocol>;
+    intent: AppIntent<any, AppIntentProtocol>;
     /**
      * The label of the button.
      */
@@ -7202,7 +8024,7 @@ type ControlWidgetToggleProps<T extends {
     /**
      * The intent to execute when the toggle is tapped. The `AppIntentProtocol` will force to be `SetValueIntent` in this case, so you can set any protocol you want. The parameter type of the intent must extends `{ value: boolean }`.
      */
-    intent: AppIntent<T, any, AppIntentProtocol>;
+    intent: AppIntent<T, AppIntentProtocol>;
     /**
      * The label of the toggle.
      */
@@ -7423,16 +8245,16 @@ declare class IntentFileURLValue extends IntentValue<'fileURL', string> {
 }
 declare class IntentSnippetIntentValue extends IntentValue<'SnippetIntent', {
     value?: IntentAttributedTextValue | IntentFileURLValue | IntentJsonValue | IntentTextValue | IntentURLValue | IntentFileValue | null;
-    snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+    snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
 }> {
     value: {
         value?: IntentAttributedTextValue | IntentFileURLValue | IntentJsonValue | IntentTextValue | IntentURLValue | IntentFileValue | null;
-        snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+        snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
     };
     type: "SnippetIntent";
     constructor(value: {
         value?: IntentAttributedTextValue | IntentFileURLValue | IntentJsonValue | IntentTextValue | IntentURLValue | IntentFileValue | null;
-        snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+        snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
     }, type?: "SnippetIntent");
 }
 declare class IntentViewValue extends IntentValue<'IntentViewValue', {
@@ -7460,16 +8282,16 @@ declare class IntentViewValue extends IntentValue<'IntentViewValue', {
 }
 declare class IntentRequestConfirmationValue extends IntentValue<'RequestConfirmation', {
     actionName: string;
-    snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+    snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
 }> {
     value: {
         actionName: string;
-        snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+        snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
     };
     type: "RequestConfirmation";
     constructor(value: {
         actionName: string;
-        snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+        snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
     }, type?: "RequestConfirmation");
 }
 /**
@@ -7568,7 +8390,7 @@ declare namespace Intent {
      */
     function snippetIntent(options: {
         value?: IntentAttributedTextValue | IntentFileURLValue | IntentJsonValue | IntentTextValue | IntentURLValue | IntentFileValue | null;
-        snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>;
+        snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>;
     }): IntentSnippetIntentValue;
     type ConfirmationActionName = "add" | "addData" | "book" | "buy" | "call" | "checkIn" | "continue" | "create" | "do" | "download" | "filter" | "find" | "get" | "go" | "log" | "open" | "order" | "pay" | "play" | "playSound" | "post" | "request" | "run" | "search" | "send" | "set" | "share" | "start" | "startNavigation" | "toggle" | "turnOff" | "turnOn" | "view";
     /**
@@ -7596,7 +8418,7 @@ declare namespace Intent {
      * @param options.dialog The dialog to display
      * @param options.showDialogAsPrompt Whether to show the dialog as a prompt, defaults to `true`.
      */
-    function requestConfirmation(actionName: ConfirmationActionName, snippetIntent: AppIntent<any, VirtualNode, AppIntentProtocol.SnippetIntent>, options?: {
+    function requestConfirmation(actionName: ConfirmationActionName, snippetIntent: AppIntent<any, AppIntentProtocol.SnippetIntent>, options?: {
         dialog?: Dialog;
         showDialogAsPrompt?: boolean;
     }): Promise<void>;
@@ -8599,8 +9421,9 @@ declare namespace Script {
      *  - `"keyboard"`: The script is running in the custom keyboard extension, "keyboard.tsx" is the entry point.
      *  - `"control_widget"`: The script is running in the control widget, "control_widget_button.tsx" or "control_widget_toggle.tsx" is the entry point.
      *  - `"live_activity"`: The script is running in the live activity extension, "live_activity.tsx" is the entry point.
+     *  - `"translation_ui_provider"`: The script is running in the translation UI provider extension, "translation_ui_provider.tsx" is the entry point.
      */
-    const env: "index" | "widget" | "intent" | "app_intents" | "notification" | "assistant_tool" | "keyboard" | "control_widget" | "live_activity";
+    const env: "index" | "widget" | "intent" | "app_intents" | "notification" | "assistant_tool" | "keyboard" | "control_widget" | "live_activity" | "translation_ui_provider";
     /**
      * Name of the current script.
      */
@@ -8831,6 +9654,10 @@ declare namespace Script {
      */
     type ResumeEventDetails = {
         /**
+         * Whether the script was resumed from the minimized state.
+         */
+        resumeFromMinimized: boolean;
+        /**
          * The widget parameter passed to the script when it was resumed by clicking the widget.
          */
         widgetParameter: string | null;
@@ -8914,6 +9741,10 @@ declare namespace Widget {
      * after clicking the widget, you can access the configuration from this property.
      */
     const parameter: string;
+    /**
+     * Whether transparent background mode is enabled for the current widget instance.
+     */
+    const isTransparentBackground: boolean;
     /**
      * Present the widget UI.
      * @param node UI for rendering widget content.
@@ -9001,6 +9832,11 @@ declare namespace Widget {
      * Reloads the timelines for all Test Widgets.
      */
     function reloadTestWidgets(): void;
+    /**
+     * Opens the app with the specified bundle ID.
+     * @param bundleId The bundle ID of the app to open.
+     */
+    function openApp(bundleId: string): void;
 }
 
 declare const Device: typeof globalThis.Device;
@@ -9017,4 +9853,4 @@ declare global {
     }
 }
 
-export { type AVLayerVideoGravity, AVPlayerView, type AVPlayerViewProps, AbortController, AbortError, AbortEvent, type AbortEventListener, AbortSignal, AccessoryWidgetBackground, type AdaptableTabBarPlacement, type Alignment, type Angle, type AngleValue, type AngularGradient, AnimatedFrames, type AnimatedFramesProps, AnimatedGif, type AnimatedGifProps, AnimatedImage, type AnimatedImageProps, type AnnotationOverflowResolution, type AnnotationOverflowResolutionStrategy, type AnnotationPosition, AppEventListenerManager, AppEvents, type AppIntent, type AppIntentFactory, AppIntentManager, type AppIntentPerform, AppIntentProtocol, AreaChart, AreaStackChart, type Axis, type AxisSet, type BadgeProminence, Bar1DChart, BarChart, type BarChartProps, BarGanttChart, type BarGanttChartProps, BarStackChart, Button, type ButtonBorderShape, type ButtonProps, type ButtonRole, type ButtonStyle, type CalendarComponent, CancelError, type CancelEventListener, CancelToken, type CancelTokenHook, Capsule, Chart, type ChartAxisScaleType, type ChartInterpolationMethod, type ChartMarkProps, type ChartMarkStackingMethod, type ChartNumberSelection, type ChartScrollPosition, type ChartSelection, type ChartStringSelection, type ChartSymbolShape, Circle, type ClockHandRotationEffectPeriod, type ClosedRange, type Color, ColorPicker, type ColorPickerProps, type ColorRenderingMode, type ColorScheme, type ColorSchemeContrast, type ColorStringHex, type ColorStringRGBA, type ColorWithGradientOrOpacity, type CommonViewProps, type ComponentCallback, type ComponentEffect, type ComponentEffectEvent, type ComponentMemo, type ComponentProps, ConcentricRectangle, type ConcentricRectangleProps, type ConcentricRectangleShape, type Consumer, type ConsumerProps, type ContentAvailableViewProps, type ContentAvailableViewWithLabelProps, type ContentAvailableViewWithTitleProps, type ContentMarginPlacement, type ContentMode, type ContentShapeKinds, type ContentTransition, ContentUnavailableView, type Context, ControlGroup, type ControlGroupProps, type ControlGroupStyle, type ControlSize, ControlWidget, ControlWidgetButton, type ControlWidgetButtonProps, type ControlWidgetLabel, ControlWidgetToggle, type ControlWidgetToggleProps, type Cookie, DateIntervalLabel, type DateIntervalLabelProps, DateLabel, type DateLabelProps, DatePicker, type DatePickerComponents, type DatePickerProps, type DatePickerStyle, DateRangeLabel, type DateRangeLabelProps, DefaultToolbarItem, type DefaultToolbarItemProps, Device, DisclosureGroup, type DisclosureGroupProps, type DiscreteSymbolEffect, type Dispatch, Divider, DonutChart, DragGesture, type DragGestureDetails, type DragGestureOptions, type DurationInMilliseconds, type DynamicImageSource, type DynamicShapeStyle, type Edge, type EdgeCornerStyle, type EdgeInsets, type EdgeSet, type EdgeSetOption, EditButton, Editor, type EditorProps, type EffectDestructor, type EffectSetup, Ellipse, EmptyView, type EnvironmentValues, EnvironmentValuesReader, type EnvironmentValuesReaderProps, type FileImageProps, FlowLayout, type FlowLayoutProps, type Font, type FontDesign, type FontWeight, type FontWidth, ForEach, type ForEachComponent, type ForEachDeprecatedProps, type ForEachProps, Form, type FormBinaryData, FormData, type FormProps, type FormStyle, type FunctionComponent, Gauge, type GaugeProps, type GaugeStyle, type GeometryProxy, GeometryReader, type GeometryReaderProps, type Gesture, GestureInfo, GlassEffectContainer, type GlassEffectContainerProps, type Gradient, type GradientStop, Grid, type GridItem, type GridProps, GridRow, type GridRowProps, type GridSize, Group, GroupBox, type GroupBoxProps, type GroupProps, HStack, type HStackProps, Headers, type HeadersInit, HeatMapChart, type HorizontalAlignment, type HorizontalEdge, type HorizontalEdgeSet, type IdProps, Image, type ImageInterpolation, type ImageProps, type ImageRenderOptions, ImageRenderer, type ImageRenderingBehaviorProps, type ImageRenderingMode, type ImageResizable, type ImageResizingMode, type ImageScale, type IndexViewStyle, Intent, IntentAttributedTextValue, IntentFileURLValue, IntentFileValue, IntentImageValue, IntentJsonValue, IntentRequestConfirmationValue, IntentSnippetIntentValue, IntentTextValue, IntentURLValue, IntentValue, IntentViewValue, type InternalWidgetRender, type KeyboardType, type KeywordPoint, type KeywordsColor, Label, type LabelProps, type LabelStyle, LazyHGrid, type LazyHGridProps, LazyHStack, type LazyHStackProps, LazyVGrid, type LazyVGridProps, LazyVStack, type LazyVStackProps, LineCategoryChart, LineChart, type LineStylePattern, type LinearGradient, Link, type LinkProps, List, type ListProps, type ListSectionSpacing, type ListStyle, LiveActivity, type LiveActivityActivitiesEnabledListener, type LiveActivityActivityUpdateListener, type LiveActivityDetail, type LiveActivityEndOptions, type LiveActivityOptions, type LiveActivityState, LiveActivityUI, type LiveActivityUIBuilder, LiveActivityUIExpandedBottom, LiveActivityUIExpandedCenter, LiveActivityUIExpandedLeading, LiveActivityUIExpandedTrailing, type LiveActivityUIExpandedViewProps, type LiveActivityUIProps, type LiveActivityUpdateOptions, LivePhotoView, type LivePhotoViewProps, LongPressGesture, type LongPressGestureOptions, MagnifyGesture, type MagnifyGestureValue, type MarkDimension, Markdown, type MarkdownProps, type MatchedGeometryProperties, type Material, Menu, type MenuProps, type MenuStyle, type MeshGradient, type ModalPresentation, type ModalPresentationStyle, MultiColumnsPicker, type MultiColumnsPickerProps, MultiPicker, type MutableRefObject, NamespaceReader, type NamespaceReaderProps, Navigation, type NavigationBarTitleDisplayMode, NavigationDestination, type NavigationDestinationProps, NavigationLink, type NavigationLinkProps, NavigationSplitView, type NavigationSplitViewColumn, type NavigationSplitViewProps, type NavigationSplitViewStyle, type NavigationSplitViewVisibility, NavigationStack, type NavigationStackProps, type NetworkImageProps, type NormalProgressViewProps, Notification, type NotificationAction, type NotificationInfo, type NotificationInterruptionLevel, type NotificationRequest, type PIPStatus, type ParagraphStyle, Path, Picker, type PickerProps, type PickerStyle, type PickerValue, PieChart, type PinnedScrollViews, type Point, Point1DChart, PointCategoryChart, PointChart, type PopoverPresentation, type PresentationAdaptation, type PresentationBackgroundInteraction, type PresentationContentInteraction, type PresentationDetent, ProgressView, type ProgressViewProps, type ProgressViewStyle, type Prominence, type Provider, type ProviderProps, QRImage, type QRImageProps, type RadialGradient, RangeAreaChart, ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader, RectAreaChart, RectChart, type RectCornerRadii, type RectWithCornerRadii, type RectWithCornerRadius, type RectWithCornerSize, Rectangle, type Reducer, type ReducerAction, type ReducerState, type RefObject, type RenderNode, ReorderableForEach, type ReorderableForEachComponent, type ReorderableForEachProps, Request, type RequestInit, Response, type ResponseInit, RotateGesture, type RotateGestureValue, type RoundedCornerStyle, RoundedRectangle, type RoundedRectangleProps, RuleChart, RuleLineForLabelChart, RuleLineForValueChart, SVG, type SVGCodeSourceProps, type SVGFilePathSourceProps, type SVGProps, type SVGURLSourceProps, type SafeAreaRegions, type ScenePhase, ScreenshotMaker, Script, type ScriptDeveloper, type ScriptMetadata, type ScriptingDeviceInfo, type ScrollDismissesKeyboardMode, type ScrollScrollIndicatorVisibility, type ScrollTargetBehavior, ScrollView, type ScrollViewProps, type ScrollViewProxy, ScrollViewReader, type ScrollViewReaderProps, type SearchFieldPlacement, type SearchSuggestionsPlacementSet, Section, type SectionProps, SecureField, type SecureFieldProps, type SensoryFeedback, type SetStateAction, type Shape, type ShapeProps, type ShapeStyle, type ShortcutFileURLParameter, type ShortcutJsonParameter, type ShortcutParameter, type ShortcutTextParameter, type Size, Slider, type SliderProps, type SliderWithLabelProps, type SliderWithRangeValueLabelsProps, type SliderWithTicksProps, Spacer, type StateInitializer, Stepper, type StepperProps, type StrokeStyle, type StyledText, type SubmitTriggers, type SwingAnimation, type SymbolEffect, type SymbolRenderingMode, type SymbolVariants, type SystemImageProps, Tab, type TabCustomizationBehavior, type TabPlacement, type TabProps, type TabRole, TabSection, type TabSectionProps, TabView, type TabViewProps, type TabViewStyle, TapGesture, Text, type TextAlignment, TextField, type TextFieldProps, type TextFieldStyle, type TextInputAutocapitalization, type TextProps, TimerIntervalLabel, type TimerIntervalLabelProps, type TimerIntervalProgressViewProps, Toggle, type ToggleProps, type ToggleStyle, type ToolBarProps, Toolbar, type ToolbarDefaultItemKind, ToolbarItem, ToolbarItemGroup, type ToolbarItemGroupProps, type ToolbarItemPlacement, type ToolbarItemProps, type ToolbarPlacement, ToolbarSpacer, type ToolbarSpacerProps, type ToolbarSpacerSizing, type ToolbarTitleDisplayMode, type TruncationMode, type UIImageProps, type UnderlineStyle, type UnderlyingSource, UnevenRoundedRectangle, type UnevenRoundedRectangleProps, type UserInterfaceSizeClass, VStack, type VStackProps, type VerticalAlignment, type VerticalEdge, type VerticalEdgeSet, VideoPlayer, type VideoPlayerProps, VideoRecorderPreviewView, type VideoRecorderPreviewViewProps, ViewModifiers, type VirtualNode, type Visibility, WebView, type WebViewProps, Widget, type WidgetAccentedRenderingMode, type WidgetDisplaySize, type WidgetFamily, type WidgetRelevance, type WidgetReloadPolicy, type WidgetRenderingMode, ZStack, type ZStackProps, createContext, fetch, gradient, modifiers, useCallback, useCancelToken, useColorScheme, useContext, useEffect, useEffectEvent, useKeyboardVisible, useMemo, useObservable, useReducer, useRef, useSelector, useState };
+export { type AVLayerVideoGravity, AVPlayerView, type AVPlayerViewProps, AbortController, AbortError, AbortEvent, type AbortEventListener, AbortSignal, AccessoryWidgetBackground, type AdaptableTabBarPlacement, type Alignment, type Angle, type AngleValue, type AngularGradient, AnimatedFrames, type AnimatedFramesProps, AnimatedGif, type AnimatedGifProps, AnimatedImage, type AnimatedImageProps, type AnnotationOverflowResolution, type AnnotationOverflowResolutionStrategy, type AnnotationPosition, AppEventListenerManager, AppEvents, type AppIntent, type AppIntentFactory, AppIntentManager, type AppIntentPerform, AppIntentProtocol, AreaChart, AreaPlot, type AreaPlotProps, AreaStackChart, type Axis, type AxisGridLineConfig, type AxisLabelFormat, type AxisMarkOrientation, type AxisMarkPosition, type AxisMarkPreset, type AxisMarkValues, type AxisMarksConfig, type AxisSet, type AxisTickConfig, type AxisValueLabelCollisionResolution, type AxisValueLabelConfig, type BadgeProminence, Bar1DChart, BarChart, type BarChartProps, BarGanttChart, type BarGanttChartProps, BarStackChart, Button, type ButtonBorderShape, type ButtonProps, type ButtonRole, type ButtonStyle, type CalendarComponent, CancelError, type CancelEventListener, CancelToken, type CancelTokenHook, Capsule, CaptureVideoPreviewView, type CaptureVideoPreviewViewProps, Chart, type ChartAxisScaleType, type ChartDateRangeSelection, ChartGesture, type ChartGestureProps, type ChartInterpolationMethod, type ChartMarkProps, type ChartMarkStackingMethod, type ChartNumberRangeSelection, type ChartNumberSelection, ChartOverlay, type ChartOverlayProps, ChartPlotProxy, ChartPlotStyle, type ChartPlotStyleProps, type ChartProxy, type ChartRangeSelection, type ChartScrollPosition, type ChartScrollTargetBehavior, type ChartSelection, type ChartStringRangeSelection, type ChartStringSelection, type ChartSymbolShape, Circle, type ClockHandRotationEffectPeriod, type ClosedRange, type Color, ColorPicker, type ColorPickerProps, type ColorRenderingMode, type ColorScheme, type ColorSchemeContrast, type ColorStringHex, type ColorStringRGBA, type ColorWithGradientOrOpacity, type CommonViewProps, type ComponentCallback, type ComponentEffect, type ComponentEffectEvent, type ComponentMemo, type ComponentProps, ConcentricRectangle, type ConcentricRectangleProps, type ConcentricRectangleShape, type Consumer, type ConsumerProps, type ContentAvailableViewProps, type ContentAvailableViewWithLabelProps, type ContentAvailableViewWithTitleProps, type ContentMarginPlacement, type ContentMode, type ContentShapeKinds, type ContentTransition, ContentUnavailableView, type Context, ControlGroup, type ControlGroupProps, type ControlGroupStyle, type ControlSize, ControlWidget, ControlWidgetButton, type ControlWidgetButtonProps, type ControlWidgetLabel, ControlWidgetToggle, type ControlWidgetToggleProps, type Cookie, DateIntervalLabel, type DateIntervalLabelProps, DateLabel, type DateLabelProps, DatePicker, type DatePickerComponents, type DatePickerProps, type DatePickerStyle, DateRangeLabel, type DateRangeLabelProps, DefaultToolbarItem, type DefaultToolbarItemProps, Device, DisclosureGroup, type DisclosureGroupProps, type DiscreteSymbolEffect, type Dispatch, Divider, DonutChart, DragGesture, type DragGestureDetails, type DragGestureOptions, type DurationInMilliseconds, type DynamicImageSource, type DynamicShapeStyle, type Edge, type EdgeCornerStyle, type EdgeInsets, type EdgeSet, type EdgeSetOption, EditButton, Editor, type EditorProps, type EffectDestructor, type EffectSetup, Ellipse, EmptyView, type EnvironmentValues, EnvironmentValuesReader, type EnvironmentValuesReaderProps, type FileImageProps, FlowLayout, type FlowLayoutProps, type Font, type FontDesign, type FontWeight, type FontWidth, ForEach, type ForEachComponent, type ForEachDeprecatedProps, type ForEachProps, Form, type FormBinaryData, FormData, type FormProps, type FormStyle, type FunctionComponent, Gauge, type GaugeProps, type GaugeStyle, type GeometryProxy, GeometryReader, type GeometryReaderProps, type Gesture, GestureInfo, GlassEffectContainer, type GlassEffectContainerProps, type Gradient, type GradientStop, Grid, type GridItem, type GridProps, GridRow, type GridRowProps, type GridSize, Group, GroupBox, type GroupBoxProps, type GroupProps, HStack, type HStackProps, Headers, type HeadersInit, HeatMapChart, type HorizontalAlignment, type HorizontalEdge, type HorizontalEdgeSet, type IdProps, Image, type ImageInterpolation, type ImageProps, type ImageRenderOptions, ImageRenderer, type ImageRenderingBehaviorProps, type ImageRenderingMode, type ImageResizable, type ImageResizingMode, type ImageScale, type IndexViewStyle, Intent, IntentAttributedTextValue, IntentFileURLValue, IntentFileValue, IntentImageValue, IntentJsonValue, IntentRequestConfirmationValue, IntentSnippetIntentValue, IntentTextValue, IntentURLValue, IntentValue, IntentViewValue, type InternalWidgetRender, type KeyboardType, type KeywordPoint, type KeywordsColor, Label, type LabelProps, type LabelStyle, LazyHGrid, type LazyHGridProps, LazyHStack, type LazyHStackProps, LazyVGrid, type LazyVGridProps, LazyVStack, type LazyVStackProps, LineCategoryChart, LineChart, LinePlot, type LinePlotFunctionProps, type LinePlotParametricProps, type LineStylePattern, type LinearGradient, Link, type LinkProps, List, type ListProps, type ListSectionSpacing, type ListStyle, LiveActivity, type LiveActivityActivitiesEnabledListener, type LiveActivityActivityUpdateListener, type LiveActivityDetail, type LiveActivityEndOptions, type LiveActivityOptions, type LiveActivityState, LiveActivityUI, type LiveActivityUIBuilder, LiveActivityUIExpandedBottom, LiveActivityUIExpandedCenter, LiveActivityUIExpandedLeading, LiveActivityUIExpandedTrailing, type LiveActivityUIExpandedViewProps, type LiveActivityUIProps, type LiveActivityUpdateOptions, LivePhotoView, type LivePhotoViewProps, LongPressGesture, type LongPressGestureOptions, MagnifyGesture, type MagnifyGestureValue, type MarkDimension, Markdown, type MarkdownProps, type MatchedGeometryProperties, type Material, Menu, type MenuProps, type MenuStyle, type MeshGradient, type ModalPresentation, type ModalPresentationStyle, MultiColumnsPicker, type MultiColumnsPickerProps, MultiPicker, type MutableRefObject, NamespaceReader, type NamespaceReaderProps, Navigation, type NavigationBarTitleDisplayMode, NavigationDestination, type NavigationDestinationProps, NavigationLink, type NavigationLinkProps, NavigationSplitView, type NavigationSplitViewColumn, type NavigationSplitViewProps, type NavigationSplitViewStyle, type NavigationSplitViewVisibility, NavigationStack, type NavigationStackProps, type NetworkImageProps, type NormalProgressViewProps, Notification, type NotificationAction, type NotificationInfo, type NotificationInterruptionLevel, type NotificationRequest, type PIPStatus, type ParagraphStyle, Path, Picker, type PickerProps, type PickerStyle, type PickerValue, PieChart, type PinnedScrollViews, type Point, Point1DChart, PointCategoryChart, PointChart, type PopoverPresentation, type PresentationAdaptation, type PresentationBackgroundInteraction, type PresentationContentInteraction, type PresentationDetent, ProgressView, type ProgressViewProps, type ProgressViewStyle, type Prominence, type Provider, type ProviderProps, QRImage, type QRImageProps, type RadialGradient, RangeAreaChart, ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader, RectAreaChart, RectChart, type RectCornerRadii, type RectWithCornerRadii, type RectWithCornerRadius, type RectWithCornerSize, Rectangle, type Reducer, type ReducerAction, type ReducerState, type RefObject, type RenderNode, ReorderableForEach, type ReorderableForEachComponent, type ReorderableForEachProps, Request, type RequestInit, Response, type ResponseInit, RotateGesture, type RotateGestureValue, type RoundedCornerStyle, RoundedRectangle, type RoundedRectangleProps, RuleChart, RuleLineForLabelChart, RuleLineForValueChart, SVG, type SVGCodeSourceProps, type SVGFilePathSourceProps, type SVGProps, type SVGURLSourceProps, type SafeAreaRegions, type ScenePhase, ScreenshotMaker, Script, type ScriptDeveloper, type ScriptMetadata, type ScriptingDeviceInfo, type ScrollDismissesKeyboardMode, type ScrollScrollIndicatorVisibility, type ScrollTargetBehavior, ScrollView, type ScrollViewProps, type ScrollViewProxy, ScrollViewReader, type ScrollViewReaderProps, type SearchFieldPlacement, type SearchSuggestionsPlacementSet, Section, type SectionProps, SecureField, type SecureFieldProps, type SensoryFeedback, type SetStateAction, type Shape, type ShapeProps, type ShapeStyle, type ShortcutFileURLParameter, type ShortcutJsonParameter, type ShortcutParameter, type ShortcutTextParameter, type Size, Slider, type SliderProps, type SliderWithLabelProps, type SliderWithRangeValueLabelsProps, type SliderWithTicksProps, Spacer, type StateInitializer, Stepper, type StepperProps, type StrokeStyle, type StyledText, type SubmitTriggers, type SwingAnimation, type SymbolEffect, type SymbolEffectOptions, type SymbolRenderingMode, type SymbolVariants, type SystemImageProps, Tab, type TabCustomizationBehavior, type TabPlacement, type TabProps, type TabRole, TabSection, type TabSectionProps, TabView, type TabViewProps, type TabViewStyle, TapGesture, Text, type TextAlignment, type TextContentType, TextField, type TextFieldProps, type TextFieldStyle, type TextInputAutocapitalization, type TextProps, TimerIntervalLabel, type TimerIntervalLabelProps, type TimerIntervalProgressViewProps, Toggle, type ToggleProps, type ToggleStyle, type ToolBarProps, Toolbar, type ToolbarDefaultItemKind, ToolbarItem, ToolbarItemGroup, type ToolbarItemGroupProps, type ToolbarItemPlacement, type ToolbarItemProps, type ToolbarPlacement, ToolbarSpacer, type ToolbarSpacerProps, type ToolbarSpacerSizing, type ToolbarTitleDisplayMode, type TriggerSymbolEffect, type TruncationMode, type UIImageProps, type UnderlineStyle, type UnderlyingSource, UnevenRoundedRectangle, type UnevenRoundedRectangleProps, type UserInterfaceSizeClass, VStack, type VStackProps, type VerticalAlignment, type VerticalEdge, type VerticalEdgeSet, VideoPlayer, type VideoPlayerProps, VideoRecorderPreviewView, type VideoRecorderPreviewViewProps, ViewModifiers, type VirtualNode, type Visibility, WebView, type WebViewProps, Widget, type WidgetAccentedRenderingMode, type WidgetDisplaySize, type WidgetFamily, type WidgetRelevance, type WidgetReloadPolicy, type WidgetRenderingMode, ZStack, type ZStackProps, createContext, fetch, gradient, modifiers, useCallback, useCancelToken, useColorScheme, useContext, useEffect, useEffectEvent, useKeyboardVisible, useMemo, useObservable, useReducer, useRef, useSelector, useState };

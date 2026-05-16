@@ -172,6 +172,12 @@
 
 ## 三、静态方法
 
+### `Reminder.get(identifier: string): Promise<Reminder | null>`
+
+获取指定标识符的提醒，如果不存在则返回 `null`。
+
+---
+
 ### `Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>`
 
 获取所有提醒，可选指定日历列表。

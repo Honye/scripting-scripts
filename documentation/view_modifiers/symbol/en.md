@@ -116,6 +116,7 @@ These effects animate when the associated value changes.
 symbolEffect?: {
   effect: DiscreteSymbolEffect
   value: string | number | boolean
+  options?: SymbolEffectOptions
 }
 ```
 
@@ -135,9 +136,80 @@ In this example, each time `isFavorited` changes, the bounce animation is trigge
 
 ---
 
+### 3. **Trigger effects** (`isActive`, mirrors SwiftUI `symbolEffect(_:options:isActive:)`)
+
+In SwiftUI's trigger form, the **steady state is `isActive = false`** (symbol visible). Flipping `isActive` plays the effect's animation; the direction depends on the effect:
+
+| Effect | `isActive=false` (steady) | `isActive=true` (effect engaged) |
+|--------|---------------------------|----------------------------------|
+| `appear` | invisible | visible (appears) |
+| `disappear` | visible | invisible (disappears) |
+| `scale` | base size | scaled |
+| **`drawOn`** | **visible** (drawn) | **invisible** (draw-off animation plays) |
+| **`drawOff`** | **invisible** | **visible** (draw-on animation plays) |
+
+Note that `drawOn` / `drawOff` describe the **animation style** (stroke-by-stroke drawing) — not the final state. `.drawOn` behaves like `.disappear` with a draw-style animation; `.drawOff` behaves like `.appear` with a draw-style animation.
+
+```tsx
+const [hidden, setHidden] = useState(false)
+
+<Image
+  systemName="checkmark.circle"
+  symbolEffect={{
+    effect: "drawOn",
+    isActive: hidden,
+  }}
+/>
+
+<Button title={hidden ? "Show" : "Hide"} action={() => setHidden(!hidden)} />
+```
+
+> `drawOn` / `drawOff` are SF Symbols 7 effects (iOS 26+). On earlier iOS the bridge silently passes content through unchanged.
+
+---
+
+### 4. **Animation options** (`SymbolEffectOptions`)
+
+Attach `options` to either the value-bound or the trigger form. **Note:** SwiftUI treats trigger-form transitions like `drawOn` / `drawOff` / `appear` / `disappear` as single-shot — `repeat` is honored most reliably on value-bound effects (`pulse`, `bounce`, etc.).
+
+```tsx
+<Image
+  systemName="bell.fill"
+  symbolEffect={{
+    effect: "pulse",
+    value: pulseTick,
+    options: {
+      speed: 0.7,
+      repeat: { count: 3, delay: 0.4 },
+    },
+  }}
+/>
+```
+
+```ts
+type SymbolEffectOptions = {
+  /** Animation speed multiplier. `2` = twice as fast. */
+  speed?: number
+  /** Force a one-shot. Mutually exclusive with `repeat` — if both are set, `nonRepeating` wins and a warning is logged. */
+  nonRepeating?: boolean
+  /**
+   * Repetition policy:
+   *  - `"continuous"`: loop forever (iOS 18+; on iOS 17 falls back to `.repeating`)
+   *  - `{ count, delay? }`: periodic — `count` cycles with optional `delay` (seconds) between them (iOS 18+)
+   *  - `{ delay }`: periodic with delay only (iOS 18+)
+   */
+  repeat?:
+    | "continuous"
+    | { count: number; delay?: number }
+    | { delay: number; count?: number }
+}
+```
+
+---
+
 ## Available Discrete Effects (`DiscreteSymbolEffect`)
 
-These effects can be bound to values:
+Use these with the value-bound form — animation replays whenever `value` changes.
 
 | Category          | Effects                                                                                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -147,6 +219,18 @@ These effects can be bound to values:
 | **Rotate**        | `rotate`, `rotateByLayer`, `rotateClockwise`, `rotateCounterClockwise`, `rotateWholeSymbol`                                                                                           |
 | **VariableColor** | `variableColor`, `variableColorCumulative`, `variableColorDimInactiveLayers`, `variableColorHideInactiveLayers`, `variableColorIterative`                                             |
 | **Wiggle**        | `wiggle`, `wiggleByLayer`, `wiggleWholeSymbol`, `wiggleLeft`, `wiggleRight`, `wiggleUp`, `wiggleDown`, `wiggleForward`, `wiggleBackward`, `wiggleClockwise`, `wiggleCounterClockwise` |
+
+## Available Trigger Effects (`TriggerSymbolEffect`)
+
+Use these with the `isActive` form. `drawOn` / `drawOff` are iOS 26+; the rest are iOS 17+.
+
+| Category                              | Effects                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Appear**                            | `appear`, `appearByLayer`, `appearUp`, `appearDown`, `appearWholeSymbol`                         |
+| **Disappear**                         | `disappear`, `disappearByLayer`, `disappearUp`, `disappearDown`, `disappearWholeSymbol`          |
+| **Scale**                             | `scale`, `scaleByLayer`, `scaleUp`, `scaleDown`, `scaleWholeSymbol`                              |
+| **DrawOn** *(iOS 26+ / SF Symbols 7)* | `drawOn`, `drawOnByLayer`, `drawOnWholeSymbol`, `drawOnIndividually`                             |
+| **DrawOff** *(iOS 26+ / SF Symbols 7)* | `drawOff`, `drawOffByLayer`, `drawOffWholeSymbol`, `drawOffIndividually`                         |
 
 ---
 

@@ -288,10 +288,21 @@ if (heading) {
 ### startUpdatingHeading
 
 ```ts
-function startUpdatingHeading(): Promise<void>
+function startUpdatingHeading(options?: {
+  requestAlwaysAuthorization?: boolean
+}): Promise<{ mode: "always" | "whenInUse" }>
 ```
 
 Starts continuous heading updates.
+
+When `options.requestAlwaysAuthorization` is `true`, the system requests "Always" authorization
+instead of the default "When In Use".
+
+The promise resolves with `{ mode }` reflecting the authorization actually granted by the
+system. If you requested `"always"` but `mode` resolves as `"whenInUse"`, iOS did not (or
+could not) prompt the user — typically because the user has already declined the upgrade
+once. iOS allows only a single programmatic Always upgrade attempt; afterwards the user must
+go to **Settings → Privacy & Security → Location Services → Scripting → Always** manually.
 
 ### stopUpdatingHeading
 
@@ -330,3 +341,121 @@ function removeHeadingListener(
 ```
 
 Removes a previously registered heading listener. If no listener is provided, all heading listeners are removed.
+
+### startUpdatingLocation
+
+```ts
+function startUpdatingLocation(options?: {
+  requestAlwaysAuthorization?: boolean
+}): Promise<{ mode: "always" | "whenInUse" }>
+```
+
+Starts continuous location updates. Subsequent updates are delivered to listeners registered via
+`addLocationListener`.
+
+When `options.requestAlwaysAuthorization` is `true`, the system requests "Always" authorization,
+which is required if you intend to keep receiving updates while the app is backgrounded.
+
+The promise resolves with `{ mode }` reflecting the authorization actually granted. If you
+requested `"always"` but `mode` resolves as `"whenInUse"`, iOS suppressed the upgrade prompt
+(only one programmatic Always upgrade attempt is permitted per app install). Direct the user
+to **Settings → Privacy & Security → Location Services → Scripting → Always** to grant it
+manually.
+
+### stopUpdatingLocation
+
+```ts
+function stopUpdatingLocation(): void
+```
+
+Stops continuous location updates and releases related system resources.
+This does not affect one-shot calls such as `requestCurrent`.
+
+### addLocationListener
+
+```ts
+function addLocationListener(
+  listener: (location: LocationInfo) => void
+): void
+```
+
+Registers a listener that is called whenever a new location is reported.
+
+**Example**
+
+```ts
+await Location.startUpdatingLocation()
+
+Location.addLocationListener(location => {
+  console.log("Lat/Lng:", location.latitude, location.longitude)
+})
+```
+
+### removeLocationListener
+
+```ts
+function removeLocationListener(
+  listener?: (location: LocationInfo) => void
+): void
+```
+
+Removes a previously registered location listener. If no listener is provided, all location
+listeners are removed and continuous updates stop.
+
+### allowsBackgroundLocationUpdates / setAllowsBackgroundLocationUpdates
+
+```ts
+const allowsBackgroundLocationUpdates: boolean
+function setAllowsBackgroundLocationUpdates(value: boolean): void
+```
+
+Whether the app receives location updates while in the background.
+
+### pausesLocationUpdatesAutomatically / setPausesLocationUpdatesAutomatically
+
+```ts
+const pausesLocationUpdatesAutomatically: boolean
+function setPausesLocationUpdatesAutomatically(value: boolean): void
+```
+
+Whether the system automatically pauses location updates when location data is unlikely to change.
+
+### showsBackgroundLocationIndicator / setShowsBackgroundLocationIndicator
+
+```ts
+const showsBackgroundLocationIndicator: boolean
+function setShowsBackgroundLocationIndicator(value: boolean): void
+```
+
+Whether the status bar background indicator is shown when the app uses location services
+in the background under `authorizedAlways`.
+
+### distanceFilter / setDistanceFilter
+
+```ts
+const distanceFilter: number
+function setDistanceFilter(meters: number): void
+```
+
+The minimum horizontal distance (in meters) the device must move before a new update is
+generated. Use `-1` to receive every movement.
+
+### headingFilter / setHeadingFilter
+
+```ts
+const headingFilter: number
+function setHeadingFilter(degrees: number): void
+```
+
+The minimum angular change (in degrees) required before a heading update is generated.
+Use `-1` to receive every change.
+
+### activityType / setActivityType
+
+```ts
+const activityType: ActivityType
+function setActivityType(value: ActivityType): void
+```
+
+A hint that helps iOS optimize battery usage and accuracy:
+`"other"`, `"automotiveNavigation"`, `"fitness"`, `"otherNavigation"` or `"airborne"`.
