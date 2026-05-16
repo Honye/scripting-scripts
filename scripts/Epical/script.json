@@ -1,44 +1,44 @@
 {
-  "version" : "1.0.0",
-  "icon" : "square.2.layers.3d.fill",
   "description" : null,
-  "iconImage" : null,
-  "intentInputTypes" : [
-
-  ],
-  "contributors" : [
-
-  ],
   "author" : {
-    "homepage" : "https:\/\/t.me\/iiMarkr",
     "email" : "Honye@github.com",
-    "name" : "Jackie"
+    "name" : "Jackie",
+    "homepage" : "https:\/\/t.me\/iiMarkr"
   },
-  "remoteResource" : null,
+  "version" : "1.0.0",
   "localizedNames" : {
-    "en" : "Epical",
-    "ja" : "Epical",
-    "it" : "Epical",
     "es" : "Epical",
-    "ru" : "Epical",
     "pt" : "Epical",
-    "zh" : "追剧日历",
+    "en" : "Epical",
     "de" : "Epical",
+    "ru" : "Epical",
+    "zh" : "追剧日历",
+    "it" : "Epical",
+    "ja" : "Epical",
     "fr" : "Epical"
   },
-  "entry" : "index.tsx",
+  "remoteResource" : null,
+  "name" : "Epical",
   "localizedDescriptions" : {
+    "fr" : "Suivez vos séries dans un calendrier hebdomadaire.",
+    "de" : "Verfolge deine Serien in einem Wochenkalender.",
     "en" : "Track your shows on a weekly calendar.",
-    "ja" : "週間カレンダーで番組を管理。",
-    "it" : "Tieni traccia delle tue serie su un calendario settimanale.",
     "es" : "Sigue tus series en un calendario semanal.",
     "ru" : "Отслеживайте сериалы по расписанию недели.",
     "pt" : "Acompanhe suas séries num calendário semanal.",
-    "zh" : "在周历上追踪你正在追的剧。",
-    "de" : "Verfolge deine Serien in einem Wochenkalender.",
-    "fr" : "Suivez vos séries dans un calendrier hebdomadaire."
+    "ja" : "週間カレンダーで番組を管理。",
+    "it" : "Tieni traccia delle tue serie su un calendario settimanale.",
+    "zh" : "在周历上追踪你正在追的剧。"
   },
-  "name" : "Epical",
-  "color" : "rgba(192,133,82,1)",
-  "runInApp" : false
+  "contributors" : [
+
+  ],
+  "iconImage" : null,
+  "color" : "rgba(243, 159, 68,1)",
+  "icon" : "play.rectangle.fill",
+  "runInApp" : false,
+  "entry" : "index.tsx",
+  "intentInputTypes" : [
+
+  ]
 }

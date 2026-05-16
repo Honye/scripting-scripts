@@ -1,4 +1,4 @@
-import type { Color, DynamicShapeStyle } from 'scripting'
+import type { Color, DynamicShapeStyle, LinearGradient } from 'scripting'
 
 /** Symmetric overlay (white on dark / black on light) at a given alpha. */
 const tone = (a: number): DynamicShapeStyle => ({
@@ -6,12 +6,18 @@ const tone = (a: number): DynamicShapeStyle => ({
   dark: `rgba(255,255,255,${a})` as Color
 })
 
+const darkGradient: LinearGradient = {
+  colors: ['#2c2c2e', '#1c1c1e'] as Color[],
+  startPoint: 'top',
+  endPoint: 'bottom'
+}
+
 export const theme = {
   // Backgrounds — explicit dicts so adaptation works in every context.
   /** Page background. */
-  bg: { light: '#f2f2f7', dark: '#0d0d14' } as DynamicShapeStyle,
+  bg: { light: '#f2f2f7' as Color, dark: darkGradient } as DynamicShapeStyle,
   /** Sheet / detail surface (sits above page). */
-  surface: { light: '#ffffff', dark: '#1a1a28' } as DynamicShapeStyle,
+  surface: { light: '#ffffff' as Color, dark: darkGradient } as DynamicShapeStyle,
 
   // Subtle overlays for cards, borders, dividers, track fills.
   card: tone(0.05),

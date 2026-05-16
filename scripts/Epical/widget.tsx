@@ -133,7 +133,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
   return (
     <VStack
       frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
-      padding={{ horizontal: rpt(6) }}
+      padding={{ horizontal: rpt(12) }}
       spacing={0}
       alignment="leading"
       widgetBackground={theme.surface}

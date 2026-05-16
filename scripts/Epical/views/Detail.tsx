@@ -7,7 +7,10 @@ import {
   ScrollView,
   Spacer,
   Text,
+  TextField,
   VStack,
+  ZStack,
+  useRef,
   useState
 } from 'scripting'
 import type { Color } from 'scripting'
@@ -15,6 +18,50 @@ import type { Show } from '../types'
 import { DAYS_FULL } from '../data'
 import { theme } from '../theme'
 import { GenrePill, Poster, PrimaryButton, SectionLabel } from '../components'
+
+function RepeatButton({
+  action,
+  children
+}: {
+  action: () => void
+  children: any
+}) {
+  const active = useRef(false)
+  const timer = useRef<number | null>(null)
+
+  const stop = () => {
+    active.current = false
+    if (timer.current != null) {
+      clearTimeout(timer.current)
+      timer.current = null
+    }
+  }
+
+  const repeat = () => {
+    if (!active.current) return
+    action()
+    timer.current = setTimeout(repeat, 80)
+  }
+
+  return (
+    <ZStack
+      onTapGesture={action}
+      onLongPressGesture={{
+        minDuration: 400,
+        perform: () => {
+          stop()
+          active.current = true
+          repeat()
+        },
+        onPressingChanged: (pressing) => {
+          if (!pressing) stop()
+        }
+      }}
+    >
+      {children}
+    </ZStack>
+  )
+}
 
 function StepperButton({
   systemName,
@@ -26,7 +73,7 @@ function StepperButton({
   tint?: Color
 }) {
   return (
-    <Button action={action} buttonStyle="plain">
+    <RepeatButton action={action}>
       <Image
         systemName={systemName}
         font={16} fontWeight="semibold"
@@ -37,7 +84,7 @@ function StepperButton({
           shape: { type: 'rect', cornerRadius: 14 }
         }}
       />
-    </Button>
+    </RepeatButton>
   )
 }
 
@@ -69,6 +116,23 @@ export function DetailView({
   const safeTotal = Math.max(total, watched)
   const ratio = safeTotal > 0 ? watched / safeTotal : 0
   const tintColor = `${show.color}55` as Color
+
+  const [editingWatched, setEditingWatched] = useState(false)
+  const [watchedInput, setWatchedInput] = useState('')
+  const [editingTotal, setEditingTotal] = useState(false)
+  const [totalInput, setTotalInput] = useState('')
+
+  const commitWatched = () => {
+    const n = parseInt(watchedInput, 10)
+    if (!isNaN(n)) setWatched(Math.max(0, Math.min(safeTotal, n)))
+    setEditingWatched(false)
+  }
+
+  const commitTotal = () => {
+    const n = parseInt(totalInput, 10)
+    if (!isNaN(n)) setTotal(Math.max(watched, Math.max(0, n)))
+    setEditingTotal(false)
+  }
 
   return (
     <ScrollView>
@@ -121,13 +185,35 @@ export function DetailView({
               tint={tintColor}
             />
             <VStack spacing={2} frame={{ minWidth: 60 }}>
-              <Text
-                font={22}
-                fontWeight="bold"
-                foregroundStyle={theme.text}
-              >
-                {watched}
-              </Text>
+              {editingWatched ? (
+                <TextField
+                  title=""
+                  value={watchedInput}
+                  onChanged={setWatchedInput}
+                  keyboardType="numberPad"
+                  textFieldStyle="plain"
+                  autofocus
+                  multilineTextAlignment="center"
+                  font={22}
+                  fontWeight="bold"
+                  foregroundStyle={theme.text}
+                  frame={{ minWidth: 60 }}
+                  onBlur={commitWatched}
+                  onSubmit={commitWatched}
+                />
+              ) : (
+                <Text
+                  font={22}
+                  fontWeight="bold"
+                  foregroundStyle={theme.text}
+                  onTapGesture={() => {
+                    setWatchedInput(String(watched))
+                    setEditingWatched(true)
+                  }}
+                >
+                  {watched}
+                </Text>
+              )}
               <Text
                 font={11}
                 foregroundStyle={theme.textQuaternary}
@@ -148,30 +234,51 @@ export function DetailView({
           <HStack>
             <SectionLabel>总集数</SectionLabel>
             <Spacer />
-            <Text
-              font={14}
-              fontWeight="semibold"
-              foregroundStyle={theme.text}
-            >
-              {total} 集
-            </Text>
-            <Button
-              action={() => setTotal(Math.max(watched, total - 1))}
-              buttonStyle="plain"
-            >
+            {editingTotal ? (
+              <HStack spacing={2}>
+                <TextField
+                  title=""
+                  value={totalInput}
+                  onChanged={setTotalInput}
+                  keyboardType="numberPad"
+                  textFieldStyle="plain"
+                  autofocus
+                  font={14}
+                  fontWeight="semibold"
+                  foregroundStyle={theme.text}
+                  fixedSize={{ horizontal: true, vertical: false }}
+                  onBlur={commitTotal}
+                  onSubmit={commitTotal}
+                />
+                <Text font={14} fontWeight="semibold" foregroundStyle={theme.text}>集</Text>
+              </HStack>
+            ) : (
+              <Text
+                font={14}
+                fontWeight="semibold"
+                foregroundStyle={theme.text}
+                onTapGesture={() => {
+                  setTotalInput(String(total))
+                  setEditingTotal(true)
+                }}
+              >
+                {total} 集
+              </Text>
+            )}
+            <RepeatButton action={() => setTotal(Math.max(watched, total - 1))}>
               <Image
                 systemName="minus.circle.fill"
                 font={22}
                 foregroundStyle={theme.text50}
               />
-            </Button>
-            <Button action={() => setTotal(total + 1)} buttonStyle="plain">
+            </RepeatButton>
+            <RepeatButton action={() => setTotal(total + 1)}>
               <Image
                 systemName="plus.circle.fill"
                 font={22}
                 foregroundStyle={theme.brandEnd}
               />
-            </Button>
+            </RepeatButton>
           </HStack>
         </VStack>
 
