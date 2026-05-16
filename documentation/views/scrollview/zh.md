@@ -255,6 +255,110 @@ type ScrollTargetBehavior =
 
 ---
 
+### `scrollPosition`
+
+把 ScrollView 中**当前 leading 可见 item 的 id** 双向绑定到 JS state。对应 SwiftUI 的 `.scrollPosition(id:anchor:)`，无需 `ScrollViewReader` 包一层。
+
+#### 类型定义
+
+```ts
+scrollPosition?:
+  | Observable<string>
+  | Observable<number>
+  | Observable<string | null>
+  | Observable<number | null>
+  | { value: Observable<string | number | null>; anchor?: KeywordPoint | Point }
+  | {
+      value: string | number | null
+      onChanged: (newValue: string | number | null) => void
+      anchor?: KeywordPoint | Point
+    }
+```
+
+#### 三步起步
+
+1. `ScrollView` 下面的直接容器（一般是 `LazyVStack` / `LazyHStack` / `VStack`）必须开 `scrollTargetLayout`。
+2. 想被滚到的子节点都要加 `key="..."`，bridge 会把它映射到 SwiftUI `.id()`。
+3. `scrollPosition` 绑到 state —— 可以直传 `Observable`，也可以用 `{ value, onChanged }`。
+
+#### 示例
+
+```tsx
+const [visibleId, setVisibleId] = useState<string | null>(null)
+
+<ScrollView
+  scrollPosition={{ value: visibleId, onChanged: setVisibleId, anchor: "top" }}
+>
+  <LazyVStack scrollTargetLayout>
+    {items.map(it => (
+      <HStack key={it.id}>{/* row content */}</HStack>
+    ))}
+  </LazyVStack>
+</ScrollView>
+```
+
+* `id` 可以是 `string` 或 `number`。state 初始化用什么类型就一直用这个类型，bridge 按运行时类型分发。
+* state 设成 `null` 时由 SwiftUI 自己管滚动位置；设成具体 id 时滚到该 item 并贴在 `anchor` 处。
+* `anchor` 是 `UnitPoint`：字符串关键字 `"top"` / `"center"` / `"leading"` 等，或 `{ x, y }`。
+
+#### 注意点
+
+* **忘了 `scrollTargetLayout`。** 没开 SwiftUI 不知道哪个子节点是 "当前 scroll target"，binding 静默无效。
+* **id 类型混用。** `Observable<number>` 跟 `key="some-string"` 的子节点匹配不上。两边类型保持一致。
+* **运行时类型切换。** Observable 初值给一个具体值（如 `useState<string|null>("first")`），bridge 才能在 modifier 创建时识别类型。一直是 `null` 时默认走 string 路径。
+* **ScrollViewReader vs scrollPosition。** 同一个 ScrollView 不要同时用 —— 命令式的 `scrollTo(id:)` 和声明式的 `scrollPosition` 会互相打架，二选一。
+
+---
+
+### `onScrollTargetVisibilityChange`
+
+iOS 18+。订阅 ScrollView 中**当前可见 scroll target 的 id 集合**变化。每次满足 `threshold` 的可见 id 集合发生变化时回调一次。对应 SwiftUI 的 `.onScrollTargetVisibilityChange(idType:threshold:_:)`。
+
+#### 类型定义
+
+```ts
+onScrollTargetVisibilityChange?: {
+  idType: "string" | "number"
+  threshold?: number   // 0.0 - 1.0, 默认 0.5
+  onChanged: (ids: string[] | number[]) => void
+}
+```
+
+#### 必备条件
+
+跟 `scrollPosition` 一样：
+
+1. 直接容器开 `scrollTargetLayout`。
+2. 子节点用 `key="..."` 或 `key={123}` 标 id。
+3. **`idType` 必须跟 key 的实际类型一致** —— SwiftUI 这个 API 是泛型，桥层需要在 modifier 创建时就静态分发，运行期没法从 `[AnyHashable]` 反推 ID 类型。string key → `"string"`；number key → `"number"`。
+
+#### 示例
+
+```tsx
+const [visibleIds, setVisibleIds] = useState<string[]>([])
+
+<ScrollView
+  onScrollTargetVisibilityChange={{
+    idType: "string",
+    threshold: 0.5,
+    onChanged: (ids) => setVisibleIds(ids as string[]),
+  }}
+>
+  <LazyVStack scrollTargetLayout>
+    {items.map(it => <Row key={it.id} />)}
+  </LazyVStack>
+</ScrollView>
+```
+
+#### 注意点
+
+* **iOS 17 fallback**：iOS 17 上 bridge 打印 `API deprecated` 警告并跳过，content 透传，不挂任何效果。其他 modifier 不受影响。
+* **`threshold` 语义**：0.5 = view 至少有 50% 出现在 viewport 才算可见。0 = 任何一像素出现就触发；1 = 整个 view 必须完整可见。
+* **回调频率**：滚动期间 SwiftUI 在主线程同步调用 callback，JSCore 也在主线程，所以是 in-line 推送，没有节流。一般 30 个 item / 视口 ≈ 5 个可见 id 的场景没问题；如果列表非常密集且滚动很快，注意 callback 内别做重活。
+* **`scrollPosition` 与 `onScrollTargetVisibilityChange` 可同时使用**：前者拿 leading 一个 id，后者拿全部可见 id 集合，互不冲突。
+
+---
+
 ### `scrollContentBackground`
 
 指定滚动区域的默认背景是否显示。
@@ -293,4 +397,6 @@ scrollContentBackground?: Visibility
 | `defaultScrollAnchor`     | 设置初始锚点或内容变化时的锚点                         |
 | `scrollTargetLayout`      | 标记布局容器为滚动对齐的目标区域                        |
 | `scrollTargetBehavior`    | 设置内容滚动对齐方式（分页、视图对齐等）                    |
+| `scrollPosition`          | 把当前 leading 可见 item 的 id 双向绑定到 JS state |
+| `onScrollTargetVisibilityChange` | iOS 18+，订阅当前可见 id 集合的变化           |
 | `scrollContentBackground` | 控制是否显示默认背景（透明、自定义背景场景常用）                |

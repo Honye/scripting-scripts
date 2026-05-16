@@ -144,6 +144,24 @@ This is useful when the data or appearance of widgets may have changed and needs
 
 ---
 
+#### `Widget.openApp(bundleID: string): void`
+
+Opens the app identified by the specified bundle ID. This API requires Scripting PRO.
+
+##### Parameters
+
+* `bundleID` (`string`) – The bundle ID of the app to open, such as `"com.apple.MobileSMS"`.
+
+##### Example
+
+```ts
+Widget.openApp("com.apple.MobileSMS")
+```
+
+> **Returns:** `void`
+
+---
+
 ## Related Types
 
 ### `WidgetFamily`

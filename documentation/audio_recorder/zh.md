@@ -126,6 +126,53 @@ async function setupRecorder() {
 }
 ```
 
+### 电平表（VU meter / 音量条）
+
+`AudioRecorder` 在录制过程中可以输出输入信号的平均功率与峰值功率（dBFS），
+用于绘制 VU 表或基于响度做触发逻辑，但不会暴露原始 PCM 数据。
+
+可以在创建时打开 `meteringEnabled`，也可以在调用 `record()` 之前设置该属性：
+
+```ts
+const recorder = await AudioRecorder.create(filePath, {
+  format: "MPEG4AAC",
+  sampleRate: 44100,
+  numberOfChannels: 1,
+  meteringEnabled: true,
+  // 可选：onLevelUpdate 触发的间隔，单位毫秒，clamp 到 [16, 1000]，默认 50。
+  levelUpdateInterval: 50,
+})
+
+recorder.onLevelUpdate = (level) => {
+  // averagePower / peakPower 单位是 dBFS，大致范围 [-160, 0]
+  // 映射到 0..1 的进度条可以参考：
+  const norm = Math.max(0, (level.averagePower + 60) / 60)
+  console.log(`avg=${level.averagePower.toFixed(1)} dB peak=${level.peakPower.toFixed(1)} dB`)
+}
+
+recorder.record()
+```
+
+也可以不使用回调，自己手动轮询：
+
+```ts
+recorder.meteringEnabled = true
+recorder.record()
+
+setInterval(() => {
+  recorder.updateMeters()
+  const avg = recorder.averagePower(0)
+  const peak = recorder.peakPower(0)
+  console.log(`channel 0 → avg=${avg} peak=${peak}`)
+}, 100)
+```
+
+电平定时器在 `pause()` / `stop()` / `dispose()` 时自动停止，下一次 `record()` 时
+若 `onLevelUpdate` 仍然存在则会自动恢复。
+
+> 如果需要原始 PCM 采样、实时波形数据或音高检测，请改用 [`AudioCapture`](audio_capture/) 。
+> `AudioRecorder` 主要用于把编码后的音频写入文件（m4a / aac / flac / opus / mp3 / wav）。
+
 ---
 
 ## API 参考
@@ -179,6 +226,31 @@ async function setupRecorder() {
 ### `AudioRecorder.onError`
 在录制或编码出现错误时调用的回调函数。
 - **message** (string): 描述错误的字符串。
+
+### `AudioRecorder.meteringEnabled`
+是否启用电平测量。在 `record()` 之前打开（或在 `create` 时传 `meteringEnabled: true`），
+`averagePower`、`peakPower` 与 `onLevelUpdate` 才会有数据。
+
+### `AudioRecorder.levelUpdateInterval`
+`onLevelUpdate` 的触发间隔，单位毫秒。Clamp 到 `[16, 1000]`，默认 `50`。
+
+### `AudioRecorder.updateMeters()`
+刷新电平值。如果不使用 `onLevelUpdate`，需要在读取 `averagePower` / `peakPower` 前调用。
+
+### `AudioRecorder.averagePower(channel?)`
+返回指定声道的平均功率（dBFS），大致范围 `[-160, 0]`。
+未启用电平测量或未在录音时返回 `0`。
+- **channel** (number, 可选): 声道索引，默认 `0`。
+
+### `AudioRecorder.peakPower(channel?)`
+返回指定声道的峰值保持功率（dBFS）。
+
+### `AudioRecorder.onLevelUpdate`
+录音过程中按 `levelUpdateInterval` 频率触发的回调（仅在 `meteringEnabled === true` 时）。
+- **level.averagePower** (number): 各声道平均功率的均值（dBFS）。
+- **level.peakPower** (number): 各声道峰值功率的均值（dBFS）。
+- **level.channels** (`{ average; peak }[]`): 每个声道的具体值。
+- **level.timestamp** (number): 采样时刻的 `deviceCurrentTime`（秒）。
 
 ---
 

@@ -37,7 +37,7 @@ console.log(task.id) // 输出任务唯一ID
 
 ```ts
 if (task.state === "running") {
-  console.log("文件上传中…")
+  console.log("文件上传中...")
 }
 ```
 

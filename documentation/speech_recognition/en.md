@@ -26,7 +26,39 @@ Hints for the type of task for which speech recognition is used:
 ### `SpeechRecognitionResult`
 Represents the result of speech recognition:
 - `isFinal`: Indicates if the transcription is complete and final.
-- `text`: The transcription as a user-displayable string, with the highest confidence level.
+- `text`: Convenience alias for `bestTranscription.formattedString`, kept for backward compatibility.
+- `bestTranscription`: The transcription with the highest confidence level (`SpeechTranscription`).
+- `transcriptions`: Alternative transcriptions of the audio, sorted in descending order of confidence (`SpeechTranscription[]`).
+- `metadata`: Aggregate speech metrics. Only available on final results (iOS 14.5+) (`SpeechRecognitionMetadata`).
+
+---
+
+### `SpeechTranscription`
+A transcription of recognized speech:
+- `formattedString`: The entire transcription formatted into a single, user-displayable string.
+- `segments`: The individual word/utterance segments that compose this transcription (`SpeechTranscriptionSegment[]`).
+
+> Speaking rate and average pause duration are reported on `SpeechRecognitionResult.metadata` instead, and only on final results.
+
+---
+
+### `SpeechTranscriptionSegment`
+A single segment within a transcription, typically corresponding to a word:
+- `substring`: The text content of this segment.
+- `substringRange`: The UTF-16 character range of `substring` within the parent transcription's `formattedString` (`{ location: number, length: number }`).
+- `timestamp`: The seconds offset, relative to the audio start, at which this segment was spoken.
+- `duration`: The duration in seconds of this segment within the audio.
+- `confidence`: Confidence in the accuracy of this segment, in `[0.0, 1.0]`. Only meaningful on final results; partial results typically report `0`.
+- `alternativeSubstrings`: Alternative substrings the recognizer also considered for this segment.
+
+---
+
+### `SpeechRecognitionMetadata`
+Aggregate speech metrics for a final recognition result:
+- `speakingRate`: Speaking rate in words per minute.
+- `averagePauseDuration`: Average pause duration in seconds between words.
+- `speechStartTimestamp`: Seconds offset within the audio at which the user started speaking.
+- `speechDuration`: Duration in seconds of the spoken speech.
 
 ---
 
@@ -53,6 +85,11 @@ Starts speech recognition from the device microphone.
 - `requestOnDeviceRecognition`: Keep audio data on the device (default: `false`).
 - `taskHint`: Specify the recognition task type (`'confirmation'`, `'dictation'`, `'search'`, `'unspecified'`).
 - `useDefaultAudioSessionSettings`: Use default audio session settings (default: `true`).
+- `preferredInput`: Preferred audio input port. `'auto'` (default) lets the system choose;
+  `'builtInMic'` forces the device's built-in microphone even when a Bluetooth headset is
+  connected — useful for keeping wireless headphones for playback while recording from the
+  built-in mic for better audio quality. Falls back silently to the system default when
+  `builtInMic` is not available on the device.
 - `onResult`: Callback for recognition results (`SpeechRecognitionResult`).
 - `onSoundLevelChanged`: Callback for sound level changes (optional).
 
@@ -136,6 +173,41 @@ await SpeechRecognition.recognizeFile({
   }
 })
 ```
+
+### Inspect Word-Level Timing and Alternatives
+```ts
+await SpeechRecognition.recognizeFile({
+  filePath: FileManager.join(FileManager.documentDirectory, "audio.m4a"),
+  partialResults: false,
+  onResult: (result) => {
+    if (!result.isFinal) return
+
+    for (const segment of result.bestTranscription.segments) {
+      console.log(
+        `[${segment.timestamp.toFixed(2)}s + ${segment.duration.toFixed(2)}s] `
+          + `${segment.substring} (confidence ${segment.confidence.toFixed(2)})`
+      )
+      if (segment.alternativeSubstrings.length > 0) {
+        console.log("  alternatives:", segment.alternativeSubstrings.join(", "))
+      }
+    }
+
+    if (result.metadata) {
+      console.log("Speaking rate (wpm):", result.metadata.speakingRate)
+      console.log("Speech duration (s):", result.metadata.speechDuration)
+    }
+
+    if (result.transcriptions.length > 1) {
+      console.log("Alternative transcriptions:")
+      for (const t of result.transcriptions.slice(1)) {
+        console.log(" -", t.formattedString)
+      }
+    }
+  }
+})
+```
+
+---
 
 ### Stop Active Recognition
 ```ts

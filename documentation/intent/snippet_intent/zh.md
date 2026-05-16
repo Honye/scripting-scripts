@@ -115,7 +115,7 @@ Intent.requestConfirmation(
 
 ### ConfirmationActionName
 
-这些名称会影响 Shortcuts UI 中呈现的文案，例如 “Set …”、“Add …”、“Toggle …” 等。
+这些名称会影响 Shortcuts UI 中呈现的文案，例如 “Set ...”、“Add ...”、“Toggle ...” 等。
 
 示例值：
 

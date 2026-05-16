@@ -124,6 +124,58 @@ async function setupRecorder() {
 }
 ```
 
+### Level Metering (VU meter / volume bar)
+
+`AudioRecorder` can report the average and peak power of the input signal in
+dBFS while recording, without exposing raw PCM samples. This is enough to
+drive a VU meter or trigger logic on loudness.
+
+Enable metering when creating the recorder, or by setting `meteringEnabled`
+before calling `record()`:
+
+```ts
+const recorder = await AudioRecorder.create(filePath, {
+  format: "MPEG4AAC",
+  sampleRate: 44100,
+  numberOfChannels: 1,
+  meteringEnabled: true,
+  // Optional: how often onLevelUpdate fires while recording.
+  // In milliseconds, clamped to [16, 1000]. Default 50.
+  levelUpdateInterval: 50,
+})
+
+recorder.onLevelUpdate = (level) => {
+  // level.averagePower / level.peakPower are in dBFS, roughly [-160, 0].
+  // Map to a 0..1 bar with something like:
+  const norm = Math.max(0, (level.averagePower + 60) / 60)
+  console.log(`avg=${level.averagePower.toFixed(1)} dB peak=${level.peakPower.toFixed(1)} dB`)
+}
+
+recorder.record()
+```
+
+You can also poll the meter manually instead of using the callback:
+
+```ts
+recorder.meteringEnabled = true
+recorder.record()
+
+setInterval(() => {
+  recorder.updateMeters()
+  const avg = recorder.averagePower(0)
+  const peak = recorder.peakPower(0)
+  console.log(`channel 0 → avg=${avg} peak=${peak}`)
+}, 100)
+```
+
+The level timer stops automatically on `pause()` / `stop()` / `dispose()`
+and resumes on the next `record()` while `onLevelUpdate` is set.
+
+> If you need raw PCM samples, real-time waveform data, or pitch
+> detection, use the [`AudioCapture`](audio_capture/) class instead.
+> `AudioRecorder` is optimized for writing encoded audio files
+> (m4a / aac / flac / opus / mp3 / wav).
+
 ## API Reference
 
 ### `AudioRecorder.create(filePath, settings?)`
@@ -175,6 +227,36 @@ Callback function invoked when the recording finishes.
 ### `AudioRecorder.onError`
 Callback function invoked when an encoding error occurs.
 - **message** (string): Describes the error.
+
+### `AudioRecorder.meteringEnabled`
+Whether level metering is enabled. Toggle before `record()` (or pass
+`meteringEnabled: true` to `create`) so that `averagePower`, `peakPower`,
+and `onLevelUpdate` report values.
+
+### `AudioRecorder.levelUpdateInterval`
+Sampling interval in milliseconds used by `onLevelUpdate`. Clamped to
+`[16, 1000]`. Default `50`.
+
+### `AudioRecorder.updateMeters()`
+Refreshes the meter values. Call before reading `averagePower` /
+`peakPower` if you do not use `onLevelUpdate`.
+
+### `AudioRecorder.averagePower(channel?)`
+Returns the average power for the given channel in dBFS, range roughly
+`[-160, 0]`. Returns `0` when metering is disabled or the recorder is not
+running.
+- **channel** (number, optional): Zero-based channel index. Defaults to `0`.
+
+### `AudioRecorder.peakPower(channel?)`
+Returns the peak hold power for the given channel in dBFS.
+
+### `AudioRecorder.onLevelUpdate`
+Callback invoked while recording at `levelUpdateInterval` cadence when
+`meteringEnabled` is `true`.
+- **level.averagePower** (number): Average power in dBFS, averaged across channels.
+- **level.peakPower** (number): Peak power in dBFS, averaged across channels.
+- **level.channels** (`{ average; peak }[]`): Per-channel values.
+- **level.timestamp** (number): `deviceCurrentTime` when the sample was taken, in seconds.
 
 ## Example Usage
 ```ts

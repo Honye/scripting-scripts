@@ -286,10 +286,20 @@ if (heading) {
 ### startUpdatingHeading
 
 ```ts
-function startUpdatingHeading(): Promise<void>
+function startUpdatingHeading(options?: {
+  requestAlwaysAuthorization?: boolean
+}): Promise<{ mode: "always" | "whenInUse" }>
 ```
 
 开始持续监听设备方向变化。
+
+当 `options.requestAlwaysAuthorization` 为 `true` 时，会向系统请求 "Always" 权限，
+而不是默认的 "When In Use" 权限。
+
+Promise resolve 时返回 `{ mode }`，表示系统实际授予的权限模式。如果你请求了 `"always"`
+但拿到的是 `"whenInUse"`，说明 iOS 没有（或不再）弹出升级对话框 —— 通常是因为用户曾
+拒绝过一次升级。iOS 仅允许一次程序内的 Always 升级请求，之后用户必须前往
+**设置 → 隐私与安全 → 定位服务 → Scripting → 始终** 手动开启。
 
 ### stopUpdatingHeading
 
@@ -328,3 +338,113 @@ function removeHeadingListener(
 ```
 
 移除方向监听器。如果未传入参数，将移除所有监听器。
+
+### startUpdatingLocation
+
+```ts
+function startUpdatingLocation(options?: {
+  requestAlwaysAuthorization?: boolean
+}): Promise<{ mode: "always" | "whenInUse" }>
+```
+
+开始持续接收位置更新。新位置会被派发给通过 `addLocationListener` 注册的监听器。
+
+当 `options.requestAlwaysAuthorization` 为 `true` 时，会请求 "Always" 权限。如果你需要在应用进入后台时
+继续接收位置更新，需要使用 "Always" 权限。
+
+Promise resolve 时返回 `{ mode }`，表示系统实际授予的权限。如果你请求了 `"always"` 但拿到
+的是 `"whenInUse"`，说明 iOS 抑制了升级弹窗（每个应用安装周期内仅允许一次程序内升级请
+求）。请引导用户前往 **设置 → 隐私与安全 → 定位服务 → Scripting → 始终** 手动开启。
+
+### stopUpdatingLocation
+
+```ts
+function stopUpdatingLocation(): void
+```
+
+停止持续位置更新，并释放相关系统资源。该方法不会影响 `requestCurrent` 等一次性调用。
+
+### addLocationListener
+
+```ts
+function addLocationListener(
+  listener: (location: LocationInfo) => void
+): void
+```
+
+添加一个位置变化监听器。每当系统报告新位置时被调用。
+
+**示例**
+
+```ts
+await Location.startUpdatingLocation()
+
+Location.addLocationListener(location => {
+  console.log("Lat/Lng:", location.latitude, location.longitude)
+})
+```
+
+### removeLocationListener
+
+```ts
+function removeLocationListener(
+  listener?: (location: LocationInfo) => void
+): void
+```
+
+移除位置变化监听器。如果未传入参数，将移除所有位置监听器并停止持续更新。
+
+### allowsBackgroundLocationUpdates / setAllowsBackgroundLocationUpdates
+
+```ts
+const allowsBackgroundLocationUpdates: boolean
+function setAllowsBackgroundLocationUpdates(value: boolean): void
+```
+
+是否允许应用进入后台后继续接收位置更新。
+
+### pausesLocationUpdatesAutomatically / setPausesLocationUpdatesAutomatically
+
+```ts
+const pausesLocationUpdatesAutomatically: boolean
+function setPausesLocationUpdatesAutomatically(value: boolean): void
+```
+
+当系统认为位置数据短期内不会变化时，是否自动暂停位置更新。
+
+### showsBackgroundLocationIndicator / setShowsBackgroundLocationIndicator
+
+```ts
+const showsBackgroundLocationIndicator: boolean
+function setShowsBackgroundLocationIndicator(value: boolean): void
+```
+
+在 `authorizedAlways` 下后台使用定位时，是否显示状态栏背景指示条。
+
+### distanceFilter / setDistanceFilter
+
+```ts
+const distanceFilter: number
+function setDistanceFilter(meters: number): void
+```
+
+生成新更新所需的最小水平移动距离（米）。设为 `-1` 表示报告所有移动。
+
+### headingFilter / setHeadingFilter
+
+```ts
+const headingFilter: number
+function setHeadingFilter(degrees: number): void
+```
+
+触发航向更新所需的最小角度变化（度）。设为 `-1` 表示报告所有变化。
+
+### activityType / setActivityType
+
+```ts
+const activityType: ActivityType
+function setActivityType(value: ActivityType): void
+```
+
+iOS 用以优化电量与精度的活动类型提示：`"other"`、`"automotiveNavigation"`、`"fitness"`、
+`"otherNavigation"` 或 `"airborne"`。

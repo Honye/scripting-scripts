@@ -8,6 +8,26 @@ The `WebViewController` class allows you to display and interact with embedded w
 const webView = new WebViewController()
 ```
 
+### Constructor
+
+```ts
+new WebViewController(options?: { ephemeral?: boolean })
+```
+
+* **Options** (all optional):
+
+  * `ephemeral`: When `true`, the WebView uses a non-persistent data store so cookies and website data are isolated from the default container and discarded when the controller is released. Useful for sandboxed login flows or clean-slate scraping.
+
+#### Example
+
+```ts
+// Regular (persistent) WebView — shares cookies with other WebViewControllers.
+const webView = new WebViewController()
+
+// Ephemeral WebView — cookies are isolated and wiped when disposed.
+const isolated = new WebViewController({ ephemeral: true })
+```
+
 ---
 
 ## Properties
@@ -252,6 +272,142 @@ Navigates to the next page in the history stack.
 ### `reload(): Promise<void>`
 
 Reloads the current webpage.
+
+---
+
+### `takeSnapshot(options?): Promise<UIImage | null>`
+
+Captures a snapshot of the WebView's currently visible viewport and returns it as a `UIImage`.
+
+* **Options** (all optional):
+
+  * `rect`: The rectangle (in the WebView's coordinate space, in points) to capture. Defaults to the full visible viewport.
+  * `snapshotWidth`: The width (in points) of the resulting image. The height is scaled proportionally. Defaults to the WebView's width.
+  * `afterScreenUpdates`: Whether to take the snapshot after pending screen updates have been applied. Defaults to `true`.
+
+* **Returns**: `Promise<UIImage | null>` — Resolves to a `UIImage`, or `null` if the WebView is not on screen (i.e. `present()` has not been called and it is not used by a `<WebView>` view), or if the snapshot fails.
+
+#### Example
+
+```ts
+const webView = new WebViewController()
+await webView.loadURL('https://example.com')
+await webView.present({ navigationTitle: 'Snapshot Demo' })
+
+const image = await webView.takeSnapshot()
+if (image) {
+  const data = image.pngData()
+  // Save or share the image...
+}
+
+webView.dispose()
+```
+
+---
+
+### `getAllCookies(): Promise<Cookie[]>`
+
+Returns every cookie currently stored in the WebView's cookie jar, including `HttpOnly` cookies that are not exposed to `document.cookie`.
+
+* **Returns**: `Promise<Cookie[]>`
+
+Each `Cookie` has the shape:
+
+```ts
+interface Cookie {
+  name: string
+  value: string
+  domain: string
+  path: string
+  isSecure: boolean
+  isHTTPOnly: boolean
+  isSessionOnly: boolean
+  expiresDate?: Date | null
+}
+```
+
+---
+
+### `getCookies(url: string): Promise<Cookie[]>`
+
+Returns the cookies that would be sent with a request to the given URL. Matching follows the standard WebKit rules: the URL's host must match `cookie.domain` (with subdomain match when `cookie.domain` starts with `.`), and the URL's path must be covered by `cookie.path`.
+
+* **Parameters**:
+
+  * `url`: The URL used to filter cookies by domain and path.
+* **Returns**: `Promise<Cookie[]>`
+
+---
+
+### `setCookie(cookie: Cookie): Promise<boolean>`
+
+Sets (or overwrites) a cookie in the WebView's cookie store.
+
+You can call `setCookie` **before** `loadURL` to pre-seed authentication state — the WebView's cookie store is ready as soon as the controller is created, even if the view has not been presented yet.
+
+* **Parameters**:
+
+  * `cookie`: The cookie to store. `name`, `value` and `domain` are required. `path` defaults to `"/"`. If `isSessionOnly` is `true` or `expiresDate` is omitted, the cookie is treated as a session cookie.
+* **Returns**: `Promise<boolean>` — Resolves to `true` when the cookie is accepted, or `false` if the input is invalid.
+
+#### Example
+
+```ts
+const webView = new WebViewController()
+
+// Seed a session cookie before loading a gated page.
+await webView.setCookie({
+  name: "session",
+  value: "abc123",
+  domain: "example.com",
+  path: "/",
+  isSecure: true,
+  isHTTPOnly: true,
+  isSessionOnly: false,
+  expiresDate: new Date(Date.now() + 86400_000),
+})
+
+await webView.loadURL("https://example.com/dashboard")
+```
+
+---
+
+### `deleteCookie(cookie: { name: string, domain?: string, path?: string }): Promise<boolean>`
+
+Deletes cookies that match the given descriptor.
+
+You can either pass a full `Cookie` object returned by `getAllCookies` / `getCookies` to delete that exact cookie, or pass a partial descriptor to delete every cookie whose `name` (and optionally `domain` / `path`) matches.
+
+* **Parameters**:
+
+  * `cookie.name`: Cookie name to match (required).
+  * `cookie.domain` (optional): When provided, only cookies with this exact domain are deleted.
+  * `cookie.path` (optional): When provided, only cookies with this exact path are deleted.
+* **Returns**: `Promise<boolean>` — Resolves to `true` when at least one cookie is removed, or `false` when nothing matched.
+
+#### Example
+
+```ts
+const webView = new WebViewController()
+await webView.loadURL("https://example.com")
+
+// Delete every "tracker" cookie regardless of domain.
+await webView.deleteCookie({ name: "tracker" })
+
+// Or delete a specific cookie returned by getCookies.
+const [c] = await webView.getCookies("https://example.com/")
+if (c) {
+  await webView.deleteCookie(c)
+}
+```
+
+---
+
+### `clearAllCookies(): Promise<void>`
+
+Removes every cookie from the WebView's cookie store. Other website data (cache, local storage, etc.) is left untouched.
+
+* **Returns**: `Promise<void>`
 
 ---
 

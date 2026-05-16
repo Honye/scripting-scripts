@@ -87,11 +87,14 @@ type KeychainAccessibility =
 | `first_unlock`             | Accessible after the first unlock following a restart                           |
 | `first_unlock_this_device` | Same as `first_unlock`, but does not migrate                                    |
 
-Default value:
+The default depends on whether iCloud synchronization is enabled:
 
 ```ts
-accessibility: "unlocked"
+synchronizable: false // accessibility: "first_unlock_this_device"
+synchronizable: true  // accessibility: "first_unlock"
 ```
+
+When `synchronizable: true` is used, `passcode`, `unlocked_this_device`, and `first_unlock_this_device` are not allowed because they have `ThisDeviceOnly` semantics and cannot synchronize to other devices. Writes with these combinations fail and return `false`.
 
 ---
 
@@ -111,6 +114,8 @@ Default:
 ```ts
 synchronizable: false
 ```
+
+When enabled, Keychain items use the migratable default accessibility policy `first_unlock`. If you customize `accessibility`, use a synchronizable policy such as `unlocked` or `first_unlock`.
 
 Even when enabled, synchronization is still restricted to the **current script scope**.
 

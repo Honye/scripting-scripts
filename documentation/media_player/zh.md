@@ -52,6 +52,8 @@ MediaPlayer.commandHandler = (command, event) => {
   当前播放时间，默认为 `0`。
 - **`playbackDuration`**: `DurationInSeconds` （可选）  
   媒体总时长，默认为 `0`。
+- **`isLiveStream`**: `boolean` （可选）  
+  默认为 `false`。设为 `true` 表示直播流（如广播电台），系统会在锁屏与控制中心的 Now Playing UI 中隐藏进度条。
 
 ---
 

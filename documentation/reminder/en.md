@@ -174,6 +174,12 @@ Deletes the reminder from the calendar.
 
 ## 4. Static Methods
 
+### `Reminder.get(identifier: string): Promise<Reminder | null>`
+
+Returns a reminder by its identifier, or `null` if not found.
+
+---
+
 ### `Reminder.getAll(calendars?: Calendar[]): Promise<Reminder[]>`
 
 Returns all reminders, optionally filtered by the specified calendars.

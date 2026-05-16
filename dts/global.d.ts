@@ -1,4 +1,4 @@
-import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream } from "scripting"
+import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream, FunctionComponent, AppIntent, AppIntentProtocol, Cookie } from "scripting"
 
 declare global {
   type Without<T, U> = {
@@ -306,6 +306,7 @@ declare global {
    * It is used to represent the data in a more convenient way, such as converting to base64 or hex string, or reading from a file.
    */
   class Data {
+    private constructor()
     /**
      * The length of the data in bytes.
      */
@@ -628,6 +629,7 @@ declare global {
    * These instances can be used to configure the appearance of a symbol image.
    */
   class UIImageSymbolConfiguration {
+    private constructor()
     static preferringMonochrome(): UIImageSymbolConfiguration
     static preferringMulticolor(): UIImageSymbolConfiguration
     static scale(value: "default" | "large" | "medium" | "small" | "unspecified"): UIImageSymbolConfiguration
@@ -644,6 +646,7 @@ declare global {
    * UIImage instance for displaying or saving an Image.
    */
   class UIImage {
+    private constructor()
     /**
      * The width of the image.
      */
@@ -1144,7 +1147,9 @@ declare global {
      */
     function set(key: string, value: string, options?: {
       /**
-       * A key with a value that indicates when the keychain item is accessible. Defaults to 'unlocked'.
+       * A key with a value that indicates when the keychain item is accessible.
+       * Defaults to 'first_unlock_this_device', or 'first_unlock' when synchronizable is true.
+       * ThisDeviceOnly values cannot be used with synchronizable items.
        */
       accessibility?: KeychainAccessibility
       /**
@@ -1155,7 +1160,9 @@ declare global {
 
     function setBool(key: string, value: boolean, options?: {
       /**
-       * A key with a value that indicates when the keychain item is accessible. Defaults to 'unlocked'.
+       * A key with a value that indicates when the keychain item is accessible.
+       * Defaults to 'first_unlock_this_device', or 'first_unlock' when synchronizable is true.
+       * ThisDeviceOnly values cannot be used with synchronizable items.
        */
       accessibility?: KeychainAccessibility
       /**
@@ -1165,7 +1172,9 @@ declare global {
     }): boolean
     function setData(key: string, value: Data, options?: {
       /**
-       * A key with a value that indicates when the keychain item is accessible. Defaults to 'unlocked'.
+       * A key with a value that indicates when the keychain item is accessible.
+       * Defaults to 'first_unlock_this_device', or 'first_unlock' when synchronizable is true.
+       * ThisDeviceOnly values cannot be used with synchronizable items.
        */
       accessibility?: KeychainAccessibility
       /**
@@ -1231,6 +1240,8 @@ declare global {
   type KeychainOptions = {
     /**
      * A key with a value that indicates when the keychain item is accessible.
+     * Defaults to 'first_unlock_this_device', or 'first_unlock' when synchronizable is true.
+     * ThisDeviceOnly values cannot be used with synchronizable items.
      */
     accessibility?: KeychainAccessibility
     /**
@@ -1409,6 +1420,22 @@ declare global {
     }
 
     /**
+     * The activity type that the location manager uses to optimize power consumption and accuracy.
+     *
+     * - `other`: General use, not related to a specific activity.
+     * - `automotiveNavigation`: Vehicle navigation.
+     * - `fitness`: Walking, running or cycling.
+     * - `otherNavigation`: Other vehicular navigation that is not automotive.
+     * - `airborne`: Airborne activities.
+     */
+    type ActivityType =
+      | "other"
+      | "automotiveNavigation"
+      | "fitness"
+      | "otherNavigation"
+      | "airborne"
+
+    /**
      * A Boolean value that indicates whether a widget is eligible to receive location updates.
      */
     const isAuthorizedForWidgetUpdates: boolean
@@ -1419,9 +1446,72 @@ declare global {
     const accuracy: LocationAccuracy
 
     /**
+     * A Boolean value indicating whether the app receives location updates while in the background.
+     */
+    const allowsBackgroundLocationUpdates: boolean
+
+    /**
+     * A Boolean value indicating whether the location manager pauses location updates automatically
+     * when the location data is unlikely to change.
+     */
+    const pausesLocationUpdatesAutomatically: boolean
+
+    /**
+     * A Boolean value indicating whether the status bar background indicator is shown
+     * when the app is using location services in the background with `authorizedAlways`.
+     */
+    const showsBackgroundLocationIndicator: boolean
+
+    /**
+     * The minimum distance (in meters) the device must move horizontally before an update event is
+     * generated. `-1` means every movement is reported.
+     */
+    const distanceFilter: number
+
+    /**
+     * The minimum angular change (in degrees) required to trigger heading updates.
+     * `-1` means every change is reported.
+     */
+    const headingFilter: number
+
+    /**
+     * The type of activity the location manager should expect.
+     * iOS uses this hint to optimize power consumption and accuracy.
+     */
+    const activityType: ActivityType
+
+    /**
      * Set the accuracy of the location data that your script wants to receive.
      */
     function setAccuracy(accuracy: LocationAccuracy): Promise<void>
+    /**
+     * Enable or disable receiving location updates while the app is in the background.
+     */
+    function setAllowsBackgroundLocationUpdates(value: boolean): void
+    /**
+     * Set whether the system automatically pauses location updates when location data is
+     * unlikely to change.
+     */
+    function setPausesLocationUpdatesAutomatically(value: boolean): void
+    /**
+     * Set whether the status bar background indicator is shown when the app uses location
+     * services in the background under `authorizedAlways`.
+     */
+    function setShowsBackgroundLocationIndicator(value: boolean): void
+    /**
+     * Set the minimum horizontal distance (in meters) between location updates.
+     * Use `-1` to receive every movement.
+     */
+    function setDistanceFilter(meters: number): void
+    /**
+     * Set the minimum angular change (in degrees) required to trigger heading updates.
+     * Use `-1` to receive every change.
+     */
+    function setHeadingFilter(degrees: number): void
+    /**
+     * Set the activity type hint used by iOS to optimize power consumption and accuracy.
+     */
+    function setActivityType(value: ActivityType): void
     /**
      * Requests the current location.
      * 
@@ -1465,13 +1555,45 @@ declare global {
 
 
     /**
+     * The authorization mode currently granted to the app at the time the streaming API resolved.
+     *
+     * - `"always"`: the app may receive updates while in the background.
+     * - `"whenInUse"`: the app may only receive updates while in the foreground.
+     */
+    type AuthorizationMode = "always" | "whenInUse"
+
+    /**
+     * The result returned by `startUpdatingHeading` / `startUpdatingLocation` when they
+     * resolve successfully.
+     */
+    type StartUpdatingResult = {
+      /**
+       * The authorization mode actually granted by the system.
+       *
+       * If you passed `requestAlwaysAuthorization: true` but the resolved `mode` is
+       * `"whenInUse"`, iOS did not (or could not) prompt for "Always" upgrade — typically
+       * because the user has already declined the upgrade once, and the system permits
+       * only a single programmatic upgrade attempt. Direct the user to **Settings →
+       * Privacy & Security → Location Services → Scripting → Always** to grant it manually.
+       */
+      mode: AuthorizationMode
+    }
+
+    /**
      * Requests the most recently reported heading. The value of this property is null if heading updates have never been initiated.
      */
     function requestHeading(): Promise<Heading | null>
     /**
      * Starts updating the heading.
+     *
+     * @param options.requestAlwaysAuthorization When `true`, requests "Always" authorization
+     * instead of the default "When In Use".
+     * @returns Resolves with the authorization mode actually granted. Inspect `mode` to
+     * detect the case where you requested "Always" but the system kept "When In Use".
      */
-    function startUpdatingHeading(): Promise<void>
+    function startUpdatingHeading(options?: {
+      requestAlwaysAuthorization?: boolean
+    }): Promise<StartUpdatingResult>
     /**
      * Stops updating the heading.
      */
@@ -1486,6 +1608,35 @@ declare global {
      * @param listener The listener is called when the heading changes.
      */
     function removeHeadingListener(listener?: (heading: Heading) => void): void
+
+    /**
+     * Starts continuous location updates. Subsequent updates are delivered to listeners
+     * registered via `addLocationListener`.
+     *
+     * @param options.requestAlwaysAuthorization When `true`, requests "Always" authorization,
+     * which is required if you intend to keep receiving updates while the app is backgrounded.
+     * @returns Resolves with the authorization mode actually granted. Inspect `mode` to
+     * detect the case where you requested "Always" but the system kept "When In Use".
+     */
+    function startUpdatingLocation(options?: {
+      requestAlwaysAuthorization?: boolean
+    }): Promise<StartUpdatingResult>
+    /**
+     * Stops continuous location updates and releases related system resources.
+     * This does not affect one-shot calls such as `requestCurrent`.
+     */
+    function stopUpdatingLocation(): void
+    /**
+     * Add a listener to be notified when a new location is reported.
+     * @param listener The listener is called when a new location is reported.
+     */
+    function addLocationListener(listener: (location: LocationInfo) => void): void
+    /**
+     * Remove a location listener. If no listener is provided, all location listeners are
+     * removed and continuous updates stop.
+     * @param listener The listener previously registered via `addLocationListener`.
+     */
+    function removeLocationListener(listener?: (location: LocationInfo) => void): void
   }
 
   /**
@@ -1528,6 +1679,14 @@ declare global {
      * this method would throw an error, you should use `isiCloudEnabled` to check it.
      */
     const iCloudDocumentsDirectory: string
+    /**
+     * Returns a boolean value indicating whether WebDAV is available.
+     */
+    const isWebDAVAvailable: boolean
+    /**
+     * Returns the path to WebDAV's `Documents` directory, you should check `isWebDAVAvailable` first.
+     */
+    const webDAVDocumentsDirectory: string
     /**
      * Returns a boolean value indicating whether the file is targeted for storage in iCloud.
      * @param filePath The path of the file
@@ -1786,7 +1945,9 @@ declare global {
 
 
   /**
-   * Share activity item. Supports a text or an image.
+   * Share activity item. Supports text, URL strings such as `https://example.com`
+   * and `file:///path/to/file`, existing absolute file paths such as
+   * `/private/var/mobile/...`, or an image.
    */
   type ActivityItem = string | UIImage
 
@@ -1796,7 +1957,11 @@ declare global {
   namespace ShareSheet {
     /**
      * Present a ShareSheet UI.
-     * @param items The array of data on which to perform the activity. You can share text, url, or UIImage.
+     * String items are shared as text by default. If a string is a URL such as
+     * `https://example.com` or `file:///path/to/file`, it will be shared as a URL.
+     * If a string is an existing absolute file path such as `/private/var/mobile/...`,
+     * it will be shared as a file URL. Non-existing file paths are still shared as text.
+     * @param items The array of data on which to perform the activity. You can share text, a URL string, an existing absolute file path, or UIImage.
      * @returns Returns a promise, it is fulfilled with a boolean value indicates that whether the share is completed when the sheet is dismissed.
      */
     function present(items: ActivityItem[]): Promise<boolean>
@@ -1818,6 +1983,24 @@ declare global {
      * ```
      */
     function parse(filePath: string): Promise<string | null>
+
+    /**
+     * Parse QRCode image.
+     * @example
+     * const result = await QRCode.parseImage(image)
+     * if (result != null) {
+     *   // handle QRCode result
+     * }
+     */
+    function parseImage(image: UIImage): Promise<string | null>
+
+    /**
+     * Generate QRCode image.
+     * @example
+     * const image = await QRCode.generate('https://example.com')
+     */
+    function generate(text: string): Promise<UIImage | null>
+
     /**
      * Open the QRCode scan page and scan.
      * @example
@@ -1830,6 +2013,7 @@ declare global {
   }
 
   class LivePhoto {
+    private constructor()
     /**
      * The size of the live photo
      */
@@ -2096,7 +2280,7 @@ declare global {
      * @param shouldMoveFile If true, the file will be moved to the Photos app, otherwise it will be copied. Defaults to false.
      * @returns Returns a promise that resolves when the operation is complete, or rejects with an error if the operation fails.
      */
-    function saveLivePhoto(imagePath: string, videoPath: string, shouldMoveFile?: boolean): Promise<void>
+    function saveLivePhoto(options: { imagePath: string, videoPath: string, shouldMoveFile?: boolean }): Promise<void>
   }
 
   /**
@@ -2126,6 +2310,7 @@ declare global {
    * The ItemProvider class is used to provide data for a file or file system item.
    */
   class ItemProvider {
+    constructor()
 
     /**
      * The types that the item provider can provide.
@@ -2587,7 +2772,12 @@ declare global {
    */
   class WebViewController {
     /**
-     * When the web view performs a request to load a resource, the function can determine whether or not to allow the request. 
+     * Create a new WebViewController.
+     * @param options.ephemeral When true, the WebView uses a non-persistent data store so cookies and website data are isolated from the default container and discarded when the controller is released. Useful for sandboxed login flows or clean-slate scraping.
+     */
+    constructor(options?: { ephemeral?: boolean })
+    /**
+     * When the web view performs a request to load a resource, the function can determine whether or not to allow the request.
      */
     shouldAllowRequest?: (request: {
       /**
@@ -2731,6 +2921,57 @@ declare global {
      */
     reload(): void
     /**
+     * Take a snapshot of the WebView's currently visible viewport and return it as a `UIImage`. Returns `null` if the WebView is not on screen (e.g. `present()` has not been called and it is not used by a `<WebView>` view), or if the snapshot fails.
+     * @param options Optional snapshot configuration.
+     * @param options.rect The rectangle (in the WebView's coordinate space, in points) to capture. Defaults to the full visible viewport.
+     * @param options.snapshotWidth The width (in points) of the resulting image. The height is scaled proportionally. Defaults to the WebView's width.
+     * @param options.afterScreenUpdates Whether to take the snapshot after pending screen updates have been applied. Defaults to `true`.
+     */
+    takeSnapshot(options?: {
+      rect?: { x: number, y: number, width: number, height: number }
+      snapshotWidth?: number
+      afterScreenUpdates?: boolean
+    }): Promise<UIImage | null>
+    /**
+     * Get all cookies currently stored in the WebView's data store, including `HttpOnly` cookies that are not exposed to `document.cookie`.
+     */
+    getAllCookies(): Promise<Cookie[]>
+    /**
+     * Get cookies that would be sent with a request to the given URL. Matching follows the standard domain + path rules used by `WKWebView`.
+     * @param url The URL used to match cookies by domain and path.
+     */
+    getCookies(url: string): Promise<Cookie[]>
+    /**
+     * Set (or overwrite) a cookie in the WebView's data store. You can call this before `loadURL` to pre-seed a session cookie for authenticated pages.
+     * @param cookie The cookie to store. `name`, `value` and `domain` are required; `path` defaults to `"/"`. When `isSessionOnly` is true or `expiresDate` is omitted, the cookie is treated as a session cookie.
+     * @returns A Promise that resolves with `true` when the cookie is accepted, or `false` if the input is invalid.
+     * @example
+     * ```ts
+     * const webView = new WebViewController()
+     * await webView.setCookie({
+     *   name: "session",
+     *   value: "abc123",
+     *   domain: "example.com",
+     *   path: "/",
+     *   isSecure: true,
+     *   isHTTPOnly: true,
+     *   isSessionOnly: false,
+     *   expiresDate: new Date(Date.now() + 86400_000),
+     * })
+     * await webView.loadURL("https://example.com/dashboard")
+     * ```
+     */
+    setCookie(cookie: Cookie): Promise<boolean>
+    /**
+     * Delete cookies matched by `name`, and optionally scoped by `domain` and `path`. You can pass a full `Cookie` object returned by `getAllCookies` / `getCookies` to delete that exact cookie, or pass a partial descriptor to delete every cookie that matches.
+     * @returns A Promise that resolves with `true` when one or more cookies are removed, or `false` when nothing matched.
+     */
+    deleteCookie(cookie: { name: string, domain?: string, path?: string }): Promise<boolean>
+    /**
+     * Remove every cookie from the WebView's cookie store. Other website data (cache, local storage, etc.) is left untouched.
+     */
+    clearAllCookies(): Promise<void>
+    /**
      * Dismiss the WebView, if the WebView is not presented, do nothing. You can presented the WebView again before it was disposed.
      */
     dismiss(): void
@@ -2738,6 +2979,83 @@ declare global {
      * Dispose the WebView controller. If the WebView is presented, it will be dismissed. You must call this method manually to avoid memory leaks.
      */
     dispose(): void
+  }
+
+  /**
+   * A lightweight scraper service.
+   */
+  namespace WebScraper {
+
+    type WaitOptions =
+      | "domComplete"
+      | "networkIdle"
+      | {
+        mode: "domComplete"
+      }
+      | {
+        mode: "networkIdle"
+        idleSeconds?: number
+      }
+      | {
+        mode: "selector"
+        selector: string
+      }
+
+    type Error = {
+      code: string
+      message: string
+    }
+
+    type Timing = {
+      totalMs: number
+    }
+
+    type Result<T = any> = {
+      ok: boolean
+      taskId: string
+      url?: string
+      html?: string
+      data?: T
+      error?: Error
+      timing?: Timing
+    }
+
+    /**
+     * Load a URL and return the final HTML.
+     */
+    function load(options: {
+      url: string
+      wait?: WaitOptions
+      timeout?: number
+      taskId?: string
+    }): Promise<Result<string>>
+
+    /**
+     * Load a URL, optionally run extractScript in page context, and return html + extracted data.
+     */
+    function scrape<T = any>(options: {
+      url: string
+      wait?: WaitOptions
+      timeout?: number
+      extractScript?: string
+      taskId?: string
+    }): Promise<Result<T>>
+
+    /**
+     * Evaluate JavaScript and return the result.
+     */
+    function eval<T = any>(options: {
+      url: string
+      script: string
+      wait?: WaitOptions
+      timeout?: number
+      taskId?: string
+    }): Promise<Result<T>>
+
+    /**
+     * Cancel a running task by taskId.
+     */
+    function cancel(taskId: string): Promise<boolean>
   }
 
   /**
@@ -2770,6 +3088,7 @@ declare global {
    * A class that defines the end of a recurrence rule.
    */
   class RecurrenceEnd {
+    private constructor()
     /**
      *  The date when the recurrence ends. If the recurrence ends by count, this value is `null`.
      */
@@ -2792,6 +3111,7 @@ declare global {
    * A class that describes the pattern for a recurring event.
    */
   class RecurrenceRule {
+    private constructor()
     /**
      * The identifier for the recurrence rule’s calendar.
      */
@@ -2925,6 +3245,7 @@ declare global {
     | "reminder"
 
   class CalendarSource {
+    private constructor()
     /**
      * The source type representing the account to which this calendar belongs.
      */
@@ -2948,6 +3269,7 @@ declare global {
    * The `Calendar` API allows you to interact with iOS calendars, enabling operations like retrieving default calendars, creating custom calendars, and managing calendar settings and events.
    */
   class Calendar {
+    private constructor()
     /**
      * A unique identifier for the calendar.
      */
@@ -3050,6 +3372,7 @@ declare global {
    * The `Reminder` API allows you to create, edit, and manage reminders in a calendar. This includes setting titles, due dates, priorities, and recurrence rules.
    */
   class Reminder {
+    constructor()
     /**
      * A unique identifier for the reminder.
      */
@@ -3141,6 +3464,10 @@ declare global {
      * Saves changes to a reminder.
      */
     save(): Promise<void>
+    /**
+     * Get a reminder by its identifier.
+     */
+    static get(identifier: string): Promise<Reminder | null>
     /**
      * Get all reminders. 
      */
@@ -3275,6 +3602,7 @@ declare global {
   }
 
   class EventAlarm {
+    private constructor()
     /**
      * Creates and returns an alarm with an absolute date.
      */
@@ -3309,6 +3637,7 @@ declare global {
    * The `CalendarEvent` API enables you to create and manage events in iOS calendars, with properties like title, location, dates, attendees, and recurrence.
    */
   class CalendarEvent {
+    constructor()
     /**
      * A unique identifier for the event.
      */
@@ -3394,8 +3723,6 @@ If the event’s calendar does not support availability settings, this property�
      */
     readonly hasRecurrenceRules: boolean
 
-    new(): CalendarEvent
-
     addAlarm(alarm: EventAlarm): void
 
     removAlarm(alarm: EventAlarm): void
@@ -3420,6 +3747,10 @@ If the event’s calendar does not support availability settings, this property�
      */
     presentEditView(): Promise<EventEditViewAction>
     /**
+     * Get a calendar event by its identifier.
+     */
+    static get(identifier: string): Promise<CalendarEvent | null>
+    /**
      * To identify events that occur within a given date range and calendars.
      * @param startDate The start date of the range of events fetched.
      * @param endDate The end date of the range of events fetched.
@@ -3439,7 +3770,7 @@ If the event’s calendar does not support availability settings, this property�
     /**
      * The WebSocket() constructor returns a new WebSocket object and immediately attempts to establish a connection to the specified WebSocket URL.
      */
-    new(url: string): WebSocket
+    constructor(url: string)
     readonly url: string
     onopen?: () => void
     onerror?: (error: Error) => void
@@ -3576,6 +3907,67 @@ If the event’s calendar does not support availability settings, this property�
      * @param listener The listener is called when the output volume changes.
      */
     function removeOutputVolumeListener(listener: AudioSessionOutputVolumeListener): void
+
+    /**
+     * The audio input ports that are currently available for use with the audio session.
+     * Bluetooth/USB/headset microphones only appear when the active category options allow them
+     * (e.g. `allowBluetoothHFP`).
+     */
+    const availableInputs: Promise<AudioSessionPort[]>
+    /**
+     * The current audio route, including selected input and output ports.
+     */
+    const currentRoute: Promise<AudioRouteDescription>
+    /**
+     * Whether the in-process "prefer built-in mic" switch is currently enabled.
+     * See `setPrefersBuiltInMicWhenAvailable` for details.
+     */
+    const prefersBuiltInMicWhenAvailable: Promise<boolean>
+    /**
+     * Sets the preferred input port for the audio session. Pass `null` to clear the preference.
+     *
+     * Must be called after `setActive(true)`. Calling it on an inactive session rejects with
+     * `Cannot setPreferredInput before setActive(true).`.
+     *
+     * The argument is matched against `availableInputs` first by `uid`, then by `portType`.
+     * If the port is not currently in `availableInputs`, the call rejects.
+     *
+     * @param input An audio port previously obtained from `availableInputs`, or `null` to clear.
+     */
+    function setPreferredInput(input: AudioSessionPort | null): Promise<void>
+    /**
+     * Forces the audio session to route its output to the device speaker, or removes that override.
+     * Independent from input selection; use together with `setPreferredInput` to fully separate I/O.
+     *
+     * @param port `'speaker'` to force the device speaker, `'none'` to drop the override.
+     */
+    function overrideOutputAudioPort(port: 'speaker' | 'none'): Promise<void>
+    /**
+     * Enables or disables the in-process "prefer built-in mic" switch. When enabled, the SDK
+     * monitors audio route changes and steers the input back to `builtInMic` whenever it becomes
+     * available, regardless of whether a Bluetooth, headset, USB, or other microphone is also
+     * connected. The output route is left untouched, which lets you keep wireless headphones for
+     * playback while using the device microphone for input.
+     *
+     * The switch lives in the current process only and is not persisted across launches. It
+     * affects every script running in the host app while the host process is alive. Manual
+     * `setPreferredInput` calls (route change reason `override`) are not overwritten by the switch.
+     *
+     * Enabling the switch immediately attempts to apply the preference once, without waiting for
+     * the next route change.
+     *
+     * @param enabled `true` to enable the switch, `false` to disable it.
+     */
+    function setPrefersBuiltInMicWhenAvailable(enabled: boolean): Promise<void>
+    /**
+     * Adds a listener that is called when the audio route changes.
+     * @param listener The listener is called with the change reason and the new route.
+     */
+    function addRouteChangeListener(listener: AudioRouteChangeListener): void
+    /**
+     * Removes a previously registered route change listener.
+     */
+    function removeRouteChangeListener(listener: AudioRouteChangeListener): void
   }
   /**
   * The type of an audio interruption.
@@ -3621,6 +4013,87 @@ If the event’s calendar does not support availability settings, this property�
   type AudioSessionCategory = 'ambient' | 'multiRoute' | 'playAndRecord' | 'playback' | 'record' | 'soloAmbient'
 
   /**
+   * Audio session port types, matching the values reported by `AVAudioSessionPortDescription.portType`.
+   * Newer iOS-only port types (e.g. `continuityMicrophone`) may also be returned as their raw string.
+   */
+  type AudioSessionPortType =
+    | 'builtInMic' | 'headsetMic' | 'lineIn' | 'usbAudio'
+    | 'bluetoothHFP' | 'bluetoothLE'
+    | 'builtInReceiver' | 'builtInSpeaker' | 'headphones' | 'lineOut'
+    | 'bluetoothA2DP' | 'airPlay' | 'hdmi' | 'carAudio'
+    | string
+
+  /**
+   * Orientation of an input data source (typically a microphone) on the device.
+   */
+  type AudioSessionDataSourceOrientation = 'top' | 'bottom' | 'front' | 'back' | 'left' | 'right' | 'unknown'
+
+  /**
+   * Physical location of an input data source on the device.
+   */
+  type AudioSessionDataSourceLocation = 'upper' | 'lower' | 'unknown'
+
+  /**
+   * Currently selected polar pattern for an input data source.
+   */
+  type AudioSessionPolarPattern = 'omnidirectional' | 'cardioid' | 'subcardioid' | 'stereo' | 'unknown'
+
+  type AudioSessionDataSource = {
+    /** Stable identifier of the data source within the parent port. */
+    id: number
+    /** Display name of the data source. */
+    name: string
+    orientation?: AudioSessionDataSourceOrientation
+    location?: AudioSessionDataSourceLocation
+    selectedPolarPattern?: AudioSessionPolarPattern
+  }
+
+  /**
+   * A description of an audio input or output port, matching `AVAudioSessionPortDescription`.
+   */
+  type AudioSessionPort = {
+    portType: AudioSessionPortType
+    /** A human-readable name suitable for display. */
+    portName: string
+    /** A stable, opaque identifier for the port. */
+    uid: string
+    /** Number of audio channels exposed by this port. */
+    channels?: number
+    /** Indicates whether this port has built-in voice-call audio processing. */
+    hasHardwareVoiceCallProcessing?: boolean
+    /** Available data sources on this port (e.g. front/back/bottom built-in mics). */
+    dataSources?: AudioSessionDataSource[]
+    /** ID of the currently selected data source, if any. */
+    selectedDataSourceId?: number
+  }
+
+  /**
+   * Snapshot of the active audio route, with separately-listed input and output ports.
+   */
+  type AudioRouteDescription = {
+    inputs: AudioSessionPort[]
+    outputs: AudioSessionPort[]
+  }
+
+  /**
+   * Reason an audio route change was triggered, mirroring `AVAudioSession.RouteChangeReason`.
+   */
+  type AudioRouteChangeReason =
+    | 'unknown'
+    | 'newDeviceAvailable'
+    | 'oldDeviceUnavailable'
+    | 'categoryChange'
+    | 'override'
+    | 'wakeFromSleep'
+    | 'noSuitableRouteForCategory'
+    | 'routeConfigurationChange'
+
+  type AudioRouteChangeListener = (
+    reason: AudioRouteChangeReason,
+    current: AudioRouteDescription,
+  ) => void
+
+  /**
    * Specifies when to pause or stop speech.
    */
   type SpeechBoundary = 'immediate' | 'word'
@@ -3660,8 +4133,23 @@ If the event’s calendar does not support availability settings, this property�
   type SpeechSynthesisOptions = {
     /**
      * A boolean value indicates whether the text is a markdown string.
+     * Mutually exclusive with `isSSML` — passing both as `true` will reject the promise.
      */
     isMarkdown?: boolean
+    /**
+     * A boolean value indicates whether the text is an SSML (Speech Synthesis Markup Language)
+     * string. The text must be wrapped in a `<speak>...</speak>` root element. Available on iOS 16+.
+     *
+     * Mutually exclusive with `isMarkdown` — passing both as `true` will reject the promise.
+     * If the SSML cannot be parsed, the promise rejects with `"Failed to parse SSML representation."`.
+     *
+     * Inline SSML tags (e.g. `<prosody>`, `<voice>`, `<break>`) take precedence; the utterance-level
+     * `voice` / `rate` / `pitch` / `volume` options still apply as fallbacks for any text that is not
+     * overridden by inline tags.
+     *
+     * See: https://developer.apple.com/documentation/avfaudio/avspeechutterance/init(ssmlrepresentation:)
+     */
+    isSSML?: boolean
     /**
      * Set this property to a value within the range of 0.5 for lower pitch to 2.0 for higher pitch. The default value is 1.0.
      * This property will override the `Speech.pitch`.
@@ -3858,6 +4346,19 @@ If the event’s calendar does not support availability settings, this property�
        */
       useDefaultAudioSessionSettings?: boolean
       /**
+       * Preferred audio input port to use for this recognition session.
+       *
+       * - `'auto'` (default): use whatever input the system selects (typically the most-recently-connected
+       *   Bluetooth/headset mic if present).
+       * - `'builtInMic'`: force the device's built-in microphone, even when a Bluetooth headset is
+       *   connected. Combined with the default audio session settings, this lets you keep wireless
+       *   headphones for playback while recording from the built-in mic for better input quality.
+       *
+       * The preference is applied after the audio session is activated. If `builtInMic` is not
+       * available on the device, the call still succeeds but the input falls back to the system default.
+       */
+      preferredInput?: 'auto' | 'builtInMic'
+      /**
        * The function to call when partial or final results are available, or when an error occurs. If the `partialResults` property is true, this function may be called multiple times to deliver the partial and final results.
        *
        * @param result A `SpeechRecognitionResult` containing the partial or final transcriptions of the audio content.
@@ -3919,9 +4420,90 @@ If the event’s calendar does not support availability settings, this property�
      */
     isFinal: boolean
     /**
-     * The entire transcription of utterances, formatted into a single, user-displayable string,  with the highest confidence level.
+     * Convenience alias for `bestTranscription.formattedString`. Kept for backward compatibility.
      */
     text: string
+    /**
+     * The transcription with the highest confidence level.
+     */
+    bestTranscription: SpeechTranscription
+    /**
+     * Alternative transcriptions of the audio, sorted in descending order of confidence.
+     */
+    transcriptions: SpeechTranscription[]
+    /**
+     * Additional speech metrics. Only available on final results (iOS 14.5+).
+     */
+    metadata?: SpeechRecognitionMetadata
+  }
+
+  /**
+   * A transcription of recognized speech.
+   */
+  type SpeechTranscription = {
+    /**
+     * The entire transcription of utterances, formatted into a single, user-displayable string.
+     */
+    formattedString: string
+    /**
+     * The individual word/utterance segments that compose this transcription.
+     */
+    segments: SpeechTranscriptionSegment[]
+  }
+
+  /**
+   * A single segment within a `SpeechTranscription`, typically corresponding to a word.
+   */
+  type SpeechTranscriptionSegment = {
+    /**
+     * The text content of this segment.
+     */
+    substring: string
+    /**
+     * The UTF-16 character range of `substring` within the parent transcription's `formattedString`.
+     */
+    substringRange: {
+      location: number
+      length: number
+    }
+    /**
+     * The seconds offset, relative to the audio start, at which this segment was spoken.
+     */
+    timestamp: number
+    /**
+     * The duration in seconds of this segment within the audio.
+     */
+    duration: number
+    /**
+     * Confidence in the accuracy of this segment, in the range [0.0, 1.0]. Only meaningful on final results; partial results typically report 0.
+     */
+    confidence: number
+    /**
+     * Alternative substrings the recognizer also considered for this segment.
+     */
+    alternativeSubstrings: string[]
+  }
+
+  /**
+   * Aggregate speech metrics for a final recognition result.
+   */
+  type SpeechRecognitionMetadata = {
+    /**
+     * Speaking rate in words per minute.
+     */
+    speakingRate: number
+    /**
+     * Average pause duration in seconds between words.
+     */
+    averagePauseDuration: number
+    /**
+     * Seconds offset within the audio at which the user started speaking.
+     */
+    speechStartTimestamp: number
+    /**
+     * Duration in seconds of the spoken speech.
+     */
+    speechDuration: number
   }
 
   type MediaItem = {
@@ -4052,6 +4634,12 @@ If the event’s calendar does not support availability settings, this property�
      * Defaults to 0.
      */
     playbackDuration?: DurationInSeconds
+    /**
+     * Defaults to `false`. Set to `true` for live streams (e.g., radio
+     * broadcasts) so the system hides the progress bar in the Lock Screen
+     * and Control Center Now Playing UI.
+     */
+    isLiveStream?: boolean
   }
 
   type MediaPlayerRemoteCommandEvent = {
@@ -4249,6 +4837,162 @@ If the event’s calendar does not support availability settings, this property�
   }
 
   /**
+   * Identifies which earbud (or aggregate source) produced a `HeadphoneDeviceMotion` sample.
+   */
+  type HeadphoneSensorLocation = 'default' | 'leftHeadphone' | 'rightHeadphone'
+
+  /**
+   * Calibration accuracy of the magnetic field reading for a `HeadphoneDeviceMotion` sample.
+   */
+  type HeadphoneMagneticFieldAccuracy = 'uncalibrated' | 'low' | 'medium' | 'high'
+
+  /**
+   * A 3D vector value used by `HeadphoneDeviceMotion`.
+   */
+  type HeadphoneVector3 = {
+    x: number
+    y: number
+    z: number
+  }
+
+  /**
+   * Device attitude (orientation) for a `HeadphoneDeviceMotion` sample, in radians for Euler angles.
+   */
+  type HeadphoneAttitude = {
+    /**
+     * Pitch (in radians).
+     */
+    pitch: number
+    /**
+     * Roll (in radians).
+     */
+    roll: number
+    /**
+     * Yaw (in radians).
+     */
+    yaw: number
+    /**
+     * Quaternion representation of the same orientation.
+     */
+    quaternion: {
+      x: number
+      y: number
+      z: number
+      w: number
+    }
+  }
+
+  /**
+   * A single device motion sample streamed from a connected pair of headphones.
+   *
+   * `userAcceleration` is in G's, `rotationRate` is in radians per second, and `gravity` is in G's.
+   * `attitude` describes the orientation of the headphones relative to a reference frame.
+   */
+  type HeadphoneDeviceMotion = {
+    /**
+     * The time, in seconds, at which the motion data was generated. Monotonic and relative to device boot.
+     */
+    timestamp: number
+    /**
+     * The orientation of the headphones at the moment the sample was captured.
+     */
+    attitude: HeadphoneAttitude
+    /**
+     * The rotation rate, in radians per second, around each axis.
+     */
+    rotationRate: HeadphoneVector3
+    /**
+     * The acceleration that the user is giving to the device, in G's.
+     */
+    userAcceleration: HeadphoneVector3
+    /**
+     * The gravity acceleration vector expressed in the headphones' reference frame, in G's.
+     */
+    gravity: HeadphoneVector3
+    /**
+     * Which earbud produced the sample (or `default` if unspecified).
+     */
+    sensorLocation: HeadphoneSensorLocation
+    /**
+     * Heading angle, in degrees, in the range [0, 360). Omitted when not available.
+     */
+    heading?: number
+    /**
+     * Calibrated magnetic field. Omitted when calibration is not yet available.
+     */
+    magneticField?: {
+      field: HeadphoneVector3
+      accuracy: HeadphoneMagneticFieldAccuracy
+    }
+  }
+
+  /**
+   * Streams device motion data from headphones that support spatial audio with dynamic head tracking
+   * (such as AirPods Pro, AirPods Max, and AirPods 3).
+   *
+   * Requires iOS 14.0+, the `NSMotionUsageDescription` key in Info.plist, and Scripting Pro.
+   *
+   * @example
+   * ```ts
+   * if (HeadphoneMotionManager.isAvailable) {
+   *   HeadphoneMotionManager.addListener('connect', () => console.log('connected'))
+   *   await HeadphoneMotionManager.startDeviceMotionUpdates({
+   *     onUpdate: motion => console.log(motion.attitude.yaw),
+   *   })
+   * }
+   * ```
+   */
+  namespace HeadphoneMotionManager {
+    /**
+     * Whether the current device supports headphone motion data and a compatible pair of headphones is reachable.
+     */
+    const isAvailable: boolean
+    /**
+     * Whether headphone motion updates are currently being delivered.
+     */
+    const isActive: boolean
+
+    /**
+     * Start streaming device motion updates from connected headphones.
+     *
+     * Resolves with `true` once the stream has been started. Authorization is handled internally:
+     * the first call automatically triggers the system Motion & Fitness permission prompt, and
+     * the promise is rejected with a clear error if motion access has been denied or restricted.
+     *
+     * Only one active subscription is supported at a time — calling `startDeviceMotionUpdates` while
+     * another stream is active replaces the previous handler.
+     */
+    function startDeviceMotionUpdates(options: {
+      /**
+       * Called for every motion sample produced by the headphones.
+       */
+      onUpdate: (motion: HeadphoneDeviceMotion) => void
+      /**
+       * Optional handler invoked when CoreMotion reports an error during streaming.
+       */
+      onError?: (error: Error) => void
+    }): Promise<boolean>
+
+    /**
+     * Stop the current motion stream. Safe to call when no stream is active.
+     */
+    function stopDeviceMotionUpdates(): void
+
+    /**
+     * Subscribe to a connection event. `connect` fires when supported headphones become reachable;
+     * `disconnect` fires when they go away.
+     */
+    function addListener(event: 'connect', listener: () => void): void
+    function addListener(event: 'disconnect', listener: () => void): void
+
+    /**
+     * Remove a previously registered listener for the given event.
+     */
+    function removeListener(event: 'connect', listener: () => void): void
+    function removeListener(event: 'disconnect', listener: () => void): void
+  }
+
+  /**
    * This interface is used to interact with NowPlayingCenter, display NowPlayingInfo and register commands and related handlers.
    */
   namespace MediaPlayer {
@@ -4281,6 +5025,101 @@ If the event’s calendar does not support availability settings, this property�
       | null
   }
 
+  namespace SystemMusicPlayer {
+    type PlaybackState =
+      | "stopped"
+      | "playing"
+      | "paused"
+      | "interrupted"
+      | "seekingForward"
+      | "seekingBackward"
+
+    type RepeatMode =
+      | "none"
+      | "one"
+      | "all"
+      | "default"
+
+    type ShuffleMode =
+      | "off"
+      | "songs"
+      | "albums"
+      | "default"
+
+    type EventType =
+      | "playbackStateDidChange"
+      | "nowPlayingItemDidChange"
+      | "volumeDidChange"
+
+    type EventPayloadMap = {
+      playbackStateDidChange: PlaybackState
+      nowPlayingItemDidChange: NowPlayingItem | null
+      volumeDidChange: null
+    }
+
+    type SetQueueByStoreIDsOptions = {
+      storeIDs: string[]
+      startItemID?: string
+      startTime?: number
+    }
+
+    type SetQueueByPersistentIDsOptions = {
+      persistentIDs: string[]
+      startItemID?: string
+      startTime?: number
+    }
+
+    type NowPlayingItem = {
+      persistentID: string
+      title: string
+      playbackDuration: number
+      playbackStoreID?: string
+      artist?: string
+      albumTitle?: string
+      albumArtist?: string
+      genre?: string
+      composer?: string
+    }
+
+    function setQueueByStoreIDs(
+      options: SetQueueByStoreIDsOptions
+    ): Promise<void>
+
+    function setQueueByPersistentIDs(
+      options: SetQueueByPersistentIDsOptions
+    ): Promise<void>
+
+    function prepare(): Promise<void>
+    function play(): Promise<void>
+    function pause(): Promise<void>
+    function stop(): Promise<void>
+    function skipToNextItem(): Promise<void>
+    function skipToPreviousItem(): Promise<void>
+    function seek(to: number): Promise<void>
+    function setCurrentPlaybackTime(seconds: number): Promise<void>
+    function setCurrentPlaybackRate(rate: number): Promise<void>
+    function setRepeatMode(mode: RepeatMode): Promise<void>
+    function setShuffleMode(mode: ShuffleMode): Promise<void>
+
+    function indexOfNowPlayingItem(): number
+    function getNowPlayingItem(): NowPlayingItem | null
+    function getPlaybackState(): PlaybackState
+    function getCurrentPlaybackTime(): number
+    function getCurrentPlaybackRate(): number
+    function getRepeatMode(): RepeatMode
+    function getShuffleMode(): ShuffleMode
+
+    function addEventListener<T extends EventType>(
+      type: T,
+      listener: (payload: EventPayloadMap[T]) => void
+    ): void
+
+    function removeEventListener<T extends EventType>(
+      type: T,
+      listener: (payload: EventPayloadMap[T]) => void
+    ): void
+  }
+
   enum TimeControlStatus {
     paused,
     waitingToPlayAtSpecifiedRate,
@@ -4291,6 +5130,7 @@ If the event’s calendar does not support availability settings, this property�
    * Represents a single metadata item.
    */
   class AVMetadataItem {
+    private constructor()
     /**
      * The key of the metadata item.
      */
@@ -4368,7 +5208,7 @@ If the event’s calendar does not support availability settings, this property�
   class MediaTime {
     private constructor()
 
-    readonly secondes: number
+    readonly seconds: number
     readonly isValid: boolean
     readonly isPositiveInfinity: boolean
     readonly isNegativeInfinity: boolean
@@ -4413,6 +5253,414 @@ If the event’s calendar does not support availability settings, this property�
     static indefinite(): MediaTime
     static positiveInfinity(): MediaTime
     static negativeInfinity(): MediaTime
+  }
+
+  /**
+   * The media type of an `AVAssetTrack`.
+   */
+  type AVMediaType = 'video' | 'audio' | 'subtitle' | 'text' | 'closedCaption' | 'metadata' | 'muxed' | 'timecode'
+
+  /**
+   * Options for generating still images from an `AVAsset`.
+   */
+  type AVAssetImageGenerateOptions = {
+    /**
+     * Maximum size in pixels for the generated image. The aspect ratio of the source is preserved.
+     * If omitted, images are generated at the natural size of the asset.
+     */
+    maximumSize?: Size
+    /**
+     * The maximum amount of time before the requested time the image generator may use to find a frame.
+     * Defaults to `MediaTime.zero()` (exact frame match).
+     */
+    toleranceBefore?: MediaTime
+    /**
+     * The maximum amount of time after the requested time the image generator may use to find a frame.
+     * Defaults to `MediaTime.zero()` (exact frame match).
+     */
+    toleranceAfter?: MediaTime
+    /**
+     * Whether the generated image should respect the asset's preferred track transform
+     * (rotation/mirroring). Defaults to `true`.
+     */
+    appliesPreferredTrackTransform?: boolean
+  }
+
+  /**
+   * Represents a single track inside an `AVAsset`. Most properties are loaded asynchronously,
+   * because they may require parsing the underlying media container.
+   *
+   * Instances are created via `AVAsset.loadTracks(...)`; do not construct directly.
+   */
+  class AVAssetTrack {
+    private constructor()
+    /** A persistent identifier for the track within the asset. */
+    readonly trackID: number
+    /** The media type of the track (video / audio / subtitle / ...). */
+    readonly mediaType: AVMediaType
+    /** The natural dimensions of the visual portion of the track, in pixels. */
+    loadNaturalSize(): Promise<Size>
+    /** The natural timescale of the track. */
+    loadNaturalTimeScale(): Promise<number>
+    /** The frame rate of the track, in frames per second. */
+    loadNominalFrameRate(): Promise<number>
+    /** The estimated data rate of the track, in bits per second. */
+    loadEstimatedDataRate(): Promise<number>
+    /** The time range of the track within the asset's overall timeline. */
+    loadTimeRange(): Promise<{ start: MediaTime; duration: MediaTime }>
+    /** ISO 639-2/T language code of the track, or `null` if unspecified. */
+    loadLanguageCode(): Promise<string | null>
+  }
+
+  /**
+   * Represents a media asset (audio / video) backed by an iOS `AVURLAsset`.
+   *
+   * `AVAsset` is a heavyweight handle. Call `dispose()` when you are done, or rely on the
+   * automatic cleanup that fires when the script finishes.
+   *
+   * Validation:
+   *  - The constructor does not verify file existence or URL reachability.
+   *  - For remote URLs, only obviously malformed strings (where `URL(string:)` returns nil)
+   *    throw immediately. 404 / network errors / missing local files surface as Promise
+   *    rejections on the first `loadXxx()` call.
+   */
+  class AVAsset {
+    /**
+     * @param filePathOrURL Local file path or `http(s)://` URL.
+     * @param options.headers HTTP headers used when `filePathOrURL` is remote.
+     * @param options.preferPreciseDuration Whether iOS should scan the file to get a precise
+     *   duration. Defaults to `true`. Required for VBR formats like mp3 — without it,
+     *   `loadDuration()` may return a `MediaTime` whose `seconds` is `NaN`. Setting `false`
+     *   speeds up remote asset loading at the cost of accuracy for those formats.
+     *
+     * Note on remote VBR audio (mp3): even with `preferPreciseDuration: true`, iOS computes
+     * mp3 duration by scanning frames via byte-range HTTP requests. If the remote server
+     * does not advertise `Accept-Ranges: bytes` and respond `206 Partial Content` to
+     * `Range:` requests, `loadDuration()` will resolve with an indefinite `MediaTime`
+     * (`seconds === NaN`, `isIndefinite === true`). Either host the file on a range-capable
+     * CDN, or download it locally first (e.g. via `fetch()` + `FileManager.writeAsBytes()`)
+     * before constructing the asset.
+     */
+    constructor(filePathOrURL: string, options?: {
+      headers?: Record<string, string>
+      preferPreciseDuration?: boolean
+    })
+
+    /** The original file path or URL string used to construct this asset. */
+    readonly source: string
+
+    /** Loads the duration of the asset. */
+    loadDuration(): Promise<MediaTime>
+    /** Whether the asset can be played back. */
+    loadIsPlayable(): Promise<boolean>
+    /** Whether the asset can be exported with `AVAssetExportSession`. */
+    loadIsExportable(): Promise<boolean>
+    /** Whether the asset's media data can be read. */
+    loadIsReadable(): Promise<boolean>
+    /** Whether the asset has DRM-protected content. */
+    loadHasProtectedContent(): Promise<boolean>
+    /**
+     * The preferred affine transform (rotation/scale/translation) for the asset's video.
+     * Returned as the 6 components of a `CGAffineTransform`.
+     */
+    loadPreferredTransform(): Promise<{ a: number; b: number; c: number; d: number; tx: number; ty: number }>
+
+    /**
+     * Loads the asset's metadata (all formats).
+     * @returns A promise that resolves to an array of `AVMetadataItem`, or `null` if unavailable.
+     */
+    loadMetadata(): Promise<AVMetadataItem[] | null>
+    /**
+     * Loads the asset's common metadata. Each returned `AVMetadataItem` provides a `commonKey`.
+     */
+    loadCommonMetadata(): Promise<AVMetadataItem[] | null>
+
+    /**
+     * Loads the asset's tracks, optionally filtered by media type.
+     * @param mediaType If provided, only tracks of that media type are returned. Otherwise all tracks are returned.
+     */
+    loadTracks(mediaType?: AVMediaType): Promise<AVAssetTrack[]>
+
+    /**
+     * Generates a still image at the given time.
+     * @param time The requested presentation time.
+     * @param options Optional generation parameters.
+     * @returns A promise resolving to the generated image and the actual time of the chosen frame,
+     *          or rejecting with the underlying generator error.
+     */
+    generateImage(
+      time: MediaTime,
+      options?: AVAssetImageGenerateOptions
+    ): Promise<{ image: UIImage; actualTime: MediaTime }>
+
+    /**
+     * Generates still images for an array of times. Each time is reported independently:
+     * successful entries carry `image` and `actualTime`; failed entries carry `error`.
+     */
+    generateImages(
+      times: MediaTime[],
+      options?: AVAssetImageGenerateOptions
+    ): Promise<Array<
+      | { requestedTime: MediaTime; actualTime: MediaTime; image: UIImage }
+      | { requestedTime: MediaTime; error: string }
+    >>
+
+    /**
+     * Releases the underlying `AVURLAsset`. Subsequent `loadXxx()` calls will reject.
+     * Auto-called when the script finishes.
+     */
+    dispose(): void
+  }
+
+  /**
+   * The export preset for `AVAssetExportSession`. Most presets correspond directly to the
+   * AVAssetExportPreset* constants from AVFoundation.
+   */
+  type AVAssetExportPreset =
+    | '640x480' | '960x540' | '1280x720' | '1920x1080' | '3840x2160'
+    | 'AppleM4A'
+    | 'LowQuality' | 'MediumQuality' | 'HighestQuality'
+    | 'HEVC1920x1080' | 'HEVC3840x2160' | 'HEVCHighestQuality'
+    | 'AppleProRes422LPCM' | 'AppleProRes4444LPCM'
+
+  /** Output container file type for `AVAssetExportSession`. */
+  type AVAssetExportFileType = 'mp4' | 'mov' | 'm4a' | 'm4v'
+
+  /** Status of an `AVAssetExportSession`. */
+  type AVAssetExportStatus = 'unknown' | 'exporting' | 'completed' | 'failed' | 'cancelled'
+
+  /**
+   * High-level transcode / re-encode of an existing `AVAsset`. Wraps iOS `AVAssetExportSession`.
+   *
+   * Typical usage:
+   * ```ts
+   * const asset = new AVAsset("input.mov")
+   * const session = new AVAssetExportSession(asset, "HEVCHighestQuality")
+   * session.outputFileType = "mp4"
+   * session.onProgress = p => console.log(`${(p * 100).toFixed(0)}%`)
+   * await session.exportTo("/tmp/output.mp4")
+   * ```
+   */
+  class AVAssetExportSession {
+    constructor(asset: AVAsset, presetName: AVAssetExportPreset)
+
+    /**
+     * Output container type. If unset, the system picks a default based on the preset
+     * (e.g. `'mp4'` for HEVC/H.264 video presets, `'m4a'` for `'AppleM4A'`).
+     */
+    outputFileType?: AVAssetExportFileType
+
+    /** Whether to optimize MOV/MP4 atoms for streaming. Defaults to `true`. */
+    shouldOptimizeForNetworkUse: boolean
+
+    /** Current export status, sampled synchronously. */
+    readonly status: AVAssetExportStatus
+
+    /** Progress callback fired periodically while exporting. The argument is in the range 0..1. */
+    onProgress?: (progress: number) => void
+
+    /** Restrict the export to this time range. By default the whole asset is exported. */
+    setTimeRange(range: { start: MediaTime; duration: MediaTime } | null): void
+
+    /**
+     * Starts the export to `outputPath`. Resolves on success.
+     * Rejects with an `Error('Export cancelled.')` if `cancel()` is called,
+     * or with the underlying error otherwise.
+     */
+    exportTo(outputPath: string): Promise<void>
+
+    /** Cancels an in-flight export. The pending `exportTo` Promise rejects. */
+    cancel(): void
+
+    /** Releases the underlying export session. Auto-called on script end. */
+    dispose(): void
+  }
+
+  /** Status of an `AVAssetReader`. */
+  type AVAssetReaderStatus = 'unknown' | 'reading' | 'completed' | 'failed' | 'cancelled'
+
+  /**
+   * Pull-style media reader. Add one or more outputs (video / audio) before calling
+   * `startReading()`, then pull samples from each output via `copyNextX()`.
+   *
+   * ```ts
+   * const asset = new AVAsset(path)
+   * const tracks = await asset.loadTracks("audio")
+   * const reader = new AVAssetReader(asset)
+   * const out = new AVAssetReaderAudioOutput(tracks)
+   * reader.add(out)
+   * reader.startReading()
+   *
+   * while (true) {
+   *   const chunk = await out.copyNextSamples()
+   *   if (!chunk) break
+   *   // process chunk.samples (Float32Array, interleaved)
+   * }
+   * ```
+   */
+  class AVAssetReader {
+    constructor(asset: AVAsset)
+
+    /**
+     * Adds an output before `startReading()`. Returns `false` if the underlying reader
+     * cannot accept the output (already started, output already added, etc).
+     */
+    add(output: AVAssetReaderVideoOutput | AVAssetReaderAudioOutput): boolean
+
+    /** Begins reading. Must be called after `add()` and before any `output.copyNextX()`. */
+    startReading(): boolean
+
+    /** Cancels reading. Pending `copyNextX()` calls will yield `null` or rejected promises. */
+    cancelReading(): void
+
+    readonly status: AVAssetReaderStatus
+    readonly error: string | null
+
+    dispose(): void
+  }
+
+  /** Pull video frames as decoded `UIImage`s with presentation times. */
+  class AVAssetReaderVideoOutput {
+    /**
+     * @param track A video track from `asset.loadTracks('video')`.
+     * @param options.pixelFormat Output pixel format. Defaults to `'bgra'`. Both values
+     *        currently decode to a UIImage; the option is reserved for future expansion.
+     */
+    constructor(track: AVAssetTrack, options?: { pixelFormat?: 'bgra' | 'rgba' })
+
+    /**
+     * Returns the next decoded video frame, or `null` when the stream is exhausted.
+     * Rejects if the sample buffer can't be decoded.
+     */
+    copyNextFrame(): Promise<{ image: UIImage; presentationTime: MediaTime } | null>
+  }
+
+  /** Pull audio samples as interleaved Float32 PCM. */
+  class AVAssetReaderAudioOutput {
+    /**
+     * @param tracks One or more audio tracks; multiple tracks are mixed together.
+     * @param options.sampleRate Resample to this rate. Defaults to source rate.
+     * @param options.channels Down/up-mix to this many channels. Defaults to source.
+     */
+    constructor(tracks: AVAssetTrack[], options?: {
+      sampleRate?: number
+      channels?: number
+    })
+
+    /**
+     * Returns the next chunk of decoded PCM (interleaved Float32), or `null` at end-of-stream.
+     * The frame count varies per call — typical is hundreds to thousands of frames.
+     */
+    copyNextSamples(): Promise<{
+      samples: Float32Array       // length === frameCount * channels
+      frameCount: number
+      sampleRate: number
+      channels: number
+      presentationTime: MediaTime
+    } | null>
+  }
+
+  /** Status of an `AVAssetWriter`. */
+  type AVAssetWriterStatus = 'unknown' | 'writing' | 'completed' | 'failed' | 'cancelled'
+
+  /**
+   * Push-style media writer. Add one or more inputs (video / audio), call `startWriting()`
+   * + `startSession(...)`, append samples on each input via `appendVideoFrame` /
+   * `appendPCMSamples`, then `markAsFinished()` on each input and `await finishWriting()`.
+   *
+   * ```ts
+   * const writer = new AVAssetWriter("/tmp/out.m4a", "m4a")
+   * const input = AVAssetWriterInput.audio({ sampleRate: 44100, channels: 1 })
+   * writer.add(input)
+   * writer.startWriting()
+   * writer.startSession(MediaTime.zero())
+   * input.appendPCMSamples(samples, 44100, 1, MediaTime.make({ seconds: 0, preferredTimescale: 44100 }))
+   * input.markAsFinished()
+   * await writer.finishWriting()
+   * ```
+   */
+  class AVAssetWriter {
+    constructor(outputPath: string, fileType: AVAssetExportFileType)
+
+    /** Adds an input before `startWriting()`. Returns `false` if writer can't accept it. */
+    add(input: AVAssetWriterInput): boolean
+
+    startWriting(): boolean
+    /** Marks the timeline origin; usually `MediaTime.zero()`. */
+    startSession(atSourceTime: MediaTime): void
+
+    /** Resolves when the file is fully flushed; rejects on failure / cancel. */
+    finishWriting(): Promise<void>
+    cancelWriting(): void
+
+    readonly status: AVAssetWriterStatus
+    readonly error: string | null
+
+    dispose(): void
+  }
+
+  /**
+   * A single track input in an `AVAssetWriter`. Created via the static factories
+   * `AVAssetWriterInput.video(...)` and `.audio(...)`.
+   */
+  class AVAssetWriterInput {
+    private constructor()
+
+    /**
+     * Creates a video input. Caller pushes UIImage frames via `appendVideoFrame`.
+     * @param options.width  Frame width in pixels.
+     * @param options.height Frame height in pixels.
+     * @param options.codec  `'h264'` (default) or `'hevc'`.
+     * @param options.bitRate Optional, in bits per second.
+     * @param options.frameRate Optional hint for the encoder.
+     */
+    static video(options: {
+      width: number
+      height: number
+      codec?: 'h264' | 'hevc'
+      bitRate?: number
+      frameRate?: number
+    }): AVAssetWriterInput
+
+    /**
+     * Creates an audio input. Caller pushes interleaved Float32 PCM via `appendPCMSamples`.
+     * @param options.sampleRate Defaults to 44100.
+     * @param options.channels   Defaults to 1.
+     * @param options.codec      `'aac'` (default) or `'pcm'`.
+     * @param options.bitRate    Only meaningful for AAC.
+     */
+    static audio(options?: {
+      sampleRate?: number
+      channels?: number
+      codec?: 'aac' | 'pcm'
+      bitRate?: number
+    }): AVAssetWriterInput
+
+    /** True if the encoder is ready to accept more samples without blocking. */
+    readonly isReadyForMoreMediaData: boolean
+
+    /** No more samples will be appended. Call before `AVAssetWriter.finishWriting()`. */
+    markAsFinished(): void
+
+    /**
+     * Appends a single video frame. Returns `false` if the input is full or finished —
+     * caller should `await whenReady()` and retry.
+     */
+    appendVideoFrame(image: UIImage, presentationTime: MediaTime): boolean
+
+    /**
+     * Appends one chunk of interleaved Float32 PCM. `samples.length` must be
+     * `frameCount * channels`.
+     */
+    appendPCMSamples(
+      samples: Float32Array,
+      sampleRate: number,
+      channels: number,
+      presentationTime: MediaTime
+    ): boolean
+
+    /** Resolves when `isReadyForMoreMediaData` becomes `true` again. */
+    whenReady(): Promise<void>
   }
 
   namespace MediaComposer {
@@ -4629,6 +5877,7 @@ If the event’s calendar does not support availability settings, this property�
    * Use for playing audio or video.
    */
   class AVPlayer {
+    constructor()
     /**
      * Controls the volume of the AVPlayer.
      * Value ranges from `0.0` (muted) to `1.0` (full volume).
@@ -4664,10 +5913,21 @@ If the event’s calendar does not support availability settings, this property�
     numberOfLoops: number
     /**
      * Sets the media source for playback.
-     * @param filePathOrURL he file path or URL to the media resource. This can be either a local file path or a remote URL.
+     * @param filePathOrURL The file path or URL to the media resource. This can be either a local file path or a remote URL.
+     * @param options The options for the media source.
+     * @param options.headers The headers to use when fetching the media source.
      * @returns `true` if the media source is set successfully, otherwise `false`.
      */
-    setSource(filePathOrURL: string): boolean
+    setSource(filePathOrURL: string, options?: {
+      headers?: Record<string, string>
+    }): boolean
+    /**
+     * Sets the media source for playback from an existing `AVAsset` instance, sharing the underlying
+     * media so any metadata / track info already loaded on the asset is reused.
+     * @param asset An `AVAsset` instance constructed beforehand.
+     * @returns `true` if the media source is set successfully, otherwise `false`.
+     */
+    setSource(asset: AVAsset): boolean
     /**
      * Plays the current media.
      * @param atRate The playback rate at which to play the media.
@@ -4743,6 +6003,7 @@ If the event’s calendar does not support availability settings, this property�
    *  - Pause and resume a recording
    */
   class AudioRecorder {
+    private constructor()
     /**
      * Creates an audio recorder with settings, it will fail and throw an error if you don't have permission.
      * @param filePath The file system location to record to.
@@ -4762,6 +6023,16 @@ If the event’s calendar does not support availability settings, this property�
        */
       numberOfChannels?: number
       encoderAudioQuality?: AVAudioQuality
+      /**
+       * Enables level metering so `averagePower`, `peakPower`, and `onLevelUpdate`
+       * report values while recording. Default: `false`.
+       */
+      meteringEnabled?: boolean
+      /**
+       * Sampling interval in milliseconds for `onLevelUpdate`. Clamped to `[16, 1000]`.
+       * Default: `50`.
+       */
+      levelUpdateInterval?: number
     }): Promise<AudioRecorder>
 
     /**
@@ -4833,13 +6104,869 @@ If the event’s calendar does not support availability settings, this property�
      * Callback that is called when ecorder encode error occured.
      */
     onError?: (message: string) => void
+
+    /**
+     * Whether level metering is enabled. Toggle this before `record()` (or
+     * pass `meteringEnabled: true` in `create`) so that `averagePower`,
+     * `peakPower`, and `onLevelUpdate` report values while recording.
+     */
+    meteringEnabled: boolean
+
+    /**
+     * Sampling interval in milliseconds used by `onLevelUpdate`.
+     * Clamped to `[16, 1000]`. Default: `50`.
+     */
+    levelUpdateInterval: number
+
+    /**
+     * Refreshes the meter values. Call before reading `averagePower` /
+     * `peakPower` if you do not use `onLevelUpdate`.
+     */
+    updateMeters(): void
+
+    /**
+     * Average power in dBFS for the given channel. Range roughly `[-160, 0]`.
+     * Returns `0` when metering is disabled or the recorder is not running.
+     * @param channel Zero-based channel index. Defaults to `0`.
+     */
+    averagePower(channel?: number): number
+
+    /**
+     * Peak hold power in dBFS for the given channel.
+     * @param channel Zero-based channel index. Defaults to `0`.
+     */
+    peakPower(channel?: number): number
+
+    /**
+     * Fires while recording at `levelUpdateInterval` cadence when
+     * `meteringEnabled` is `true`. Stops automatically on `pause()` /
+     * `stop()` / `dispose()` and resumes on the next `record()`.
+     */
+    onLevelUpdate?: (level: {
+      /** Average power in dBFS, averaged across channels. */
+      averagePower: number
+      /** Peak hold power in dBFS, averaged across channels. */
+      peakPower: number
+      /** Per-channel power values. */
+      channels: { average: number; peak: number }[]
+      /** `deviceCurrentTime` when the sample was taken, in seconds. */
+      timestamp: DurationInSeconds
+    }) => void
+  }
+
+  namespace AudioCapture {
+    /**
+     * Sample format used by `onBuffer`.
+     * - `float32`: each sample is in `[-1.0, 1.0]`, exposed as a `Float32Array`.
+     * - `int16`: each sample is in `[-32768, 32767]`, exposed as an `Int16Array`.
+     */
+    type Format = 'float32' | 'int16'
+
+    interface Configuration {
+      /**
+       * Hint for the desired sample rate. v1 does not resample — the actual
+       * value is decided by the audio hardware and exposed via the
+       * `sampleRate` property after `start()`. Default: `44100`.
+       */
+      sampleRate?: number
+      /**
+       * Hint for the desired channel count (`1` mono, `2` stereo). Same caveat
+       * as `sampleRate` — the hardware decides. Default: `1`.
+       */
+      channels?: 1 | 2
+      /**
+       * Frames per audio tap. Smaller buffers mean more frequent callbacks at
+       * lower latency. Range `[256, 8192]`. Default: `1024`
+       * (≈ 23 ms at 44.1 kHz).
+       */
+      bufferSize?: number
+      /**
+       * Sample format for the `onBuffer.samples` payload. Default: `float32`.
+       */
+      format?: Format
+      /**
+       * Optional file system path. When set, raw PCM is written to this file
+       * as a 32-bit float WAV (matches the hardware format to avoid
+       * conversion). Omit to discard captured audio after analysis.
+       *
+       * For final-quality encoded recordings (m4a / aac / mp3 / flac / opus),
+       * use `AudioRecorder` instead.
+       */
+      saveTo?: string
+    }
+
+    interface BufferFrame {
+      /**
+       * Interleaved samples. Channels are packed: `[L, R, L, R, ...]` for
+       * stereo. Length equals `frames * channels`.
+       */
+      samples: Float32Array | Int16Array
+      /** Sample rate, in Hz. */
+      sampleRate: number
+      /** Channel count of `samples` (interleaved). */
+      channels: number
+      /** Number of audio frames in this buffer. */
+      frames: number
+      /** Capture timestamp in seconds (host time). */
+      timestamp: DurationInSeconds
+      /** RMS / peak level of this buffer in dBFS. */
+      level: { averagePower: number; peakPower: number }
+    }
+
+    interface PitchFrame {
+      /**
+       * Estimated fundamental frequency in Hz. `0` means the analyzer could
+       * not lock onto a periodic signal (silence, noise, polyphonic input).
+       */
+      frequency: number
+      /** YIN aperiodicity inverted to a `[0, 1]` confidence score. */
+      confidence: number
+      /** Note name like `"A4"`, only present when `frequency > 0`. */
+      note?: string
+      /**
+       * Cents offset from the nearest equal-tempered semitone, range
+       * `[-50, 50]`. Useful for tuners.
+       */
+      cents?: number
+      /** Capture timestamp in seconds (host time). */
+      timestamp: DurationInSeconds
+      /** RMS / peak level of the analysis window. */
+      level: { averagePower: number; peakPower: number }
+    }
+
+    interface LevelFrame {
+      /** Average power (dBFS). */
+      averagePower: number
+      /** Peak hold power (dBFS). */
+      peakPower: number
+      /** Capture timestamp in seconds (host time). */
+      timestamp: DurationInSeconds
+    }
+
+    interface PitchConfig {
+      /** Lower bound of the pitch search, in Hz. Default `70`. */
+      minFrequency?: number
+      /** Upper bound of the pitch search, in Hz. Default `1000`. */
+      maxFrequency?: number
+      /**
+       * YIN aperiodicity threshold. Lower = stricter (fewer false positives,
+       * more silent frames). Range `(0, 0.5]`. Default `0.15`.
+       */
+      threshold?: number
+      /** How often `onPitch` fires, in Hz. Range `[1, 120]`. Default `30`. */
+      emitRate?: number
+    }
   }
 
   /**
-   * A class that represents a capture session.
+   * Real-time microphone capture for waveform / pitch analysis. Unlike
+   * `AudioRecorder` (which writes encoded files and only exposes power
+   * meters), `AudioCapture` taps the input node and streams raw PCM
+   * samples, RMS / peak levels, and YIN-based pitch estimates.
+   *
+   * Setup the audio session first, e.g.:
+   * ```ts
+   * await SharedAudioSession.setActive(true)
+   * await SharedAudioSession.setCategory("playAndRecord", ["defaultToSpeaker"])
+   * ```
+   *
+   * `AudioCapture` is a superset of `AudioRecorder`'s capabilities for
+   * uncompressed audio (it can also write a wav file via `saveTo`), but
+   * `AudioRecorder` is still the right choice for compressed final-quality
+   * recordings such as `.m4a`. Using both at the same time is **not
+   * supported** — they would compete for the same input bus.
+   */
+  class AudioCapture {
+    private constructor()
+
+    /**
+     * Requests microphone permission and prepares the engine.
+     */
+    static create(config?: AudioCapture.Configuration): Promise<AudioCapture>
+
+    /** Whether the engine is currently running. */
+    readonly isRunning: boolean
+
+    /** Actual sample rate after `start()` (decided by the hardware). */
+    readonly sampleRate: number
+
+    /** Actual channel count after `start()`. */
+    readonly channels: number
+
+    /**
+     * Starts the audio engine and opens the optional `saveTo` wav file.
+     * Returns `false` if no input is available, an error occurs, or
+     * permission was not granted.
+     */
+    start(): boolean
+
+    /** Stops the engine and closes the wav file (if any). */
+    stop(): void
+
+    /** Releases all resources. After calling this, the instance is unusable. */
+    dispose(): void
+
+    /**
+     * Fires with raw PCM frames. Set to `undefined` (or never assign) to
+     * disable PCM emission. The samples are a copy — safe to retain.
+     */
+    onBuffer?: (frame: AudioCapture.BufferFrame) => void
+
+    /**
+     * Fires at `bufferEmitRate` Hz. `0` means follow the hardware tap
+     * rate (≈ 43 Hz at 1024-frame / 44.1 kHz). Default `0`.
+     */
+    bufferEmitRate: number
+
+    /**
+     * Fires with YIN pitch estimates. Tune via `pitchConfig`.
+     */
+    onPitch?: (frame: AudioCapture.PitchFrame) => void
+
+    /**
+     * Pitch detection parameters. Assigning a partial object merges with
+     * the current configuration (default `{ minFrequency: 70,
+     * maxFrequency: 1000, threshold: 0.15, emitRate: 30 }`).
+     */
+    pitchConfig?: AudioCapture.PitchConfig
+
+    /**
+     * Lightweight RMS / peak level callback. Cheaper than `onBuffer` when
+     * you only need a meter.
+     */
+    onLevel?: (frame: AudioCapture.LevelFrame) => void
+
+    /** Fires `onLevel` at this rate, in Hz. Default `30`. */
+    levelEmitRate: number
+
+    /** Fires when the engine fails to start or encounters a runtime error. */
+    onError?: (message: string) => void
+  }
+
+  /**
+   * The session preset for an `AVCaptureSession`.
+   */
+  type AVCaptureSessionPreset =
+    | "high" | "medium" | "low" | "photo" | "inputPriority"
+    | "cif352x288" | "vga640x480"
+    | "iFrame960x540" | "iFrame1280x720"
+    | "hd1280x720" | "hd1920x1080" | "hd4K3840x2160"
+
+  /**
+   * Camera position. `unspecified` is rare and only returned for some
+   * external/continuity devices.
+   */
+  type AVCaptureDevicePosition = "unspecified" | "back" | "front"
+
+  /**
+   * Built-in capture device types. Not every device exposes every type;
+   * use `AVCaptureDevice.discoverySession({...})` to enumerate what is
+   * actually available on the current hardware.
+   */
+  type AVCaptureDeviceType =
+    | "builtInWideAngleCamera"
+    | "builtInUltraWideCamera"
+    | "builtInTelephotoCamera"
+    | "builtInDualCamera"
+    | "builtInDualWideCamera"
+    | "builtInTripleCamera"
+    | "builtInTrueDepthCamera"
+    | "builtInLiDARDepthCamera"
+    | "continuityCamera"
+    | "external"
+    | "microphone"
+
+  type AVCaptureFocusMode = "locked" | "autoFocus" | "continuousAutoFocus"
+  type AVCaptureExposureMode = "locked" | "autoExpose" | "continuousAutoExposure" | "custom"
+  type AVCaptureTorchMode = "off" | "on" | "auto"
+
+  type AVCaptureMediaType = "video" | "audio" | "muxed"
+
+  /** Top-level rectangle helper for capture APIs. */
+  type AVCaptureRect = { x: number; y: number; width: number; height: number }
+
+  /**
+   * Represents a camera or microphone input on the device. Get one with
+   * `AVCaptureDevice.default(...)` or `AVCaptureDevice.discoverySession(...)`.
+   *
+   * Setters that map to AVFoundation properties guarded by
+   * `lockForConfiguration` automatically lock and unlock around the change.
+   * For batched changes use `lockForConfiguration()` / `unlockForConfiguration()`.
+   */
+  class AVCaptureDevice {
+    private constructor()
+
+    static default(mediaType: AVCaptureMediaType): AVCaptureDevice | null
+    static defaultDevice(
+      deviceType: AVCaptureDeviceType,
+      mediaType: AVCaptureMediaType,
+      position: AVCaptureDevicePosition
+    ): AVCaptureDevice | null
+
+    static discoverySession(options: {
+      deviceTypes: AVCaptureDeviceType[]
+      mediaType: AVCaptureMediaType
+      position?: AVCaptureDevicePosition
+    }): AVCaptureDevice.DiscoverySession
+
+    readonly uniqueID: string
+    readonly modelID: string
+    readonly localizedName: string
+    readonly position: AVCaptureDevicePosition
+    readonly deviceType: AVCaptureDeviceType
+    readonly isConnected: boolean
+
+    readonly hasTorch: boolean
+    readonly isTorchAvailable: boolean
+    readonly torchMode: AVCaptureTorchMode
+    setTorchMode(mode: AVCaptureTorchMode): void
+    /** Force torch on at the given level (0..1). Throws if unsupported. */
+    setTorchModeOn(level: number): void
+
+    readonly minAvailableVideoZoomFactor: number
+    readonly maxAvailableVideoZoomFactor: number
+    readonly videoZoomFactor: number
+    setVideoZoomFactor(factor: number): void
+    rampToVideoZoomFactor(factor: number, rate: number): void
+    cancelVideoZoomRamp(): void
+
+    readonly focusMode: AVCaptureFocusMode
+    readonly focusPointOfInterest: { x: number; y: number }
+    readonly isFocusPointOfInterestSupported: boolean
+    isFocusModeSupported(mode: AVCaptureFocusMode): boolean
+    setFocusMode(mode: AVCaptureFocusMode): void
+    setFocusPointOfInterest(point: { x: number; y: number }): void
+
+    readonly exposureMode: AVCaptureExposureMode
+    readonly exposurePointOfInterest: { x: number; y: number }
+    readonly isExposurePointOfInterestSupported: boolean
+    readonly minExposureTargetBias: number
+    readonly maxExposureTargetBias: number
+    readonly exposureTargetBias: number
+    isExposureModeSupported(mode: AVCaptureExposureMode): boolean
+    setExposureMode(mode: AVCaptureExposureMode): void
+    setExposurePointOfInterest(point: { x: number; y: number }): void
+    setExposureTargetBias(ev: number): Promise<void>
+
+    /** Lock the device for an atomic batch of configuration changes. Pair with `unlockForConfiguration()`. */
+    lockForConfiguration(): void
+    unlockForConfiguration(): void
+
+    /**
+     * All capture formats this device can be configured into. Apple guarantees
+     * a stable order, and the bridge caches wrapper instances per device — so
+     * `device.formats[i] === device.formats[i]` and
+     * `device.formats.includes(device.activeFormat)` both hold across calls.
+     * Filter with `formats.filter(...)` to pick a 4K / 60fps / spatial / etc.
+     * format, then pass it to `setActiveFormat`.
+     */
+    readonly formats: AVCaptureDeviceFormat[]
+
+    /**
+     * The format currently in use. Returns the same wrapper instance as the
+     * matching element in `formats`, so identity comparison works.
+     */
+    readonly activeFormat: AVCaptureDeviceFormat
+
+    /**
+     * Switch the active capture format. The format must come from this device's
+     * `formats` array; passing one from another device throws. The change is
+     * performed inside an automatic configuration lock; for several related
+     * changes (format + frame rate + color space) call `lockForConfiguration()`
+     * yourself first and `unlockForConfiguration()` after, so the whole batch
+     * uses a single lock.
+     */
+    setActiveFormat(format: AVCaptureDeviceFormat): void
+
+    /**
+     * The color space currently in use. One of `"sRGB"`, `"P3_D65"`,
+     * `"HLG_BT2020"`, `"appleLog"`, `"appleLog2"`. Pair with `setActiveColorSpace` to change it.
+     */
+    readonly activeColorSpace: AVCaptureColorSpace
+
+    /**
+     * Switch to a different color space. The chosen value must appear in
+     * `activeFormat.supportedColorSpaces`; otherwise this throws with a message
+     * pointing you at the supported list. Use `appleLog` for grading workflows
+     * on devices where the active format supports it.
+     */
+    setActiveColorSpace(value: AVCaptureColorSpace): void
+
+    /**
+     * Current minimum frame duration in seconds. The maximum frame rate the
+     * device will produce equals `1 / activeVideoMinFrameDuration`. `0` if the
+     * device has not been clamped (it then uses the format's natural range).
+     */
+    readonly activeVideoMinFrameDuration: number
+
+    /**
+     * Clamp the maximum frame rate (shorter duration ⇒ higher fps cap). Pass
+     * seconds, e.g. `1 / 60` to cap at 60 fps. Must fall inside one of the
+     * `minFrameDuration..maxFrameDuration` ranges advertised by
+     * `activeFormat.videoSupportedFrameRateRanges`, or this throws.
+     */
+    setActiveVideoMinFrameDuration(seconds: number): void
+
+    /**
+     * Current maximum frame duration in seconds — the minimum frame rate the
+     * device will produce equals `1 / activeVideoMaxFrameDuration`. `0` if
+     * unclamped.
+     */
+    readonly activeVideoMaxFrameDuration: number
+
+    /**
+     * Clamp the minimum frame rate (longer duration ⇒ lower fps floor). Pass
+     * seconds, e.g. `1 / 24` to floor at 24 fps. Must fall inside one of the
+     * `minFrameDuration..maxFrameDuration` ranges on the active format.
+     */
+    setActiveVideoMaxFrameDuration(seconds: number): void
+  }
+
+  namespace AVCaptureDevice {
+    class DiscoverySession {
+      private constructor()
+      readonly devices: AVCaptureDevice[]
+    }
+  }
+
+  type AVCaptureColorSpace = "sRGB" | "P3_D65" | "HLG_BT2020" | "appleLog" | "appleLog2"
+
+  type AVCaptureAutoFocusSystem = "none" | "contrastDetection" | "phaseDetection"
+
+  /**
+   * Static description of one capture mode a device supports — resolution,
+   * frame rates, HDR/multi-cam/stabilization/spatial-video flags, etc.
+   *
+   * Obtain instances via `device.formats` or `device.activeFormat`. The bridge
+   * caches wrappers per device so identity comparison
+   * (`format === device.activeFormat`) is stable across calls. Never constructed
+   * directly from JS.
+   *
+   * Numeric defaults for non-video formats: `width` / `height` / `fieldOfView`
+   * return `0` on audio / metadata formats since they don't have video dimensions.
+   */
+  class AVCaptureDeviceFormat {
+    private constructor()
+
+    /** "video" / "audio" / "depthData" / "metadata" / etc. (raw AVMediaType) */
+    readonly mediaType: string
+
+    /** Pixel width from the video format description. `0` for non-video formats. */
+    readonly width: number
+    /** Pixel height from the video format description. `0` for non-video formats. */
+    readonly height: number
+    /** Horizontal field of view in degrees. `0` for non-video formats. */
+    readonly fieldOfView: number
+
+    readonly videoMaxZoomFactor: number
+    readonly videoZoomFactorUpscaleThreshold: number
+    /** True when this format uses pixel binning (lower resolution, better low-light). */
+    readonly isVideoBinned: boolean
+
+    readonly isHighestPhotoQualitySupported: boolean
+    readonly isHighPhotoQualitySupported: boolean
+
+    readonly isVideoHDRSupported: boolean
+    /** True if this format works inside an `AVCaptureMultiCamSession`. */
+    readonly isMultiCamSupported: boolean
+
+    /** Color spaces this format can record in. Pass any of these to `device.setActiveColorSpace`. */
+    readonly supportedColorSpaces: AVCaptureColorSpace[]
+
+    readonly autoFocusSystem: AVCaptureAutoFocusSystem
+
+    /**
+     * Frame-rate envelope. Each entry describes one continuous range — pick the
+     * range that covers your desired fps then call
+     * `device.setActiveVideoMinFrameDuration(...)` / `setActiveVideoMaxFrameDuration(...)`
+     * with `1 / desiredFps`. `minFrameDuration` / `maxFrameDuration` are in seconds.
+     */
+    readonly videoSupportedFrameRateRanges: {
+      minFrameRate: number
+      maxFrameRate: number
+      minFrameDuration: number
+      maxFrameDuration: number
+    }[]
+
+    /**
+     * Query whether this format supports a specific stabilization mode. Use it
+     * to filter before setting `movieFileOutput.setVideoStabilizationMode(...)`.
+     */
+    isVideoStabilizationModeSupported(
+      mode: "off" | "standard" | "cinematic" | "cinematicExtended" | "auto"
+    ): boolean
+
+    /** True if this format can record spatial video (iPhone 15 Pro+ / iOS 17.2+). */
+    readonly isSpatialVideoCaptureSupported: boolean
+
+    /** True if this format can use Center Stage on the front camera. */
+    readonly isCenterStageSupported: boolean
+    /** True if this format can use Portrait Effect. */
+    readonly isPortraitEffectSupported: boolean
+    /** True if this format can use Studio Light. */
+    readonly isStudioLightSupported: boolean
+  }
+
+  /**
+   * Camera/microphone input wrapping an `AVCaptureDevice`. You add one of
+   * these to a session with `session.addInput(input)`. Constructor throws if
+   * the device cannot be opened (busy, missing permission, etc.).
+   */
+  class AVCaptureDeviceInput {
+    constructor(device: AVCaptureDevice)
+    readonly device: AVCaptureDevice
+  }
+
+  /**
+   * Base type for capture outputs. You will not construct this directly;
+   * use one of the subclasses (PhotoOutput / MovieFileOutput / MetadataOutput).
+   */
+  class AVCaptureOutput {
+    protected constructor()
+  }
+
+  /**
+   * Captures still photos from a session. PRO-gated when `capturePhoto()` runs.
+   */
+  class AVCapturePhotoOutput extends AVCaptureOutput {
+    constructor()
+    readonly isLivePhotoCaptureSupported: boolean
+    isLivePhotoCaptureEnabled: boolean
+    maxPhotoQualityPrioritization: "speed" | "balanced" | "quality"
+
+    /**
+     * Responsive capture family. Unsupported devices report `*Supported`
+     * as `false` and the setters are silent no-ops, so feature-detect via
+     * `*Supported` before flipping.
+     *
+     * `isFastCapturePrioritizationSupported` is gated by Apple on
+     * `isResponsiveCaptureEnabled = true` *and*
+     * `maxPhotoQualityPrioritization = "quality"` — i.e. responsive is the
+     * prerequisite for fast, not the other way around. The bridge handles
+     * the ordering for you: turning `fast = true` first turns `responsive`
+     * on if it is supported, and turning `responsive = false` first turns
+     * `fast` off if it is on. You can flip either from JS in any order.
+     */
+    readonly isResponsiveCaptureSupported: boolean
+    isResponsiveCaptureEnabled: boolean
+    readonly isFastCapturePrioritizationSupported: boolean
+    isFastCapturePrioritizationEnabled: boolean
+    readonly isZeroShutterLagSupported: boolean
+    isZeroShutterLagEnabled: boolean
+    /**
+     * When `true`, the system may deliver a deferred-photo proxy instead of
+     * a finalized photo for back-to-back captures. The proxy is an
+     * *unfinished* version of the photo; the system finalizes the real
+     * photo asynchronously and writes it directly to the Photo Library —
+     * **the final image is not delivered through `capturePhoto`**.
+     *
+     * When the result of `capturePhoto()` has `isDeferredProxy: true`, the
+     * `image` is the proxy. To pick up the finalized photo, query the user's
+     * Photo Library with PhotoKit.
+     */
+    readonly isAutoDeferredPhotoDeliverySupported: boolean
+    isAutoDeferredPhotoDeliveryEnabled: boolean
+
+    capturePhoto(options?: {
+      codec?: "hevc" | "jpeg"
+      flashMode?: "off" | "on" | "auto"
+      /**
+       * Path where the still photo's raw bytes should be written.
+       * The bridge writes `photo.fileDataRepresentation()` verbatim — all
+       * metadata is preserved (EXIF, Apple Maker Note, and crucially the
+       * Live Photo asset identifier in Maker Note key 17).
+       *
+       * **Required** if you want to feed the result into
+       * `Photos.saveLivePhoto` — re-encoding via `image.toJPEGData()` strips
+       * the asset identifier and PhotoKit then rejects the pairing with
+       * `PHPhotosErrorDomain 3302`.
+       *
+       * If the target file already exists the bridge deletes it first.
+       */
+      photoFile?: string
+      /**
+       * Path where the Live Photo `.mov` companion clip should be written.
+       * Pass an absolute file path; if a file already exists at that path
+       * the bridge deletes it before capture (AVFoundation refuses to write
+       * to an existing path).
+       *
+       * Requires `isLivePhotoCaptureEnabled = true` on the photo output
+       * before calling — otherwise the promise rejects immediately.
+       *
+       * Live Photo capture and `isAutoDeferredPhotoDeliveryEnabled` are
+       * effectively mutually exclusive: with deferred on, the system may
+       * skip the `.mov` and the result's `livePhotoMovieFileURL` is absent.
+       * Turn deferred off if Live Photo is the goal.
+       */
+      livePhotoMovieFile?: string
+      /**
+       * Codec for the Live Photo `.mov` companion. Defaults to the system
+       * choice (usually HEVC on supported devices). Silently ignored if the
+       * device doesn't list it in `availableLivePhotoVideoCodecTypes`.
+       */
+      livePhotoVideoCodec?: "hevc" | "h264"
+    }): Promise<{
+      image: UIImage
+      metadata: Record<string, any>
+      isRawPhoto: boolean
+      /**
+       * `true` if `isAutoDeferredPhotoDeliveryEnabled` was on and the system
+       * chose to defer; the `image` is the deferred-photo proxy, not the
+       * finalized photo. Final image is delivered to the Photo Library async.
+       * Always `false` otherwise.
+       */
+      isDeferredProxy: boolean
+      /**
+       * Absolute path of the still photo's raw bytes, if you passed
+       * `photoFile`. Use this (not a re-encoded `image.toJPEGData()`) when
+       * feeding the result into `Photos.saveLivePhoto` so the Live Photo
+       * asset identifier survives.
+       */
+      photoFileURL?: string
+      /**
+       * Absolute path of the Live Photo `.mov` companion clip, if you
+       * requested one via `livePhotoMovieFile` and the system actually
+       * produced it. Absent for plain photo captures.
+       */
+      livePhotoMovieFileURL?: string
+    }>
+  }
+
+  /**
+   * Records a movie file. Use this when you want a full custom capture
+   * pipeline; for the typical "press record" flow consider `VideoRecorder`
+   * which already wraps state, pause/resume, audio session, and orientation.
+   */
+  /** Video stabilization mode applied to the output's video connection. */
+  type AVCaptureVideoStabilizationMode =
+    | "off"
+    | "standard"
+    | "cinematic"
+    | "cinematicExtended"
+    | "cinematicExtendedEnhanced"
+    | "previewOptimized"
+    | "lowLatency"
+    | "auto"
+
+  class AVCaptureMovieFileOutput extends AVCaptureOutput {
+    constructor()
+    readonly isRecording: boolean
+    /** Maximum recorded duration in seconds. `0` = unlimited. */
+    maxRecordedDuration: number
+    /** Maximum recorded file size in bytes. `0` = unlimited. */
+    maxRecordedFileSize: number
+    /**
+     * Active video stabilization mode currently applied by the system.
+     * The system may pick a mode different from the one you requested via
+     * `setVideoStabilizationMode` (or `"off"` if unsupported by the active format).
+     */
+    readonly videoStabilizationMode: AVCaptureVideoStabilizationMode
+    /**
+     * Set the preferred video stabilization mode on the output's video connection.
+     * Returns `true` if the preference was written; the system decides whether
+     * to actually activate it based on device + format. Read `videoStabilizationMode`
+     * to see the active mode.
+     *
+     * Throws on unknown modes.
+     */
+    setVideoStabilizationMode(mode: AVCaptureVideoStabilizationMode): boolean
+    /** Resolves with the final output path when recording stops successfully. */
+    startRecording(toPath: string): Promise<string>
+    stopRecording(): Promise<void>
+  }
+
+  /** Object types that an `AVCaptureMetadataOutput` can detect. */
+  type AVMetadataObjectType =
+    | "qr" | "aztec" | "code128" | "code39" | "code39Mod43"
+    | "code93" | "ean13" | "ean8" | "interleaved2of5" | "itf14"
+    | "pdf417" | "upce" | "dataMatrix" | "face" | "humanBody"
+    | "catBody" | "dogBody" | "salientObject"
+    | string
+
+  type AVMetadataObject = {
+    type: AVMetadataObjectType
+    /** Time of detection in seconds, in the session's clock. */
+    time: number
+    bounds: AVCaptureRect
+    /** Only present for machine-readable code objects (`qr`, barcodes). */
+    stringValue?: string
+  }
+
+  /**
+   * Detects faces, codes, etc. from the live video stream. The most common use
+   * is QR / barcode scanning — see the docs site for a copy-pasteable demo.
+   */
+  class AVCaptureMetadataOutput extends AVCaptureOutput {
+    constructor()
+    readonly availableMetadataObjectTypes: AVMetadataObjectType[]
+    metadataObjectTypes: AVMetadataObjectType[]
+    /** Region (normalized 0..1) of the video frame to scan. */
+    rectOfInterest: AVCaptureRect
+    setMetadataObjectsListener(listener: ((objects: AVMetadataObject[]) => void) | null): void
+  }
+
+  // ===== Camera Control (iOS 18+, iPhone 16 hardware Camera Control) =====
+
+  /** Base for any camera control. Will not be constructed directly. */
+  class AVCaptureControl {
+    protected constructor()
+    enabled: boolean
+  }
+
+  /**
+   * Continuous or stepped slider that surfaces in the iPhone 16 hardware
+   * Camera Control (and on-screen). Use `range` for a continuous slider,
+   * `step` to make it discrete, or `values` for an explicit value list.
+   *
+   * `localizedValueFormat` lets you render values like "ƒ%.1f".
+   *
+   * @available iOS 18.0+
+   */
+  class AVCaptureSlider extends AVCaptureControl {
+    constructor(
+      localizedTitle: string,
+      symbolName: string,
+      options: {
+        range?: [number, number]
+        step?: number
+        values?: number[]
+        defaultValue?: number
+        localizedValueFormat?: string
+        prominentValues?: number[]
+        accessibilityIdentifier?: string
+      }
+    )
+    value: number
+    prominentValues: number[]
+    setActionHandler(handler: ((value: number) => void) | null): void
+  }
+
+  /**
+   * Index picker control: choose one of a set of localized titles.
+   *
+   * @available iOS 18.0+
+   */
+  class AVCaptureIndexPicker extends AVCaptureControl {
+    constructor(
+      localizedTitle: string,
+      symbolName: string,
+      options: {
+        localizedIndexTitles: string[]
+        defaultIndex?: number
+        accessibilityIdentifier?: string
+      }
+    )
+    selectedIndex: number
+    setActionHandler(handler: ((index: number) => void) | null): void
+  }
+
+  /** System-provided zoom slider bound to a device. @available iOS 18.0+ */
+  class AVCaptureSystemZoomSlider extends AVCaptureControl {
+    constructor(device: AVCaptureDevice, action?: (zoom: number) => void)
+  }
+
+  /** System-provided exposure-bias slider bound to a device. @available iOS 18.0+ */
+  class AVCaptureSystemExposureBiasSlider extends AVCaptureControl {
+    constructor(device: AVCaptureDevice, action?: (bias: number) => void)
+  }
+
+  /**
+   * Bridges the hardware Camera Control button to your capture pipeline.
+   * Without an attached `AVCaptureEventInteraction`, presses on the Camera
+   * Control will not dispatch through your delegate. Always pair this with
+   * `setControlsDelegate(...)` on the session.
+   *
+   * @available iOS 18.0+
+   */
+  class AVCaptureEventInteraction {
+    constructor(handler: (phase: "began" | "ended" | "cancelled", kind: "primary" | "secondary") => void)
+    isEnabled: boolean
+    /** Attach the interaction to the current key window. */
+    attach(): void
+    /** Detach (and stop receiving events). */
+    detach(): void
+  }
+
+  /**
+   * Callbacks for when the system Camera Control UI shows/hides. All keys are
+   * optional. Pass an object literal to `session.setControlsDelegate(...)`.
+   */
+  type AVCaptureSessionControlsDelegate = {
+    didBecomeActive?: () => void
+    willEnterFullscreenAppearance?: () => void
+    willExitFullscreenAppearance?: () => void
+    didBecomeInactive?: () => void
+  }
+
+  /**
+   * Configures camera capture and coordinates the flow of data between
+   * inputs and outputs. Construct with `new AVCaptureSession()`, attach
+   * `AVCaptureDeviceInput` + outputs, then call `startRunning()`.
+   *
+   * `startRunning()`, `capturePhoto()` and `startRecording()` are PRO-gated.
    */
   class AVCaptureSession {
-    private constructor()
+    constructor()
+
+    sessionPreset: AVCaptureSessionPreset
+    canSetSessionPreset(preset: AVCaptureSessionPreset): boolean
+
+    readonly isRunning: boolean
+    readonly isInterrupted: boolean
+    readonly inputs: AVCaptureDeviceInput[]
+    readonly outputs: AVCaptureOutput[]
+
+    canAddInput(input: AVCaptureDeviceInput): boolean
+    addInput(input: AVCaptureDeviceInput): void
+    removeInput(input: AVCaptureDeviceInput): void
+
+    canAddOutput(output: AVCaptureOutput): boolean
+    addOutput(output: AVCaptureOutput): void
+    removeOutput(output: AVCaptureOutput): void
+
+    /** Run a batch of input/output mutations atomically. */
+    configure(block: () => void): void
+    beginConfiguration(): void
+    commitConfiguration(): void
+
+    /** Resolves once the session has started. PRO-gated. */
+    startRunning(): Promise<void>
+    stopRunning(): Promise<void>
+
+    addRuntimeErrorListener(listener: (message: string) => void): void
+    removeRuntimeErrorListener(listener?: (message: string) => void): void
+    addInterruptionListener(listener: (event: "began" | "ended", reason: string) => void): void
+    removeInterruptionListener(listener?: (event: "began" | "ended", reason: string) => void): void
+
+    // ===== Camera Control =====
+    /** `false` on devices without iPhone 16-style Camera Control. */
+    readonly supportsControls: boolean
+    readonly maxControlsCount: number
+    readonly controls: AVCaptureControl[]
+    canAddControl(control: AVCaptureControl): boolean
+    addControl(control: AVCaptureControl): void
+    removeControl(control: AVCaptureControl): void
+    setControlsDelegate(delegate: AVCaptureSessionControlsDelegate | null): void
+
+    dispose(): void
+  }
+
+  /**
+   * Props for `<CaptureVideoPreviewView/>` — the live preview surface for any
+   * `AVCaptureSession` you build yourself. For the typical "press record"
+   * flow there is also `<VideoRecorderPreviewView/>` which is wired to the
+   * built-in `VideoRecorder` singleton.
+   *
+   * Pass `videoDevice` to enable rotation coordination, otherwise the
+   * preview keeps the connection's default orientation.
+   */
+  type CaptureVideoPreviewViewProps = {
+    session: AVCaptureSession
+    videoDevice?: AVCaptureDevice
+    videoGravity?: 'resize' | 'resizeAspect' | 'resizeAspectFill'
+    isVideoMirrored?: boolean
+    cornerRadius?: number
+    masksToBounds?: boolean
   }
 
   namespace VideoRecorder {
@@ -5067,22 +7194,7 @@ If the event’s calendar does not support availability settings, this property�
     /**
      * An array of cookies that will be sent during the initial connection.
      */
-    cookies?: {
-      name: string
-      value: string
-      originURL?: string
-      version?: string
-      domain?: string
-      path?: string
-      secure?: string
-      expires?: string
-      comment?: string
-      commentURL?: string
-      discard?: string
-      maximumAge?: string
-      port?: string
-      sameSitePolicy?: "lax" | "strict"
-    }[]
+    cookies?: Cookie[]
     /**
      * Any extra HTTP headers that should be sent during the initial connection.
      */
@@ -5213,6 +7325,7 @@ If the event’s calendar does not support availability settings, this property�
    * ```
    */
   class SocketIOClient {
+    private constructor()
     /**
      * The id of this socket.io connect.
      */
@@ -5240,6 +7353,7 @@ If the event’s calendar does not support availability settings, this property�
    * This class provides static methods to create various types of SSH authentication methods, such as password-based and private key-based authentication.
    */
   class SSHAuthenticationMethod {
+    private constructor()
     /**
      * Creates a password based authentication method.
      * @param username The username to authenticate with.
@@ -5265,6 +7379,7 @@ If the event’s calendar does not support availability settings, this property�
    * This class provides methods to write data to the TTY stdin and change the terminal size.
    */
   class TTYStdinWriter {
+    private constructor()
 
     /**
      * Writes data to the TTY stdin.
@@ -5294,6 +7409,7 @@ If the event’s calendar does not support availability settings, this property�
    * Represents an SFTP file.
    */
   class SFTPFile {
+    private constructor()
     /**
      * True if the file is still open, false otherwise.
      */
@@ -5352,6 +7468,7 @@ If the event’s calendar does not support availability settings, this property�
    * This class provides methods to perform various file operations such as reading directories, creating directories, reading and writing files, and more.
    */
   class SFTPClient {
+    private constructor()
     /**
      * True if the SFTP connection is still open, false otherwise.
      */
@@ -5444,6 +7561,7 @@ If the event’s calendar does not support availability settings, this property�
    * This class provides methods for connecting to the server, executing commands, and managing the SSH session.
    */
   class SSHClient {
+    private constructor()
     /**
      * Connects to an SSH server using the provided options.
      * @param options The options for connecting to the SSH server.
@@ -5558,6 +7676,439 @@ If the event’s calendar does not support availability settings, this property�
      * @returns A promise that resolves when the SSH connection is successfully closed.
      */
     close(): Promise<void>
+  }
+
+  /**
+   * JWT signing and verification algorithm names.
+   */
+  type JWTAlgorithm =
+    | "HS256" | "HS384" | "HS512"
+    | "RS256" | "RS384" | "RS512"
+    | "PS256" | "PS384" | "PS512"
+    | "ES256" | "ES384" | "ES512"
+    | "EdDSA"
+
+  type JWTAudience = string | string[]
+
+  type JWTKeyInput = string | Data
+
+  type JWTHeader = {
+    alg: JWTAlgorithm
+    typ?: "JWT"
+    kid?: string
+    [key: string]: any
+  }
+
+  type JWTPayload = Record<string, any> & {
+    iss?: string
+    sub?: string
+    aud?: JWTAudience
+    exp?: number
+    nbf?: number
+    iat?: number
+    jti?: string
+  }
+
+  /**
+   * Optional values to inject standard claims and custom header fields when signing.
+   * Time-related values use **seconds**.
+   */
+  type JWTSignOptions = {
+    algorithm?: JWTAlgorithm
+    header?: Partial<JWTHeader>
+    issuer?: string
+    subject?: string
+    audience?: JWTAudience
+    expiresIn?: number
+    notBefore?: number
+    issuedAt?: number
+    jwtID?: string
+  }
+
+  /**
+   * Verification options for claim validation.
+   * Time-related values use **seconds**.
+   */
+  type JWTVerifyOptions = {
+    algorithm?: JWTAlgorithm | JWTAlgorithm[]
+    issuer?: string
+    subject?: string
+    audience?: JWTAudience
+    clockTolerance?: number
+    now?: number
+  }
+
+  type JWTDecodedResult = {
+    header: JWTHeader
+    payload: JWTPayload
+    signature: string
+    signingInput: string
+  }
+
+  type JWTVerifiedResult = {
+    header: JWTHeader
+    payload: JWTPayload
+  }
+
+  /**
+   * JSON Web Token helper for signing, verifying, and decoding JWT strings.
+   *
+   * Supported algorithms:
+   * - HMAC: `HS256`, `HS384`, `HS512`
+   * - RSA PKCS#1 v1.5: `RS256`, `RS384`, `RS512`
+   * - RSA-PSS: `PS256`, `PS384`, `PS512`
+   * - ECDSA: `ES256`, `ES384`, `ES512`
+   * - EdDSA: `EdDSA`
+   *
+   * For RSA/ECDSA, `privateKey` and `publicKey` are usually PEM strings.
+   * For EdDSA, both raw/base64url and PEM are supported.
+   *
+   * @example
+   * ```ts
+   * const jwt = new JWT({
+   *   algorithm: "HS256",
+   *   secret: "my-secret"
+   * })
+   *
+   * const token = jwt.sign({ userId: "u_123" }, {
+   *   issuer: "Scripting",
+   *   audience: ["app", "web"],
+   *   expiresIn: 3600
+   * })
+   *
+   * const verified = jwt.verify(token, {
+   *   issuer: "Scripting",
+   *   audience: "app",
+   *   clockTolerance: 5
+   * })
+   *
+   * console.log(verified.header.alg)   // HS256
+   * console.log(verified.payload.userId)
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Decode only (no signature verification)
+   * const decoded = jwt.decode(token)
+   * console.log(decoded.header)
+   * console.log(decoded.payload)
+   * ```
+   */
+  class JWT {
+    /**
+     * Create a JWT helper instance.
+     * @param options.algorithm Default algorithm used by `sign` when omitted from sign options.
+     * @param options.secret Secret key for `HS*` algorithms.
+     * @param options.privateKey Private key for signing with `RS*`, `PS*`, `ES*`, `EdDSA`.
+     * @param options.publicKey Public key for verifying with `RS*`, `PS*`, `ES*`, `EdDSA`.
+     * @param options.passphrase Optional passphrase field reserved for encrypted-key workflows.
+     * @param options.kid Optional key id written into JWT header as `kid`.
+     */
+    constructor(options?: {
+      algorithm?: JWTAlgorithm
+      secret?: JWTKeyInput
+      privateKey?: JWTKeyInput
+      publicKey?: JWTKeyInput
+      passphrase?: string
+      kid?: string
+    })
+
+    /**
+     * Sign payload and return a JWT string.
+     * @throws Error when key/algorithm/options are invalid.
+     */
+    sign(payload: JWTPayload, options?: JWTSignOptions): string
+
+    /**
+     * Verify JWT and return decoded header/payload.
+     * @throws Error when signature or claims are invalid.
+     */
+    verify(token: string, options?: JWTVerifyOptions): JWTVerifiedResult
+
+    /**
+     * Decode JWT without verifying signature.
+     * @throws Error when token format is invalid.
+     */
+    decode(token: string): JWTDecodedResult
+  }
+
+  /**
+   * The Rime input-method engine, available in the main app and the keyboard
+   * extension. The engine is shared across all scripts in the same process.
+   *
+   * Typical lifecycle in a keyboard script:
+   *
+   * ```ts
+   * await Rime.setup()
+   * await Rime.deploy()      // call once after importing/changing schemas
+   * const s = new Rime.Session()
+   * try {
+   *   if (!s.processKey(charCode)) CustomKeyboard.insertText(text)
+   *   if (s.context?.preedit) CustomKeyboard.setMarkedText(s.context.preedit, 0, 0)
+   *   // ... render s.context.menu.candidates, call s.selectCandidate(i) on tap
+   * } finally {
+   *   s.close()              // release the session promptly
+   * }
+   * ```
+   */
+  namespace Rime {
+    /**
+     * A single candidate produced by the Rime input-method engine.
+     */
+    type Candidate = {
+      /** Candidate text to commit, e.g. "我". */
+      text: string
+      /** Optional comment shown alongside the candidate (e.g. tone hint). */
+      comment: string | null
+    }
+
+    /**
+     * Schema entry exposed by `Rime.listSchemas()`.
+     */
+    type Schema = {
+      /** Schema identifier, e.g. "luna_pinyin". */
+      id: string
+      /** Human-friendly schema name, e.g. "朙月拼音". */
+      name: string
+    }
+
+    /**
+     * Current candidate menu derived from a session's composition.
+     */
+    type Menu = {
+      /** Zero-based page number. */
+      pageNo: number
+      /** Number of candidates per page. */
+      pageSize: number
+      /** True when no more candidates are available after this page. */
+      isLastPage: boolean
+      /** Index of the highlighted candidate on the current page (0-based). */
+      highlightedIndex: number
+      /** Candidates on the current page. */
+      candidates: Candidate[]
+    }
+
+    /**
+     * Snapshot of the current composition + candidate menu.
+     */
+    type Context = {
+      /** Composition text shown above the candidate bar. Null when idle. */
+      preedit: string | null
+      /** Caret position within `preedit`. */
+      cursorPos: number
+      /** Selection start within `preedit`. */
+      selectionStart: number
+      /** Selection end within `preedit`. */
+      selectionEnd: number
+      /** Optional preview of what would commit if the user confirms now. */
+      commitTextPreview?: string
+      /** Optional selection-key string defined by the schema (e.g. "1234567890"). */
+      selectKeys?: string
+      /** Optional per-candidate labels (parallel to `menu.candidates`). */
+      selectLabels?: string[]
+      /** Candidate menu; null when there are no candidates. */
+      menu: Menu | null
+    }
+
+    /**
+     * Engine status flags for a session (schema + input-mode toggles).
+     */
+    type Status = {
+      schemaId: string | null
+      schemaName: string | null
+      /** True if the session has been disabled. */
+      isDisabled: boolean
+      /** True if the user is mid-composition. */
+      isComposing: boolean
+      /** True if ASCII direct-input mode is on (English passthrough). */
+      isAsciiMode: boolean
+      /** True if half/full-shape is full. */
+      isFullShape: boolean
+      /** True if simplified-Chinese output is active. */
+      isSimplified: boolean
+      /** True if traditional-Chinese output is active. */
+      isTraditional: boolean
+      /** True if ASCII punctuation is forced. */
+      isAsciiPunct: boolean
+    }
+
+    /**
+     * Notification event delivered to `Rime.onNotification`.
+     *
+     * Fired on the JS main thread; subscribers should be cheap. To support
+     * multiple subscribers, fan-out from a single handler in JavaScript:
+     *
+     * ```ts
+     * const subs: Array<(e: Rime.Event) => void> = []
+     * Rime.onNotification = (e) => subs.forEach(s => s(e))
+     * ```
+     */
+    type Event =
+      | { type: "deployStart" | "deploySuccess" | "deployFailure"; sessionId: number }
+      | { type: "schemaChanged"; sessionId: number; schemaId: string; schemaName?: string }
+      | { type: "optionChanged"; sessionId: number; option: string; enabled: boolean }
+      | { type: "other"; sessionId: number; raw: { type: string; value: string } }
+
+    /** Engine version string, e.g. "1.16.1". */
+    const version: string
+
+    /** Whether `Rime.setup()` has succeeded in this process. */
+    const isSetUp: boolean
+
+    /** True while a deploy/maintenance pass is running. */
+    const isDeploying: boolean
+
+    /**
+     * Path to the shared data directory (read-only resources such as
+     * schemas and dictionaries). Defaults to the app group's
+     * `Rime/shared/` directory; resolves to a final value after `setup()`.
+     */
+    const sharedDataDir: string
+
+    /**
+     * Path to the user data directory (user dictionaries, build cache).
+     * Defaults to the app group's `Rime/user/` directory.
+     */
+    const userDataDir: string
+
+    /**
+     * Single notification handler. Assign `null` to detach.
+     *
+     * Fires on the JS main thread for engine events such as deploy
+     * start/success/failure, schema change, and option toggles.
+     */
+    let onNotification: ((event: Event) => void) | null
+
+    /**
+     * Initialize the Rime engine. Must be called once before any other
+     * `Rime.*` API. Subsequent calls in the same process are no-ops and
+     * resolve successfully.
+     *
+     * @param options.sharedDataDir Override the shared data directory.
+     * @param options.userDataDir Override the user data directory.
+     * @param options.appName Log identifier passed to the engine.
+     */
+    function setup(options?: {
+      sharedDataDir?: string
+      userDataDir?: string
+      appName?: string
+    }): Promise<void>
+
+    /**
+     * Recompile schemas and rebuild user dictionaries when needed.
+     * Call this after importing or modifying schema/dict files.
+     *
+     * @param options.fullCheck Force a full rebuild even if up-to-date.
+     */
+    function deploy(options?: { fullCheck?: boolean }): Promise<void>
+
+    /** Enumerate all deployed input schemas. */
+    function listSchemas(): Promise<Schema[]>
+
+    /**
+     * Currently selected schema. Reads from a process-internal session,
+     * so reflects the engine-wide default rather than any specific session.
+     * Returns `null` when no schema is active yet.
+     */
+    function getCurrentSchema(): Schema | null
+
+    /**
+     * Switch the engine-wide default schema. New sessions created after
+     * this call inherit the selection; existing sessions are unaffected
+     * unless you call `session.selectSchema(id)` on them.
+     */
+    function selectSchema(schemaId: string): Promise<void>
+
+    /**
+     * Engine-wide option flags (e.g. `"ascii_mode"`, `"full_shape"`).
+     * Internally bound to a shared session; new sessions inherit defaults
+     * defined by the schema. For per-session overrides, use
+     * `session.setOption(...)` instead.
+     */
+    function getOption(name: string): boolean
+    function setOption(name: string, value: boolean): void
+    function getProperty(name: string): string | null
+    function setProperty(name: string, value: string): void
+
+    /**
+     * One input-method session. Each `new Rime.Session()` is independent;
+     * call `session.close()` to release it as soon as the session is done.
+     * Closed sessions become no-ops (methods return `false`/`null`).
+     */
+    class Session {
+      /**
+       * Create a new session. Throws if the engine is not set up.
+       */
+      constructor()
+
+      /** Underlying session id (non-zero); `0` after `close()`. */
+      readonly id: number
+
+      /** True once `close()` has been called (idempotent). */
+      readonly closed: boolean
+
+      /**
+       * Current composition + candidate menu, or `null` when idle.
+       * A fresh snapshot is fetched on every access.
+       */
+      readonly context: Context | null
+
+      /**
+       * Pending commit text from the engine, if any. Reading drains the
+       * pending commit; call once per `processKey` cycle.
+       */
+      readonly commit: string | null
+
+      /** Engine status flags for this session. */
+      readonly status: Status | null
+
+      /** Convenience: `{id, name}` derived from `status`. */
+      readonly currentSchema: Schema | null
+
+      /**
+       * Feed a key event to the engine. Returns `true` if the engine
+       * consumed it (you should not insert the corresponding character
+       * into the host text field).
+       *
+       * @param keyCode X11 keysym value (e.g. `'w'.charCodeAt(0)` is `0x77`).
+       * @param modifiers Optional bitmask (X11 conventions). Defaults to `0`.
+       */
+      processKey(keyCode: number, modifiers?: number): boolean
+
+      /**
+       * Force-commit the current composition. Returns the committed text
+       * wrapped in `{text}`, or `null` when there was nothing to commit.
+       */
+      commitComposition(): { text: string | null } | null
+
+      /** Discard the current composition without committing. */
+      clearComposition(): void
+
+      /**
+       * Pick a candidate by its absolute index in the full menu (0-based).
+       */
+      selectCandidate(index: number): boolean
+
+      /**
+       * Pick a candidate by its 0-based index on the current page.
+       */
+      selectCandidateOnCurrentPage(index: number): boolean
+
+      /** Switch this session to a different schema. */
+      selectSchema(schemaId: string): boolean
+
+      /** Per-session option flags. */
+      setOption(name: string, value: boolean): void
+      getOption(name: string): boolean
+      setProperty(name: string, value: string): void
+      getProperty(name: string): string | null
+
+      /**
+       * Release the session immediately. After this call, all methods
+       * become no-ops and `closed` is `true`. Safe to call multiple times.
+       */
+      close(): void
+    }
   }
 
   /**
@@ -6427,6 +8978,17 @@ If the event’s calendar does not support availability settings, this property�
     }
 
     /**
+     * An image content output from the assistant.
+     */
+    type StreamImageContent = {
+      type: 'image'
+      content: {
+        data: string
+        mediaType: string
+      }
+    }
+
+    /**
      * A chunk of reasoning output from the assistant.
      */
     type StreamReasoningChunk = {
@@ -6463,7 +9025,7 @@ If the event’s calendar does not support availability settings, this property�
       }
     }
 
-    type StreamChunk = StreamTextChunk | StreamReasoningChunk | StreamUsageChunk
+    type StreamChunk = StreamTextChunk | StreamReasoningChunk | StreamImageContent | StreamUsageChunk
 
     /**
      * The text content of a message.
@@ -6819,6 +9381,52 @@ If the event’s calendar does not support availability settings, this property�
     secondaryConfirmed: boolean
   }
 
+  type AssistantToolOutputTextPart = {
+    type: "text"
+    text: string
+  }
+
+  type AssistantToolOutputImagePart = {
+    type: "image"
+    base64: string
+    mimeType?: string
+  }
+
+  type AssistantToolOutputPart = string | AssistantToolOutputTextPart | AssistantToolOutputImagePart
+
+  type AssistantToolDeprecatedExecutionResult = {
+    /**
+     * Indicates whether the tool execution was successful.
+     */
+    success: boolean
+    /**
+     * The response message to be returned to the assistant.
+     */
+    message: string
+  }
+
+  type AssistantToolResponseResult = {
+    /**
+     * Indicates whether the tool execution was successful.
+     */
+    success: boolean
+    /**
+     * Structured output parts returned by the tool.
+     */
+    output: {
+      /**
+       * The parts of the response to be displayed to the user.
+       */
+      userParts?: AssistantToolOutputPart[]
+      /**
+       * The parts of the response to be sent to the assistant.
+       */
+      assistantParts?: AssistantToolOutputPart[]
+    }
+  }
+
+  type AssistantToolExecutionResult = AssistantToolDeprecatedExecutionResult | AssistantToolResponseResult
+
   /**
    * Function to execute the tool after receiving user approval.
    */
@@ -6836,16 +9444,7 @@ If the event’s calendar does not support availability settings, this property�
      * to allow communication with the editor.
      */
     scriptEditorProvider?: ScriptEditorProvider
-  ) => Promise<{
-    /**
-     * Indicates whether the tool execution was successful.
-     */
-    success: boolean
-    /**
-     * The response message to be returned to the assistant.
-     */
-    message: string
-  }>
+  ) => Promise<AssistantToolExecutionResult>
 
   /**
    * Test function for executing the tool with approval.
@@ -6874,16 +9473,7 @@ If the event’s calendar does not support availability settings, this property�
      * to allow communication with the editor.
      */
     scriptEditorProvider?: ScriptEditorProvider
-  ) => Promise<{
-    /**
-     * Indicates whether the tool execution was successful.
-     */
-    success: boolean
-    /**
-     * The response message to be returned to the assistant.
-     */
-    message: string
-  }>
+  ) => Promise<AssistantToolExecutionResult>
 
   /**
    * Test function for executing the tool.
@@ -6893,6 +9483,42 @@ If the event’s calendar does not support availability settings, this property�
   namespace AssistantTool {
 
     type OnCancel = () => string | null | undefined
+
+    type UIRenderResponse = (result: AssistantToolResponseResult) => void
+
+    type UIProps<P> = {
+      params: P
+      response: UIRenderResponse
+      /**
+       * Indicates whether the current tool call is auto-approved.
+       */
+      isAutoApprove: boolean
+      scriptEditorProvider?: ScriptEditorProvider
+    }
+
+    type UIRenderTestOptions = {
+      /**
+       * Simulate tool call auto-approval behavior in test mode.
+       */
+      isAutoApprove?: boolean
+      /**
+       * Initial storage state used during test.
+       */
+      initialState?: Record<string, any>
+      /**
+       * Whether to capture screenshot in test mode.
+       */
+      screenshot?: boolean
+    }
+
+    type UIRenderTestFn<P> = (params: P, options?: UIRenderTestOptions) => void
+
+    /**
+     * Registers the function that renders the interactive UI for the tool.
+     * @param view - The function component that renders the UI.
+     * @returns A test function for the UI rendering.
+     */
+    function registerUIView<P>(view: FunctionComponent<UIProps<P>>): UIRenderTestFn<P>
 
     /**
      * The function to be called when the tool is cancelled by the user.
@@ -6937,6 +9563,22 @@ If the event’s calendar does not support availability settings, this property�
      * @param id - The id of the report message, you can replace the message with the same id. It is useful when you want to update the message.
      */
     function report(message: string, id?: string): void
+    /**
+     * Gets a stored state value by key.
+     */
+    function getState<T = any>(key: string): T | null
+    /**
+     * Stores a state value by key.
+     */
+    function setState(key: string, value: any): void
+    /**
+     * Removes a stored state value by key.
+     */
+    function removeState(key: string): void
+    /**
+     * Clears all stored state values for this tool call.
+     */
+    function clearState(): void
   }
 
   /**
@@ -7521,6 +10163,7 @@ If the event’s calendar does not support availability settings, this property�
    * This class provides an interface for working with PDF page.
    */
   class PDFPage {
+    private constructor()
     /**
      * Creates a PDF page from the given image.
      * @param image The image to be converted to a PDF page.
@@ -7556,6 +10199,7 @@ If the event’s calendar does not support availability settings, this property�
    * It allows you to read, modify, and save PDF documents.
    */
   class PDFDocument {
+    private constructor()
     /**
      * Creates a PDF document from the given data.
      * @param data The data to be converted to a PDF document.
@@ -7752,7 +10396,7 @@ If the event’s calendar does not support availability settings, this property�
   type TimeZoneIdentifier = "current" | "autoupdatingCurrent" | "gmt" | string
 
   class DateFormatter {
-    new(): DateFormatter
+    constructor()
 
     static localizedString(date: Date, options: {
       dateStyle: DateFormatterStyle
@@ -8390,6 +11034,7 @@ If the event’s calendar does not support availability settings, this property�
    * It allows you to access information about health devices, such as their unique identifier, manufacturer, model, hardware version, firmware version, software version, and user-facing name.
    */
   class HealthDevice {
+    private constructor()
     /**
      * A unique identifier for the health device.
      * This identifier is used to distinguish the device from other health devices.
@@ -8431,6 +11076,7 @@ If the event’s calendar does not support availability settings, this property�
    * It allows you to access information about health sources, such as the bundle identifier and name of the app that provides the health data.
    */
   class HealthSource {
+    private constructor()
     /**
      * The bundle identifier of the health source.
      */
@@ -8446,6 +11092,7 @@ If the event’s calendar does not support availability settings, this property�
   }
 
   class HealthSourceRevision {
+    private constructor()
     /**
      * The health source that this revision belongs to.
      * This is an instance of the HealthSource class, which provides information about the app that provides the health data.
@@ -8479,6 +11126,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkunit}
    */
   class HealthUnit {
+    private constructor()
 
     /**
      * The raw value of the health unit, which is a string representation of the unit.
@@ -8619,6 +11267,7 @@ If the event’s calendar does not support availability settings, this property�
    * You can use this class to analyze health data over a specified period, such as daily, weekly, or monthly statistics.
    */
   class HealthStatistics {
+    private constructor()
     /**
      * The identifier for the health quantity type that this statistics object represents.
      */
@@ -8703,6 +11352,7 @@ If the event’s calendar does not support availability settings, this property�
    * It allows you to access collections of health statistics, which can include multiple health sources and statistics for different health quantity types.
    */
   class HealthStatisticsCollection {
+    private constructor()
     sources(): HealthSource[]
     statistics(): HealthStatistics[]
     statisticsFor(date: Date): HealthStatistics | null
@@ -8719,6 +11369,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkquantitysample}
    */
   class HealthQuantitySample {
+    private constructor()
     readonly uuid: string
     readonly quantityType: HealthQuantityType
     readonly startDate: Date
@@ -8765,6 +11416,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkcumulativequantitysample}
    */
   class HealthCumulativeQuantitySample {
+    private constructor()
     readonly uuid: string
     readonly quantityType: HealthQuantityType
     readonly startDate: Date
@@ -8793,6 +11445,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkdiscretequantitysample}
    */
   class HealthDiscreteQuantitySample {
+    private constructor()
     readonly uuid: string
     readonly quantityType: HealthQuantityType
     readonly startDate: Date
@@ -8822,6 +11475,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkcategorysample}
    */
   class HealthCategorySample {
+    private constructor()
     readonly uuid: string
     readonly categoryType: HealthCategoryType
     readonly startDate: Date
@@ -8865,6 +11519,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkcorrelation}
    */
   class HealthCorrelation {
+    private constructor()
     readonly uuid: string
     readonly correlationType: HealthCorrelationType
     readonly startDate: Date
@@ -9016,6 +11671,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkworkoutevent}
    */
   class HealthWorkoutEvent {
+    private constructor()
     readonly type: HealthWorkoutEventType
     readonly dateInterval: HealthDateInterval
     readonly metadata: Record<string, any> | null
@@ -9033,6 +11689,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkworkout}
    */
   class HealthWorkout {
+    private constructor()
     readonly uuid: string
     readonly workoutActivityType: HealthWorkoutActivityType
     readonly startDate: Date
@@ -9057,6 +11714,7 @@ If the event’s calendar does not support availability settings, this property�
    * @see {@link https://developer.apple.com/documentation/healthkit/hkheartbeatseriessample}
    */
   class HealthHeartbeatSeriesSample {
+    private constructor()
     readonly uuid: string
     readonly sampleType: string
     readonly startDate: Date
@@ -9081,6 +11739,7 @@ If the event’s calendar does not support availability settings, this property�
    * It allows you to access daily summaries of health activity, including active energy burned, exercise time, stand hours, and more.
    */
   class HealthActivitySummary {
+    private constructor()
     readonly dateComponents: DateComponents
     readonly activityMoveMode: HealthActivityMoveMode
 
@@ -9562,6 +12221,7 @@ If the event’s calendar does not support availability settings, this property�
    * Requires iOS 18.0 or later.
    */
   class Translation {
+    constructor()
 
     /**
      * The shared instance of the Translation class for convenient access to translation methods.
@@ -9713,10 +12373,9 @@ If the event’s calendar does not support availability settings, this property�
     const hasText: boolean
 
     /**
-     * Sets the visibility of the dictation key of the system.
-     * @param value A boolean value indicating whether the dictation key should be shown (true) or hidden (false).
+     * A boolean value indicating whether the dictation key should be shown (true) or hidden (false).
      */
-    function setHasDictationKey(value: boolean): void
+    var hasDictationKey: boolean
 
     /**
      * Dismisses the custom keyboard.
@@ -9821,6 +12480,39 @@ If the event’s calendar does not support availability settings, this property�
 
   }
 
+  /**
+   * Access the current Translation UI Provider session and present a scripted UI.
+   * @available iOS 18.4+
+   */
+  namespace TranslationUIProvider {
+
+    /**
+     * The source text selected by the host app, or null when unavailable.
+     */
+    const inputText: string | null
+
+    /**
+     * Indicates whether the host app allows replacing the original text with a translation.
+     */
+    const allowsReplacement: boolean
+
+    /**
+     * Requests the system sheet to expand.
+     */
+    function expandSheet(): void
+
+    /**
+     * Finishes the current translation session and optionally returns translated text to the host.
+     * Pass `null` or omit the parameter to close without replacement.
+     */
+    function finish(translation?: string | null): void
+
+    /**
+     * Presents the scripted translation UI.
+     */
+    function present(node: VirtualNode): void
+  }
+
   type BluetoothCharacteristicProperty =
     "broadcast" |
     "read" |
@@ -9844,6 +12536,7 @@ If the event’s calendar does not support availability settings, this property�
    * It contains properties that describe the characteristic's UUID, service UUID, properties, notification status, and value.
    */
   class BluetoothCharacteristic {
+    private constructor()
     /**
      * The UUID of the characteristic.
      */
@@ -9873,6 +12566,7 @@ If the event’s calendar does not support availability settings, this property�
    * It contains properties that describe the service's UUID, peripheral ID, primary status, included services, and characteristics.
    */
   class BluetoothService {
+    private constructor()
     /**
      * The UUID of the service.
      */
@@ -9909,6 +12603,7 @@ If the event’s calendar does not support availability settings, this property�
    * It contains properties that describe the peripheral's name, ID, services, and capabilities, as well as methods for interacting with the peripheral.
    */
   class BluetoothPeripheral {
+    private constructor()
     /**
      * The name of the peripheral, or null if the name is not known.
      */
@@ -10532,6 +13227,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * A URL session download task.
    */
   class URLSessionDownloadTask {
+    private constructor()
     /**
      * The identifier of the download task.
      */
@@ -10620,6 +13316,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * A URL session upload task.
    */
   class URLSessionUploadTask {
+    private constructor()
     /**
      * The identifier of the upload task.
      */
@@ -10785,6 +13482,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   }
 
   class FileEntity {
+    private constructor()
     /**
      * The path of the file
      */
@@ -10855,6 +13553,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * The HTTP response body.
    */
   class HttpResponseBody {
+    private constructor()
     /**
      * Creates a text response body.
      * @param text The text content of the response body.
@@ -10881,6 +13580,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * The HTTP response.
    */
   class HttpResponse {
+    private constructor()
     /**
      * The status code of the response.
      */
@@ -10943,6 +13643,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * The HTTP request.
    */
   class HttpRequest {
+    private constructor()
     /**
      * The path of the request.
      */
@@ -11002,6 +13703,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * The WebSocket session.
    */
   class WebSocketSession {
+    private constructor()
     /**
      * Writes text to the session.
      * @param text The text to write.
@@ -11027,6 +13729,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * The HTTP server.
    */
   class HttpServer {
+    constructor()
     /**
      * The state of the HTTP server.
      */
@@ -11172,6 +13875,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   }
 
   class Archive {
+    private constructor()
     /**
      * Opens an archive for specifed path and accessMode.
      * @param path The path of the archive
@@ -11420,6 +14124,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * Represents an animation.
    */
   class Animation {
+    private constructor()
     /**
      * Delay the animation by the given time.
      * @param time The time to delay in seconds.
@@ -11563,6 +14268,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * Represents a transition.
    */
   class Transition {
+    private constructor()
     animation(animation?: Animation): Transition
     combined(other: Transition): Transition
 
@@ -11679,6 +14385,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   }
 
   class EditMode {
+    private constructor()
 
     readonly value: "active" | "inactive" | "transient" | "unknown"
     readonly isEditing: boolean
@@ -11693,6 +14400,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * This is used in the `openURL` view modifier.
    */
   class OpenURLActionResult {
+    private constructor()
 
     type: string
 
@@ -11733,6 +14441,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * @available iOS 18.4+
    */
   class TabViewCustomizationSection {
+    private constructor()
     readonly tabOrder: string[] | null
     resetTabOrder(): void
   }
@@ -11742,6 +14451,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * @available iOS 18.4+
    */
   class TabViewCustomizationTab {
+    private constructor()
     readonly tabBarVisibility: Visibility
     sidebarVisibility: Visibility
   }
@@ -11752,6 +14462,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * @available iOS 18.0+
    */
   class TabViewCustomization {
+    constructor()
     /**
      * Create a TabViewCustomization from data.
      * @param data The data to create the TabViewCustomization from, use the `toData` method to create the data.
@@ -11804,6 +14515,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    * @available iOS 26.0+
    */
   class UIGlass {
+    private constructor()
     /**
      * Returns a new instance configured to be interactive. Defaults to true.
      */
@@ -11825,6 +14537,75 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      * The regular variant of the Liquid Glass material.
      */
     static identity(): UIGlass
+  }
+
+  /**
+   * Format style for chart axis tick labels (mirrors SwiftUI Foundation's `FormatStyle` family).
+   * Use it as the `format` field of a `chartXAxis` / `chartYAxis` value-label config when you need
+   * fraction-digit precision, a fixed currency code, or a non-default date / time style. The
+   * existing string-token shortcuts (`'number'` / `'percent'` / `'currency'` / `'date'` / `'time'`
+   * / `'dateTime'`) keep working unchanged — use this class only when you need extra options.
+   *
+   * - `number` / `percent` / `currency`: applies to `Double`-plottable axes.
+   * - `currency` defaults to the device locale's currency code; pass `currencyCode: 'CNY'` etc.
+   *   to override.
+   * - `date` / `time` / `dateTime`: applies to `Date`-plottable axes; mirrors the
+   *   `Date.formatted(date:time:)` style enums.
+   *
+   * @example
+   * ```ts
+   * <Chart chartYAxis={{
+   *   valueLabel: {
+   *     format: ChartAxisLabelFormat.currency({ currencyCode: "CNY", fractionDigits: 2 })
+   *   }
+   * }}>...</Chart>
+   * ```
+   */
+  class ChartAxisLabelFormat {
+    private constructor()
+    /**
+     * Numeric format. Optional `fractionDigits` (max) / `minFractionDigits` (min).
+     * Default produces an integer-style render.
+     */
+    static number(opts?: {
+      fractionDigits?: number
+      minFractionDigits?: number
+    }): ChartAxisLabelFormat
+    /**
+     * Percent format (formats the underlying `Double`, e.g. `0.42` → `42%`).
+     */
+    static percent(opts?: {
+      fractionDigits?: number
+      minFractionDigits?: number
+    }): ChartAxisLabelFormat
+    /**
+     * Currency format. `currencyCode` defaults to the device locale's currency.
+     * Use `fractionDigits` to override the default decimal places for that currency.
+     */
+    static currency(opts?: {
+      fractionDigits?: number
+      minFractionDigits?: number
+      currencyCode?: string
+    }): ChartAxisLabelFormat
+    /**
+     * Date-only format. `dateStyle` defaults to `'numeric'` when omitted.
+     */
+    static date(opts?: {
+      dateStyle?: 'omitted' | 'numeric' | 'abbreviated' | 'long' | 'complete'
+    }): ChartAxisLabelFormat
+    /**
+     * Time-only format. `timeStyle` defaults to `'shortened'` when omitted.
+     */
+    static time(opts?: {
+      timeStyle?: 'omitted' | 'shortened' | 'standard' | 'complete'
+    }): ChartAxisLabelFormat
+    /**
+     * Combined date + time format. Defaults to `dateStyle: 'numeric'`, `timeStyle: 'shortened'`.
+     */
+    static dateTime(opts?: {
+      dateStyle?: 'omitted' | 'numeric' | 'abbreviated' | 'long' | 'complete'
+      timeStyle?: 'omitted' | 'shortened' | 'standard' | 'complete'
+    }): ChartAxisLabelFormat
   }
 
   namespace AppStore {
@@ -12029,6 +14810,1106 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      * Releases resources associated with the language model session.
      */
     dispose(): void
+  }
+
+  namespace AlarmManager {
+    type AlarmState = "scheduled" | "countdown" | "paused" | "alerting"
+    type SecondaryButtonBehavior = "countdown" | "custom"
+    type AlarmAppIntent = AppIntent<any, AppIntentProtocol.LiveActivityIntent>
+    type AlarmUpdateListener = (alarms: Alarm[]) => void
+
+    class Alarm {
+      private constructor()
+      readonly id: string
+      readonly state: AlarmState
+      readonly schedule?: Schedule | null
+      readonly countdownDuration?: Countdown | null
+    }
+
+    class Schedule {
+      private constructor()
+      readonly type: "fixed" | "relative"
+      readonly date?: Date | null
+      readonly hour?: number | null
+      readonly minute?: number | null
+      readonly weekdays?: number[] | null
+
+      static fixed(date: Date): Schedule
+      static relative(hour: number, minute: number): Schedule
+      static weekly(hour: number, minute: number, weekdays: number[]): Schedule
+    }
+
+    class Countdown {
+      private constructor()
+      readonly preAlert?: number | null
+      readonly postAlert?: number | null
+
+      static create(options?: {
+        preAlert?: DurationInSeconds | null
+        postAlert?: DurationInSeconds | null
+      }): Countdown
+    }
+
+    class Button {
+      private constructor()
+      static create(options: {
+        title?: string
+        textColor?: Color
+        systemImageName?: string
+      }): Button
+    }
+
+    class Sound {
+      private constructor()
+      static default(): Sound
+      static named(name: string): Sound
+    }
+
+    class AlertPresentation {
+      private constructor()
+      static create(options: {
+        title: string
+        /**
+         * @deprecated The stop button on the alarm's alert UI is now
+         * managed by the system as a slider (iOS 26.1+). Custom buttons
+         * passed here are ignored on iOS 26.1 and later, and are only
+         * used as a fallback on iOS 26.0. Prefer omitting this field.
+         */
+        stopButton?: Button | null
+        secondaryButton?: Button | null
+        secondaryBehavior?: SecondaryButtonBehavior | null
+      }): AlertPresentation
+    }
+
+    class CountdownPresentation {
+      private constructor()
+      static create(title?: string | null, pauseButton?: Button | null): CountdownPresentation
+    }
+
+    class PausedPresentation {
+      private constructor()
+      static create(title?: string | null, resumeButton?: Button | null): PausedPresentation | null
+    }
+
+    class Attributes {
+      private constructor()
+      static create(options: {
+        alert: AlertPresentation
+        countdown?: CountdownPresentation | null
+        paused?: PausedPresentation | null
+        tintColor?: Color
+        metadata?: Record<string, string>
+      }): Attributes | null
+    }
+    class Configuration {
+      private constructor()
+      static alarm(options: {
+        schedule?: Schedule | null
+        attributes: Attributes
+        sound?: Sound | null
+        stopIntent?: AlarmAppIntent | null
+        secondaryIntent?: AlarmAppIntent | null
+      }): Configuration | null
+
+      static timer(options: {
+        duration: DurationInSeconds
+        attributes: Attributes
+        sound?: Sound | null
+        stopIntent?: AlarmAppIntent | null
+        secondaryIntent?: AlarmAppIntent | null
+      }): Configuration | null
+
+      static countdown(options: {
+        countdown?: Countdown | null
+        schedule?: Schedule | null
+        attributes: Attributes
+        sound?: Sound | null
+        stopIntent?: AlarmAppIntent | null
+        secondaryIntent?: AlarmAppIntent | null
+      }): Configuration | null
+    }
+
+    const isAvailable: boolean
+
+    function alarms(): Promise<Alarm[]>
+    function schedule(id: string, configuration: Configuration): Promise<Alarm>
+    function cancel(id: string): Promise<boolean>
+    function stop(id: string): Promise<boolean>
+    function pause(id: string): Promise<boolean>
+    function resume(id: string): Promise<boolean>
+    function startCountdown(id: string): Promise<boolean>
+    function addAlarmUpdateListener(listener: AlarmUpdateListener): void
+    function removeAlarmUpdateListener(listener?: AlarmUpdateListener): void
+  }
+
+  namespace MediaLibrary {
+    type Item = {
+      title: string
+      persistentID: string
+      artist?: string
+      albumTitle?: string
+      albumArtist?: string
+      genre?: string
+      composer?: string
+      albumTrackNumber?: number
+      albumTrackCount?: number
+      discNumber?: number
+      discCount?: number
+      playbackDuration?: number
+      playbackStoreID?: string
+      isCloudItem?: boolean
+      hasProtectedAsset?: boolean
+    }
+
+    type Playlist = {
+      persistentID: string
+      name: string
+      trackCount: number
+    }
+
+    type Album = {
+      title: string
+      artist?: string
+      persistentID?: string
+      trackCount?: number
+    }
+
+    type SongQueryOptions = {
+      limit?: number
+      sortBy?:
+      | "title"
+      | "artist"
+      | "albumTitle"
+      | "playbackDuration"
+      | "albumTrackNumber"
+      ascending?: boolean
+    }
+
+    type AlbumQueryOptions = {
+      limit?: number
+      sortBy?:
+      | "title"
+      | "artist"
+      | "trackCount"
+      ascending?: boolean
+    }
+
+    type PlaylistQueryOptions = {
+      limit?: number
+      sortBy?:
+      | "name"
+      | "trackCount"
+      ascending?: boolean
+    }
+
+    type ArtistQueryOptions = {
+      limit?: number
+      ascending?: boolean
+    }
+
+    type SongFilter = {
+      title?: string
+      artist?: string
+      albumTitle?: string
+      genre?: string
+      composer?: string
+      persistentID?: string
+    }
+
+    function getSongs(
+      filter?: SongFilter,
+      options?: SongQueryOptions
+    ): Promise<Item[]>
+
+    function getSongByPersistentID(
+      persistentID: string
+    ): Promise<Item | null>
+
+    function getAlbums(
+      options?: AlbumQueryOptions
+    ): Promise<Album[]>
+
+    function getAlbumSongs(
+      albumTitle: string,
+      options?: SongQueryOptions
+    ): Promise<Item[]>
+
+    function getArtists(
+      options?: ArtistQueryOptions
+    ): Promise<string[]>
+
+    function getArtistSongs(
+      artist: string,
+      options?: SongQueryOptions
+    ): Promise<Item[]>
+
+    function getPlaylists(
+      options?: PlaylistQueryOptions
+    ): Promise<Playlist[]>
+
+    function getPlaylistSongs(
+      playlistPersistentID: string,
+      options?: SongQueryOptions
+    ): Promise<Item[]>
+
+    function getArtwork(
+      persistentID: string,
+      size?: {
+        width: number
+        height: number
+      }
+    ): Promise<UIImage | null>
+  }
+
+  /**
+   * Provides authenticated access to the GitHub REST API.
+   *
+   * The API is gated by Scripting PRO and requires a personal access token configured in
+   * Settings → GitHub. Each script and shared skill maintains its own per-capability
+   * authorization state — the first call to a capability prompts the user to allow or deny
+   * it. Tokens are stored in the iCloud-synchronized Keychain and are never readable from JS.
+   *
+   * Extension hosts (Widget, Keyboard, Notification, Share) cannot present the authorization
+   * UI; if a capability has not yet been granted in the main app, calls there will fail with
+   * a "permission not granted in this context" error.
+   */
+  namespace GitHub {
+    /**
+     * The 13 permission identifiers a script or skill can be granted.
+     */
+    type Permission =
+      | "read_profile"
+      | "read_repos"
+      | "read_contents"
+      | "write_contents"
+      | "read_issues"
+      | "write_issues"
+      | "read_pull_requests"
+      | "write_pull_requests"
+      | "read_actions"
+      | "write_actions"
+      | "search_repositories"
+      | "search_issues"
+      | "search_code"
+
+    type Availability = {
+      /** True only if PRO is active AND a token is configured. */
+      available: boolean
+      /** True if Scripting PRO is required (i.e. not currently active). */
+      proRequired: boolean
+      /** True if a personal access token is configured in the keychain. */
+      tokenConfigured: boolean
+    }
+
+    type SortDirection = "asc" | "desc"
+
+    type ArchiveFormat = "zipball" | "tarball"
+
+    /** Optional commit identity passed to write APIs. */
+    type CommitterIdentity = {
+      name: string
+      email: string
+      /** ISO-8601 timestamp. */
+      date?: string
+    }
+
+    /**
+     * Synchronous availability probe. Returns true when PRO is active AND a token is configured.
+     * Does not consult per-script permission state — use it for capability discovery, not gating.
+     */
+    function isAvailable(): boolean
+
+    /** Detailed availability snapshot — see {@link Availability}. */
+    function getAvailability(): Availability
+
+    /**
+     * Read-only inspection of the current scope's permission state. Does not prompt the user
+     * and does not require PRO or a configured token. Returns `"unset"` when called outside
+     * a context that has a script/skill scope.
+     */
+    function getPermissionStatus(options: { permission: Permission }): Promise<"allowed" | "denied" | "unset">
+
+    /**
+     * Bulk authorization request. Useful at script startup to grant several capabilities at
+     * once instead of letting them prompt one by one on first use.
+     *
+     * Behavior:
+     * - PRO check runs first. Throws `tokenNotConfigured` if no token is configured.
+     * - Permissions already `allowed` or `denied` are NOT shown in the prompt.
+     * - If every requested permission is already recorded, no sheet is shown.
+     * - In environments without a presenting view controller (Widget / Keyboard / Notification /
+     *   Share extensions), no sheet is shown either.
+     * - If a sheet is shown:
+     *   - "Allow Selected" persists the checked permissions as `allowed`; unchecked ones stay `unset`.
+     *   - "Deny All" persists every permission in this batch as `denied`.
+     *   - "Cancel" persists nothing.
+     * - The resolved value is the FINAL set of permissions in the `allowed` state for this scope
+     *   among those requested (already-allowed ∪ newly-approved).
+     *
+     * Pass no argument (or omit/empty array) to request all 13 permissions.
+     */
+    function requestPermissions(permissions?: Permission[]): Promise<Permission[]>
+
+    /** GET /user — returns the authenticated user. Permission: `read_profile`. */
+    function getViewer(): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo} — Permission: `read_repos`. */
+    function getRepo(options: { owner: string; repo: string }): Promise<Record<string, any>>
+
+    /** GET /user/repos — Permission: `read_repos`. */
+    function listRepos(options?: {
+      visibility?: "all" | "public" | "private"
+      affiliation?: string
+      type?: "all" | "owner" | "public" | "private" | "member"
+      sort?: "created" | "updated" | "pushed" | "full_name"
+      direction?: SortDirection
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /users/{username}/repos — Permission: `read_repos`. */
+    function listUserRepos(options: {
+      username: string
+      sort?: "created" | "updated" | "pushed" | "full_name"
+      direction?: SortDirection
+      type?: "all" | "owner" | "member"
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /repos/{owner}/{repo}/branches — Permission: `read_repos`. */
+    function listBranches(options: {
+      owner: string
+      repo: string
+      protected?: boolean
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /repos/{owner}/{repo}/branches/{branch} — Permission: `read_repos`. */
+    function getBranch(options: {
+      owner: string
+      repo: string
+      branch: string
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/commits — Permission: `read_repos`. */
+    function listCommits(options: {
+      owner: string
+      repo: string
+      sha?: string
+      path?: string
+      author?: string
+      /** ISO-8601 timestamp. */
+      since?: string
+      /** ISO-8601 timestamp. */
+      until?: string
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /repos/{owner}/{repo}/compare/{base}...{head} — Permission: `read_repos`. */
+    function compareCommits(options: {
+      owner: string
+      repo: string
+      base: string
+      head: string
+    }): Promise<Record<string, any>>
+
+    /**
+     * GET /repos/{owner}/{repo}/contents/{path} — Returns either a file metadata object
+     * (with `content` base64) or an array of entries when `path` is a directory.
+     * Permission: `read_contents`.
+     */
+    function getContent(options: {
+      owner: string
+      repo: string
+      path: string
+      ref?: string
+    }): Promise<Record<string, any> | Record<string, any>[]>
+
+    /**
+     * Same as {@link getContent} but with the file decoded as UTF-8 text in `result.text`.
+     * Throws if the file is not valid UTF-8 or larger than ~1 MB (use {@link getRawContent}
+     * or {@link getBlob} instead). Permission: `read_contents`.
+     */
+    function getTextContent(options: {
+      owner: string
+      repo: string
+      path: string
+      ref?: string
+    }): Promise<Record<string, any> & { text: string }>
+
+    /**
+     * PUT /repos/{owner}/{repo}/contents/{path} — Creates or updates a file.
+     * `content` accepts a string (encoded as UTF-8), a {@link Data} buffer, an
+     * `ArrayBuffer`, or a `Uint8Array`. Provide `sha` to update an existing file.
+     * Permission: `write_contents`.
+     */
+    function putContent(options: {
+      owner: string
+      repo: string
+      path: string
+      message: string
+      content: string | Data | ArrayBuffer | Uint8Array
+      sha?: string
+      branch?: string
+      committer?: CommitterIdentity
+      author?: CommitterIdentity
+    }): Promise<Record<string, any>>
+
+    /**
+     * DELETE /repos/{owner}/{repo}/contents/{path} — Deletes a file. `sha` is required.
+     * Permission: `write_contents`.
+     */
+    function deleteContent(options: {
+      owner: string
+      repo: string
+      path: string
+      message: string
+      sha: string
+      branch?: string
+      committer?: CommitterIdentity
+      author?: CommitterIdentity
+    }): Promise<Record<string, any>>
+
+    /**
+     * GET /repos/{owner}/{repo}/contents/{path} with `Accept: application/vnd.github.raw`.
+     * Returns the raw file bytes. Use this for binary files. Permission: `read_contents`.
+     */
+    function getRawContent(options: {
+      owner: string
+      repo: string
+      path: string
+      ref?: string
+    }): Promise<Data>
+
+    /**
+     * GET /repos/{owner}/{repo}/git/blobs/{sha} with raw accept — returns the blob bytes.
+     * Permission: `read_contents`.
+     */
+    function getBlob(options: {
+      owner: string
+      repo: string
+      sha: string
+    }): Promise<Data>
+
+    /**
+     * GET /repos/{owner}/{repo}/{format}/{ref?} — Downloads a repository archive.
+     * `format` defaults to `"zipball"`; pass `"tarball"` for a tar.gz. `ref` defaults
+     * to the repository's default branch. Permission: `read_contents`.
+     */
+    function downloadArchive(options: {
+      owner: string
+      repo: string
+      format?: ArchiveFormat
+      ref?: string
+    }): Promise<Data>
+
+    /** GET /repos/{owner}/{repo}/issues — Permission: `read_issues`. */
+    function listIssues(options: {
+      owner: string
+      repo: string
+      state?: "open" | "closed" | "all"
+      labels?: string
+      assignee?: string
+      creator?: string
+      mentioned?: string
+      sort?: "created" | "updated" | "comments"
+      direction?: SortDirection
+      since?: string
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /repos/{owner}/{repo}/issues/{issueNumber} — Permission: `read_issues`. */
+    function getIssue(options: {
+      owner: string
+      repo: string
+      issueNumber: number
+    }): Promise<Record<string, any>>
+
+    /** POST /repos/{owner}/{repo}/issues — Permission: `write_issues`. */
+    function createIssue(options: {
+      owner: string
+      repo: string
+      title: string
+      body?: string
+      assignees?: string[]
+      labels?: string[]
+      milestone?: number
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/issues/{issueNumber}/comments — Permission: `read_issues`. */
+    function listIssueComments(options: {
+      owner: string
+      repo: string
+      issueNumber: number
+      sort?: "created" | "updated"
+      direction?: SortDirection
+      since?: string
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** POST /repos/{owner}/{repo}/issues/{issueNumber}/comments — Permission: `write_issues`. */
+    function createIssueComment(options: {
+      owner: string
+      repo: string
+      issueNumber: number
+      body: string
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/pulls — Permission: `read_pull_requests`. */
+    function listPullRequests(options: {
+      owner: string
+      repo: string
+      state?: "open" | "closed" | "all"
+      head?: string
+      base?: string
+      sort?: "created" | "updated" | "popularity" | "long-running"
+      direction?: SortDirection
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /repos/{owner}/{repo}/pulls/{pullNumber} — Permission: `read_pull_requests`. */
+    function getPullRequest(options: {
+      owner: string
+      repo: string
+      pullNumber: number
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/pulls/{pullNumber}/files — Permission: `read_pull_requests`. */
+    function listPullRequestFiles(options: {
+      owner: string
+      repo: string
+      pullNumber: number
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** POST /repos/{owner}/{repo}/pulls — Permission: `write_pull_requests`. */
+    function createPullRequest(options: {
+      owner: string
+      repo: string
+      title: string
+      head: string
+      base: string
+      body?: string
+      draft?: boolean
+      maintainerCanModify?: boolean
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/actions/workflows — Permission: `read_actions`. */
+    function listWorkflows(options: {
+      owner: string
+      repo: string
+    }): Promise<Record<string, any>>
+
+    /**
+     * GET /repos/{owner}/{repo}/actions/workflows/{workflow}/runs — `workflow` accepts a
+     * filename like `"ci.yml"` or a numeric workflow id as a string. Permission: `read_actions`.
+     */
+    function listWorkflowRuns(options: {
+      owner: string
+      repo: string
+      workflow: string
+      actor?: string
+      branch?: string
+      event?: string
+      status?: string
+      created?: string
+      excludePullRequests?: boolean
+      checkSuiteId?: number
+      headSha?: string
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>>
+
+    /**
+     * POST /repos/{owner}/{repo}/actions/workflows/{workflow}/dispatches — Triggers a
+     * `workflow_dispatch` event. Resolves to `void` on success (HTTP 204). The keys of
+     * `inputs` are passed through to GitHub as-is — they correspond to the workflow's
+     * declared inputs and are NOT auto-converted to snake_case. Permission: `write_actions`.
+     */
+    function dispatchWorkflow(options: {
+      owner: string
+      repo: string
+      workflow: string
+      ref: string
+      inputs?: Record<string, any>
+    }): Promise<void>
+
+    /** GET /search/repositories — `query` is sent as `q`. Permission: `search_repositories`. */
+    function searchRepositories(options: {
+      query: string
+      sort?: "stars" | "forks" | "help-wanted-issues" | "updated"
+      order?: SortDirection
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>>
+
+    /** GET /search/issues — `query` is sent as `q`. Permission: `search_issues`. */
+    function searchIssues(options: {
+      query: string
+      sort?:
+      | "comments"
+      | "reactions"
+      | "reactions-+1"
+      | "reactions--1"
+      | "reactions-smile"
+      | "reactions-thinking_face"
+      | "reactions-heart"
+      | "reactions-tada"
+      | "interactions"
+      | "created"
+      | "updated"
+      order?: SortDirection
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>>
+
+    /** GET /search/code — `query` is sent as `q`. Permission: `search_code`. */
+    function searchCode(options: {
+      query: string
+      sort?: "indexed"
+      order?: SortDirection
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/releases — Permission: `read_repos`. */
+    function listReleases(options: {
+      owner: string
+      repo: string
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /** GET /repos/{owner}/{repo}/releases/latest — Permission: `read_repos`. */
+    function getLatestRelease(options: {
+      owner: string
+      repo: string
+    }): Promise<Record<string, any>>
+
+    /** GET /repos/{owner}/{repo}/releases/{releaseId}/assets — Permission: `read_repos`. */
+    function listReleaseAssets(options: {
+      owner: string
+      repo: string
+      releaseId: number
+      perPage?: number
+      page?: number
+    }): Promise<Record<string, any>[]>
+
+    /**
+     * GET /repos/{owner}/{repo}/releases/assets/{assetId} with `Accept: application/octet-stream`.
+     * Follows GitHub's redirect to fetch the asset bytes. Permission: `read_repos`.
+     */
+    function downloadReleaseAsset(options: {
+      owner: string
+      repo: string
+      assetId: number
+    }): Promise<Data>
+  }
+
+
+  /**
+   * Result of executing a shell command via `Shell.run` or a Python code
+   * snippet via `Python.run`.
+   *
+   * `output` is the combined stdout + stderr (the underlying iOS shell pipes
+   * both into a single stream, so they cannot be separated). The caller should
+   * inspect `exitCode` to decide whether the command succeeded.
+   */
+  type ShellExecutionResult = {
+    /**
+     * Combined stdout + stderr produced by the command.
+     */
+    output: string;
+    /**
+     * Process exit code. `0` means success. Non-zero values are surfaced as
+     * resolved promises (no rejection), so the caller can handle expected
+     * non-zero exits (e.g. `grep` finding no matches).
+     */
+    exitCode: number;
+    /**
+     * Whether the command was killed by the timeout limit.
+     */
+    timedOut: boolean;
+    /**
+     * Whether the command was cancelled by the caller.
+     */
+    cancelled: boolean;
+  };
+
+  /**
+   * Common options for `Shell.run` and `Python.run`.
+   */
+  type ShellRunOptions = {
+    /**
+     * Working directory for the command. Resolved relative to the
+     * documents directory if a relative path is provided. Tilde (`~/`) is
+     * expanded to the documents directory.
+     */
+    cwd?: string;
+    /**
+     * Maximum execution time in seconds. Defaults to 120.
+     * Note: not honored by `Python.run` in the current version.
+     */
+    timeout?: number;
+    /**
+     * Extra environment variables injected for this invocation only.
+     * Restored to their previous values after the command finishes.
+     */
+    env?: Record<string, string>;
+    /**
+     * String key/value pairs serialized as JSON and exposed to the
+     * subprocess via the `SCRIPTING_QUERY_PARAMETERS` environment variable.
+     * Mirrors `Script.queryParameters` for ad-hoc commands.
+     */
+    queryParameters?: Record<string, string>;
+  };
+
+  /**
+   * Run shell commands via the embedded `ios_system` runtime.
+   *
+   * - All `Shell.run` and `Python.run` invocations share a single serial
+   *   queue: while one is running, others wait. This is intentional —
+   *   `ios_system` and the embedded Python interpreter share global state
+   *   (env vars, sys.modules) and cannot run concurrently.
+   * - Non-zero exit codes resolve normally; only argument validation errors
+   *   reject the promise.
+   *
+   * @example
+   * ```ts
+   * const r = await Shell.run("echo hi && pwd", { cwd: "/tmp" })
+   * console.log(r.output)   // "hi\n/tmp\n"
+   * console.log(r.exitCode) // 0
+   * ```
+   */
+  namespace Shell {
+    /**
+     * Execute a shell command. Returns when the command exits or the
+     * timeout is reached.
+     */
+    function run(command: string, options?: ShellRunOptions): Promise<ShellExecutionResult>;
+  }
+
+  /**
+   * Run Python code via the embedded Python interpreter (the same runtime
+   * that powers Python index scripts). Code is executed using
+   * `python -c <code>`, so it must be self-contained.
+   *
+   * Shares the serial queue with `Shell.run`. The current version does not
+   * honor `options.timeout` because the underlying Python bridge has no
+   * timeout primitive — long-running snippets will block subsequent
+   * `Shell.run` / `Python.run` calls until they finish.
+   *
+   * @example
+   * ```ts
+   * const r = await Python.run("print(1 + 2)")
+   * console.log(r.output) // "3\n"
+   * ```
+   */
+  namespace Python {
+    /**
+     * Execute a Python code snippet. Returns when the snippet exits.
+     */
+    function run(code: string, options?: ShellRunOptions): Promise<ShellExecutionResult>;
+
+    /**
+     * Execute a Python file by absolute filesystem path. The script runs
+     * under `__main__` (so `if __name__ == "__main__":` triggers, `__file__`
+     * is the given path, and `sys.argv[0]` matches). The directory
+     * containing the file is prepended to `sys.path` so sibling modules
+     * are importable without manual setup.
+     *
+     * @example
+     * ```ts
+     * const r = await Python.runFile("/path/to/script.py", {
+     *   queryParameters: { foo: "bar" },
+     * })
+     * console.log(r.exitCode)
+     * ```
+     */
+    function runFile(path: string, options?: ShellRunOptions): Promise<ShellExecutionResult>;
+  }
+
+  // ─── HomeKit ────────────────────────────────────────────────────────────
+
+  /**
+   * HomeKit accessory category. Mirrors `HMAccessoryCategoryType*`.
+   * Unrecognized categories on newer iOS versions are passed through as
+   * raw strings, so this type stays open via `(string & {})`.
+   */
+  type HMAccessoryCategory =
+    | 'other' | 'bridge' | 'fan' | 'garageDoorOpener' | 'lightbulb' | 'doorLock'
+    | 'outlet' | 'switch' | 'thermostat' | 'sensor' | 'securitySystem' | 'door'
+    | 'window' | 'windowCovering' | 'programmableSwitch' | 'rangeExtender'
+    | 'ipCamera' | 'videoDoorbell' | 'airPurifier' | 'airHeater' | 'airConditioner'
+    | 'airHumidifier' | 'airDehumidifier' | 'sprinkler' | 'faucet' | 'showerHead'
+    | 'television' | 'wifiRouter' | 'audioReceiver' | 'speaker'
+    | 'tvSetTopBox' | 'tvStreamingStick' | 'airPort'
+    | (string & {})
+
+  /**
+   * HomeKit service type. Mirrors `HMServiceType*`. Open-ended (see
+   * HMAccessoryCategory).
+   */
+  type HMServiceType =
+    | 'lightbulb' | 'switch' | 'outlet' | 'fan' | 'thermostat' | 'lockMechanism'
+    | 'lockManagement' | 'garageDoorOpener' | 'door' | 'window' | 'windowCovering'
+    | 'temperatureSensor' | 'humiditySensor' | 'airQualitySensor' | 'lightSensor'
+    | 'motionSensor' | 'occupancySensor' | 'smokeSensor' | 'carbonDioxideSensor'
+    | 'carbonMonoxideSensor' | 'leakSensor' | 'contactSensor'
+    | 'securitySystem' | 'cameraRTPStreamManagement' | 'doorbell'
+    | 'battery' | 'accessoryInformation' | 'label' | 'speaker' | 'microphone'
+    | 'irrigationSystem' | 'valve' | 'faucet' | 'filterMaintenance'
+    | 'statefulProgrammableSwitch' | 'statelessProgrammableSwitch'
+    | 'ventilationFan' | 'heaterCooler' | 'humidifierDehumidifier' | 'slats'
+    | (string & {})
+
+  /**
+   * HomeKit characteristic type. Mirrors `HMCharacteristicType*`. Open-ended.
+   *
+   * Note: legacy `manufacturer` / `model` / `serialNumber` / `firmwareVersion`
+   * characteristic constants were deprecated by Apple in iOS 11. Use the
+   * direct `HMAccessory.manufacturer` / `model` / `firmwareVersion`
+   * properties instead.
+   */
+  type HMCharacteristicType =
+    | 'powerState' | 'brightness' | 'hue' | 'saturation' | 'colorTemperature'
+    | 'currentTemperature' | 'targetTemperature' | 'temperatureUnits'
+    | 'currentHeatingCooling' | 'targetHeatingCooling'
+    | 'currentRelativeHumidity' | 'targetRelativeHumidity'
+    | 'currentDoorState' | 'targetDoorState'
+    | 'lockMechanismCurrentState' | 'lockMechanismTargetState'
+    | 'motionDetected' | 'occupancyDetected' | 'leakDetected' | 'contactState'
+    | 'currentLightLevel' | 'currentAirQuality'
+    | 'batteryLevel' | 'chargingState' | 'statusLowBattery'
+    | 'identify' | 'name' | 'hardwareVersion' | 'softwareVersion' | 'version'
+    | 'currentPosition' | 'targetPosition' | 'positionState' | 'obstructionDetected'
+    | 'rotationDirection' | 'rotationSpeed'
+    | 'airParticulateDensity' | 'airParticulateSize'
+    | 'carbonDioxideDetected' | 'carbonDioxideLevel' | 'carbonDioxidePeakLevel'
+    | 'carbonMonoxideDetected' | 'carbonMonoxideLevel' | 'carbonMonoxidePeakLevel'
+    | 'smokeDetected' | 'statusActive' | 'statusFault' | 'statusJammed' | 'statusTampered'
+    | 'outputState' | 'inputEvent' | 'outletInUse'
+    | 'mute' | 'volume'
+    | 'ozoneDensity' | 'nitrogenDioxideDensity' | 'sulphurDioxideDensity'
+    | 'pm25Density' | 'pm10Density' | 'volatileOrganicCompoundDensity'
+    | 'filterChangeIndication' | 'filterLifeLevel' | 'filterResetChangeIndication'
+    | (string & {})
+
+  type HMCharacteristicProperty = 'readable' | 'writable' | 'supportsEvent' | 'hidden' | (string & {})
+
+  /**
+   * Characteristic value shape. Currently scalar; future versions may extend
+   * to include `Data` or structured objects (forward-compatible).
+   */
+  type HMCharacteristicValue = number | boolean | string
+
+  type HMActionSetType = 'userDefined' | 'wakeUp' | 'sleep' | 'homeArrival' | 'homeDeparture' | 'triggerOwned' | (string & {})
+
+  /**
+   * Format & range metadata for a characteristic. Use this to validate values
+   * client-side before calling `writeValue`.
+   */
+  interface HMCharacteristicMetadata {
+    format:
+      | 'bool' | 'int' | 'float' | 'string' | 'tlv8' | 'data' | 'array' | 'dictionary'
+      | 'uint8' | 'uint16' | 'uint32' | 'uint64' | (string & {})
+    units?:
+      | 'celsius' | 'fahrenheit' | 'percentage' | 'arcdegree' | 'seconds'
+      | 'lux' | 'partsPerMillion' | 'microgramsPerCubicMeter' | (string & {})
+    minimumValue?: number
+    maximumValue?: number
+    stepValue?: number
+    maxLength?: number
+    validValues?: number[]
+    manufacturerDescription?: string
+  }
+
+  interface HMCharacteristicWriteAction {
+    characteristicUUID: string
+    serviceUUID: string | null
+    accessoryUUID: string | null
+    targetValue: HMCharacteristicValue
+  }
+
+  /**
+   * Top-level HomeKit entry.
+   *
+   * Authorization is handled transparently: any call (homes / addHome /
+   * removeHome) lazily triggers the system HomeKit permission prompt the
+   * first time it is invoked. Once the user grants access, subsequent
+   * calls proceed normally; if access is denied or restricted, the call
+   * rejects with an "HomeKit access is not authorized" error.
+   *
+   * Scripts therefore do not need to check or request authorization
+   * manually — just call the API, and handle the rejection if the user
+   * has disabled HomeKit access in Settings.
+   */
+  class HMHomeManager {
+    static readonly homes: Promise<HMHome[]>
+    static addHome(name: string): Promise<HMHome>
+    static removeHome(home: HMHome): Promise<void>
+
+    static onHomesChanged: ((homes: HMHome[]) => void) | null
+  }
+
+  /**
+   * A HomeKit home — the top-level container for rooms, accessories, scenes,
+   * and zones.
+   */
+  class HMHome {
+    readonly uuid: string
+    readonly name: string
+    readonly isPrimary: boolean
+
+    readonly rooms: HMRoom[]
+    readonly accessories: HMAccessory[]
+    readonly actionSets: HMActionSet[]
+    readonly zones: HMZone[]
+    readonly serviceGroups: HMServiceGroup[]
+    readonly currentUser: HMUser
+
+    rename(name: string): Promise<void>
+
+    /** Virtual "default" room that contains accessories without a custom room. */
+    roomForEntireHome(): HMRoom
+    addRoom(name: string): Promise<HMRoom>
+    removeRoom(room: HMRoom): Promise<void>
+
+    /**
+     * Triggers the system Add-Accessory UI (uses `HMAccessorySetupManager`
+     * on iOS 15.4+); resolves to the home's full accessory list afterward.
+     */
+    addAndSetupAccessories(): Promise<HMAccessory[]>
+    removeAccessory(accessory: HMAccessory): Promise<void>
+    assignAccessoryToRoom(accessory: HMAccessory, room: HMRoom): Promise<void>
+
+    addZone(name: string): Promise<HMZone>
+    removeZone(zone: HMZone): Promise<void>
+
+    executeActionSet(set: HMActionSet): Promise<void>
+    addUserActionSet(name: string): Promise<HMActionSet>
+    removeActionSet(set: HMActionSet): Promise<void>
+    /** System-defined action sets (wake-up, sleep, arrival, departure). Read-only. */
+    builtinActionSets(): {
+      wakeUp: HMActionSet | null
+      sleep: HMActionSet | null
+      homeArrival: HMActionSet | null
+      homeDeparture: HMActionSet | null
+    }
+
+    onAccessoriesChanged: ((accessories: HMAccessory[]) => void) | null
+    onRoomsChanged: ((rooms: HMRoom[]) => void) | null
+    onActionSetsChanged: ((sets: HMActionSet[]) => void) | null
+    onNameChanged: ((name: string) => void) | null
+  }
+
+  class HMRoom {
+    readonly uuid: string
+    readonly name: string
+    readonly accessories: HMAccessory[]
+    rename(name: string): Promise<void>
+  }
+
+  class HMZone {
+    readonly uuid: string
+    readonly name: string
+    readonly rooms: HMRoom[]
+    rename(name: string): Promise<void>
+    addRoom(room: HMRoom): Promise<void>
+    removeRoom(room: HMRoom): Promise<void>
+  }
+
+  class HMAccessory {
+    readonly uuid: string
+    readonly name: string
+    readonly room: HMRoom | null
+    readonly category: HMAccessoryCategory
+    readonly manufacturer: string | null
+    readonly model: string | null
+    readonly firmwareVersion: string | null
+    readonly isReachable: boolean
+    readonly isBlocked: boolean
+    readonly isBridged: boolean
+    readonly bridgedAccessoryUUIDs: string[] | null
+    readonly services: HMService[]
+
+    rename(name: string): Promise<void>
+    /** Sends an identify request to the accessory (e.g. blink). */
+    identify(): Promise<void>
+
+    onReachabilityChanged: ((isReachable: boolean) => void) | null
+    onNameChanged: ((name: string) => void) | null
+    onServicesChanged: ((services: HMService[]) => void) | null
+    onFirmwareVersionChanged: ((version: string | null) => void) | null
+  }
+
+  class HMService {
+    readonly uuid: string
+    readonly name: string
+    readonly serviceType: HMServiceType
+    readonly accessoryUUID: string
+    readonly isPrimaryService: boolean
+    readonly isUserInteractive: boolean
+    readonly characteristics: HMCharacteristic[]
+    readonly linkedServices: HMService[] | null
+    readonly associatedServiceType: HMServiceType | null
+
+    rename(name: string): Promise<void>
+    updateAssociatedServiceType(type: HMServiceType | null): Promise<void>
+  }
+
+  class HMCharacteristic {
+    readonly uuid: string
+    readonly serviceUUID: string
+    readonly characteristicType: HMCharacteristicType
+    readonly properties: HMCharacteristicProperty[]
+    readonly metadata: HMCharacteristicMetadata | null
+    /** Last cached value (from a previous readValue / notification). */
+    readonly value: HMCharacteristicValue | null
+
+    /** Reads the live value from the accessory. */
+    readValue(): Promise<HMCharacteristicValue>
+    /** Writes a value; coerced and range-checked against `metadata`. */
+    writeValue(value: HMCharacteristicValue): Promise<void>
+
+    /**
+     * Subscribe to value-change notifications. The handler is invoked on
+     * every characteristic update until `unsubscribe()` is called.
+     * Note: HomeKit notification delivery is best-effort.
+     */
+    subscribe(handler: (error: Error | null, value: HMCharacteristicValue | null) => void): Promise<void>
+    unsubscribe(): Promise<void>
+  }
+
+  class HMActionSet {
+    readonly uuid: string
+    readonly name: string
+    readonly type: HMActionSetType
+    readonly isExecuting: boolean
+    readonly lastExecutionDate: Date | null
+    /** Read-only snapshot of characteristic write actions in this set. */
+    readonly actions: HMCharacteristicWriteAction[]
+    rename(name: string): Promise<void>
+    addCharacteristicAction(characteristic: HMCharacteristic, value: HMCharacteristicValue): Promise<void>
+    removeCharacteristicAction(characteristic: HMCharacteristic): Promise<void>
+  }
+
+  class HMServiceGroup {
+    readonly uuid: string
+    readonly name: string
+    readonly services: HMService[]
+  }
+
+  class HMUser {
+    readonly uuid: string
+    readonly name: string
   }
 }
 

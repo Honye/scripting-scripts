@@ -8,6 +8,26 @@
 const webView = new WebViewController()
 ```
 
+### 构造函数
+
+```ts
+new WebViewController(options?: { ephemeral?: boolean })
+```
+
+* **选项**（均为可选）：
+
+  * `ephemeral`：为 `true` 时，WebView 使用非持久化数据存储，cookie 与网站数据与默认容器隔离，在实例释放后一并丢弃。适合沙盒化的登陆流程或需要干净环境的抓取任务。
+
+#### 示例
+
+```ts
+// 普通（持久化）WebView —— 与其他 WebViewController 共享 cookie。
+const webView = new WebViewController()
+
+// 独立 WebView —— cookie 被隔离，销毁时一并清除。
+const isolated = new WebViewController({ ephemeral: true })
+```
+
 ---
 
 ## 属性
@@ -250,6 +270,142 @@ await webView.loadHTML(`
 ### `reload(): Promise<void>`
 
 重新加载当前网页。
+
+---
+
+### `takeSnapshot(options?): Promise<UIImage | null>`
+
+对 WebView 当前可见区域进行截图，返回一个 `UIImage`。
+
+* **选项**（均为可选）：
+
+  * `rect`：要截取的矩形区域（基于 WebView 坐标系，单位为点）。默认为整个可见视口。
+  * `snapshotWidth`：结果图像的宽度（单位为点），高度按比例缩放。默认为 WebView 的宽度。
+  * `afterScreenUpdates`：是否在应用完待处理的屏幕更新后再截图。默认为 `true`。
+
+* **返回**：`Promise<UIImage | null>` — 成功时返回 `UIImage`；若 WebView 未上屏（即未调用 `present()` 且未被 `<WebView>` 视图使用）或截图失败，返回 `null`。
+
+#### 示例
+
+```ts
+const webView = new WebViewController()
+await webView.loadURL('https://example.com')
+await webView.present({ navigationTitle: '截图示例' })
+
+const image = await webView.takeSnapshot()
+if (image) {
+  const data = image.pngData()
+  // 保存或分享截图......
+}
+
+webView.dispose()
+```
+
+---
+
+### `getAllCookies(): Promise<Cookie[]>`
+
+返回 WebView cookie 容器中当前保存的全部 cookie，包含 `document.cookie` 无法访问的 `HttpOnly` cookie。
+
+* **返回**：`Promise<Cookie[]>`
+
+`Cookie` 的结构：
+
+```ts
+interface Cookie {
+  name: string
+  value: string
+  domain: string
+  path: string
+  isSecure: boolean
+  isHTTPOnly: boolean
+  isSessionOnly: boolean
+  expiresDate?: Date | null
+}
+```
+
+---
+
+### `getCookies(url: string): Promise<Cookie[]>`
+
+返回将随给定 URL 一同发送的 cookie。匹配规则遵循 WebKit 的标准：URL 的 host 必须匹配 `cookie.domain`（当 `cookie.domain` 以 `.` 开头时支持子域匹配），且 URL 的路径必须被 `cookie.path` 覆盖。
+
+* **参数**：
+
+  * `url`：用于按域名和路径过滤 cookie 的 URL。
+* **返回**：`Promise<Cookie[]>`
+
+---
+
+### `setCookie(cookie: Cookie): Promise<boolean>`
+
+向 WebView cookie 容器写入（或覆盖）一条 cookie。
+
+可以在调用 `loadURL` **之前**先调用 `setCookie` 预置登陆态 —— 只要实例创建完成，cookie 容器即可使用，不需要先把 WebView 展示到屏幕上。
+
+* **参数**：
+
+  * `cookie`：要写入的 cookie。`name`、`value`、`domain` 必填；`path` 默认为 `"/"`；当 `isSessionOnly` 为 `true` 或未提供 `expiresDate` 时，视为会话 cookie。
+* **返回**：`Promise<boolean>` — 写入成功返回 `true`，输入非法返回 `false`。
+
+#### 示例
+
+```ts
+const webView = new WebViewController()
+
+// 在打开受限页面之前先写入 session cookie。
+await webView.setCookie({
+  name: "session",
+  value: "abc123",
+  domain: "example.com",
+  path: "/",
+  isSecure: true,
+  isHTTPOnly: true,
+  isSessionOnly: false,
+  expiresDate: new Date(Date.now() + 86400_000),
+})
+
+await webView.loadURL("https://example.com/dashboard")
+```
+
+---
+
+### `deleteCookie(cookie: { name: string, domain?: string, path?: string }): Promise<boolean>`
+
+删除匹配给定描述符的 cookie。
+
+可以把 `getAllCookies` / `getCookies` 返回的完整 `Cookie` 对象传回来精确删除，也可以只传部分字段（比如仅 `name`），此时每一条匹配的 cookie 都会被删除。
+
+* **参数**：
+
+  * `cookie.name`：要匹配的 cookie 名（必填）。
+  * `cookie.domain`（可选）：提供时仅删除该域名下的 cookie。
+  * `cookie.path`（可选）：提供时仅删除该路径下的 cookie。
+* **返回**：`Promise<boolean>` — 至少删除一条返回 `true`，否则返回 `false`。
+
+#### 示例
+
+```ts
+const webView = new WebViewController()
+await webView.loadURL("https://example.com")
+
+// 删除所有名为 "tracker" 的 cookie。
+await webView.deleteCookie({ name: "tracker" })
+
+// 或者把 getCookies 返回的具体 cookie 传回删除。
+const [c] = await webView.getCookies("https://example.com/")
+if (c) {
+  await webView.deleteCookie(c)
+}
+```
+
+---
+
+### `clearAllCookies(): Promise<void>`
+
+清空 WebView cookie 容器中的全部 cookie。其他网站数据（缓存、localStorage 等）不受影响。
+
+* **返回**：`Promise<void>`
 
 ---
 

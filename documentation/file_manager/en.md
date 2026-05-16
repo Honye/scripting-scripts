@@ -25,6 +25,15 @@ Throws an error if iCloud is disabled. Always check `isiCloudEnabled` before cal
 Returns the path to the shared App Group `Documents` directory.
 Files stored here are not accessible in the Files app, but scripts running inside Widgets can access them.
 
+### `FileManager.isWebDAVAvailable: boolean`
+
+Indicates whether WebDAV has been configured and is available for use.
+
+### `FileManager.webDAVDocumentsDirectory: string`
+
+Returns the path to the WebDAV-backed `Documents` cache directory.
+Files written here will be queued for WebDAV sync after WebDAV is configured.
+
 ### `FileManager.documentsDirectory: string`
 
 Returns the path to the local `Documents` directory.

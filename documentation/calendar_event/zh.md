@@ -288,6 +288,10 @@ new(): CalendarEvent
 
 ## 六、静态方法
 
+## `get(identifier: string): Promise<CalendarEvent | null>`
+
+根据事件标识符获取事件。
+
 ## `getAll(startDate: Date, endDate: Date, calendars?: Calendar[]): Promise<CalendarEvent[]>`
 
 获取指定日期范围内的事件。

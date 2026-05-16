@@ -87,11 +87,14 @@ type KeychainAccessibility =
 | `first_unlock`             | 重启后首次解锁即可访问         |
 | `first_unlock_this_device` | 重启后首次解锁即可访问，不会迁移    |
 
-默认值：
+默认值取决于是否启用 iCloud 同步：
 
 ```ts
-accessibility: "unlocked"
+synchronizable: false // accessibility: "first_unlock_this_device"
+synchronizable: true  // accessibility: "first_unlock"
 ```
+
+当 `synchronizable: true` 时，不能使用 `passcode`、`unlocked_this_device` 或 `first_unlock_this_device`，因为这些策略带有 `ThisDeviceOnly` 语义，无法同步到其他设备。传入这些组合时写入会失败并返回 `false`。
 
 ---
 
@@ -111,6 +114,8 @@ synchronizable?: boolean
 ```ts
 synchronizable: false
 ```
+
+启用后，Keychain 项会使用可迁移的默认可访问性策略 `first_unlock`。如果需要自定义 `accessibility`，请使用 `unlocked` 或 `first_unlock` 这类可同步策略。
 
 ---
 

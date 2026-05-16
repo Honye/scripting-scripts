@@ -22,6 +22,605 @@
     "children": [
       {
         "title": {
+          "en": "3.1.0",
+          "zh": "3.1.0"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "AVCaptureSession & Camera Control",
+              "zh": "AVCaptureSession 与 Camera Control"
+            },
+            "subtitle": {
+              "en": "Assemble your own capture pipeline (device + input + photo / movie / metadata outputs), select AVCaptureDeviceFormat by resolution / fps / HDR / spatial video, switch color space and clamp frame rate, capture Live Photo with paired .mov, opt into responsive capture / fast prioritization / ZSL / deferred photo, drive iPhone 16 hardware Camera Control with custom sliders & pickers, and render previews with <CaptureVideoPreviewView/>.",
+              "zh": "自己组装相机流水线（设备 + 输入 + 拍照 / 录像 / metadata 输出）;按分辨率 / 帧率 / HDR / spatial video 挑 AVCaptureDeviceFormat,切换色彩空间、锁帧率上下限;拍 Live Photo 同时拿静态图和配对 .mov;开启 responsive capture / fast prioritization / ZSL / deferred photo;用自定义滑块 / 选择器驱动 iPhone 16 硬件 Camera Control;并用 <CaptureVideoPreviewView/> 渲染实时预览。"
+            },
+            "keywords": [
+              "AVCaptureSession",
+              "AVCaptureDevice",
+              "AVCaptureDeviceInput",
+              "AVCaptureDeviceFormat",
+              "AVCapturePhotoOutput",
+              "AVCaptureMovieFileOutput",
+              "AVCaptureMetadataOutput",
+              "AVCaptureControl",
+              "AVCaptureSlider",
+              "AVCaptureIndexPicker",
+              "AVCaptureSystemZoomSlider",
+              "AVCaptureEventInteraction",
+              "CaptureVideoPreviewView",
+              "Live Photo",
+              "Responsive Capture",
+              "Zero Shutter Lag",
+              "Fast Capture Prioritization",
+              "Deferred Photo",
+              "Spatial Video",
+              "Apple Log",
+              "HDR",
+              "Multi-Cam",
+              "Center Stage",
+              "Portrait Effect",
+              "Studio Light",
+              "Video Stabilization",
+              "Frame Rate",
+              "Color Space",
+              "QR",
+              "barcode",
+              "Camera Control"
+            ],
+            "children": [
+              {
+                "pro": true,
+                "title": {
+                  "en": "Quick Start",
+                  "zh": "快速开始"
+                },
+                "subtitle": {
+                  "en": "Build a session, scan QR codes, capture photos, render the preview, and tear it down. Self-contained demo.",
+                  "zh": "搭建 session、扫 QR、拍照、渲染预览、清理释放,完整 demo。"
+                },
+                "readme": "av_capture_session/quick_start/",
+                "example": "av_capture_session/quick_start/index"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Camera Control (iOS 18+)",
+                  "zh": "Camera Control(iOS 18+)"
+                },
+                "subtitle": {
+                  "en": "AVCaptureSlider, AVCaptureIndexPicker, system zoom / exposure sliders, and AVCaptureEventInteraction for the iPhone 16 hardware button.",
+                  "zh": "AVCaptureSlider、AVCaptureIndexPicker、系统缩放/曝光滑块,以及让 iPhone 16 硬件按键拍照的 AVCaptureEventInteraction。"
+                },
+                "readme": "av_capture_session/controls/"
+              },
+              {
+                "title": {
+                  "en": "Tap-to-focus, interruptions, stabilization",
+                  "zh": "点击对焦 / 中断事件 / 视频稳定化"
+                },
+                "subtitle": {
+                  "en": "Three small but common controls: focus / exposure point of interest, session interruption notifications, and movie stabilization mode.",
+                  "zh": "三个常用控制点:焦点曝光点击对焦、会话中断通知、录像视频稳定化模式。"
+                },
+                "readme": "av_capture_session/session_control/",
+                "example": "av_capture_session/session_control/index"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Responsive capture",
+                  "zh": "响应式拍照"
+                },
+                "subtitle": {
+                  "en": "Zero Shutter Lag, Responsive Capture, Fast Prioritization, and Auto Deferred Photo Delivery — what each does and when (not) to enable it.",
+                  "zh": "Zero Shutter Lag、Responsive Capture、Fast Prioritization、Auto Deferred Photo Delivery 四个开关讲清楚,以及什么时候不该开。"
+                },
+                "readme": "av_capture_session/responsive_capture/",
+                "example": "av_capture_session/responsive_capture/index"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "Live Photo",
+                  "zh": "Live Photo 实况照片"
+                },
+                "subtitle": {
+                  "en": "Pass `livePhotoMovieFile` to capturePhoto and resolve with both the still image and the .mov companion clip.",
+                  "zh": "在 capturePhoto 时传 livePhotoMovieFile,resolve 同时拿到静态图和 .mov 短片。"
+                },
+                "readme": "av_capture_session/live_photo/",
+                "example": "av_capture_session/live_photo/index"
+              },
+              {
+                "title": {
+                  "en": "Device formats",
+                  "zh": "设备 formats"
+                },
+                "subtitle": {
+                  "en": "List and switch AVCaptureDeviceFormat (resolution, fps, HDR, multi-cam, spatial video, stabilization); pick a color space via setActiveColorSpace; lock frame-rate ceiling/floor via setActiveVideoMin/MaxFrameDuration.",
+                  "zh": "列出并切换 AVCaptureDeviceFormat(分辨率、帧率、HDR、multi-cam、spatial video、稳定化);setActiveColorSpace 切色彩空间;setActiveVideoMin/MaxFrameDuration 锁帧率上下限。"
+                },
+                "readme": "av_capture_session/formats/",
+                "example": "av_capture_session/formats/index"
+              },
+              {
+                "title": {
+                  "en": "CaptureVideoPreviewView",
+                  "zh": "CaptureVideoPreviewView 预览"
+                },
+                "subtitle": {
+                  "en": "Render the live preview of any AVCaptureSession in a SwiftUI view with rotation coordination.",
+                  "zh": "用 SwiftUI 视图渲染任意 AVCaptureSession 的实时预览,支持旋转协调。"
+                },
+                "readme": "av_capture_session/preview_view/"
+              },
+              {
+                "title": {
+                  "en": "VideoRecorder vs AVCaptureSession",
+                  "zh": "VideoRecorder vs AVCaptureSession"
+                },
+                "subtitle": {
+                  "en": "When to reach for the high-level VideoRecorder vs the low-level AVCaptureSession pipeline.",
+                  "zh": "高层封装的 VideoRecorder 与底层的 AVCaptureSession 流水线,各自适合什么场景。"
+                },
+                "readme": "av_capture_session/vs_video_recorder/"
+              }
+            ]
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Github API",
+              "zh": "Github API"
+            },
+            "subtitle": {
+              "en": "This interface is used to call Github API.",
+              "zh": "用于调用Github API的接口。"
+            },
+            "readme": "github/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "AudioCapture",
+              "zh": "实时音频采集"
+            },
+            "subtitle": {
+              "en": "Real-time microphone capture exposing raw PCM frames, RMS / peak levels, and YIN-based pitch estimates. Suitable for tuners, waveform views, and custom DSP. Optionally writes a wav file.",
+              "zh": "基于 AVAudioEngine 的实时音频采集接口，向脚本输出原始 PCM 数据、电平（RMS / Peak）以及基于 YIN 算法的音高估计，适合调音器、实时波形与自定义 DSP，可选择落盘为 wav 文件。"
+            },
+            "keywords": [
+              "AudioCapture",
+              "pitch",
+              "PCM",
+              "waveform",
+              "tuner"
+            ],
+            "readme": "audio_capture/"
+          },
+          {
+            "title": {
+              "en": "AudioRecorder (Level Metering)",
+              "zh": "录音（电平测量）"
+            },
+            "subtitle": {
+              "en": "Added level metering: meteringEnabled / averagePower / peakPower / onLevelUpdate. Drive a VU meter or loudness-based triggers while recording, without exposing raw PCM samples.",
+              "zh": "新增电平测量能力：meteringEnabled / averagePower / peakPower / onLevelUpdate，可在录音过程中驱动 VU 表或基于响度做触发逻辑，不暴露原始 PCM 数据。"
+            },
+            "keywords": [
+              "AudioRecorder",
+              "metering",
+              "averagePower",
+              "peakPower",
+              "onLevelUpdate",
+              "VU"
+            ],
+            "readme": "audio_recorder/"
+          },
+          {
+            "title": {
+              "en": "Speech (SSML)",
+              "zh": "语音合成（SSML）"
+            },
+            "subtitle": {
+              "en": "Added isSSML option to Speech.speak / Speech.synthesizeToFile for SSML input on iOS 16+.",
+              "zh": "Speech.speak / Speech.synthesizeToFile 新增 isSSML 选项,在 iOS 16+ 支持 SSML 输入。"
+            },
+            "keywords": [
+              "Speech",
+              "SSML",
+              "isSSML"
+            ],
+            "readme": "speech/"
+          },
+          {
+            "title": {
+              "en": "SpeechRecognition",
+              "zh": "语音识别"
+            },
+            "subtitle": {
+              "en": "Recognition results expose more fields, and start() accepts a new preferredInput option to force the built-in microphone.",
+              "zh": "识别结果新增更多字段；start() 新增 preferredInput 选项，可强制使用内置麦克风。"
+            },
+            "keywords": [
+              "SpeechRecognition",
+              "preferredInput",
+              "builtInMic"
+            ],
+            "readme": "speech_recognition/"
+          },
+          {
+            "title": {
+              "en": "SharedAudioSession",
+              "zh": "音频会话"
+            },
+            "subtitle": {
+              "en": "New audio routing APIs: list available inputs, set the preferred input (e.g. force builtInMic), override the output port, observe route changes, plus an in-process \"prefer built-in mic\" switch for clean input/output separation when wireless headphones are connected.",
+              "zh": "新增音频路由相关 API：列出可用输入、设置首选输入（例如强制 builtInMic）、强制输出端口、监听路由变化，以及进程内\"优先内置麦克风\"开关，便于在连接无线耳机时分离输入/输出。"
+            },
+            "keywords": [
+              "SharedAudioSession",
+              "availableInputs",
+              "setPreferredInput",
+              "builtInMic",
+              "overrideOutputAudioPort",
+              "routeChange",
+              "setPrefersBuiltInMicWhenAvailable"
+            ],
+            "readme": "shared_audio_session/"
+          },
+          {
+            "title": {
+              "en": "AVPlayer",
+              "zh": "音视频播放器"
+            },
+            "subtitle": {
+              "en": "Add options parameter to setSource method, to configure request headers.",
+              "zh": "setSource 方法新增 options 可选参数，可配置请求 headers。"
+            },
+            "keywords": [
+              "AVPlayer"
+            ],
+            "readme": "audio_player/"
+          },
+          {
+            "title": {
+              "en": "AVAsset",
+              "zh": "AVAsset"
+            },
+            "subtitle": {
+              "en": "New AVAsset / AVAssetTrack APIs: a heavyweight handle to a media asset for loading metadata, tracks, and extracting still images without spinning up an AVPlayer. Pass the same instance to AVPlayer.setSource(asset) to share the underlying media.",
+              "zh": "新增 AVAsset / AVAssetTrack API：媒体资源的重量级句柄，可在不启动 AVPlayer 的前提下加载元数据、轨道并提取静帧。可将同一实例传给 AVPlayer.setSource(asset) 以共享底层媒体。"
+            },
+            "keywords": [
+              "AVAsset",
+              "AVAssetTrack",
+              "loadDuration",
+              "loadTracks",
+              "generateImage"
+            ],
+            "readme": "av_asset/"
+          },
+          {
+            "title": {
+              "en": "AVAsset Reader / Writer / Export",
+              "zh": "AVAsset 读取 / 写入 / 导出"
+            },
+            "subtitle": {
+              "en": "New low-level companions to AVAsset: AVAssetExportSession (preset-based transcode), AVAssetReader + Video/AudioOutput (pull decoded frames as UIImage / interleaved Float32 PCM), and AVAssetWriter + AVAssetWriterInput (push frames / samples to mp4 / m4a). Suitable for transcoding, OCR / ML on individual frames, waveform / FFT, and synthesizing media from JS.",
+              "zh": "AVAsset 的低层伴随 API：AVAssetExportSession（按 preset 转码）、AVAssetReader + Video/AudioOutput（拉取已解码帧为 UIImage / 交错 Float32 PCM）、AVAssetWriter + AVAssetWriterInput（向 mp4 / m4a 推帧 / 采样）。适合转码、对单帧做 OCR / ML、波形 / FFT、以及从 JS 端合成媒体。"
+            },
+            "pro": true,
+            "keywords": [
+              "AVAssetExportSession",
+              "AVAssetReader",
+              "AVAssetReaderVideoOutput",
+              "AVAssetReaderAudioOutput",
+              "AVAssetWriter",
+              "AVAssetWriterInput",
+              "transcode",
+              "PCM",
+              "Float32Array"
+            ],
+            "readme": "av_asset_reader_writer/"
+          },
+          {
+            "title": {
+              "en": "Location",
+              "zh": "定位（Location）"
+            },
+            "subtitle": {
+              "en": "Heading stream APIs (requestHeading / startUpdatingHeading / addHeadingListener / removeHeadingListener), continuous location stream APIs (startUpdatingLocation / stopUpdatingLocation / addLocationListener / removeLocationListener), an optional requestAlwaysAuthorization flag on startUpdating*, CLLocationManager passthrough properties (allowsBackgroundLocationUpdates / pausesLocationUpdatesAutomatically / showsBackgroundLocationIndicator / distanceFilter / headingFilter / activityType), and the streaming Promise now resolves with the authorization mode actually granted.",
+              "zh": "新增航向流接口（requestHeading / startUpdatingHeading / addHeadingListener / removeHeadingListener）、持续位置流接口（startUpdatingLocation / stopUpdatingLocation / addLocationListener / removeLocationListener）、startUpdating* 可选 requestAlwaysAuthorization 选项、CLLocationManager 透传属性（allowsBackgroundLocationUpdates / pausesLocationUpdatesAutomatically / showsBackgroundLocationIndicator / distanceFilter / headingFilter / activityType），且流式 Promise 现已返回实际获得的授权模式。"
+            },
+            "readme": "location/",
+            "example": "location/index"
+          },
+          {
+            "title": {
+              "en": "MediaPlayer (Live Stream)",
+              "zh": "MediaPlayer（直播流）"
+            },
+            "subtitle": {
+              "en": "NowPlayingInfo gains an isLiveStream flag; when true the Lock Screen and Control Center hide the progress bar and render as a live broadcast.",
+              "zh": "NowPlayingInfo 新增 isLiveStream 字段;设为 true 时锁屏与控制中心隐藏进度条,按直播 UI 渲染。"
+            },
+            "keywords": [
+              "MediaPlayer",
+              "NowPlayingInfo",
+              "isLiveStream",
+              "liveStream",
+              "radio"
+            ],
+            "readme": "media_player/"
+          },
+          {
+            "title": {
+              "en": "Shell",
+              "zh": "Shell"
+            },
+            "subtitle": {
+              "en": "Run shell commands from JS / TS via the embedded ios_system runtime, with support for cwd, timeout, env, and queryParameters.",
+              "zh": "通过内嵌 ios_system 运行时在 JS / TS 中执行 shell 命令,支持 cwd、timeout、env 与 queryParameters。"
+            },
+            "keywords": [
+              "Shell",
+              "Shell.run",
+              "ios_system",
+              "command"
+            ],
+            "readme": "shell/"
+          },
+          {
+            "title": {
+              "en": "Python",
+              "zh": "Python"
+            },
+            "subtitle": {
+              "en": "Run Python code snippets from JS / TS via the embedded Python interpreter; shares a serial queue with Shell.run.",
+              "zh": "通过内嵌 Python 解释器在 JS / TS 中运行 Python 代码片段;与 Shell.run 共享同一串行队列。"
+            },
+            "keywords": [
+              "Python",
+              "Python.run",
+              "snippet",
+              "interpreter"
+            ],
+            "readme": "python/"
+          },
+          {
+            "title": {
+              "en": "Chart: gesture, overlay & styling",
+              "zh": "Chart：手势、浮层与样式"
+            },
+            "subtitle": {
+              "en": "ChartGesture (custom gestures + ChartProxy.select* for programmatic selection), ChartPlotStyle (plot-area background / border / frame builder), ChartAxisLabelFormat (currency / number / date precision factories), and per-mark VoiceOver fields (accessibilityLabel / Value / Hidden).",
+              "zh": "ChartGesture（自定义手势 + ChartProxy.select* 程式化驱动选区）、ChartPlotStyle（plot 区域 background / border / frame builder）、ChartAxisLabelFormat（货币 / 数字 / 日期精度工厂），以及每个 mark 的 VoiceOver 字段（accessibilityLabel / Value / Hidden）。"
+            },
+            "keywords": [
+              "ChartGesture",
+              "ChartPlotStyle",
+              "ChartProxy",
+              "ChartAxisLabelFormat",
+              "accessibilityLabel",
+              "VoiceOver"
+            ],
+            "example": "views/charts/chart_overlay/index",
+            "readme": "views/charts/chart_overlay/"
+          },
+          {
+            "title": {
+              "en": "Chart: scroll target behavior",
+              "zh": "Chart：滚动停留对齐"
+            },
+            "subtitle": {
+              "en": "chartScrollTargetBehavior(.valueAligned) snaps chart scroll deceleration to data boundaries. Pick unit step for numeric axes or matching DateComponents for date axes; majorAlignment controls the secondary 'page' snap.",
+              "zh": "chartScrollTargetBehavior(.valueAligned) 让图表滚动减速时停在数据边界上。数值轴用 unit 步进、日期轴用 matching DateComponents，majorAlignment 控制次级 page 对齐。"
+            },
+            "keywords": [
+              "chartScrollTargetBehavior",
+              "valueAligned",
+              "MajorValueAlignment",
+              "DateComponents"
+            ],
+            "example": "views/charts/chart_scroll_target_behavior/index",
+            "readme": "views/charts/chart_scroll_target_behavior/"
+          },
+          {
+            "title": {
+              "en": "Chart: LinePlot & AreaPlot (function curves)",
+              "zh": "Chart：LinePlot 与 AreaPlot（函数曲线）"
+            },
+            "subtitle": {
+              "en": "iOS 18+ LinePlot / AreaPlot mark types — plot smooth curves and areas straight from a JS function. Supports single-variable y=f(x), parametric (x,y)=f(t), and AreaPlot (yStart,yEnd)=f(x).",
+              "zh": "iOS 18+ 新增 LinePlot / AreaPlot mark：用一个 JS 函数直接画平滑曲线 / 区间面积。支持单变量 y=f(x)、参数化 (x,y)=f(t)、AreaPlot (yStart,yEnd)=f(x)。"
+            },
+            "keywords": [
+              "LinePlot",
+              "AreaPlot",
+              "function plot",
+              "parametric"
+            ],
+            "example": "views/charts/line_plot/index",
+            "readme": "views/charts/line_plot/"
+          },
+          {
+            "title": {
+              "en": "ScrollView: scroll position & visibility tracking",
+              "zh": "ScrollView：滚动位置与可见性跟踪"
+            },
+            "subtitle": {
+              "en": "scrollPosition(id:anchor:) two-way binds the leading visible item's id to JS state on plain ScrollView (no ScrollViewReader needed). onScrollTargetVisibilityChange (iOS 18+) reports the full visible-id set as you scroll. Children mark themselves with key={...} (mapped to SwiftUI .id()) and the layout container needs scrollTargetLayout.",
+              "zh": "scrollPosition(id:anchor:) 把普通 ScrollView 中 leading 可见 item 的 id 双向绑定到 JS state，不需要 ScrollViewReader 包一层。onScrollTargetVisibilityChange（iOS 18+）回调当前可见 id 集合。子节点用 key={...} 标 id（bridge 映射到 SwiftUI .id()），布局容器开 scrollTargetLayout。"
+            },
+            "keywords": [
+              "scrollPosition",
+              "onScrollTargetVisibilityChange",
+              "scrollTargetLayout",
+              "ScrollView"
+            ],
+            "example": "views/scrollview/index",
+            "readme": "views/scrollview/"
+          },
+          {
+            "title": {
+              "en": "symbolEffect: drawOn / drawOff + isActive + options",
+              "zh": "symbolEffect：drawOn / drawOff + isActive + options"
+            },
+            "subtitle": {
+              "en": "iOS 26 / SF Symbols 7 introduces drawOn and drawOff symbol animations. The bridge now exposes them via the `isActive` trigger form (mirrors SwiftUI symbolEffect(_:options:isActive:)) — flip a bool to draw the symbol on or off. The new SymbolEffectOptions (speed / repeat / nonRepeating) is also wired through, and isActive is opened up for the existing appear / disappear / scale effects. Silent fallback on iOS < 26 for drawOn/drawOff.",
+              "zh": "iOS 26 / SF Symbols 7 新增了 drawOn 与 drawOff 动画。桥层通过 `isActive` 触发形态透出（对应 SwiftUI symbolEffect(_:options:isActive:)）——翻转一个 bool 即可让符号画上或擦除。同时打通了 SymbolEffectOptions（speed / repeat / nonRepeating），现有的 appear / disappear / scale 也开放了 isActive 形态。drawOn/drawOff 在 iOS 26 以下静默透传。"
+            },
+            "keywords": [
+              "symbolEffect",
+              "drawOn",
+              "drawOff",
+              "SymbolEffectOptions",
+              "isActive"
+            ],
+            "example": "view_modifiers/symbol/index",
+            "readme": "view_modifiers/symbol/"
+          },
+          {
+            "title": {
+              "en": "Script (Python)",
+              "zh": "Script（Python）"
+            },
+            "subtitle": {
+              "en": "Python index scripts can now read Script.name / queryParameters / metadata / directory and call Script.run / Script.exit, mirroring the JS-side Script global.",
+              "zh": "Python 索引脚本现可读取 Script.name / queryParameters / metadata / directory,并调用 Script.run / Script.exit,与 JS 端 Script 全局对象语义一致。"
+            },
+            "keywords": [
+              "Python",
+              "scripting",
+              "Script.run",
+              "Script.exit"
+            ],
+            "readme": "script/python_api/"
+          },
+          {
+            "title": {
+              "en": "Storage (Python)",
+              "zh": "Storage（Python）"
+            },
+            "subtitle": {
+              "en": "Python-side persistent key-value storage with per-script and shared namespaces, sharing the underlying store with the JS-side Storage namespace.",
+              "zh": "Python 端的持久化键值存储,与 JS 端 Storage 共享同一底层存储,支持按脚本隔离与跨脚本共享。"
+            },
+            "keywords": [
+              "Python",
+              "scripting",
+              "Storage.set",
+              "Storage.get"
+            ],
+            "readme": "storage/python_api/"
+          },
+          {
+            "title": {
+              "en": "Device (Python)",
+              "zh": "Device（Python）"
+            },
+            "subtitle": {
+              "en": "Python-side read-only device info: model, system version, screen, battery, orientation, and locale.",
+              "zh": "Python 端只读获取设备信息:型号、系统版本、屏幕、电池、方向、语言等。"
+            },
+            "keywords": [
+              "Python",
+              "scripting",
+              "Device.model",
+              "Device.systemName"
+            ],
+            "readme": "device/python_api/"
+          },
+          {
+            "title": {
+              "en": "Dialog (Python)",
+              "zh": "Dialog（Python）"
+            },
+            "subtitle": {
+              "en": "Python-side synchronous Dialog API: alert / confirm / prompt / actionSheet wrappers around the host's modal UI.",
+              "zh": "Python 端同步对话框 API:封装宿主模态 UI,提供 alert / confirm / prompt / actionSheet。"
+            },
+            "keywords": [
+              "Python",
+              "scripting",
+              "Dialog.alert",
+              "Dialog.confirm",
+              "Dialog.prompt"
+            ],
+            "readme": "views/dialog/python_api/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Rime",
+              "zh": "Rime 输入法引擎"
+            },
+            "subtitle": {
+              "en": "Added a programmable Chinese input-method engine: load schemas, feed key events, render candidates, and commit text from JavaScript in both the main app and the keyboard extension.",
+              "zh": "新增可编程中文输入法引擎:在主 App 和键盘扩展内通过 JavaScript 加载方案、喂入按键事件、自绘候选条并提交文本。"
+            },
+            "keywords": [
+              "Rime",
+              "Rime.setup",
+              "Rime.deploy",
+              "Rime.Session",
+              "Rime.listSchemas",
+              "Rime.onNotification",
+              "input method",
+              "Chinese input"
+            ],
+            "readme": "rime/"
+          }
+        ]
+      },
+      {
+        "title": {
+          "en": "3.0.0",
+          "zh": "3.0.0"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "TranslationUIProvider",
+              "zh": "TranslationUIProvider (翻译)"
+            },
+            "subtitle": {
+              "en": "This interface allows scripts to take control of the system translation panel’s UI and interaction flow.",
+              "zh": "用于接管系统翻译面板的界面展示与交互流程，让脚本自定义翻译 UI，并实现自己的默认翻译逻辑。"
+            },
+            "readme": "translation_ui_provider/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "AlarmManager",
+              "zh": "AlarmManager (闹钟)"
+            },
+            "subtitle": {
+              "en": "For creating and managing AlarmKit-based alarms, timers, and countdown reminders.",
+              "zh": "为创建和管理基于 AlarmKit 的闹钟、定时器和倒计时提醒。"
+            },
+            "readme": "alarm_manager/"
+          },
+          {
+            "title": {
+              "en": "FileManager",
+              "zh": "文件管理器"
+            },
+            "subtitle": {
+              "en": "Add webDAVDocumentsDirectory and isWebDAVAvailable properties.",
+              "zh": "新增 webDAVDocumentsDirectory 和 isWebDAVAvailable 属性。"
+            },
+            "readme": "file_manager/"
+          }
+        ]
+      },
+      {
+        "title": {
           "en": "2.4.9",
           "zh": "2.4.9"
         },
@@ -40,6 +639,132 @@
               "Script.onResume()"
             ],
             "readme": "script/minimize_and_resume/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "zh": "可交互 UI 的 Assistant Tool",
+              "en": "Assistant Tool With Interactive UI"
+            },
+            "subtitle": {
+              "zh": "学习如何通过 registerUIView 实现可交互工具 UI，并返回结构化输出。",
+              "en": "Learn how to build interactive Assistant Tools using registerUIView and return structured output."
+            },
+            "readme": "assistant_tool/interactive_ui/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "MediaLibrary",
+              "zh": "媒体库（MediaLibrary）"
+            },
+            "subtitle": {
+              "en": "Read local media library metadata, including songs, albums, artists, playlists, and artwork.",
+              "zh": "读取本地媒体库元数据，包括歌曲、专辑、艺术家、播放列表与封面图。"
+            },
+            "keywords": [
+              "MediaLibrary",
+              "MediaLibrary.getSongs",
+              "MediaLibrary.getArtwork"
+            ],
+            "readme": "media_library/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "SystemMusicPlayer",
+              "zh": "系统音乐播放器（SystemMusicPlayer）"
+            },
+            "subtitle": {
+              "en": "Control the system music player.",
+              "zh": "控制系统音乐播放器。"
+            },
+            "readme": "system_music_player/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "WebScraper",
+              "zh": "网页爬虫（WebScraper）"
+            },
+            "subtitle": {
+              "en": "Extract data from web pages.",
+              "zh": "从网页中提取数据。"
+            },
+            "readme": "web_scraper/"
+          },
+          {
+            "title": {
+              "en": "Reminder",
+              "zh": "提醒事项"
+            },
+            "subtitle": {
+              "en": "Added Reminder.get method to get a specific Reminder by ID.",
+              "zh": "新增 Reminder.get 方法获取指定 ID 的提醒事项。"
+            },
+            "readme": "reminder/"
+          },
+          {
+            "title": {
+              "en": "CalendarEvent",
+              "zh": "日历事件"
+            },
+            "subtitle": {
+              "en": "Added CalendarEvent.get method to get a specific CalendarEvent by ID.",
+              "zh": "新增 CalendarEvent.get 方法获取指定 ID 的日历事件。"
+            },
+            "readme": "calendar_event/"
+          },
+          {
+            "title": {
+              "en": "TextField textContentType",
+              "zh": "TextField textContentType"
+            },
+            "subtitle": {
+              "en": "Added textContentType modifier for TextField to provide semantic input hints and autofill behavior.",
+              "zh": "为 TextField 新增 textContentType 修饰符，用于提供语义化输入提示与自动填充能力。"
+            },
+            "keywords": [
+              "textContentType",
+              "TextField"
+            ],
+            "readme": "view_modifiers/text_field/"
+          },
+          {
+            "title": {
+              "en": "JWT",
+              "zh": "JWT（JSON Web Token）"
+            },
+            "subtitle": {
+              "en": "Added synchronous JWT APIs for signing, verifying, and decoding tokens, with support for HS/RS/PS/ES/EdDSA algorithms and standard claim validation.",
+              "zh": "新增同步 JWT 接口，支持签发、验签与解码，并覆盖 HS/RS/PS/ES/EdDSA 算法及标准声明校验。"
+            },
+            "keywords": [
+              "JWT",
+              "JWT.sign",
+              "JWT.verify",
+              "JWT.decode"
+            ],
+            "readme": "jwt/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HeadphoneMotionManager",
+              "zh": "耳机运动数据"
+            },
+            "subtitle": {
+              "en": "Stream attitude, rotation rate, user acceleration, gravity, and connection events from spatial-audio headphones (AirPods Pro / Max / 3) on iOS 14+.",
+              "zh": "在 iOS 14+ 上读取支持空间音频的耳机（AirPods Pro / Max / 3）的姿态、旋转速率、用户加速度、重力，以及连接/断开事件。"
+            },
+            "keywords": [
+              "HeadphoneMotionManager",
+              "AirPods",
+              "CMHeadphoneMotionManager",
+              "head tracking",
+              "spatial audio"
+            ],
+            "readme": "headphone_motion_manager/"
           }
         ]
       },
@@ -171,7 +896,7 @@
                   "en": "This section describes the transaction model, transaction types.",
                   "zh": "介绍了 SQLite 的事务模型以及事务类型。"
                 },
-                "readme": "sqlite/Transaction/"
+                "readme": "sqlite/transaction/"
               },
               {
                 "pro": true,
@@ -273,17 +998,6 @@
               "zh": "Widget.present 方法新增 relevance 参数，用于控制小组件的优先级。"
             },
             "readme": "widget_api/"
-          },
-          {
-            "title": {
-              "en": "Location",
-              "zh": "定位（Location）"
-            },
-            "subtitle": {
-              "en": "Add requestHeading、 addHeadingListener、removeHeadingListener, etc.",
-              "zh": "新增 requestHeading、 addHeadingListener、removeHeadingListener 等方法。"
-            },
-            "readme": "location/"
           },
           {
             "title": {
@@ -416,6 +1130,24 @@
             },
             "readme": "device/",
             "example": "device/index"
+          },
+          {
+            "title": {
+              "en": "Device (Python)",
+              "zh": "Device（Python）"
+            },
+            "subtitle": {
+              "en": "Python-side Device API mirroring the JS Device namespace: read-only model / system / screen / battery / orientation / locale info.",
+              "zh": "Python 索引脚本可用的 Device API,与 JS 端语义一致:只读获取设备型号 / 系统 / 屏幕 / 电池 / 方向 / 语言等信息。"
+            },
+            "keywords": [
+              "Python",
+              "scripting",
+              "Device.model",
+              "Device.systemName",
+              "Device.screen"
+            ],
+            "readme": "device/python_api/"
           }
         ]
       },
@@ -876,6 +1608,18 @@
             },
             "readme": "notification/",
             "example": "notification/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "AlarmManager",
+              "zh": "AlarmManager (闹钟)"
+            },
+            "subtitle": {
+              "en": "For creating and managing AlarmKit-based alarms, timers, and countdown reminders.",
+              "zh": "为创建和管理基于 AlarmKit 的闹钟、定时器和倒计时提醒。"
+            },
+            "readme": "alarm_manager/"
           },
           {
             "pro": true,
@@ -2257,6 +3001,25 @@
       },
       {
         "title": {
+          "en": "Dialog (Python)",
+          "zh": "Dialog（Python）"
+        },
+        "subtitle": {
+          "en": "Python-side Dialog API mirroring the JS Dialog namespace: synchronous alert / confirm / prompt / actionSheet wrappers around the host's modal UI.",
+          "zh": "Python 索引脚本可用的 Dialog API,与 JS 端语义一致:同步阻塞封装宿主 UI,提供 alert / confirm / prompt / actionSheet。"
+        },
+        "keywords": [
+          "Python",
+          "scripting",
+          "Dialog.alert",
+          "Dialog.confirm",
+          "Dialog.prompt",
+          "Dialog.actionSheet"
+        ],
+        "readme": "views/dialog/python_api/"
+      },
+      {
+        "title": {
           "en": "Modal presentaions",
           "zh": "模态展示"
         },
@@ -2606,6 +3369,54 @@
             },
             "example": "views/charts/multiple_charts/index",
             "readme": "views/charts/multiple_charts/"
+          },
+          {
+            "title": {
+              "en": "Axis Customization",
+              "zh": "坐标轴自定义"
+            },
+            "subtitle": {
+              "en": "Use chartXAxis / chartYAxis with AxisMarksConfig to customize grid lines, ticks, value labels, and stride.",
+              "zh": "通过 chartXAxis / chartYAxis 配合 AxisMarksConfig 自定义网格线、刻度、标签格式与步长。"
+            },
+            "example": "views/charts/axis_customization/index",
+            "readme": "views/charts/axis_customization/"
+          },
+          {
+            "title": {
+              "en": "Chart Overlay & Range Selection",
+              "zh": "图表浮层与区间选择"
+            },
+            "subtitle": {
+              "en": "Use ChartOverlay + ChartProxy for custom tooltips and hit-test, and the from/to form of chartXSelection / chartYSelection for drag-select ranges.",
+              "zh": "使用 ChartOverlay + ChartProxy 自定义 tooltip 与 hit-test；通过 chartXSelection / chartYSelection 的 from/to 形式做拖选区间。"
+            },
+            "example": "views/charts/chart_overlay/index",
+            "readme": "views/charts/chart_overlay/"
+          },
+          {
+            "title": {
+              "en": "Chart Scroll Target Behavior",
+              "zh": "图表滚动停留对齐"
+            },
+            "subtitle": {
+              "en": "Snap chart scroll deceleration to data boundaries with chartScrollTargetBehavior. Choose unit step for numeric axes, matching DateComponents for date axes.",
+              "zh": "通过 chartScrollTargetBehavior 让图表滚动停留时按数据边界对齐：数值轴用 unit 步进，日期轴用 matching DateComponents。"
+            },
+            "example": "views/charts/chart_scroll_target_behavior/index",
+            "readme": "views/charts/chart_scroll_target_behavior/"
+          },
+          {
+            "title": {
+              "en": "LinePlot & AreaPlot (function curves)",
+              "zh": "LinePlot 与 AreaPlot（函数曲线）"
+            },
+            "subtitle": {
+              "en": "Plot smooth curves and areas from a JS function. Supports single-variable y=f(x), parametric (x,y)=f(t), and AreaPlot (yStart,yEnd)=f(x). Requires iOS 18+.",
+              "zh": "用一个 JS 函数直接画平滑曲线 / 面积。支持单变量 y=f(x)、参数化 (x,y)=f(t)、AreaPlot (yStart,yEnd)=f(x)。iOS 18+。"
+            },
+            "example": "views/charts/line_plot/index",
+            "readme": "views/charts/line_plot/"
           }
         ]
       },
@@ -3115,6 +3926,7 @@
           "symbolVariant",
           "symbolRenderingMode"
         ],
+        "example": "view_modifiers/symbol/index",
         "readme": "view_modifiers/symbol/"
       },
       {
@@ -3784,6 +4596,30 @@
   {
     "pro": true,
     "title": {
+      "en": "Rime",
+      "zh": "Rime 输入法"
+    },
+    "subtitle": {
+      "en": "A programmable Chinese input-method engine. Load schemas, feed key events, render candidates, and commit text from JavaScript.",
+      "zh": "可编程的中文输入法引擎。脚本可加载方案、喂入按键事件、自绘候选条并提交文本。"
+    },
+    "readme": "rime/"
+  },
+  {
+    "pro": true,
+    "title": {
+      "en": "TranslationUIProvider",
+      "zh": "TranslationUIProvider (翻译)"
+    },
+    "subtitle": {
+      "en": "This interface allows scripts to take control of the system translation panel’s UI and interaction flow.",
+      "zh": "用于接管系统翻译面板的界面展示与交互流程，让脚本自定义翻译 UI，并实现自己的默认翻译逻辑。"
+    },
+    "readme": "translation_ui_provider/"
+  },
+  {
+    "pro": true,
+    "title": {
       "en": "Assistant",
       "zh": "智能助手"
     },
@@ -3892,6 +4728,18 @@
       {
         "pro": true,
         "title": {
+          "zh": "可交互 UI 的 Assistant Tool",
+          "en": "Assistant Tool With Interactive UI"
+        },
+        "subtitle": {
+          "zh": "学习如何通过 registerUIView 实现可交互工具 UI，并返回结构化输出。",
+          "en": "Learn how to build interactive Assistant Tools using registerUIView and return structured output."
+        },
+        "readme": "assistant_tool/interactive_ui/"
+      },
+      {
+        "pro": true,
+        "title": {
           "zh": "ScriptEditorProvider 及编辑器相关类型详解",
           "en": "ScriptEditorProvider and Editor Types"
         },
@@ -3953,6 +4801,24 @@
           "Script.onResume()"
         ],
         "readme": "script/minimize_and_resume/"
+      },
+      {
+        "title": {
+          "en": "Script (Python)",
+          "zh": "Script（Python）"
+        },
+        "subtitle": {
+          "en": "Python-side Script API for index scripts: Script.name / queryParameters / metadata / documentsDirectory, plus Script.run and Script.exit for cross-script calls and result delivery.",
+          "zh": "Python 索引脚本可用的 Script API: Script.name / queryParameters / metadata / documentsDirectory,以及用于跨脚本调用和返回结果的 Script.run 与 Script.exit。"
+        },
+        "keywords": [
+          "Python",
+          "scripting",
+          "Script.run",
+          "Script.exit",
+          "Script.queryParameters"
+        ],
+        "readme": "script/python_api/"
       }
     ]
   },
@@ -4117,6 +4983,23 @@
           "本地存储"
         ],
         "readme": "storage/"
+      },
+      {
+        "title": {
+          "en": "Storage (Python)",
+          "zh": "Storage（Python）"
+        },
+        "subtitle": {
+          "en": "Python-side Storage API mirroring the JS Storage namespace: per-script and shared key-value persistence.",
+          "zh": "Python 索引脚本可用的 Storage API,与 JS 端语义一致:按脚本隔离的键值持久化,可选 shared 跨脚本共享。"
+        },
+        "keywords": [
+          "Python",
+          "scripting",
+          "Storage.set",
+          "Storage.get"
+        ],
+        "readme": "storage/python_api/"
       },
       {
         "title": {
@@ -4431,7 +5314,7 @@
               "en": "This section describes the transaction model, transaction types.",
               "zh": "介绍了 SQLite 的事务模型以及事务类型。"
             },
-            "readme": "sqlite/Transaction/"
+            "readme": "sqlite/transaction/"
           },
           {
             "pro": true,
@@ -4460,6 +5343,18 @@
         ]
       },
       {
+        "pro": true,
+        "title": {
+          "en": "WebScraper",
+          "zh": "网页爬虫（WebScraper）"
+        },
+        "subtitle": {
+          "en": "Extract data from web pages.",
+          "zh": "从网页中提取数据。"
+        },
+        "readme": "web_scraper/"
+      },
+      {
         "title": {
           "en": "OAuth2",
           "zh": "OAuth2"
@@ -4469,6 +5364,29 @@
           "zh": "该接口提供了一种简单的方法来使用 OAuth2 协议进行用户身份验证和资源访问授权。"
         },
         "readme": "oauth2/"
+      },
+      {
+        "title": {
+          "en": "JWT",
+          "zh": "JWT（JSON Web Token）"
+        },
+        "subtitle": {
+          "en": "Synchronous APIs for signing, verifying, and decoding JSON Web Tokens.",
+          "zh": "用于签发、验证和解码 JSON Web Token 的同步接口。"
+        },
+        "readme": "jwt/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "HeadphoneMotionManager",
+          "zh": "耳机运动数据"
+        },
+        "subtitle": {
+          "en": "Stream motion data from spatial-audio headphones such as AirPods Pro/Max/3.",
+          "zh": "读取 AirPods Pro/Max/3 等支持空间音频的耳机的运动数据。"
+        },
+        "readme": "headphone_motion_manager/"
       },
       {
         "title": {
@@ -4552,6 +5470,28 @@
           "scenePhase"
         ],
         "readme": "app_events/"
+      },
+      {
+        "title": {
+          "en": "Shell",
+          "zh": "Shell"
+        },
+        "subtitle": {
+          "en": "Run shell commands from JS / TS via the embedded ios_system runtime.",
+          "zh": "通过内嵌 ios_system 运行时在 JS / TS 中执行 shell 命令。"
+        },
+        "readme": "shell/"
+      },
+      {
+        "title": {
+          "en": "Python",
+          "zh": "Python"
+        },
+        "subtitle": {
+          "en": "Run Python code snippets from JS / TS via the embedded Python interpreter.",
+          "zh": "通过内嵌 Python 解释器在 JS / TS 中运行 Python 代码片段。"
+        },
+        "readme": "python/"
       }
     ]
   },
@@ -4818,7 +5758,8 @@
           "获取当前位置",
           "逆地理编码"
         ],
-        "readme": "location/"
+        "readme": "location/",
+        "example": "location/index"
       },
       {
         "title": {
@@ -4841,7 +5782,8 @@
           "en": "Parse the QR code image file, or open the scan code page to scan.",
           "zh": "解析二维码图像文件，或打开扫码页面进行扫描。"
         },
-        "example": "qrcode/index"
+        "example": "qrcode/index",
+        "readme": "qrcode/"
       },
       {
         "title": {
@@ -4958,6 +5900,133 @@
         ]
       },
       {
+        "pro": true,
+        "title": {
+          "en": "AVCaptureSession & Camera Control",
+          "zh": "AVCaptureSession 与 Camera Control"
+        },
+        "subtitle": {
+          "en": "Full AVCaptureSession bridge: assemble your own capture pipeline (device + input + photo / movie / metadata outputs), drive iPhone 16 hardware Camera Control with custom sliders & pickers, and render previews with <CaptureVideoPreviewView/>.",
+          "zh": "完整暴露 AVCaptureSession：自己组装相机流水线（设备 + 输入 + 拍照/录像/metadata 输出），驱动 iPhone 16 硬件 Camera Control 的自定义滑块/选择器，并通过 <CaptureVideoPreviewView/> 渲染实时预览。"
+        },
+        "keywords": [
+          "AVCaptureSession",
+          "AVCaptureDevice",
+          "AVCaptureDeviceInput",
+          "AVCapturePhotoOutput",
+          "AVCaptureMovieFileOutput",
+          "AVCaptureMetadataOutput",
+          "AVCaptureControl",
+          "AVCaptureSlider",
+          "AVCaptureIndexPicker",
+          "AVCaptureSystemZoomSlider",
+          "AVCaptureEventInteraction",
+          "CaptureVideoPreviewView",
+          "QR",
+          "barcode",
+          "Camera Control"
+        ],
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "Quick Start",
+              "zh": "快速开始"
+            },
+            "subtitle": {
+              "en": "Build a session, scan QR codes, capture photos, render the preview, and tear it down. Self-contained demo.",
+              "zh": "搭建 session、扫 QR、拍照、渲染预览、清理释放,完整 demo。"
+            },
+            "readme": "av_capture_session/quick_start/",
+            "example": "av_capture_session/quick_start/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Camera Control (iOS 18+)",
+              "zh": "Camera Control(iOS 18+)"
+            },
+            "subtitle": {
+              "en": "AVCaptureSlider, AVCaptureIndexPicker, system zoom / exposure sliders, and AVCaptureEventInteraction for the iPhone 16 hardware button.",
+              "zh": "AVCaptureSlider、AVCaptureIndexPicker、系统缩放/曝光滑块,以及让 iPhone 16 硬件按键拍照的 AVCaptureEventInteraction。"
+            },
+            "readme": "av_capture_session/controls/"
+          },
+          {
+            "title": {
+              "en": "Tap-to-focus, interruptions, stabilization",
+              "zh": "点击对焦 / 中断事件 / 视频稳定化"
+            },
+            "subtitle": {
+              "en": "Three small but common controls: focus / exposure point of interest, session interruption notifications, and movie stabilization mode.",
+              "zh": "三个常用控制点:焦点曝光点击对焦、会话中断通知、录像视频稳定化模式。"
+            },
+            "readme": "av_capture_session/session_control/",
+            "example": "av_capture_session/session_control/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Responsive capture",
+              "zh": "响应式拍照"
+            },
+            "subtitle": {
+              "en": "Zero Shutter Lag, Responsive Capture, Fast Prioritization, and Auto Deferred Photo Delivery — what each does and when (not) to enable it.",
+              "zh": "Zero Shutter Lag、Responsive Capture、Fast Prioritization、Auto Deferred Photo Delivery 四个开关讲清楚,以及什么时候不该开。"
+            },
+            "readme": "av_capture_session/responsive_capture/",
+            "example": "av_capture_session/responsive_capture/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Live Photo",
+              "zh": "Live Photo 实况照片"
+            },
+            "subtitle": {
+              "en": "Pass `livePhotoMovieFile` to capturePhoto and resolve with both the still image and the .mov companion clip.",
+              "zh": "在 capturePhoto 时传 livePhotoMovieFile,resolve 同时拿到静态图和 .mov 短片。"
+            },
+            "readme": "av_capture_session/live_photo/",
+            "example": "av_capture_session/live_photo/index"
+          },
+          {
+            "title": {
+              "en": "Device formats",
+              "zh": "设备 formats"
+            },
+            "subtitle": {
+              "en": "List and switch AVCaptureDeviceFormat (resolution, fps, HDR, multi-cam, spatial video, stabilization); pick a color space via setActiveColorSpace; lock frame-rate ceiling/floor via setActiveVideoMin/MaxFrameDuration.",
+              "zh": "列出并切换 AVCaptureDeviceFormat(分辨率、帧率、HDR、multi-cam、spatial video、稳定化);setActiveColorSpace 切色彩空间;setActiveVideoMin/MaxFrameDuration 锁帧率上下限。"
+            },
+            "readme": "av_capture_session/formats/",
+            "example": "av_capture_session/formats/index"
+          },
+          {
+            "title": {
+              "en": "CaptureVideoPreviewView",
+              "zh": "CaptureVideoPreviewView 预览"
+            },
+            "subtitle": {
+              "en": "Render the live preview of any AVCaptureSession in a SwiftUI view with rotation coordination.",
+              "zh": "用 SwiftUI 视图渲染任意 AVCaptureSession 的实时预览,支持旋转协调。"
+            },
+            "readme": "av_capture_session/preview_view/"
+          },
+          {
+            "title": {
+              "en": "VideoRecorder vs AVCaptureSession",
+              "zh": "VideoRecorder vs AVCaptureSession"
+            },
+            "subtitle": {
+              "en": "When to reach for the high-level VideoRecorder vs the low-level AVCaptureSession pipeline.",
+              "zh": "高层封装的 VideoRecorder 与底层的 AVCaptureSession 流水线,各自适合什么场景。"
+            },
+            "readme": "av_capture_session/vs_video_recorder/"
+          }
+        ]
+      },
+      {
         "title": {
           "en": "AudioRecorder",
           "zh": "录音"
@@ -4978,6 +6047,44 @@
           "zh": "AVMetadataItem 是一个类，表示音频或视频资源中的元数据项。"
         },
         "readme": "av_metadata_item/"
+      },
+      {
+        "title": {
+          "en": "AVAsset",
+          "zh": "AVAsset"
+        },
+        "subtitle": {
+          "en": "A heavyweight handle to a media asset (audio / video) for loading metadata, tracks, and extracting still images without spinning up an AVPlayer.",
+          "zh": "音视频资源的重量级句柄，用于在不启动 AVPlayer 的前提下加载元数据、轨道并提取静帧。"
+        },
+        "keywords": [
+          "AVAsset",
+          "AVAssetTrack"
+        ],
+        "readme": "av_asset/"
+      },
+      {
+        "title": {
+          "en": "AVAsset Reader / Writer / Export",
+          "zh": "AVAsset 读取 / 写入 / 导出"
+        },
+        "subtitle": {
+          "en": "Low-level companions to AVAsset: AVAssetExportSession (preset-based transcode), AVAssetReader + Video/AudioOutput (pull decoded frames as UIImage / interleaved Float32 PCM), and AVAssetWriter + AVAssetWriterInput (push frames / samples into mp4 / m4a).",
+          "zh": "AVAsset 的低层伴随 API：AVAssetExportSession（按 preset 转码）、AVAssetReader + Video/AudioOutput（拉取已解码帧为 UIImage / 交错 Float32 PCM）、AVAssetWriter + AVAssetWriterInput（向 mp4 / m4a 推帧 / 采样）。"
+        },
+        "pro": true,
+        "keywords": [
+          "AVAssetExportSession",
+          "AVAssetReader",
+          "AVAssetReaderVideoOutput",
+          "AVAssetReaderAudioOutput",
+          "AVAssetWriter",
+          "AVAssetWriterInput",
+          "transcode",
+          "PCM",
+          "Float32Array"
+        ],
+        "readme": "av_asset_reader_writer/"
       },
       {
         "title": {
@@ -5041,6 +6148,35 @@
           "zh": "该接口允许与 Now Playing Center 交互，管理 Now Playing Info，并响应远程控制事件。"
         },
         "readme": "media_player/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "MediaLibrary",
+          "zh": "媒体库（MediaLibrary）"
+        },
+        "subtitle": {
+          "en": "Read local media library metadata, including songs, albums, artists, playlists, and artwork.",
+          "zh": "读取本地媒体库元数据，包括歌曲、专辑、艺术家、播放列表与封面图。"
+        },
+        "keywords": [
+          "MediaLibrary",
+          "MediaLibrary.getSongs",
+          "MediaLibrary.getArtwork"
+        ],
+        "readme": "media_library/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "SystemMusicPlayer",
+          "zh": "系统音乐播放器（SystemMusicPlayer）"
+        },
+        "subtitle": {
+          "en": "Control the system music player.",
+          "zh": "控制系统音乐播放器。"
+        },
+        "readme": "system_music_player/"
       },
       {
         "pro": true,
@@ -5608,6 +6744,115 @@
               "zh": "该接口允许你创建一个蓝牙外设，可以广播服务和特征，并接受来自中央设备的连接。"
             },
             "readme": "bluetooth/peripheral_manager/"
+          }
+        ]
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "HomeKit",
+          "zh": "HomeKit"
+        },
+        "subtitle": {
+          "en": "Read and control your homes, accessories, and scenes via HomeKit.",
+          "zh": "通过 HomeKit 读取并控制家、配件、场景，构建家居自动化脚本。"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "HMHomeManager",
+              "zh": "HomeKit 家居管理器"
+            },
+            "subtitle": {
+              "en": "Top-level entry: authorization, list of homes, primary home, and home/auth events.",
+              "zh": "HomeKit 顶层入口：授权、家列表、主家、变更事件。"
+            },
+            "readme": "homekit/home_manager/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMHome",
+              "zh": "HomeKit 家"
+            },
+            "subtitle": {
+              "en": "A HomeKit home — container for rooms, accessories, scenes, and zones.",
+              "zh": "一个 HomeKit 家，承载房间、配件、场景与区域。"
+            },
+            "readme": "homekit/home/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMRoom",
+              "zh": "HomeKit 房间"
+            },
+            "subtitle": {
+              "en": "A named grouping of accessories within a home.",
+              "zh": "家中带名字的一组配件。"
+            },
+            "readme": "homekit/room/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMAccessory",
+              "zh": "HomeKit 配件"
+            },
+            "subtitle": {
+              "en": "A HomeKit accessory (light, sensor, lock, etc.) and its services.",
+              "zh": "一个 HomeKit 配件（灯泡 / 传感器 / 锁等）以及它包含的服务。"
+            },
+            "readme": "homekit/accessory/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMService",
+              "zh": "HomeKit 服务"
+            },
+            "subtitle": {
+              "en": "A HomeKit service — a typed cluster of characteristics on an accessory.",
+              "zh": "HomeKit 服务，一组分类特征值的集合。"
+            },
+            "readme": "homekit/service/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMCharacteristic",
+              "zh": "HomeKit 特征值"
+            },
+            "subtitle": {
+              "en": "A readable / writable / observable value on a HomeKit service.",
+              "zh": "HomeKit 服务上的可读 / 可写 / 可订阅的值。"
+            },
+            "readme": "homekit/characteristic/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMActionSet",
+              "zh": "HomeKit 场景"
+            },
+            "subtitle": {
+              "en": "A HomeKit scene — a named bundle of characteristic write actions.",
+              "zh": "HomeKit 场景，多个特征值写入动作的命名集合。"
+            },
+            "readme": "homekit/action_set/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "HMZone",
+              "zh": "HomeKit 区域"
+            },
+            "subtitle": {
+              "en": "A HomeKit zone — an arbitrary grouping of rooms (e.g. \"Upstairs\").",
+              "zh": "HomeKit 区域，任意房间的命名分组（例如 \"楼上\"）。"
+            },
+            "readme": "homekit/zone/"
           }
         ]
       },

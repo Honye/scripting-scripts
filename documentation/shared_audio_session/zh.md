@@ -191,7 +191,94 @@ await SharedAudioSession.setPrefersNoInterruptionsFromSystemAlerts(true)
 
 ---
 
-### 9. **系统输出音量**
+### 9. **音频路由（Audio Routing）**
+
+iOS 把音频输入和输出当作两条独立的路径管理。以下 API 让你列出当前可选的输入端口、强制把
+录音输入切到指定端口（通常是 `builtInMic`），或者把输出强制到设备扬声器。这在你希望「设备
+内置麦克风录音 + 无线耳机播放」时尤其有用——可以避开蓝牙 HFP 双向链路带来的麦克风音质降级。
+
+> `setPreferredInput` 与 `overrideOutputAudioPort` 必须在会话激活后才能生效，请先调用
+> `setActive(true)`。
+
+#### `availableInputs`
+
+返回当前会话允许的输入端口列表。蓝牙、USB、有线耳机麦克风需要在 category options 中允许
+对应的传输（例如 `allowBluetoothHFP`）才会出现。
+
+```typescript
+const inputs = await SharedAudioSession.availableInputs
+for (const port of inputs) {
+  console.log(port.portType, port.portName, port.uid)
+}
+```
+
+#### `currentRoute`
+
+返回当前选中的输入和输出端口。
+
+```typescript
+const route = await SharedAudioSession.currentRoute
+console.log('input:', route.inputs[0]?.portType)
+console.log('output:', route.outputs[0]?.portType)
+```
+
+#### `setPreferredInput(input: AudioSessionPort | null)`
+
+指定首选输入端口；传 `null` 清除偏好。参数会先按 `uid` 与 `availableInputs` 精确匹配，再退化
+到 `portType` 匹配。会话未激活时会以 `Cannot setPreferredInput before setActive(true).` 报错。
+
+```typescript
+await SharedAudioSession.setActive(true)
+const inputs = await SharedAudioSession.availableInputs
+const builtIn = inputs.find(p => p.portType === 'builtInMic')
+if (builtIn) {
+  await SharedAudioSession.setPreferredInput(builtIn)
+}
+```
+
+#### `overrideOutputAudioPort(port: 'speaker' | 'none')`
+
+把输出强制到设备扬声器，或者取消强制。与输入选择互不干扰。
+
+```typescript
+await SharedAudioSession.overrideOutputAudioPort('speaker')
+// 之后
+await SharedAudioSession.overrideOutputAudioPort('none')
+```
+
+#### `setPrefersBuiltInMicWhenAvailable(enabled: boolean)`
+
+打开一个进程内开关：开启后，SDK 会监听音频路由变化，每当 `builtInMic` 可用时自动把输入切回
+内置麦克风——即使期间插入了蓝牙耳机、USB 麦克风或有线耳机麦克风。输出路由不被改动，因此
+你可以保持「内置麦录入、无线耳机（A2DP）播放」的分离 I/O。
+
+开关**不会持久化**到下次启动，但在宿主进程存活期间会影响所有运行中的脚本。如果某个脚本
+之后又主动调用 `setPreferredInput`（reason 为 `override`），开关不会再把它改回 `builtInMic`。
+
+启用开关时会**立即尝试应用一次**，不需要等待下一次路由变化。
+
+```typescript
+await SharedAudioSession.setActive(true)
+await SharedAudioSession.setPrefersBuiltInMicWhenAvailable(true)
+
+// 查询当前状态
+const enabled = await SharedAudioSession.prefersBuiltInMicWhenAvailable
+```
+
+#### 路由变化事件
+
+```typescript
+SharedAudioSession.addRouteChangeListener((reason, current) => {
+  console.log('route changed:', reason)
+  console.log('inputs now:', current.inputs.map(p => p.portType))
+})
+```
+
+`reason` 取值之一：`'newDeviceAvailable' | 'oldDeviceUnavailable' | 'categoryChange' | 'override' | 'wakeFromSleep' | 'noSuitableRouteForCategory' | 'routeConfigurationChange' | 'unknown'`。
+
+---
+
+### 10. **系统输出音量**
 
 #### `outputVolume: number`
 

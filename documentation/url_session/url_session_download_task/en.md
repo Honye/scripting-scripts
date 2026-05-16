@@ -37,7 +37,7 @@ Possible values:
 
 ```ts
 if (task.state === "running") {
-  console.log("Download in progress…")
+  console.log("Download in progress...")
 }
 ```
 

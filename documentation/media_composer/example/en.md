@@ -263,7 +263,7 @@ exportOptions: {
   Enables or disables ducking (default: `true`)
 
 * **duckedVolume**
-  Target volume for external audio during ducking (0…1)
+  Target volume for external audio during ducking (0...1)
 
 * **attackSeconds**
   Ramp-down duration before original audio starts

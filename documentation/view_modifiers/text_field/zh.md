@@ -132,6 +132,72 @@ textInputAutocapitalization?: TextInputAutocapitalization
 
 ---
 
+## `textContentType`
+
+设置输入内容的语义类型，系统可据此提供自动填充与键盘建议。
+
+### 类型
+
+```ts
+textContentType?: TextContentType
+```
+
+### 可选值
+
+* `"cellularEID"`
+* `"cellularIMEI"`
+* `"URL"`
+* `"namePrefix"`
+* `"name"`
+* `"nameSuffix"`
+* `"givenName"`
+* `"middleName"`
+* `"familyName"`
+* `"nickname"`
+* `"organizationName"`
+* `"jobTitle"`
+* `"location"`
+* `"fullStreetAddress"`
+* `"streetAddressLine1"`
+* `"streetAddressLine2"`
+* `"addressCity"`
+* `"addressCityAndState"`
+* `"addressState"`
+* `"postalCode"`
+* `"sublocality"`
+* `"countryName"`
+* `"username"`
+* `"password"`
+* `"newPassword"`
+* `"oneTimeCode"`
+* `"emailAddress"`
+* `"telephoneNumber"`
+* `"creditCardNumber"`
+* `"creditCardExpiration"`
+* `"creditCardExpirationMonth"`
+* `"creditCardExpirationYear"`
+* `"creditCardSecurityCode"`
+* `"creditCardType"`
+* `"creditCardName"`
+* `"creditCardGivenName"`
+* `"creditCardMiddleName"`
+* `"creditCardFamilyName"`
+* `"birthdate"`
+* `"birthdateDay"`
+* `"birthdateMonth"`
+* `"birthdateYear"`
+* `"dateTime"`
+* `"flightNumber"`
+* `"shipmentTrackingNumber"`
+
+### 示例
+
+```tsx
+<TextField textContentType="oneTimeCode" />
+```
+
+---
+
 ## `submitScope`
 
 阻止当前视图触发的提交操作向上传递到父级视图的 `onSubmit` 处理器。

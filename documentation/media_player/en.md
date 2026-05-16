@@ -52,6 +52,8 @@ The `nowPlayingInfo` object displays metadata about the currently playing media.
     - Defaults to `0`. The current playback time.
 - **`playbackDuration`**: `DurationInSeconds` (Optional)
     - Defaults to `0`. The total duration of the media.
+- **`isLiveStream`**: `boolean` (Optional)
+    - Defaults to `false`. Set to `true` for live streams (e.g., radio broadcasts) so the system hides the progress bar in the Lock Screen and Control Center Now Playing UI.
 
 ### Playback State
 

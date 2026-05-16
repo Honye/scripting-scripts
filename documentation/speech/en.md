@@ -7,6 +7,7 @@ The `Speech` interface provides a high-level API for text-to-speech (TTS) functi
 - **Text-to-Speech:** Convert text into speech with customizable options like pitch, rate, and volume.
 - **Voice Management:** Choose from available system voices by language or identifier.
 - **Markdown Support:** Render text with basic formatting using Markdown.
+- **SSML Support:** Drive fine-grained pronunciation, pauses, and prosody with SSML (iOS 16+).
 - **Audio Session Management:** Control audio sessions for seamless speech integration with other audio sources.
 - **Event Listeners:** Respond to speech synthesis lifecycle events.
 
@@ -42,7 +43,8 @@ Details about progress during speech synthesis:
 
 ### `SpeechSynthesisOptions`
 Options for customizing speech synthesis:
-- `isMarkdown` (optional): Interpret text as Markdown.
+- `isMarkdown` (optional): Interpret text as Markdown. Mutually exclusive with `isSSML`.
+- `isSSML` (optional): Interpret text as an SSML (Speech Synthesis Markup Language) document. The text must be wrapped in a `<speak>...</speak>` root element. Available on iOS 16+. Mutually exclusive with `isMarkdown`.
 - `pitch`, `rate`, `volume`: Override global `Speech` values for pitch, rate, and volume.
 - `preUtteranceDelay`, `postUtteranceDelay`: Control pauses before and after utterances.
 - `voiceIdentifier`, `voiceLanguage`: Override global voice settings.
@@ -168,3 +170,24 @@ Speech.addListener("progress", (details) => {
 await Speech.speak("Event listening example.")
 Speech.removeListener("progress", listener)
 ```
+
+### Speak SSML (iOS 16+)
+SSML lets you control pauses, prosody, pronunciation, and substitutions inline. Wrap the markup in a single `<speak>` root and pass `isSSML: true`.
+
+Inline SSML tags (e.g. `<prosody>`, `<voice>`, `<break>`) take precedence; the utterance-level `voice` / `rate` / `pitch` / `volume` options still apply as fallbacks for any text that is not overridden by inline tags.
+
+If the SSML cannot be parsed, the promise rejects with `"Failed to parse SSML representation."`. Passing both `isMarkdown: true` and `isSSML: true` rejects the promise with a usage error.
+
+```ts
+await Speech.speak(
+  `<speak>
+     Hello
+     <break time="500ms" />
+     <prosody rate="150%">nice to meet you!</prosody>
+     <sub alias="World Wide Web Consortium">W3C</sub>
+   </speak>`,
+  { isSSML: true }
+)
+```
+
+Supported SSML tags include `<speak>`, `<break>`, `<prosody>`, `<sub>`, `<phoneme>`, and others documented by Apple. See [`AVSpeechUtterance.init(ssmlRepresentation:)`](https://developer.apple.com/documentation/avfaudio/avspeechutterance/init(ssmlrepresentation:)) for details.

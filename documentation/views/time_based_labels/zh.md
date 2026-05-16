@@ -11,12 +11,19 @@ Scripting 提供了一组便捷的时间标签组件，封装了 SwiftUI 中 `Te
 
 ```ts
 type DateLabelProps = {
+  date: Date
+  style: 'date' | 'time' | 'timer' | 'relative' | 'offset'
+} | {
+  /**
+   * @deprecated Use `date` instead
+   */
   timestamp: number
   style: 'date' | 'time' | 'timer' | 'relative' | 'offset'
 }
 ```
 
-- `timestamp`: 要显示的时间点，单位为毫秒（UNIX 时间戳）。                                            
+- `date`: 要显示的时间点。
+- `timestamp`: 要显示的时间点，单位为毫秒（UNIX 时间戳），已废弃，可以使用 `date` 代替。                                            
 
 - `style`: 显示样式，可选值包括: 
   - `"date"`: 以日期形式显示，例如 `"June 3, 2019"`
@@ -29,12 +36,12 @@ type DateLabelProps = {
 
 ```tsx
 <DateLabel
-  timestamp={Date.now()}
+  date={new Date}
   style="date"
 />
 
 <DateLabel
-  timestamp={Date.now()}
+  date={new Date}
   style="relative"
 />
 ```
