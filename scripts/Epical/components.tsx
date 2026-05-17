@@ -1,0 +1,368 @@
+import {
+  Button,
+  HStack,
+  Image,
+  ProgressView,
+  RoundedRectangle,
+  Spacer,
+  Text,
+  VStack,
+  ZStack
+} from 'scripting'
+import type { Color } from 'scripting'
+import type { Schedule, Show } from './types'
+import { theme, tintedBg } from './theme'
+import { i18n } from './i18n'
+
+/** Compact poster: a remote cover image when available, otherwise a tall rounded rect with diagonal gradient and the title's first 2 chars. */
+export function Poster({
+  show,
+  size = 50
+}: {
+  show: Show | { title: string; color: string; coverUrl?: string; playUrl?: string }
+  size?: number
+}) {
+  const initials = show.title.slice(0, 2)
+  const w = size
+  const h = Math.round(size * 1.4)
+  const fontSize = Math.round(size * 0.28)
+  const playIconSize = Math.round(size * 0.5)
+
+  const fallback = (
+    <ZStack
+      frame={{ width: w, height: h }}
+      background={
+        <RoundedRectangle
+          cornerRadius={8}
+          fill={{
+            colors: [`${show.color}cc` as Color, `${show.color}55` as Color],
+            startPoint: 'topLeading',
+            endPoint: 'bottomTrailing'
+          }}
+        />
+      }
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+    >
+      <Text
+        font={fontSize}
+        fontWeight="bold"
+        foregroundStyle="rgba(255,255,255,0.9)"
+        kerning={0.3}
+      >
+        {initials}
+      </Text>
+    </ZStack>
+  )
+
+  const base = show.coverUrl ? (
+    <Image
+      imageUrl={show.coverUrl}
+      placeholder={fallback}
+      resizable
+      scaleToFill
+      frame={{ width: w, height: h }}
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+      overlay={
+        <RoundedRectangle
+          cornerRadius={8}
+          stroke={{
+            shapeStyle: theme.divider,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+    />
+  ) : (
+    <ZStack
+      frame={{ width: w, height: h }}
+      background={
+        <RoundedRectangle
+          cornerRadius={8}
+          fill={{
+            colors: [`${show.color}cc` as Color, `${show.color}55` as Color],
+            startPoint: 'topLeading',
+            endPoint: 'bottomTrailing'
+          }}
+        />
+      }
+      overlay={
+        <RoundedRectangle
+          cornerRadius={8}
+          stroke={{
+            shapeStyle: theme.divider,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+    >
+      <Text
+        font={fontSize}
+        fontWeight="bold"
+        foregroundStyle="rgba(255,255,255,0.9)"
+        kerning={0.3}
+      >
+        {initials}
+      </Text>
+    </ZStack>
+  )
+
+  if (!show.playUrl) {
+    return base
+  }
+
+  const playUrl = show.playUrl
+  return (
+    <ZStack
+      frame={{ width: w, height: h }}
+      clipShape={{ type: 'rect', cornerRadius: 8 }}
+      onTapGesture={() => {
+        Safari.openURL(playUrl)
+      }}
+    >
+      {base}
+      <RoundedRectangle
+        cornerRadius={8}
+        fill={'rgba(0,0,0,0.18)' as Color}
+        frame={{ width: w, height: h }}
+      />
+      <Image
+        systemName="play.circle.fill"
+        font={playIconSize}
+        foregroundStyle="white"
+        shadow={{ color: 'rgba(0,0,0,0.35)' as Color, radius: 4 }}
+      />
+    </ZStack>
+  )
+}
+
+/** Small pill showing the genre, tinted with the show's accent color. */
+export function GenrePill({
+  genre,
+  color
+}: {
+  genre: string
+  color: string
+}) {
+  return (
+    <Text
+      font={11}
+      fontWeight="medium"
+      foregroundStyle={color as Color}
+      padding={{ horizontal: 6, vertical: 2 }}
+      background={{
+        style: tintedBg(color),
+        shape: { type: 'rect', cornerRadius: 4 }
+      }}
+    >
+      {genre}
+    </Text>
+  )
+}
+
+/** A row in the calendar showing one scheduled airing for one show today. */
+export function EpisodeCard({
+  show,
+  schedule,
+  onTap
+}: {
+  show: Show
+  schedule: Schedule
+  onTap: () => void
+}) {
+  const nextEp = show.watchedEps + 1
+  const lastEp = nextEp + schedule.episodes - 1
+  const ratio = show.totalEps > 0 ? show.watchedEps / show.totalEps : 0
+  return (
+    <HStack
+      alignment="center"
+      spacing={14}
+      padding={{ horizontal: 16, vertical: 14 }}
+      background={{
+        style: theme.card,
+        shape: { type: 'rect', cornerRadius: 16 }
+      }}
+      overlay={
+        <RoundedRectangle
+          cornerRadius={16}
+          stroke={{
+            shapeStyle: theme.cardBorder,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+      contentShape={{ type: 'rect' }}
+      onTapGesture={onTap}
+    >
+      <Poster show={show} size={50} />
+      <VStack
+        alignment="leading"
+        spacing={3}
+        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+      >
+        <Text
+          font={15}
+          fontWeight="semibold"
+          foregroundStyle={theme.text}
+          lineLimit={1}
+          truncationMode="tail"
+        >
+          {show.title}
+        </Text>
+        <HStack spacing={6}>
+          <GenrePill genre={show.genre} color={show.color} />
+          <Text
+            font={12}
+            foregroundStyle={theme.textTertiary}
+            lineLimit={1}
+          >
+            {i18n.episodeRange(nextEp, lastEp)}
+          </Text>
+        </HStack>
+        <HStack spacing={8} padding={{ top: 5 }}>
+          <ProgressView
+            value={ratio}
+            total={1}
+            tint={show.color as Color}
+          />
+          <Text
+            font={11}
+            foregroundStyle={theme.textQuaternary}
+          >
+            {i18n.episodesCountTight(show.watchedEps, show.totalEps)}
+          </Text>
+        </HStack>
+      </VStack>
+      <VStack alignment="trailing" spacing={4}>
+        <Text
+          font={15}
+          fontWeight="semibold"
+          foregroundStyle={theme.text80}
+        >
+          {schedule.time}
+        </Text>
+        <Text
+          font={11}
+          foregroundStyle={theme.textQuaternary}
+        >
+          {i18n.componentEpsUpdate(schedule.episodes)}
+        </Text>
+      </VStack>
+    </HStack>
+  )
+}
+
+/** A small chip showing which weekday a show airs on. */
+export function DayChip({ day }: { day: number }) {
+  return (
+    <Text
+      font={10}
+      fontWeight="semibold"
+      foregroundStyle={theme.brandEnd}
+      padding={{ horizontal: 5, vertical: 2 }}
+      background={{
+        style: theme.brandSoftBg,
+        shape: { type: 'rect', cornerRadius: 4 }
+      }}
+    >
+      {i18n.dayChip[day]}
+    </Text>
+  )
+}
+
+/** Filled purple pill button — main call-to-action. */
+export function PrimaryButton({
+  title,
+  action,
+  height = 50
+}: {
+  title: string
+  action: () => void
+  height?: number
+}) {
+  return (
+    <Button action={action} buttonStyle="plain">
+      <HStack
+        alignment="center"
+        padding={{ horizontal: 24 }}
+        frame={{ maxWidth: 'infinity', height }}
+        background={{
+          style: {
+            colors: [theme.brandStart, theme.brandEnd],
+            startPoint: 'topLeading',
+            endPoint: 'bottomTrailing'
+          },
+          shape: { type: 'rect', cornerRadius: 14 }
+        }}
+        shadow={{
+          color: theme.brandShadow,
+          radius: 16,
+          y: 4
+        }}
+      >
+        <Spacer />
+        <Text
+          font={16}
+          fontWeight="semibold"
+          foregroundStyle="white"
+        >
+          {title}
+        </Text>
+        <Spacer />
+      </HStack>
+    </Button>
+  )
+}
+
+/** Layout helper: dimmed section header text. */
+export function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text
+      font={13}
+      fontWeight="medium"
+      foregroundStyle={theme.text50}
+    >
+      {children}
+    </Text>
+  )
+}
+
+/** Used in the 'Add' flow to render the selected-show preview card. */
+export function ShowPreviewCard({
+  show
+}: {
+  show: { title: string; genre: string; color: string }
+}) {
+  return (
+    <HStack
+      spacing={14}
+      padding={14}
+      background={{
+        style: theme.surfaceAlt,
+        shape: { type: 'rect', cornerRadius: 16 }
+      }}
+      overlay={
+        <RoundedRectangle
+          cornerRadius={16}
+          stroke={{
+            shapeStyle: theme.cardBorder,
+            strokeStyle: { lineWidth: 1 }
+          }}
+        />
+      }
+    >
+      <Poster show={show} size={44} />
+      <VStack alignment="leading" spacing={4}>
+        <Text
+          font={16}
+          fontWeight="bold"
+          foregroundStyle={theme.text}
+        >
+          {show.title}
+        </Text>
+        <GenrePill genre={show.genre} color={show.color} />
+      </VStack>
+      <Spacer />
+    </HStack>
+  )
+}
