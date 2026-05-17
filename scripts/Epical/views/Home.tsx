@@ -10,8 +10,9 @@ import {
 } from 'scripting'
 import type { Color, DynamicShapeStyle } from 'scripting'
 import type { Show } from '../types'
-import { DAYS_CN, DAYS_FULL, getTodayIndex } from '../data'
+import { getTodayIndex } from '../data'
 import { theme } from '../theme'
+import { i18n } from '../i18n'
 import { EpisodeCard } from '../components'
 
 const WEEK_DAYS = [0, 1, 2, 3, 4, 5, 6]
@@ -69,7 +70,7 @@ function DaySelector({
                 fontWeight={isSelected ? 'bold' : 'regular'}
                 foregroundStyle={labelColor}
               >
-                {DAYS_CN[d]}
+                {i18n.daysShort[d]}
               </Text>
               {cnt > 0 ? (
                 <Text
@@ -111,7 +112,7 @@ function EmptyState({ day }: { day: number }) {
         foregroundStyle={theme.textDisabled}
         multilineTextAlignment="center"
       >
-        {DAYS_FULL[day]}没有更新{'\n'}去添加你喜欢的剧吧
+        {i18n.homeNoUpdates(i18n.daysFull[day])}
       </Text>
     </VStack>
   )
@@ -137,7 +138,7 @@ export function HomeView({
     s.schedules.some((sc) => sc.day === selectedDay)
   )
 
-  const dateLabel = new Date().toLocaleDateString('zh-CN', {
+  const dateLabel = new Date().toLocaleDateString(i18n.dateLocale, {
     month: 'long',
     day: 'numeric'
   })
@@ -145,8 +146,8 @@ export function HomeView({
   return (
     <VStack
       background={theme.bg}
-      navigationTitle="追剧日历"
-      navigationSubtitle={`${dateLabel} · ${DAYS_FULL[today]}`}
+      navigationTitle={i18n.homeTitle}
+      navigationSubtitle={`${dateLabel} · ${i18n.daysFull[today]}`}
       toolbar={{
         topBarTrailing: (
           <Button action={onAddPress}>
@@ -188,7 +189,10 @@ export function HomeView({
                 foregroundStyle={theme.textQuaternary}
                 frame={{ maxWidth: 'infinity', alignment: 'leading' }}
               >
-                {DAYS_FULL[selectedDay]} · {todaysShows.length} 部更新
+                {i18n.homeDayUpdatesHeader(
+                  i18n.daysFull[selectedDay],
+                  todaysShows.length
+                )}
               </Text>
               {todaysShows.flatMap((show) =>
                 show.schedules

@@ -15,8 +15,8 @@ import {
 } from 'scripting'
 import type { Color } from 'scripting'
 import type { Show } from '../types'
-import { DAYS_FULL } from '../data'
 import { theme } from '../theme'
+import { i18n } from '../i18n'
 import { GenrePill, Poster, PrimaryButton, SectionLabel } from '../components'
 
 function RepeatButton({
@@ -101,10 +101,10 @@ export function DetailView({
 }) {
   const confirmDelete = async () => {
     const ok = await Dialog.confirm({
-      title: '删除追剧',
-      message: `确定要从追剧列表中删除《${show.title}》吗？此操作无法撤销。`,
-      cancelLabel: '取消',
-      confirmLabel: '删除'
+      title: i18n.detailDeleteTitle,
+      message: i18n.detailDeleteMessage(show.title),
+      cancelLabel: i18n.cancel,
+      confirmLabel: i18n.delete
     })
     if (ok) {
       onDelete(show.id)
@@ -158,7 +158,7 @@ export function DetailView({
               font={13}
               foregroundStyle={theme.textTertiary}
             >
-              共 {safeTotal} 集 · 已看 {watched} 集
+              {i18n.detailSummary(safeTotal, watched)}
             </Text>
           </VStack>
           <Spacer />
@@ -166,7 +166,7 @@ export function DetailView({
 
         <VStack spacing={12} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
           <HStack>
-            <SectionLabel>观看进度</SectionLabel>
+            <SectionLabel>{i18n.detailProgress}</SectionLabel>
             <Spacer />
             <Text
               font={13}
@@ -218,7 +218,7 @@ export function DetailView({
                 font={11}
                 foregroundStyle={theme.textQuaternary}
               >
-                已观看
+                {i18n.detailWatched}
               </Text>
             </VStack>
             <StepperButton
@@ -232,7 +232,7 @@ export function DetailView({
 
         <VStack spacing={10} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
           <HStack>
-            <SectionLabel>总集数</SectionLabel>
+            <SectionLabel>{i18n.detailTotalEps}</SectionLabel>
             <Spacer />
             {editingTotal ? (
               <HStack spacing={2}>
@@ -250,7 +250,7 @@ export function DetailView({
                   onBlur={commitTotal}
                   onSubmit={commitTotal}
                 />
-                <Text font={14} fontWeight="semibold" foregroundStyle={theme.text}>集</Text>
+                <Text font={14} fontWeight="semibold" foregroundStyle={theme.text}>{i18n.detailEpsUnit}</Text>
               </HStack>
             ) : (
               <Text
@@ -262,7 +262,7 @@ export function DetailView({
                   setEditingTotal(true)
                 }}
               >
-                {total} 集
+                {i18n.detailTotalValue(total)}
               </Text>
             )}
             <RepeatButton action={() => setTotal(Math.max(watched, total - 1))}>
@@ -302,21 +302,21 @@ export function DetailView({
                 fontWeight="medium"
                 foregroundStyle={theme.text70}
               >
-                每{DAYS_FULL[sc.day]} {sc.time}
+                {i18n.detailScheduleLine(i18n.daysFull[sc.day], sc.time)}
               </Text>
               <Spacer />
               <Text
                 font={13}
                 foregroundStyle={theme.textQuaternary}
               >
-                更新 {sc.episodes} 集
+                {i18n.detailScheduleEps(sc.episodes)}
               </Text>
             </HStack>
           ))}
         </VStack>
 
         <PrimaryButton
-          title="保存进度"
+          title={i18n.detailSave}
           action={() => {
             onSave(show.id, watched, safeTotal)
             onClose()
@@ -340,7 +340,7 @@ export function DetailView({
               fontWeight="semibold"
               foregroundStyle="systemRed"
             >
-              删除追剧
+              {i18n.detailDelete}
             </Text>
           </HStack>
         </Button>

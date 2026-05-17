@@ -17,12 +17,10 @@ import {
 } from 'scripting'
 import type { Color } from 'scripting'
 import type { Show } from '../types'
-import {
-  DAYS_CN,
-  nextColor
-} from '../data'
+import { nextColor } from '../data'
 import { searchShows, type SearchItem } from '../api'
 import { theme } from '../theme'
+import { i18n } from '../i18n'
 import { GenrePill, Poster, PrimaryButton, ShowPreviewCard } from '../components'
 
 type Candidate = {
@@ -185,11 +183,11 @@ function SearchStep({
             fontWeight="medium"
             foregroundStyle={theme.brandEnd}
           >
-            找不到？添加 “{trimmed}” 为新剧
+            {i18n.addShowCustomAdd(trimmed)}
           </Text>
           <TextField
             title=""
-            prompt="类型，例如：古装剧"
+            prompt={i18n.addShowGenrePrompt}
             value={customGenre}
             onChanged={setCustomGenre}
             textFieldStyle="roundedBorder"
@@ -200,7 +198,7 @@ function SearchStep({
             action={() =>
               onSelect({
                 title: trimmed,
-                genre: customGenre.trim() || '剧集',
+                genre: customGenre.trim() || i18n.addShowDefaultGenre,
                 color: nextColor(Date.now())
               })
             }
@@ -222,7 +220,7 @@ function SearchStep({
                 fontWeight="semibold"
                 foregroundStyle="white"
               >
-                继续设置更新时间
+                {i18n.addShowContinue}
               </Text>
               <Spacer />
               <Image
@@ -242,12 +240,12 @@ function SearchStep({
           foregroundStyle={theme.textQuaternary}
         >
           {trimmed.length === 0
-            ? '输入剧名开始搜索'
+            ? i18n.addShowSearchHint
             : loading
-              ? '搜索中…'
+              ? i18n.addShowSearching
               : error
-                ? '搜索失败'
-                : `搜索结果 · ${results.length}`}
+                ? i18n.addShowSearchFailed
+                : i18n.addShowResults(results.length)}
         </Text>
         <Spacer />
         {loading ? <ProgressView progressViewStyle="circular" /> : null}
@@ -296,14 +294,14 @@ function ModeToggle({
 }) {
   return (
     <Picker
-      title="更新方式"
+      title={i18n.addShowModeTitle}
       value={mode}
       onChanged={(v) => setMode(v as UpdateMode)}
       pickerStyle="segmented"
       tint={theme.brandEnd}
     >
-      <Text tag="weekly">每周更新</Text>
-      <Text tag="daily">每日更新</Text>
+      <Text tag="weekly">{i18n.addShowWeekly}</Text>
+      <Text tag="daily">{i18n.addShowDaily}</Text>
     </Picker>
   )
 }
@@ -317,7 +315,7 @@ function DayPicker({
 }) {
   return (
     <HStack spacing={0} frame={{ maxWidth: 'infinity' }}>
-      {DAYS_CN.flatMap((label, di) => {
+      {i18n.daysShort.flatMap((label, di) => {
         const sel = selected.includes(di)
         const btn = (
           <Button key={di} action={() => toggle(di)} buttonStyle="plain">
@@ -372,7 +370,7 @@ function TimePicker({
 }) {
   return (
     <DatePicker
-      title="更新时间"
+      title={i18n.addShowUpdateTimeTitle}
       value={value}
       onChanged={onChanged}
       displayedComponents={['hourAndMinute']}
@@ -474,8 +472,8 @@ function ScheduleStep({
     weeklyDays
       .slice()
       .sort((a, b) => a - b)
-      .map((d) => `周${DAYS_CN[d]}`)
-      .join('、') || '尚未选择'
+      .map((d) => i18n.daysFull[d])
+      .join(i18n.daysJoiner) || i18n.addShowNoDays
 
   return (
     <VStack
@@ -512,7 +510,7 @@ function ScheduleStep({
                   font={12}
                   foregroundStyle={theme.text35}
                 >
-                  更新日（可多选）
+                  {i18n.addShowUpdateDays}
                 </Text>
                 <DayPicker selected={weeklyDays} toggle={toggleWeekly} />
               </VStack>
@@ -522,7 +520,7 @@ function ScheduleStep({
                     font={12}
                     foregroundStyle={theme.text35}
                   >
-                    更新时间
+                    {i18n.addShowUpdateTime}
                   </Text>
                   <TimePicker value={weeklyTime} onChanged={setWeeklyTime} />
                 </VStack>
@@ -531,7 +529,7 @@ function ScheduleStep({
                     font={12}
                     foregroundStyle={theme.text35}
                   >
-                    更新集数
+                    {i18n.addShowUpdateEps}
                   </Text>
                   <EpisodeStepper value={weeklyEps} onChange={setWeeklyEps} />
                 </VStack>
@@ -540,7 +538,7 @@ function ScheduleStep({
                 font={12}
                 foregroundStyle={theme.textQuaternary}
               >
-                将在每{weeklyHint} {tsToHHMM(weeklyTime)} 更新 {weeklyEps} 集
+                {i18n.addShowWeeklyHint(weeklyHint, tsToHHMM(weeklyTime), weeklyEps)}
               </Text>
             </>
           ) : (
@@ -551,7 +549,7 @@ function ScheduleStep({
                     font={12}
                     foregroundStyle={theme.text35}
                   >
-                    每天更新时间
+                    {i18n.addShowDailyTime}
                   </Text>
                   <TimePicker value={dailyTime} onChanged={setDailyTime} />
                 </VStack>
@@ -560,7 +558,7 @@ function ScheduleStep({
                     font={12}
                     foregroundStyle={theme.text35}
                   >
-                    每天更新集数
+                    {i18n.addShowDailyEps}
                   </Text>
                   <EpisodeStepper value={dailyEps} onChange={setDailyEps} />
                 </VStack>
@@ -569,7 +567,7 @@ function ScheduleStep({
                 font={12}
                 foregroundStyle={theme.textQuaternary}
               >
-                将在每天 {tsToHHMM(dailyTime)} 更新 {dailyEps} 集
+                {i18n.addShowDailyHint(tsToHHMM(dailyTime), dailyEps)}
               </Text>
             </>
           )}
@@ -585,11 +583,11 @@ function ScheduleStep({
           font={12}
           foregroundStyle={theme.text35}
         >
-          播放地址（可选）
+          {i18n.addShowPlayUrl}
         </Text>
         <TextField
           title=""
-          prompt="粘贴播放链接，留空则不设置"
+          prompt={i18n.addShowPlayUrlPrompt}
           value={playUrl}
           onChanged={setPlayUrl}
           textFieldStyle="roundedBorder"
@@ -605,7 +603,7 @@ function ScheduleStep({
         padding={{ top: 12 }}
         frame={{ maxWidth: 'infinity' }}
       >
-        <PrimaryButton title="添加" action={onConfirm} height={52} />
+        <PrimaryButton title={i18n.add} action={onConfirm} height={52} />
       </VStack>
     </VStack>
   )
@@ -656,7 +654,7 @@ export function AddShowView({
           if (cancelled) return
           setResults([])
           setLoading(false)
-          setError(e instanceof Error ? e.message : '网络异常，请重试')
+          setError(e instanceof Error ? e.message : i18n.addShowNetworkError)
         })
     }, 350)
     return () => {
@@ -720,7 +718,7 @@ export function AddShowView({
           searchable={{
             value: query,
             onChanged: setQuery,
-            prompt: '搜索影视名称…',
+            prompt: i18n.addShowSearchPrompt,
             placement: 'navigationBarDrawerAutomaticDisplay'
           }}
         >
@@ -741,7 +739,7 @@ export function AddShowView({
           spacing={0}
           frame={{ maxWidth: 'infinity', maxHeight: 'infinity', alignment: 'top' }}
           background={theme.bg}
-          navigationTitle="设置更新时间"
+          navigationTitle={i18n.addShowScheduleTitle}
           navigationBarTitleDisplayMode="inline"
           toolbar={{
             topBarLeading: (

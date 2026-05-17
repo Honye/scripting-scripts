@@ -11,6 +11,7 @@ import {
 import type { Color } from 'scripting'
 import type { Show } from '../types'
 import { theme } from '../theme'
+import { i18n } from '../i18n'
 import { DayChip, GenrePill, Poster } from '../components'
 
 function ShowRow({
@@ -62,7 +63,7 @@ function ShowRow({
           font={11}
           foregroundStyle={theme.textQuaternary}
         >
-          {show.watchedEps}/{show.totalEps} 集
+          {i18n.episodesCount(show.watchedEps, show.totalEps)}
         </Text>
       </VStack>
       <VStack alignment="trailing" spacing={3}>
@@ -90,7 +91,7 @@ function EmptyState() {
         font={14}
         foregroundStyle={theme.textDisabled}
       >
-        还没有追的剧
+        {i18n.allShowsEmpty}
       </Text>
     </VStack>
   )
@@ -108,8 +109,8 @@ export function AllShowsView({
       spacing={0}
       frame={{ maxWidth: 'infinity', maxHeight: 'infinity', alignment: 'top' }}
       background={theme.bg}
-      navigationTitle="我的追剧"
-      navigationSubtitle={`共 ${shows.length} 部`}
+      navigationTitle={i18n.allShowsTitle}
+      navigationSubtitle={i18n.allShowsSubtitle(shows.length)}
     >
       <ScrollView>
         <VStack

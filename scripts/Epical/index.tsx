@@ -10,6 +10,7 @@ import {
 } from 'scripting'
 import type { Show } from './types'
 import { theme } from './theme'
+import { i18n } from './i18n'
 import { loadShows, saveShows } from './store'
 import { HomeView } from './views/Home'
 import { AllShowsView } from './views/AllShows'
@@ -85,6 +86,7 @@ function App() {
               presentationDetents={['medium', 'large']}
             >
               <DetailView
+                key={detailShow.id}
                 show={detailShow}
                 onClose={() => setDetailId(null)}
                 onSave={handleSaveDetail}
@@ -98,7 +100,7 @@ function App() {
       ]}
     >
       <TabView>
-        <Tab title="日历" systemImage="calendar">
+        <Tab title={i18n.tabCalendar} systemImage="calendar">
           <NavigationStack>
             <HomeView
               shows={shows}
@@ -107,7 +109,7 @@ function App() {
             />
           </NavigationStack>
         </Tab>
-        <Tab title="追剧" systemImage="list.bullet">
+        <Tab title={i18n.tabShows} systemImage="list.bullet">
           <NavigationStack>
             <AllShowsView
               shows={shows}

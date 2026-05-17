@@ -12,6 +12,7 @@ import {
 import type { Color } from 'scripting'
 import type { Schedule, Show } from './types'
 import { theme, tintedBg } from './theme'
+import { i18n } from './i18n'
 
 /** Compact poster: a remote cover image when available, otherwise a tall rounded rect with diagonal gradient and the title's first 2 chars. */
 export function Poster({
@@ -215,7 +216,7 @@ export function EpisodeCard({
             foregroundStyle={theme.textTertiary}
             lineLimit={1}
           >
-            今日更新第 {nextEp}–{lastEp} 集
+            {i18n.episodeRange(nextEp, lastEp)}
           </Text>
         </HStack>
         <HStack spacing={8} padding={{ top: 5 }}>
@@ -228,7 +229,7 @@ export function EpisodeCard({
             font={11}
             foregroundStyle={theme.textQuaternary}
           >
-            {show.watchedEps}/{show.totalEps}集
+            {i18n.episodesCountTight(show.watchedEps, show.totalEps)}
           </Text>
         </HStack>
       </VStack>
@@ -244,7 +245,7 @@ export function EpisodeCard({
           font={11}
           foregroundStyle={theme.textQuaternary}
         >
-          更新{schedule.episodes}集
+          {i18n.componentEpsUpdate(schedule.episodes)}
         </Text>
       </VStack>
     </HStack>
@@ -253,7 +254,6 @@ export function EpisodeCard({
 
 /** A small chip showing which weekday a show airs on. */
 export function DayChip({ day }: { day: number }) {
-  const labels = ['日', '一', '二', '三', '四', '五', '六']
   return (
     <Text
       font={10}
@@ -265,7 +265,7 @@ export function DayChip({ day }: { day: number }) {
         shape: { type: 'rect', cornerRadius: 4 }
       }}
     >
-      周{labels[day]}
+      {i18n.dayChip[day]}
     </Text>
   )
 }

@@ -14,6 +14,7 @@ import type { Show } from './types'
 import { getTodayIndex } from './data'
 import { loadShows } from './store'
 import { theme } from './theme'
+import { i18n } from './i18n'
 import { rpt } from './utils'
 
 function loadTodaysShows(): Show[] {
@@ -109,7 +110,7 @@ function EmptyView() {
         foregroundStyle={theme.textTertiary}
         multilineTextAlignment="center"
       >
-        今日没有更新
+        {i18n.widgetNoUpdates}
       </Text>
       <Spacer />
     </VStack>
@@ -128,7 +129,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
 
   const date = new Date()
   const dateLabel = `${date.getMonth() + 1}/${date.getDate()}`
-  const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()]
+  const weekday = i18n.dayChip[date.getDay()]
 
   return (
     <VStack
@@ -151,7 +152,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
           kerning={0.2}
           lineLimit={1}
         >
-          剧历
+          {i18n.widgetTitle}
         </Text>
         <Spacer />
         <Text
@@ -183,7 +184,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
           fontWeight="semibold"
           foregroundStyle={theme.textTertiary}
         >
-          部上新
+          {i18n.widgetNewCount}
         </Text>
       </HStack>
 
@@ -276,7 +277,10 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
   const cardRadius = rpt(8)
 
   const date = new Date()
-  const dateLabel = `${date.getMonth() + 1}月${date.getDate()}日`
+  const dateLabel = date.toLocaleDateString(i18n.dateLocale, {
+    month: 'long',
+    day: 'numeric'
+  })
 
   return (
     <VStack
@@ -291,7 +295,7 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
           fontWeight="semibold"
           foregroundStyle={theme.brandEnd}
         >
-          今日更新 · {count} 部
+          {i18n.widgetMediumHeader(count)}
         </Text>
         <Spacer />
         <Text
