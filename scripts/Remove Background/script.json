@@ -1,0 +1,44 @@
+{
+  "description" : null,
+  "remoteResource" : null,
+  "version" : "0.1.0",
+  "color" : "rgba(230, 190, 1,1)",
+  "localizedNames" : {
+    "ja" : "背景除去",
+    "fr" : "Supprimer l'arrière-plan",
+    "en" : "Remove Background",
+    "it" : "Rimuovi sfondo",
+    "zh" : "去除背景",
+    "es" : "Quitar fondo",
+    "pt" : "Remover fundo",
+    "de" : "Hintergrund entfernen",
+    "ru" : "Удалить фон"
+  },
+  "icon" : "square.2.layers.3d.fill",
+  "iconImage" : null,
+  "intentInputTypes" : [
+
+  ],
+  "localizedDescriptions" : {
+    "ja" : "@imgly/background-removal でローカル AI 推論を使って画像の背景を除去します。",
+    "fr" : "Supprime l'arrière-plan d'une image via une inférence IA locale (@imgly/background-removal).",
+    "en" : "Remove the background of an image using on-device AI inference powered by @imgly/background-removal.",
+    "it" : "Rimuove lo sfondo di un'immagine con inferenza IA in locale (@imgly/background-removal).",
+    "zh" : "基于 @imgly/background-removal 在本地 AI 推理实现图片背景去除。",
+    "es" : "Elimina el fondo de una imagen con inferencia de IA en el dispositivo (@imgly/background-removal).",
+    "pt" : "Remove o fundo de uma imagem com inferência de IA no dispositivo (@imgly/background-removal).",
+    "de" : "Entfernt den Hintergrund eines Bildes per On-Device-KI (@imgly/background-removal).",
+    "ru" : "Удаляет фон изображения с помощью локального ИИ (@imgly/background-removal)."
+  },
+  "name" : "Remove Background",
+  "runInApp" : false,
+  "entry" : "index.tsx",
+  "author" : {
+    "email" : "Honye@github.com",
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "name" : "Jackie"
+  },
+  "contributors" : [
+
+  ]
+}
