@@ -1,0 +1,44 @@
+{
+  "localizedNames" : {
+    "en" : "AI Trainer Exam",
+    "it" : "",
+    "zh" : "AI训练师题库",
+    "pt" : "",
+    "de" : "",
+    "es" : "",
+    "ja" : "",
+    "fr" : "",
+    "ru" : ""
+  },
+  "localizedDescriptions" : {
+    "en" : "Practice questions for the Level-3 AI Trainer exam.",
+    "it" : "",
+    "zh" : "人工智能训练师三级理论知识模拟试卷练习。",
+    "pt" : "",
+    "de" : "",
+    "es" : "",
+    "ja" : "",
+    "fr" : "",
+    "ru" : ""
+  },
+  "icon" : "square.2.layers.3d.fill",
+  "iconImage" : null,
+  "version" : "1.0.0",
+  "name" : "AITrainer",
+  "description" : null,
+  "color" : "rgba(174, 109, 216,1)",
+  "entry" : "index.tsx",
+  "remoteResource" : null,
+  "author" : {
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "name" : "Jackie",
+    "email" : "Honye@github.com"
+  },
+  "contributors" : [
+
+  ],
+  "intentInputTypes" : [
+
+  ],
+  "runInApp" : false
+}
