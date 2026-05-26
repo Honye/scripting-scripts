@@ -18,6 +18,7 @@ type EnvironmentValues = {
     dismiss: () => void;
     dismissSearch: () => void;
     editMode: EditMode | null;
+    layoutDirection: "leftToRight" | "rightToLeft";
     widgetRenderingMode: WidgetRenderingMode;
     showsWidgetContainerBackground: boolean;
     isSearching: boolean;
@@ -89,42 +90,49 @@ Indicates whether the view is in editing mode (e.g., during List editing).
 
 ---
 
-### 9. widgetRenderingMode
+### 9. layoutDirection
+
+Type: `"leftToRight" | "rightToLeft"`
+The current layout direction of the view hierarchy.
+
+---
+
+### 10. widgetRenderingMode
 
 Type: `WidgetRenderingMode`
 The current widget rendering mode (e.g., `fullColor`, `accented`).
 
 ---
 
-### 10. showsWidgetContainerBackground
+### 11. showsWidgetContainerBackground
 
 Type: `boolean`
 Indicates whether the widget is showing the system-provided container background.
 
 ---
 
-### 11. isSearching
+### 12. isSearching
 
 Type: `boolean`
 Whether the view is currently in a searching state triggered by `searchable`.
 
 ---
 
-### 12. isPresented
+### 13. isPresented
 
 Type: `boolean`
 Whether the view is currently being shown, unlike `onAppear` which is called every time the view appears, `isPresented` is called only once when the view is first shown.
 
 ---
 
-### 13. activityFamily
+### 14. activityFamily
 
 Type: `"small" | "medium"`
 The current LiveActivity size, similar to SwiftUI's `activityFamily`, used to determine the size of LiveActivity UI.
 
 ---
 
-### 14. tabViewBottomAccessoryPlacement
+### 15. tabViewBottomAccessoryPlacement
 
 Type: `'expanded' | 'inline'`
 The current TabView bottom accessory placement, similar to SwiftUI's `tabViewBottomAccessoryPlacement`.

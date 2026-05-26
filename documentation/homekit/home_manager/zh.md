@@ -1,6 +1,6 @@
 `HMHomeManager` 是 HomeKit 的顶层入口，暴露当前用户的所有家以及家变更事件。
 
-> ⚠️ HomeKit 能力需要订阅 Scripting PRO 并打开系统 HomeKit 权限。**首次调用任意 `HMHomeManager.*` 接口时会自动触发系统授权弹窗**，无需手动请求权限。后续可在 **设置 → 权限 → HomeKit** 或 **设置 → 隐私与安全性 → HomeKit** 中切换。
+> **首次调用任意 `HMHomeManager.*` 接口时会自动触发系统授权弹窗**，无需手动请求权限。后续可在 **设置 → 权限 → HomeKit** 或 **设置 → 隐私与安全性 → HomeKit** 中切换。
 
 ---
 

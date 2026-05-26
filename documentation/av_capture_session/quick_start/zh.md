@@ -150,7 +150,7 @@ await session.startRunning()
 
 ## 预览
 
-在 Scripting 视图层里使用 `<CaptureVideoPreviewView session={session} videoDevice={camera}/>`。完整 prop 列表见 [Preview View](preview_view/)。
+在 Scripting 视图层里使用 `<CaptureVideoPreviewView session={session} videoDevice={camera}/>`。完整 prop 列表见 `预览视图`。
 
 ---
 

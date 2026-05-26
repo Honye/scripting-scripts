@@ -65,5 +65,5 @@ All three forms accept the standard `ChartMarkProps` (`foregroundStyle` / `opaci
 
 ## See also
 
-* [`ChartGesture`](../chart_overlay/) — for closures driven by user gestures (pure-body rule applies the same way).
-* [`ChartPlotStyle`](../chart_overlay/) — another reader-style mark child whose closure is repeatedly evaluated.
+* `ChartGesture` — for closures driven by user gestures (pure-body rule applies the same way).
+* `ChartPlotStyle` — another reader-style mark child whose closure is repeatedly evaluated.

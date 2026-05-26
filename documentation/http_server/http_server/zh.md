@@ -60,7 +60,9 @@ IPv6 监听地址，仅当 `forceIPv6` 为 `true` 时使用。
 
 ### `registerHandler(path: string, handler: (request: HttpRequest) => HttpResponse): void`
 
-为指定路径注册一个 HTTP 请求处理器。
+> **已废弃。** 推荐使用 `registerAsyncHandler`。同步入口无法在响应前 `await` Keychain 访问、网络 IO 或文件读取，仅为兼容历史脚本保留。
+
+为指定路径注册一个同步 HTTP 请求处理器。处理函数会在 JavaScript 主线程上同步执行，必须立刻返回 `HttpResponse`。
 
 **参数：**
 
@@ -76,6 +78,30 @@ const server = new HttpServer()
 
 server.registerHandler("/hello", (req) => {
   return HttpResponse.ok(HttpResponseBody.text("Hello, world!"))
+})
+```
+
+---
+
+### `registerAsyncHandler(path: string, handler: (request: HttpRequest) => Promise<HttpResponse>): void`
+
+注册一个异步处理器。处理函数可以返回 `Promise<HttpResponse>`，服务器会等待 promise 兑现后再发送响应。若 promise 被 reject，服务器会以 500 状态码返回错误信息。
+
+**参数：**
+
+| 参数        | 类型                                                | 说明                                  |
+| --------- | ------------------------------------------------- | ----------------------------------- |
+| `path`    | `string`                                          | 请求路径（支持动态参数，例如 `/user/:id`）。      |
+| `handler` | `(request: HttpRequest) => Promise<HttpResponse>` | 异步处理函数，返回 `HttpResponse` 的 Promise。 |
+
+**示例：**
+
+```ts
+const server = new HttpServer()
+
+server.registerAsyncHandler("/slow", async (req) => {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  return HttpResponse.ok(HttpResponseBody.text("slow ok"))
 })
 ```
 
@@ -169,23 +195,70 @@ server.registerWebsocket("/ws", {
 
 ---
 
-### `start(options?: { port?: number; forceIPv4?: boolean }): string | null`
+### `registerMiddleware(handler: (request: HttpRequest) => Promise<HttpResponse | null | undefined>): void`
 
-启动服务器。
+注册一层 async 中间件，按注册顺序在所有路由处理器之前执行。中间件可以：
+
+- resolve `null` / `undefined` — 放行，继续走下一层中间件或路由处理器；
+- resolve 一个 `HttpResponse` — 直接截胡，后续中间件和路由处理器都不再执行。
+
+reject 或抛错会被转成 `500` 响应。
 
 **参数：**
 
-| 参数                  | 类型        | 说明                                    |
-| ------------------- | --------- | ------------------------------------- |
-| `options.port`      | `number`  | 指定监听端口，默认为 `8080`。如果设为 `0`，则自动选择可用端口。 |
-| `options.forceIPv4` | `boolean` | 是否强制使用 IPv4 地址，默认 `false`。            |
+| 参数        | 类型                                                              | 说明              |
+| --------- | ----------------------------------------------------------------- | --------------- |
+| `handler` | `(req: HttpRequest) => Promise<HttpResponse \| null \| undefined>` | 异步中间件函数。        |
 
-**返回值：**
+**示例：简单鉴权拦截**
 
-* 若启动失败，返回错误消息字符串。
-* 若成功，返回 `null`。
+```ts
+server.registerMiddleware(async (req) => {
+  if (!req.headers["x-auth"]) {
+    return HttpResponse.unauthorized(HttpResponseBody.text("missing token"))
+  }
+  return null
+})
+```
+
+---
+
+### `setNotFoundHandler(handler: (request: HttpRequest) => Promise<HttpResponse>): void`
+
+设置自定义 async 404 兜底处理器。当所有路由都未命中时调用。多次调用会覆盖之前的注册。reject 或抛错会被转成 `500`。
+
+**参数：**
+
+| 参数        | 类型                                            | 说明              |
+| --------- | --------------------------------------------- | --------------- |
+| `handler` | `(req: HttpRequest) => Promise<HttpResponse>` | 异步 404 处理函数。    |
 
 **示例：**
+
+```ts
+server.setNotFoundHandler(async (req) => {
+  return HttpResponse.notFound(HttpResponseBody.text(`未找到路径: ${req.path}`))
+})
+```
+
+---
+
+### `start(options?: { port?, forceIPv4?, tls? }): string | null`
+
+启动服务器。成功返回 `null`，失败（配置错误、端口被占等）返回错误描述字符串。
+
+**参数：**
+
+| 参数                      | 类型                | 说明                                                                                                                  |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `options.port`          | `number`          | 指定监听端口，默认为 `8080`。如果设为 `0`，则自动选择可用端口，启动后通过 `server.port` 获取实际端口。                                                  |
+| `options.forceIPv4`     | `boolean`         | 是否强制使用 IPv4 地址，默认 `false`。                                                                                          |
+| `options.tls.p12`       | `string \| Data`  | PKCS#12 身份。可以是文件绝对路径（`string`），也可以是 P12 原始字节（`Data`）。当 P12 从 Keychain 等内存源加载时，直接传 `Data` 更方便。                       |
+| `options.tls.password`  | `string`          | P12 解密密码。                                                                                                           |
+| `options.tls.minVersion`| `"1.2" \| "1.3"` | 最低 TLS 协议版本，默认 `"1.2"`。Apple 在 macOS 12 / iOS 15 后弃用了 TLSv1.0/1.1，本接口不支持。                                          |
+| `options.tls.maxVersion`| `"1.2" \| "1.3"` | 最高 TLS 协议版本，默认不限。把 `minVersion` 与 `maxVersion` 都设为 `"1.3"` 即可强制只跑 TLSv1.3。                                          |
+
+**HTTP 示例：**
 
 ```ts
 const error = server.start({ port: 8080 })
@@ -194,6 +267,49 @@ if (error) {
 } else {
   console.log("服务器运行在端口:", server.port)
 }
+```
+
+**HTTPS（P12 文件）：**
+
+```ts
+const error = server.start({
+  port: 8443,
+  tls: {
+    p12: Path.join(Script.directory, "server.p12"),
+    password: "your-p12-password",
+  },
+})
+```
+
+**HTTPS（P12 字节 + 强制 TLS 1.3）：**
+
+```ts
+// Keychain 接口是同步的，未找到时返回 null。
+const p12Bytes = Keychain.getData("server.p12")
+if (!p12Bytes) {
+  throw new Error("Keychain 中未存储 server.p12")
+}
+server.start({
+  port: 8443,
+  tls: {
+    p12: p12Bytes,
+    password: "your-p12-password",
+    minVersion: "1.3",
+    maxVersion: "1.3",
+  },
+})
+```
+
+本地测试用的自签名 P12 可以这样生成：
+
+```sh
+openssl req -x509 -newkey rsa:2048 \
+    -keyout localhost.key -out localhost.crt \
+    -days 3650 -nodes -subj "/CN=localhost"
+openssl pkcs12 -export -out localhost.p12 \
+    -inkey localhost.key -in localhost.crt \
+    -name "scripting-test" -password pass:yourpassword \
+    -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES
 ```
 
 ---

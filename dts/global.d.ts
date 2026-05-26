@@ -1,4 +1,4 @@
-import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream, FunctionComponent, AppIntent, AppIntentProtocol, Cookie } from "scripting"
+import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream, FunctionComponent, AppIntent, AppIntentProtocol, Cookie, MapCoordinate, MapRegion, MapPointsOfInterestSpec, MapStyleSpec } from "scripting"
 
 declare global {
   type Without<T, U> = {
@@ -1304,6 +1304,160 @@ declare global {
     function notificationWarning(): void
   }
 
+  type HapticEventType =
+    | 'hapticTransient'
+    | 'hapticContinuous'
+    | 'audioContinuous'
+    | 'audioCustom'
+
+  type HapticEventParameterID =
+    | 'hapticIntensity'
+    | 'hapticSharpness'
+    | 'attackTime'
+    | 'decayTime'
+    | 'releaseTime'
+    | 'sustained'
+    | 'audioVolume'
+    | 'audioPitch'
+    | 'audioPan'
+    | 'audioBrightness'
+
+  type HapticDynamicParameterID =
+    | 'hapticIntensityControl'
+    | 'hapticSharpnessControl'
+    | 'hapticAttackTimeControl'
+    | 'hapticDecayTimeControl'
+    | 'hapticReleaseTimeControl'
+    | 'audioVolumeControl'
+    | 'audioPanControl'
+    | 'audioBrightnessControl'
+    | 'audioPitchControl'
+    | 'audioAttackTimeControl'
+    | 'audioDecayTimeControl'
+    | 'audioReleaseTimeControl'
+
+  type HapticEngineStoppedReason =
+    | 'audioSessionInterrupt'
+    | 'applicationSuspended'
+    | 'idleTimeout'
+    | 'notifyWhenFinished'
+    | 'engineDestroyed'
+    | 'gameControllerDisconnect'
+    | 'systemError'
+    | 'unknown'
+
+  type HapticEngineFinishedAction = 'stopEngine' | 'leaveEngineRunning'
+
+  class HapticEventParameter {
+    constructor(parameterID: HapticEventParameterID, value: number)
+    readonly parameterID: HapticEventParameterID
+    value: number
+  }
+
+  class HapticDynamicParameter {
+    constructor(parameterID: HapticDynamicParameterID, value: number, relativeTime: number)
+    readonly parameterID: HapticDynamicParameterID
+    value: number
+    relativeTime: number
+  }
+
+  class HapticParameterCurveControlPoint {
+    constructor(relativeTime: number, value: number)
+    relativeTime: number
+    value: number
+  }
+
+  class HapticParameterCurve {
+    constructor(
+      parameterID: HapticDynamicParameterID,
+      controlPoints: HapticParameterCurveControlPoint[],
+      relativeTime: number
+    )
+    readonly parameterID: HapticDynamicParameterID
+    readonly controlPoints: HapticParameterCurveControlPoint[]
+    relativeTime: number
+  }
+
+  class HapticEvent {
+    constructor(
+      eventType: HapticEventType,
+      parameters: HapticEventParameter[],
+      relativeTime: number,
+      duration?: number
+    )
+    readonly type: HapticEventType
+    readonly eventParameters: HapticEventParameter[]
+    relativeTime: number
+    duration: number
+  }
+
+  class HapticPattern {
+    constructor(
+      events: HapticEvent[],
+      parametersOrCurves?: Array<HapticDynamicParameter | HapticParameterCurve>
+    )
+    readonly duration: number
+    exportDictionary(): Record<string, any>
+    static fromDictionary(dictionary: Record<string, any>): HapticPattern
+    static fromFile(filePath: string): HapticPattern
+    static fromData(data: Data): HapticPattern
+  }
+
+  class HapticPatternPlayer {
+    isMuted: boolean
+    start(atTime?: number): void
+    stop(atTime?: number): void
+    sendParameters(parameters: HapticDynamicParameter[], atTime?: number): void
+    scheduleParameterCurve(parameterCurve: HapticParameterCurve, atTime?: number): void
+    cancel(): void
+  }
+
+  class HapticAdvancedPatternPlayer extends HapticPatternPlayer {
+    loopEnabled: boolean
+    loopEnd: number
+    playbackRate: number
+    completionHandler?: (error: Error | null) => void
+    pause(atTime?: number): void
+    resume(atTime?: number): void
+    seek(toOffset: number): void
+  }
+
+  class HapticEngine {
+    constructor(audioSession?: typeof SharedAudioSession | null)
+    static readonly supportsHaptics: boolean
+    static readonly supportsAudio: boolean
+    readonly currentTime: number
+    readonly isRunning: boolean
+    playsHapticsOnly: boolean
+    playsAudioOnly: boolean
+    isMutedForAudio: boolean
+    isMutedForHaptics: boolean
+    autoShutdownEnabled: boolean
+    onStopped?: (reason: HapticEngineStoppedReason) => void
+    onReset?: () => void
+    start(): void
+    startAsync(): Promise<void>
+    stop(): Promise<void>
+    notifyWhenPlayersFinished(handler: (error: Error | null) => HapticEngineFinishedAction): void
+    makePlayer(pattern: HapticPattern): HapticPatternPlayer
+    makeAdvancedPlayer(pattern: HapticPattern): HapticAdvancedPatternPlayer
+    playPatternFromFile(filePath: string): void
+    playPatternFromData(data: Data): void
+    registerAudioResource(filePath: string, options?: {
+      useVolumeEnvelope?: boolean
+      loopEnabled?: boolean
+    }): number
+    unregisterAudioResource(resourceID: number): void
+    dispose(): void
+  }
+
+  namespace Haptics {
+    const supportsHaptics: boolean
+    const supportsAudio: boolean
+    function transient(intensity?: number, sharpness?: number): Promise<void>
+    function continuous(duration: number, intensity?: number, sharpness?: number): Promise<void>
+  }
+
   /**
    * The accuracy of a geographical coordinate.
    */
@@ -1640,6 +1794,674 @@ declare global {
   }
 
   /**
+   * SwiftUI MapKit `MapCamera`. An eye-style camera positioned a given
+   * `distance` (meters) from a center coordinate, with optional `heading` and
+   * `pitch`. Construct via `MapCamera.make({...})`. Pass to
+   * `MapCameraPosition.camera(...)` to frame the map.
+   */
+  class MapCamera {
+    private constructor()
+    /** The point the camera is looking at. */
+    readonly centerCoordinate: MapCoordinate
+    /** Distance from `centerCoordinate` to the camera, in meters. */
+    readonly distance: number
+    /** Compass heading of the camera in degrees clockwise from north. */
+    readonly heading: number
+    /** Pitch (tilt) of the camera in degrees. 0 = top-down, 60 = tilted. */
+    readonly pitch: number
+
+    /**
+     * Construct a `MapCamera`. `heading` and `pitch` default to `0`.
+     */
+    static make(opts: {
+      centerCoordinate: MapCoordinate
+      distance: number
+      heading?: number
+      pitch?: number
+    }): MapCamera
+  }
+
+  /**
+   * SwiftUI MapKit `MapCameraPosition`. Describes how the map frames its
+   * content — by region, rect, eye-style camera, focused on a single map
+   * item, tracking the user's location, or letting the system pick
+   * automatically.
+   *
+   * Construct via the static factory methods on the `MapCameraPosition`
+   * namespace. Treat instances as opaque values — pass them around to
+   * `<Map cameraPosition={...} />` / `<Map initialCameraPosition={...} />`
+   * or store them in an `Observable<MapCameraPosition>`. The readonly
+   * accessors below let you inspect what's currently being framed.
+   *
+   * Example:
+   * ```ts
+   * const pos = useObservable<MapCameraPosition>(
+   *   MapCameraPosition.region({
+   *     center: { latitude: 31.23, longitude: 121.47 },
+   *     span:   { latitudeDelta: 0.05, longitudeDelta: 0.05 },
+   *   })
+   * )
+   *
+   * // Re-frame:
+   * pos.setValue(MapCameraPosition.camera(
+   *   MapCamera.make({
+   *     centerCoordinate: { latitude: 31.24, longitude: 121.50 },
+   *     distance: 1500,
+   *     pitch: 45,
+   *   })
+   * ))
+   * ```
+   */
+  class MapCameraPosition {
+    private constructor()
+    /** The region being framed, if any. `null` for other forms. */
+    readonly region: MapRegion | null
+    /**
+     * The rect being framed, if any. Reported in `{ center, size }` form
+     * (size in meters), matching the input shape of `MapCameraPosition.rect`.
+     * `null` for other forms.
+     */
+    readonly rect: {
+      center: MapCoordinate
+      size: { width: number; height: number }
+    } | null
+    /** The eye-style camera being used, if any. `null` for other forms. */
+    readonly camera: MapCamera | null
+    /** The map item being framed, if any. `null` for other forms. */
+    readonly item: { coordinate: MapCoordinate; name?: string } | null
+    /** The fallback used when `.userLocation` cannot resolve. */
+    readonly fallbackPosition: MapCameraPosition | null
+    /**
+     * Whether automatic pitch is allowed — only meaningful when framing a
+     * map item via `MapCameraPosition.item(item, { allowsAutomaticPitch })`.
+     */
+    readonly allowsAutomaticPitch: boolean
+    /**
+     * `true` if this position came from a user gesture (pan / zoom / rotate),
+     * rather than from a programmatic update.
+     */
+    readonly positionedByUser: boolean
+
+    /** Frame the given coordinate region. */
+    static region(region: MapRegion): MapCameraPosition
+    /**
+     * Frame the given map rect, expressed as a center coordinate plus a
+     * metric size (width/height in meters).
+     */
+    static rect(rect: {
+      center: MapCoordinate
+      size: { width: number; height: number }
+    }): MapCameraPosition
+    /**
+     * Use the given eye-style camera. Accepts either a `MapCamera` instance
+     * or the same options dict used by `MapCamera.make`.
+     */
+    static camera(
+      camera: MapCamera | {
+        centerCoordinate: MapCoordinate
+        distance: number
+        heading?: number
+        pitch?: number
+      }
+    ): MapCameraPosition
+    /**
+     * Frame the given map item (a coordinate plus an optional name). Pass
+     * `{ allowsAutomaticPitch: true }` to let MapKit pick a 3D pitch
+     * automatically when appropriate.
+     */
+    static item(
+      item: { coordinate: MapCoordinate; name?: string },
+      options?: { allowsAutomaticPitch?: boolean }
+    ): MapCameraPosition
+    /**
+     * Track the user's current location. If location is not authorized /
+     * resolvable, MapKit falls back to `options.fallback` (default `.automatic`).
+     */
+    static userLocation(options?: { fallback?: MapCameraPosition }): MapCameraPosition
+    /** Let the framework choose an appropriate camera based on content. */
+    static automatic(): MapCameraPosition
+  }
+
+  /**
+   * SwiftUI MapKit `MapCameraBounds`. Constrains how the user can pan and
+   * zoom an interactive map — either by clamping the center to a region
+   * (`centerCoordinateBounds`) or by limiting the camera-to-center distance
+   * (`minimumDistance` / `maximumDistance`, in meters). Pass to
+   * `<Map cameraBounds={...}>` to apply.
+   *
+   * Treat instances as opaque — construct via the static factories.
+   *
+   * Example:
+   * ```ts
+   * // Lock the center inside Shanghai's downtown bounds, and limit zoom
+   * // (the camera cannot pull farther than 8 km or push closer than 200 m).
+   * const bounds = MapCameraBounds.centerCoordinateBounds(
+   *   {
+   *     center: { latitude: 31.2304, longitude: 121.4737 },
+   *     span:   { latitudeDelta: 0.1, longitudeDelta: 0.1 },
+   *   },
+   *   { minimumDistance: 200, maximumDistance: 8000 }
+   * )
+   *
+   * return <Map cameraPosition={cam} cameraBounds={bounds}>...</Map>
+   * ```
+   */
+  class MapCameraBounds {
+    private constructor()
+
+    /**
+     * Constrain the camera so its center stays inside the given region.
+     * Optionally also restrict the zoom range with `minimumDistance` /
+     * `maximumDistance` (meters from camera to center).
+     */
+    static centerCoordinateBounds(
+      region: MapRegion,
+      options?: {
+        minimumDistance?: number
+        maximumDistance?: number
+      }
+    ): MapCameraBounds
+
+    /**
+     * Restrict only the zoom range (camera-to-center distance, in meters);
+     * the camera center is free to move anywhere on the map.
+     */
+    static distance(options: {
+      minimumDistance?: number
+      maximumDistance?: number
+    }): MapCameraBounds
+  }
+
+  /**
+   * Search the on-device map database for points of interest and addresses. Pure query
+   * APIs — no system permissions required. Coordinates come back as `MapCoordinate`,
+   * suitable for direct use with `<Marker>` / `<Map>` from the views layer.
+   *
+   * Companion namespace: `MapUtils` for distance / bearing / region geometry helpers.
+   * Forward / reverse geocoding lives on the existing `Location` namespace
+   * (`Location.geocodeAddress`, `Location.reverseGeocode`).
+   */
+  /**
+   * A single place / point-of-interest. Opaque wrapper around Apple's `MKMapItem`.
+   * Returned by `MapSearch.locate` / `MapSearchCompleter.resolve` and carried on
+   * `MapDirections.DirectionsResponse` / `ETAResponse`. Plug `item.coordinate`
+   * directly into `<Marker>` / `<Map>`.
+   *
+   * **Not a plain object.** `JSON.stringify(item)` and `Object.keys(item)` will
+   * not return the field dictionary — read fields by name (`item.name`,
+   * `item.coordinate`, etc.). Spread the fields manually if a serializable
+   * snapshot is needed.
+   */
+  class MapItem {
+    private constructor()
+
+    readonly coordinate: MapCoordinate
+    /** Display name of the place (e.g. "Apple Park Visitor Center"). */
+    readonly name: string | null
+    /** Single-line address formatted from the placemark components. */
+    readonly formattedAddress: string | null
+    readonly placemark: LocationPlacemark
+    readonly phoneNumber: string | null
+    readonly url: string | null
+    /**
+     * Normalized POI category such as `"restaurant"` / `"cafe"`. May be a category
+     * outside the documented set of `MapPointOfInterestCategory` values — MapKit
+     * occasionally returns categories beyond the documented enumeration.
+     */
+    readonly pointOfInterestCategory: string | null
+    /** IANA timezone identifier, e.g. `"Asia/Shanghai"`. */
+    readonly timeZone: string | null
+    /**
+     * True when the item represents the device's current location (returned only
+     * by APIs that supply such an item — typical search / directions results are
+     * `false`).
+     */
+    readonly isCurrentLocation: boolean
+
+    /**
+     * Open this item in the Apple Maps app. The current app moves to the
+     * background. Resolves with the boolean returned by the system — `true` when
+     * the launch request was accepted, `false` if the system refused (rare).
+     */
+    openInMaps(options?: MapItemOpenOptions): Promise<boolean>
+
+    /**
+     * Great-circle distance from this item to another coordinate or `MapItem`,
+     * in meters. Equivalent to `MapUtils.distance(this.coordinate, to)` when `to`
+     * is a coordinate, or `MapUtils.distance(this.coordinate, to.coordinate)`
+     * when `to` is a `MapItem`.
+     */
+    distance(to: MapCoordinate | MapItem): number
+
+    /**
+     * Initial bearing from this item to another coordinate or `MapItem`, in
+     * degrees normalized to `[0, 360)`. `0` = north, `90` = east, etc.
+     */
+    bearing(to: MapCoordinate | MapItem): number
+
+    /**
+     * Placeholder `MapItem` representing the device's current location. The
+     * Apple Maps app interprets this specially when handed off via
+     * `openInMaps()` — no permission required, the coordinate is not read
+     * locally. Returned items have `isCurrentLocation === true`.
+     *
+     * @example
+     * await MapItem.forCurrentLocation().openInMaps({ directionsMode: "walking" })
+     */
+    static forCurrentLocation(): MapItem
+  }
+
+  type MapItemOpenOptions = {
+    /**
+     * Show directions on the opened map. `"default"` lets Apple Maps pick the
+     * mode based on the user's preferences.
+     */
+    directionsMode?: "driving" | "walking" | "transit" | "default"
+    /** Show live traffic overlay on the opened map. */
+    showsTraffic?: boolean
+    /** Map type to apply. */
+    mapType?: "standard" | "satellite" | "hybrid"
+  }
+
+  namespace MapSearch {
+    /**
+     * Categories of search results returned by `locate`. `physicalFeature` is
+     * iOS 18+ — silently ignored on older systems.
+     */
+    type MapItemResultType = "pointOfInterest" | "address" | "physicalFeature"
+
+    type LocateOptions = {
+      /** Search keyword. Required and non-empty. */
+      query: string
+      /**
+       * Restrict the search to a region. Without it MapKit uses a default area
+       * based on the device's last-known coarse location.
+       */
+      region?: MapRegion
+      /** Filter by result categories. Defaults to `["pointOfInterest", "address"]`. */
+      resultTypes?: MapItemResultType[]
+      /**
+       * Filter by point-of-interest categories. Shares the same union as the
+       * `<Map mapStyle={{ pointsOfInterest }}>` filter, so you can pass the same
+       * spec to both surfaces.
+       */
+      pointOfInterestFilter?: MapPointsOfInterestSpec
+    }
+
+    /**
+     * One autocomplete suggestion produced by a `MapSearchCompleter`. Pass the
+     * whole object back to `completer.resolve(...)` to look up the underlying
+     * `MapItem[]`.
+     *
+     * `id` is an opaque token managed by the completer. It is only valid until
+     * the completer issues its next batch of suggestions; tapping a stale
+     * suggestion will reject with `"unknown completion id"`.
+     */
+    type MapSearchCompletion = {
+      title: string
+      subtitle: string
+      id: string
+    }
+
+    type CompleterOptions = {
+      region?: MapRegion
+      /**
+       * Filter by result categories. Note: `physicalFeature` is not valid here
+       * (it is only meaningful for `locate`); `query` is supported as well.
+       */
+      resultTypes?: (MapItemResultType | "query")[]
+    }
+
+    /**
+     * Stateful autocomplete completer. One instance per input field — sharing
+     * a completer between unrelated text fields will cross-contaminate results
+     * because the underlying `queryFragment` is single-valued.
+     *
+     * Always call `dispose()` when the input is removed.
+     */
+    interface MapSearchCompleter {
+      /** Update the search fragment. Triggers a delegate-driven update. */
+      setQuery(query: string): void
+      /** Update the search region. */
+      setRegion(region: MapRegion): void
+      /** Subscribe to autocomplete results. Each update replaces the previous batch. */
+      addListener(listener: (completions: MapSearchCompletion[]) => void): void
+      /** Remove a single listener, or all listeners when called without arguments. */
+      removeListener(listener?: (completions: MapSearchCompletion[]) => void): void
+      /** Resolve a suggestion (typically the one the user tapped) to full `MapItem[]`. */
+      resolve(completion: MapSearchCompletion): Promise<MapItem[]>
+      /** Stop the underlying completer and release listeners. Idempotent. */
+      dispose(): void
+    }
+
+    /**
+     * Run a one-shot keyword search.
+     *
+     * High-frequency input (e.g. typing in a search bar) should use
+     * `createCompleter` instead — repeated `locate` calls do not deduplicate
+     * stale responses.
+     */
+    function locate(options: LocateOptions): Promise<MapItem[]>
+
+    /**
+     * Create a stateful autocomplete completer bound to one input field.
+     * Returns immediately; suggestions arrive asynchronously via the registered
+     * listeners after every `setQuery` change.
+     */
+    function createCompleter(options?: CompleterOptions): MapSearchCompleter
+  }
+
+  /**
+   * Geometry helpers for the `MapKit` types from the views layer (`MapCoordinate`,
+   * `MapRegion`). All functions are pure and synchronous — safe to call during
+   * render or in tight loops.
+   */
+  namespace MapUtils {
+    /**
+     * Great-circle distance between two coordinates, in meters. Computed via the
+     * Haversine formula using mean Earth radius (6 371 008.8 m).
+     */
+    function distance(a: MapCoordinate, b: MapCoordinate): number
+
+    /**
+     * Initial bearing (forward azimuth) from `a` to `b`, in degrees normalized
+     * to `[0, 360)`. `0` = north, `90` = east, `180` = south, `270` = west.
+     */
+    function bearing(a: MapCoordinate, b: MapCoordinate): number
+
+    /**
+     * Whether `coordinate` lies inside `region`. Does not handle regions that
+     * straddle the antimeridian (±180° longitude).
+     */
+    function regionContains(region: MapRegion, coordinate: MapCoordinate): boolean
+
+    /**
+     * Smallest `MapRegion` enclosing all `coordinates`. Returns `null` for an
+     * empty array.
+     *
+     * @param paddingFactor Fraction to expand the bounding span outward,
+     * default `0.1` (10%). Pass `0` for a tight fit.
+     */
+    function regionFromCoordinates(
+      coordinates: MapCoordinate[],
+      paddingFactor?: number
+    ): MapRegion | null
+
+    type FormatDistanceOptions = {
+      /**
+       * Unit system. `"default"` (default) follows the device locale. `"metric"`
+       * forces km/m; `"imperial"` forces miles/feet.
+       */
+      units?: "metric" | "imperial" | "default"
+      /**
+       * Visual style of the unit suffix:
+       * - `"default"` — locale default (e.g. `"5 km"`)
+       * - `"abbreviated"` — short form (e.g. `"5 km"`)
+       * - `"full"` — long form (e.g. `"5 kilometers"`)
+       */
+      unitStyle?: "abbreviated" | "default" | "full"
+    }
+
+    /**
+     * Format a distance in meters into a localized human-readable string using
+     * `MKDistanceFormatter`. Negative values clamp to 0.
+     *
+     * Output is locale-aware; do not assert on exact strings.
+     *
+     * @example
+     * MapUtils.formatDistance(1230)                            // "1.2 km"
+     * MapUtils.formatDistance(1230, { units: "imperial" })     // "0.8 mi"
+     * MapUtils.formatDistance(1230, { unitStyle: "full" })     // "1.2 kilometers"
+     */
+    function formatDistance(meters: number, options?: FormatDistanceOptions): string
+
+    type FormatDurationOptions = {
+      /**
+       * Visual style. Defaults to `"abbreviated"` (e.g. `"1h 23m"`).
+       *
+       * - `"positional"` — `"1:23"`
+       * - `"abbreviated"` — `"1h 23m"`
+       * - `"short"` — `"1 hr, 23 min"`
+       * - `"full"` — `"1 hour, 23 minutes"`
+       * - `"brief"` — `"1hr 23min"`
+       * - `"spellOut"` — `"one hour, twenty-three minutes"`
+       */
+      unitsStyle?: "positional" | "abbreviated" | "short" | "full" | "brief" | "spellOut"
+      /**
+       * Which units the formatter is allowed to emit. Defaults to
+       * `["day", "hour", "minute"]`. Add `"second"` for sub-minute precision.
+       */
+      allowedUnits?: ("day" | "hour" | "minute" | "second")[]
+      /**
+       * Limit how many unit segments appear. e.g. `1` collapses `3661s` to
+       * just `"1 hr"` instead of `"1 hr, 1 min, 1 sec"`.
+       */
+      maximumUnitCount?: number
+    }
+
+    /**
+     * Format a duration in seconds using `DateComponentsFormatter`. Negative
+     * values return an empty string. Output is locale-aware.
+     *
+     * @example
+     * MapUtils.formatDuration(3725)                              // "1h 2m"
+     * MapUtils.formatDuration(3725, { unitsStyle: "full" })       // "1 hour, 2 minutes"
+     * MapUtils.formatDuration(3725, { unitsStyle: "positional" }) // "1:02:05"
+     */
+    function formatDuration(seconds: number, options?: FormatDurationOptions): string
+  }
+
+  /**
+   * Plan a route between two endpoints. Returns ready-to-render polyline coordinates
+   * suitable for `<MapPolyline coordinates={route.coordinates}>` and turn-by-turn
+   * steps for in-app directions UI.
+   *
+   * Companion namespace: `MapSearch` (look up endpoints), `MapUtils` (geometry helpers).
+   *
+   * No system permissions required. The result data comes from Apple's directions
+   * servers and arrives as plain objects — no opaque references to dispose.
+   *
+   * Transit (`transportType: "transit"`) is supported in a limited set of regions.
+   * Apple's iOS Maps app traditionally falls back to launching the Maps UI for
+   * transit; this API does not — unsupported transit queries reject with
+   * `directionsNotFound`. For broad coverage prefer `"automobile"` or `"walking"`.
+   */
+  namespace MapDirections {
+    type TransportType = "automobile" | "walking" | "transit" | "any"
+
+    /**
+     * Preference for tolls or highways. `"any"` (default) lets MapKit decide,
+     * `"avoid"` asks it to route around them when possible.
+     */
+    type RoutePreference = "any" | "avoid"
+
+    /**
+     * Source or destination of a route. Accepts either:
+     * - A bare `MapCoordinate` (wrapped internally in an unnamed map item).
+     * - An object carrying `coordinate` + optional `name` (typically a value picked
+     *   from a `MapItem` — pass `{ coordinate, name }`).
+     */
+    type DirectionsEndpoint =
+      | MapCoordinate
+      | { coordinate: MapCoordinate; name?: string }
+
+    type DirectionsOptions = {
+      source: DirectionsEndpoint
+      destination: DirectionsEndpoint
+      /** Default `"automobile"`. */
+      transportType?: TransportType
+      /**
+       * Request up to 3 alternate routes (driving + highway routes only typically
+       * return multiple). Default `false`.
+       */
+      requestsAlternateRoutes?: boolean
+      /**
+       * Plan a route departing at this time. Mutually exclusive with `arrivalDate`;
+       * if both are supplied, `departureDate` wins.
+       */
+      departureDate?: Date
+      /** Plan a route arriving by this time. */
+      arrivalDate?: Date
+      /** Toll preference. Default `"any"`. */
+      tollPreference?: RoutePreference
+      /** Highway preference. Default `"any"`. */
+      highwayPreference?: RoutePreference
+    }
+
+    type DirectionsRouteStep = {
+      /** Turn-by-turn instructions, e.g. `"Turn right onto Main St."`. */
+      instructions: string
+      /** Optional advisory ("HOV lane", "Toll road", etc.). */
+      notice?: string
+      /** Step distance in meters. */
+      distance: number
+      /** Polyline coordinates for this step. */
+      coordinates: MapCoordinate[]
+      transportType: TransportType
+    }
+
+    type DirectionsRoute = {
+      name: string
+      /** Total route distance in meters. */
+      distance: number
+      /** Expected travel time in seconds. */
+      expectedTravelTime: number
+      transportType: TransportType
+      /**
+       * Ready-to-render polyline coordinates. Feed straight into
+       * `<MapPolyline coordinates={...}>` — no extra conversion needed.
+       */
+      coordinates: MapCoordinate[]
+      steps: DirectionsRouteStep[]
+      hasTolls: boolean
+      hasHighways: boolean
+      advisoryNotices: string[]
+    }
+
+    type DirectionsResponse = {
+      source: MapItem
+      destination: MapItem
+      /** At least 1 route. `requestsAlternateRoutes: true` may include up to 3. */
+      routes: DirectionsRoute[]
+    }
+
+    type ETAResponse = {
+      source: MapItem
+      destination: MapItem
+      /** Expected travel time in seconds. */
+      expectedTravelTime: number
+      /** Total route distance in meters. */
+      distance: number
+      expectedArrivalDate: Date
+      expectedDepartureDate: Date
+      transportType: TransportType
+    }
+
+    /**
+     * Calculate one or more routes between `source` and `destination`. Each
+     * `DirectionsRoute` carries a ready-to-render `coordinates` polyline plus
+     * turn-by-turn `steps`.
+     */
+    function calculate(options: DirectionsOptions): Promise<DirectionsResponse>
+
+    /**
+     * Compute the expected travel time / distance / arrival window without
+     * downloading the full route geometry. Cheaper and faster than `calculate`
+     * for ETA-only UI.
+     */
+    function calculateETA(options: DirectionsOptions): Promise<ETAResponse>
+  }
+
+  /**
+   * Render a static map image offscreen via MapKit's snapshotter. Useful when
+   * you need a map picture without a live `<Map>` view — widget previews,
+   * share-sheet thumbnails, exported reports, and so on.
+   *
+   * Returns a `MapSnapshot` opaque handle exposing `pngBase64`, `size`, and
+   * `pointForCoordinate(...)`. Feed the base64 string into an `<Image>` view
+   * via `data:image/png;base64,${snap.pngBase64}`.
+   */
+  namespace MapSnapshotter {
+    type Options = {
+      /** Region to capture. Mutually exclusive with `camera`. */
+      region?: MapRegion
+      /** Eye-style camera framing. Mutually exclusive with `region`; wins when both are provided. */
+      camera?: MapCamera
+      /** Output size in points. Both dimensions must be > 0. */
+      size: { width: number; height: number }
+      /**
+       * Pixel scale factor. `1` = points = pixels, `2` = retina, `3` = super-retina.
+       * Defaults to the device's main screen scale.
+       */
+      scale?: number
+      /**
+       * Map style. Same shape as `<Map mapStyle>` from Phase 1.
+       * Defaults to `{ style: "standard" }`.
+       */
+      mapStyle?: MapStyleSpec
+      /** `"light"` (default) or `"dark"`. Adjusts the rendered map's color tinting. */
+      appearance?: "light" | "dark"
+    }
+
+    function take(options: Options): Promise<MapSnapshot>
+  }
+
+  /**
+   * Opaque handle to a rendered map snapshot. Instances come from
+   * `MapSnapshotter.take(...)` — there is no public constructor.
+   */
+  class MapSnapshot {
+    private constructor()
+    /** Snapshot dimensions in points (matches `options.size`). */
+    readonly size: { width: number; height: number }
+    /**
+     * Rendered map as a `UIImage`. Drop into `<Image image={snap.image}>`
+     * for display, or use the rich `UIImage` API
+     * (`toPNGBase64String()` / `toPNGData()` / `preparingThumbnail(size)` / ...)
+     * for further processing.
+     */
+    readonly image: UIImage
+    /**
+     * Convert a geographic coordinate to a point inside the snapshot
+     * (in points, matching `size`). Values can fall outside the snapshot
+     * bounds — callers should bounds-check if they need to gate overlay
+     * rendering.
+     */
+    point(coordinate: MapCoordinate): { x: number; y: number }
+  }
+
+  /**
+   * Query MapKit for the LookAround (street-level) scene available at a
+   * coordinate. Resolves to `null` when the location has no imagery — most
+   * non-urban and unsupported regions.
+   *
+   * Combine with `<LookAroundPreview scene={...} />` from the views layer to
+   * render the scene interactively.
+   */
+  namespace MapLookAround {
+    function request(coordinate: MapCoordinate): Promise<MapLookAroundScene | null>
+  }
+
+  /**
+   * Optional badge position inside `<LookAroundPreview>`. Mirrors Apple's
+   * `MKLookAroundBadgePosition` (three cases only — no `bottomLeading`).
+   * Default `"topLeading"`.
+   */
+  type MapLookAroundBadgePosition =
+    | "topLeading" | "topTrailing" | "bottomTrailing"
+
+  /**
+   * Opaque LookAround scene reference. Backed by an Apple `MKLookAroundScene`
+   * — instances come from `MapLookAround.request(...)`; there's no public
+   * constructor. Passes through to the `<LookAroundPreview>` view directly.
+   */
+  class MapLookAroundScene {
+    private constructor()
+    /** Anchor coordinate the scene was requested at. */
+    readonly coordinate: MapCoordinate
+  }
+
+  /**
    * The result of calling the POSIX `stat()` function on a file system object.
    */
   type FileStat = {
@@ -1687,6 +2509,25 @@ declare global {
      * Returns the path to WebDAV's `Documents` directory, you should check `isWebDAVAvailable` first.
      */
     const webDAVDocumentsDirectory: string
+    /**
+     * Returns the path to Safari browser userscript data root directory.
+     * This directory follows the Safari Browser Data storage location configured in Settings.
+     */
+    const safariBrowserDirectory: string
+    /**
+     * Returns the path to Safari browser userscript GM storage directory.
+     * This directory contains the JSON files used by GM.getValue / GM.setValue.
+     */
+    const safariBrowserStorageDirectory: string
+    /**
+     * Returns the path to the directory where Safari browser userscripts save files through `GM.download`.
+     * This directory follows the Safari Browser Data storage location configured in Settings.
+     */
+    const safariBrowserDownloadsDirectory: string
+    /**
+     * Returns the path to the directory where Safari browser userscripts installed from the extension popup are stored.
+     */
+    const safariBrowserUserscriptsDirectory: string
     /**
      * Returns a boolean value indicating whether the file is targeted for storage in iCloud.
      * @param filePath The path of the file
@@ -7587,24 +8428,45 @@ If the event’s calendar does not support availability settings, this property�
 
     /**
      * Executes a command on the SSH server.
+     *
+     * Output decoding is controlled by `options.encoding`:
+     * - `"utf8"` (default): lossy UTF-8 decode. Invalid bytes are replaced with U+FFFD.
+     * - `"ascii"`: lossy ASCII decode.
+     * - `"binary"`: returns raw bytes as `Data`, no decoding. Use this for commands whose
+     *   output may contain binary or terminal control characters (e.g. `softwareupdate -l`,
+     *   commands that emit `\r` progress bars or ANSI escapes). You can then post-process
+     *   the bytes yourself (strip control chars, decode with a different encoding, etc.).
+     *
      * @param command The command to execute on the SSH server.
      * @param options An optional object containing additional options for the command execution.
      * @param options.maxResponseSize The maximum size of the response to return. Defaults to no limit.
      * @param options.includeStderr A boolean value that indicates whether to include the standard error output in the response. Defaults to false.
      * @param options.inShell A boolean value that indicates whether to execute the command in a shell. Defaults to false.
-     * @returns A promise that resolves to the command output as a string if the command execution is successful, or rejects with an error if the command execution fails.
+     * @param options.encoding How to decode the command output. Defaults to `"utf8"`.
+     * @returns A promise that resolves to the command output. Returns `string` when `encoding` is `"utf8"` or `"ascii"`, `Data` when `encoding` is `"binary"`.
      * @throws Error if the command execution fails or if the SSH connection is not established.
      */
+    executeCommand(command: string, options: {
+      maxResponseSize?: number
+      includeStderr?: boolean
+      inShell?: boolean
+      encoding: "binary"
+    }): Promise<Data>
     executeCommand(command: string, options?: {
       maxResponseSize?: number
       includeStderr?: boolean
       inShell?: boolean
+      encoding?: "utf8" | "ascii"
     }): Promise<string>
 
     /**
      * Executes a command on the SSH server and streams the output.
+     *
+     * Note: `onOutput` runs on the JavaScript main thread. Keep it fast — heavy work
+     * inside the callback will block UI updates and slow down stream consumption.
+     *
      * @param command The command to execute on the SSH server.
-     * @param onOutput A callback function that is called for each line of output from the command. The function receives the output data and a boolean indicating whether it is standard error output. The function should return `true` to continue receiving output or `false` to stop receiving output.
+     * @param onOutput A callback function that is called for each chunk of output from the command. The function receives the output data and a boolean indicating whether it is standard error output. Return `true` to continue receiving output, or `false` to stop the stream.
      * @param options An optional object containing additional options for the command execution.
      * @returns A promise that resolves when the command execution is complete, or rejects with an error if the command execution fails.
      */
@@ -7614,6 +8476,10 @@ If the event’s calendar does not support availability settings, this property�
 
     /**
      * Opens a pseudo-terminal (PTY) session on the SSH server.
+     *
+     * Note: `onOutput` runs on the JavaScript main thread. Keep it fast — heavy work
+     * inside the callback will block UI updates and slow down stream consumption.
+     *
      * @param options An object containing options for the PTY session.
      * @param options.wantReply A boolean value that indicates whether to wait for a reply from the server. Defaults to true.
      * @param options.term The terminal type to use for the PTY session. Defaults to "xterm".
@@ -7621,8 +8487,8 @@ If the event’s calendar does not support availability settings, this property�
      * @param options.terminalRowHeight The row height of the terminal. Defaults to 24.
      * @param options.terminalPixelWidth The pixel width of the terminal. Defaults to 0.
      * @param options.terminalPixelHeight The pixel height of the terminal. Defaults to 0.
-     * @param options.onOutput A callback function that is called for each line of output from the PTY session. The function receives the output data and a boolean indicating whether it is standard error output. The function should return `true` to continue receiving output or `false` to stop receiving output.
-     * @param options.onError An optional callback function that is called when an error occurs in the PTY session. The function receives the error message as a string.
+     * @param options.onOutput A callback function that is called for each chunk of output from the PTY session. The function receives the output data and a boolean indicating whether it is standard error output. Return `true` to continue receiving output, or `false` to stop the stream.
+     * @param options.onError An optional callback function that is called when an error occurs after the PTY session has started streaming. The function receives the error message as a string. Errors thrown before the session is established cause the returned promise to reject instead.
      * @returns A promise that resolves to a TTYStdinWriter instance if the PTY session is successfully opened, or rejects with an error if the PTY session fails to open.
      */
     withPTY(optoins: {
@@ -7638,9 +8504,13 @@ If the event’s calendar does not support availability settings, this property�
 
     /**
      * Creates a TTY session and executes the provided closure with input/output streams.
+     *
+     * Note: `onOutput` runs on the JavaScript main thread. Keep it fast — heavy work
+     * inside the callback will block UI updates and slow down stream consumption.
+     *
      * @param options An object containing options for the TTY session.
-     * @param options.onOutput A callback function that is called for each line of output from the TTY session. The function receives the output data and a boolean indicating whether it is standard error output. The function should return `true` to continue receiving output or `false` to stop receiving output.
-     * @param options.onError An optional callback function that is called when an error occurs in the TTY session. The function receives the error message as a string.
+     * @param options.onOutput A callback function that is called for each chunk of output from the TTY session. The function receives the output data and a boolean indicating whether it is standard error output. Return `true` to continue receiving output, or `false` to stop the stream.
+     * @param options.onError An optional callback function that is called when an error occurs after the TTY session has started streaming. The function receives the error message as a string. Errors thrown before the session is established cause the returned promise to reject instead.
      * @returns A promise that resolves to a TTYStdinWriter instance if the TTY session is successfully created, or rejects with an error if the TTY session fails to open.
      */
     withTTY(options: {
@@ -10160,6 +11030,415 @@ If the event’s calendar does not support availability settings, this property�
   }
 
   /**
+   * On-device text analysis APIs that wrap Apple's NaturalLanguage framework:
+   * language identification, tokenization, part-of-speech / named-entity /
+   * sentiment tagging, word & sentence embeddings, gazetteer lookups, and
+   * contextual embeddings.
+   *
+   * All synchronous functions on this namespace return their result directly —
+   * the work is local, free, and typically completes in milliseconds.
+   */
+  namespace NaturalLanguage {
+    /**
+   * ISO BCP-47 language code (e.g. `"en"`, `"zh-Hans"`, `"ja"`). Strings are passed
+   * through to Apple's `Language(rawValue:)`, so any value Apple recognizes is
+   * accepted — the union below is just for editor hints.
+   */
+    type Language =
+      | "en" | "zh-Hans" | "zh-Hant" | "ja" | "ko"
+      | "es" | "fr" | "de" | "it" | "pt" | "ru" | "nl" | "sv" | "no" | "da" | "fi"
+      | "pl" | "tr" | "cs" | "sk" | "hu" | "ro" | "el" | "bg" | "uk" | "hr"
+      | "ar" | "he" | "fa" | "ur" | "hi" | "bn" | "ta" | "te" | "kn" | "ml"
+      | "mr" | "gu" | "pa" | "or"
+      | "th" | "vi" | "id" | "ms" | "lo" | "km" | "my"
+      | "am" | "ka" | "hy" | "mn" | "kk" | "ckb" | "si" | "is" | "ca"
+      | "und"
+      | (string & {})
+
+    type TokenUnit = "word" | "sentence" | "paragraph" | "document"
+
+    /**
+     * Half-open UTF-16 range, mirroring `NSRange`. Indices line up with native
+     * JS string indexing (`text.substring(location, location + length)`).
+     */
+    type StringRange = {
+      location: number
+      length: number
+    }
+
+    type TokenAttributes = {
+      /** The token contains emoji codepoints. */
+      emoji?: boolean
+      /** The token is a numeric sequence. */
+      numeric?: boolean
+      /** The token consists of symbol characters. */
+      symbolic?: boolean
+    }
+
+    type TokenRange = {
+      range: StringRange
+      text: string
+      attributes: TokenAttributes
+    }
+
+    type LanguageHypothesis = {
+      language: Language
+      confidence: number
+    }
+
+    /**
+     * Detect the dominant language of `text`. Returns a BCP-47 language code or
+     * `null` if the recognizer can't make a guess (e.g. text too short).
+     */
+    function dominantLanguage(text: string): Language | null
+
+    /**
+     * Return the top-K language hypotheses for `text`, sorted by confidence
+     * (descending). Pass `constraints` to restrict the candidate set and
+     * `hints` to bias the recognizer with prior probabilities.
+     *
+     * @example
+     * ```ts
+     * const hypotheses = NaturalLanguage.languageHypotheses("Buenos días", {
+     *   maximumCount: 2,
+     *   constraints: ["es", "pt"],
+     * })
+     * ```
+     */
+    function languageHypotheses(
+      text: string,
+      options?: {
+        /** How many candidates to return. Defaults to 3. */
+        maximumCount?: number
+        /** Restrict the recognizer to this set of languages. */
+        constraints?: Language[]
+        /** Prior probabilities, keyed by BCP-47 code. */
+        hints?: { [language: string]: number }
+      }
+    ): LanguageHypothesis[]
+
+    /**
+     * Split `text` into tokens at the requested granularity.
+     *
+     * @param options.unit Token granularity. Defaults to `"word"`.
+     * @param options.language Optional hint to help the tokenizer choose a model.
+     *
+     * @example
+     * ```ts
+     * const sentences = NaturalLanguage.tokenize(article, { unit: "sentence" })
+     * sentences.forEach(t => console.log(t.text))
+     * ```
+     */
+    function tokenize(
+      text: string,
+      options?: {
+        unit?: TokenUnit
+        language?: Language
+      }
+    ): TokenRange[]
+
+    /**
+     * Linguistic tag scheme. Custom NLModel-defined schemes are not exposed yet.
+     */
+    type TagScheme =
+      | "tokenType"
+      | "lexicalClass"
+      | "nameType"
+      | "nameTypeOrLexicalClass"
+      | "lemma"
+      | "language"
+      | "script"
+      | "sentimentScore"
+
+    /**
+     * Enumeration filters applied while walking tags. Mirrors `Tagger.Options`.
+     */
+    type TaggerOptions = {
+      omitWords?: boolean
+      omitPunctuation?: boolean
+      omitWhitespace?: boolean
+      omitOther?: boolean
+      /** Treat sequences of personal-name tokens (e.g. "John Smith") as a single tag. */
+      joinNames?: boolean
+      /** Treat contractions (e.g. "don't") as a single tag. */
+      joinContractions?: boolean
+    }
+
+    type TagResult = {
+      /** Apple's `NLTag` rawValue (e.g. `"Noun"`, `"PersonalName"`). `null` when no tag at this position. */
+      tag: string | null
+      range: StringRange
+    }
+
+    type NamedEntityKind = "personalName" | "placeName" | "organizationName"
+
+    type NamedEntityResult = {
+      entity: NamedEntityKind
+      text: string
+      range: StringRange
+    }
+
+    type TagHypothesesResult = {
+      /** Candidate tag rawValue → confidence (0...1). */
+      hypotheses: { [tag: string]: number }
+      range: StringRange
+    }
+
+    /**
+     * Linguistic tagger. Construct with the schemes you want to use, attach a
+     * text via `setText`, then query single positions or whole ranges.
+     *
+     * Convenience methods `enumerateNamedEntities` and `sentimentScore` cover
+     * the two most common workflows without manually wiring tag scheme flags.
+     *
+     * @example
+     * ```ts
+     * const tagger = new NaturalLanguage.Tagger(["nameType", "lexicalClass"])
+     * tagger.setText("Tim Cook visited Beijing yesterday.")
+     * const entities = tagger.enumerateNamedEntities()
+     * // [{ entity: "personalName", text: "Tim Cook", range: ... },
+     * //  { entity: "placeName",    text: "Beijing",  range: ... }]
+     * ```
+     */
+    class Tagger {
+      constructor(tagSchemes: TagScheme[])
+
+      /** Attach the text to analyze. All subsequent queries operate on this string. */
+      setText(text: string): void
+
+      /**
+       * Override the language hint for the whole text or a sub-range.
+       * Omit `range` to apply to the entire text.
+       */
+      setLanguage(language: Language, range?: StringRange): void
+
+      /**
+       * Attach one or more gazetteers to a tag scheme. Tokens that hit a
+       * gazetteer entry will be tagged with the corresponding label, taking
+       * precedence over the system model for that scheme.
+       *
+       * The scheme must be one of the schemes passed to the constructor.
+       */
+      setGazetteers(gazetteers: Gazetteer[], scheme: TagScheme): void
+
+      /**
+       * Look up the tag covering a single UTF-16 offset.
+       * Returns `null` if `at` is out of range; the inner `tag` may still be `null`
+       * when no tag of the requested scheme exists at that position.
+       */
+      tag(at: number, unit: TokenUnit, scheme: TagScheme): TagResult | null
+
+      /**
+       * Enumerate all tags in a range. Pass `null` to scan the whole text.
+       */
+      tags(
+        range: StringRange | null,
+        unit: TokenUnit,
+        scheme: TagScheme,
+        options?: TaggerOptions
+      ): TagResult[]
+
+      /**
+       * Top-K candidate tags at a position, sorted by confidence (descending).
+       */
+      tagHypotheses(
+        at: number,
+        unit: TokenUnit,
+        scheme: TagScheme,
+        maximumCount: number
+      ): TagHypothesesResult
+
+      /**
+       * Convenience over `tags(..., "word", "nameType", ...)`: returns
+       * person / place / organization mentions only, with `joinNames` enabled
+       * so multi-token names appear as a single entity.
+       */
+      enumerateNamedEntities(
+        range?: StringRange,
+        options?: TaggerOptions
+      ): NamedEntityResult[]
+
+      /**
+       * Sentiment score in the range `[-1.0, 1.0]` (negative → positive),
+       * scored at paragraph granularity starting from `range.location`.
+       * Returns `null` when no sentiment can be computed.
+       *
+       * Requires the tagger to have been constructed with `"sentimentScore"`
+       * in its scheme list.
+       */
+      sentimentScore(range?: StringRange): number | null
+    }
+
+    /**
+     * Distance metric used by Embedding lookups. Apple currently exposes
+     * only cosine distance, but the parameter is reserved for future metrics.
+     */
+    type DistanceType = "cosine"
+
+    type EmbeddingNeighbor = {
+      token: string
+      /** Cosine distance ∈ [0, 2]; smaller is closer. */
+      distance: number
+    }
+
+    /**
+     * On-device word and sentence embeddings. Get an instance from
+     * `wordEmbedding(language)` or `sentenceEmbedding(language)` — direct
+     * construction is not supported.
+     *
+     * The static factories return `null` when no embedding is available for
+     * the requested language on this OS revision.
+     *
+     * @example
+     * ```ts
+     * const emb = NaturalLanguage.Embedding.wordEmbedding("en")
+     * if (emb) {
+     *   console.log(emb.distance("cat", "kitten"))     // small
+     *   console.log(emb.neighbors("happy", 5))         // ~5 nearest words
+     * }
+     * ```
+     */
+    class Embedding {
+      private constructor()
+
+      /** Word-level embedding (iOS 12+). */
+      static wordEmbedding(language: Language, revision?: number): Embedding | null
+      /** Sentence-level embedding (iOS 14+). Returns `null` on iOS 13. */
+      static sentenceEmbedding(language: Language, revision?: number): Embedding | null
+
+      readonly language: Language | null
+      readonly dimension: number
+      readonly vocabularySize: number
+      readonly revision: number
+
+      /** Whether `token` is present in this embedding's vocabulary. */
+      contains(token: string): boolean
+
+      /** Vector for `token`, or `null` if the token is not in vocabulary. */
+      vector(token: string): number[] | null
+
+      /**
+       * Cosine distance between two tokens. Returns `null` if either token is
+       * outside the embedding's vocabulary — use `contains` to disambiguate
+       * "no signal" from "very far apart".
+       */
+      distance(first: string, second: string, type?: DistanceType): number | null
+
+      /**
+       * Up to `maximumCount` nearest neighbors of `token`, sorted by ascending
+       * distance. Returns an empty array if `token` is not in vocabulary.
+       */
+      neighbors(token: string, maximumCount: number, type?: DistanceType): EmbeddingNeighbor[]
+    }
+
+    /**
+     * A user-supplied lexicon mapping labels to lists of terms. Attach to a
+     * `Tagger` via `setGazetteers` to override the system model for a tag
+     * scheme — useful for product names, code identifiers, or any custom
+     * vocabulary you want NER / lexical tagging to recognize.
+     *
+     * @example
+     * ```ts
+     * const gz = new NaturalLanguage.Gazetteer({
+     *   product: ["Scripting", "Pro"],
+     *   company: ["Acme", "Acme Corp"]
+     * }, "en")
+     *
+     * const tagger = new NaturalLanguage.Tagger(["nameType"])
+     * tagger.setGazetteers([gz], "nameType")
+     * tagger.setText("Acme Corp ships the Scripting app.")
+     * const tags = tagger.tags(null, "word", "nameType", { omitWhitespace: true })
+     * // tags include { tag: "product", ... } and { tag: "company", ... }
+     * ```
+     */
+    class Gazetteer {
+      /**
+       * Build a gazetteer from a `{ label: [term, term, ...] }` dictionary.
+       * Throws if the dictionary is malformed (e.g. empty terms, duplicate
+       * entries across labels).
+       *
+       * @param language Optional BCP-47 language hint; pass when the terms
+       *                 are language-specific.
+       */
+      constructor(dictionary: { [label: string]: string[] }, language?: Language)
+
+      /** Language the gazetteer was built for, or `null` if unspecified. */
+      readonly language: Language | null
+
+      /** Returns the gazetteer label matching `term`, or `null` for a miss. */
+      label(term: string): string | null
+    }
+
+    /**
+     * BCP-47 script tag (ISO 15924), e.g. `"Latn"`, `"Hans"`, `"Cyrl"`.
+     */
+    type Script = "Latn" | "Hans" | "Hant" | "Cyrl" | "Hira" | "Arab" | "Hebr" | "Grek" | (string & {})
+
+    type ContextualEmbeddingToken = {
+      text: string
+      range: StringRange
+      /** Dense vector of length `dimension`. */
+      vector: number[]
+    }
+
+    type ContextualEmbeddingResult = {
+      sequenceLength: number
+      tokens: ContextualEmbeddingToken[]
+    }
+
+    /**
+     * Pretrained transformer-style contextual embeddings (iOS 17+). The
+     * underlying assets are downloaded on demand — call `prepare()` once
+     * before the first `embeddingResult()`.
+     *
+     * On iOS 16 and earlier, the class is still present but every method
+     * rejects with `"ContextualEmbedding requires iOS 17 or later."`.
+     *
+     * @example
+     * ```ts
+     * const emb = NaturalLanguage.ContextualEmbedding.forLanguage("en")
+     * if (emb) {
+     *   await emb.prepare()
+     *   const r = await emb.embeddingResult("Hello world", "en")
+     *   console.log(r.sequenceLength, r.tokens[0].vector.length)
+     * }
+     * ```
+     */
+    class ContextualEmbedding {
+      private constructor()
+
+      /** Most recent embedding suitable for the given language, or `null`. */
+      static forLanguage(language: Language): ContextualEmbedding | null
+      /** Most recent embedding suitable for the given script, or `null`. */
+      static forScript(script: Script): ContextualEmbedding | null
+      /** Locate an embedding by its model identifier (e.g. for inference matching a training run). */
+      static forModelIdentifier(modelIdentifier: string): ContextualEmbedding | null
+
+      readonly modelIdentifier: string
+      readonly languages: Language[]
+      readonly scripts: Script[]
+      readonly revision: number
+      readonly dimension: number
+      readonly maximumSequenceLength: number
+      readonly hasAvailableAssets: boolean
+
+      /**
+       * Request that the embedding's assets be loaded onto the device, then
+       * resolve. Calling `embeddingResult()` before this resolves will
+       * generally fail.
+       */
+      prepare(): Promise<void>
+
+      /**
+       * Compute contextual embedding vectors for `text`. Tokens correspond to
+       * the embedding model's own tokenization (typically wordpieces), each
+       * with a `vector` of length `dimension`.
+       */
+      embeddingResult(text: string, language?: Language): Promise<ContextualEmbeddingResult>
+    }
+  }
+
+  /**
    * This class provides an interface for working with PDF page.
    */
   class PDFPage {
@@ -12349,7 +13628,34 @@ If the event’s calendar does not support availability settings, this property�
       "shipmentTrackingNumber"
     }
 
+    /**
+     * Metadata for a script that can run in the custom keyboard extension.
+     */
+    type KeyboardScriptInfo = {
+      /**
+       * The script's stable name.
+       */
+      name: string
+      /**
+       * The localized display name for the current device language.
+       */
+      localizedName: string
+      /**
+       * The SF Symbol name used by the script.
+       */
+      icon: string
+      /**
+       * The script color name.
+       */
+      color: string
+    }
+
     const traits: TextInputTraits
+
+    /**
+     * All scripts that can run in the custom keyboard extension.
+     */
+    const allScripts: KeyboardScriptInfo[]
 
     /**
      * The text before the cursor, or null if there is no text before the cursor.
@@ -12385,6 +13691,17 @@ If the event’s calendar does not support availability settings, this property�
      * Switches to the next keyboard in the list of enabled keyboards.
      */
     function nextKeyboard(): void
+    /**
+     * Dismisses the current keyboard script and runs another keyboard script by name.
+     * @param scriptName The target script's stable name.
+     * @param queryParameters Parameters passed to the target script, available as `Script.queryParameters`.
+     */
+    function switchToScript(scriptName: string, queryParameters?: Record<string, string>): Promise<void>
+    /**
+     * Dismisses the current keyboard script and runs the next available keyboard script.
+     * @param queryParameters Parameters passed to the target script, available as `Script.queryParameters`.
+     */
+    function nextScript(queryParameters?: Record<string, string>): Promise<void>
     /**
      * Moves the cursor by the specified offset.
      * @param offset The number of characters to move the cursor. A positive value moves the cursor to the right, while a negative value moves it to the left.
@@ -13753,11 +15070,37 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     listenAddressIPv6: string | null
 
     /**
-     * Registers a handler for the specified path.
+     * Registers a synchronous handler for the specified path. The handler
+     * runs on the JavaScript main thread and must return an `HttpResponse`
+     * immediately.
+     *
+     * @deprecated Prefer `registerAsyncHandler`, which lets the handler
+     * await async work (network calls, async file IO, SQLite queries,
+     * etc.) before sending the response. The sync entry point is kept
+     * only for legacy scripts and may be removed in a future major
+     * release.
+     *
      * @param path The path to register the handler for.
-     * @param handler The handler function. The handler function takes a request as an argument and returns a response.
+     * @param handler The handler function. Takes a request and returns a response.
      */
     registerHandler(path: string, handler: (request: HttpRequest) => HttpResponse): void
+
+    /**
+     * Registers an async handler for the specified path. The handler may
+     * return a `Promise<HttpResponse>` and the server will wait for it to
+     * resolve before sending the reply. If the promise rejects, the server
+     * returns a 500 with the error message as the body.
+     * @param path The path to register the handler for.
+     * @param handler The async handler function. Takes a request and returns a promise of a response.
+     * @example
+     * ```ts
+     * server.registerAsyncHandler("/slow", async req => {
+     *   await new Promise(r => setTimeout(r, 200))
+     *   return HttpResponse.ok(HttpResponseBody.text("slow ok"))
+     * })
+     * ```
+     */
+    registerAsyncHandler(path: string, handler: (request: HttpRequest) => Promise<HttpResponse>): void
 
     /**
      * Register a static file for the specified path.
@@ -13786,6 +15129,21 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     registerFilesFromDirectory(path: string, directory: string, options?: {
       defaults?: string[]
     }): void
+
+    /**
+     * Register an auto-generated directory browser for the specified path.
+     * Subpaths that resolve to a file are streamed back as-is; subpaths
+     * that resolve to a directory are rendered as a simple HTML index
+     * with links to each entry.
+     * @param path The path to register the browser for. Must include a
+     * single path variable, e.g. "/browse/:path".
+     * @param directory The directory to browse.
+     * @example
+     * ```ts
+     * server.registerDirectoryBrowser("/browse/:path", Path.join(Script.directory, "data"))
+     * ```
+     */
+    registerDirectoryBrowser(path: string, directory: string): void
 
     /**
      * Registers a websocket handler for the specified path.
@@ -13827,15 +15185,100 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     }): void
 
     /**
+     * Registers an async middleware layer that runs before route handlers.
+     * The middleware receives the incoming request and may either:
+     *   - resolve with `null` / `undefined` to let the request pass through
+     *     to the next middleware or the route handler, or
+     *   - resolve with an `HttpResponse` to short-circuit the request — no
+     *     subsequent middleware or route handler will run.
+     *
+     * Layers run in registration order. Throwing or rejecting becomes a
+     * 500 response.
+     *
+     * Common uses: per-request logging, auth checks, CORS headers, rate
+     * limiting. For CORS specifically, prefer setting headers on the
+     * downstream response inside the middleware that returns `null`.
+     *
+     * @param handler The middleware function. Always async.
+     * @example
+     * ```ts
+     * // Reject anything without an X-Auth header
+     * server.registerMiddleware(async (req) => {
+     *   if (!req.headers["x-auth"]) {
+     *     return HttpResponse.unauthorized(HttpResponseBody.text("missing token"))
+     *   }
+     *   return null
+     * })
+     * ```
+     */
+    registerMiddleware(handler: (request: HttpRequest) => Promise<HttpResponse | null | undefined>): void
+
+    /**
+     * Sets the async handler that runs when no route matches the request.
+     * The handler is required to resolve with an `HttpResponse`. Throwing
+     * or rejecting becomes a 500 response.
+     *
+     * Calling this multiple times replaces the previous handler.
+     *
+     * @param handler The async handler. Resolves with an `HttpResponse`.
+     * @example
+     * ```ts
+     * server.setNotFoundHandler(async (req) => {
+     *   return HttpResponse.notFound(HttpResponseBody.text(`No route: ${req.path}`))
+     * })
+     * ```
+     */
+    setNotFoundHandler(handler: (request: HttpRequest) => Promise<HttpResponse>): void
+
+    /**
      * Starts the HTTP server.
      * @param options The options for the HTTP server.
      * @param options.port The port to listen on. Defaults to 8080, if specified 0, the server will listen on a random port.
      * @param options.forceIPv4 Whether to force the server to listen on IPv4. Defaults to false.
+     * @param options.tls Optional TLS configuration. When provided, the server starts as HTTPS using the supplied PKCS#12 identity.
+     * @param options.tls.p12 Either an absolute path to a PKCS#12 file (string)
+     *   or the raw P12 bytes (`Data`). The `Data` form is useful when the P12
+     *   is loaded from Keychain or another in-memory source instead of disk.
+     * @param options.tls.password Password for the P12 identity.
+     * @param options.tls.minVersion Minimum TLS protocol version. Accepts
+     *   `"1.2"` or `"1.3"`. Defaults to `"1.2"`.
+     * @param options.tls.maxVersion Maximum TLS protocol version. Accepts
+     *   `"1.2"` or `"1.3"`. Defaults to unset (no upper bound).
      * @returns An error message if the server fails to start, or null if the server starts successfully.
+     * @example
+     * ```ts
+     * // HTTPS from a P12 file
+     * const err = server.start({
+     *   port: 8443,
+     *   tls: {
+     *     p12: Path.join(Script.directory, "server.p12"),
+     *     password: "your-p12-password",
+     *   },
+     * })
+     *
+     * // HTTPS with P12 bytes from Keychain, pinned to TLS 1.3
+     * const p12Bytes = Keychain.getData("server.p12") // sync, returns Data | null
+     * if (!p12Bytes) throw new Error("P12 not found in Keychain")
+     * server.start({
+     *   port: 8443,
+     *   tls: {
+     *     p12: p12Bytes,
+     *     password: "your-p12-password",
+     *     minVersion: "1.3",
+     *     maxVersion: "1.3",
+     *   },
+     * })
+     * ```
      */
     start(options?: {
       port?: number
       forceIPv4?: boolean
+      tls?: {
+        p12: string | Data
+        password: string
+        minVersion?: "1.2" | "1.3"
+        maxVersion?: "1.2" | "1.3"
+      }
     }): string | null
 
     /**
@@ -14351,7 +15794,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   }
 
   class Observable<T> {
-    constructor(initialValue: T)
+    private constructor(initialValue: T)
     value: T
     setValue: (value: T) => void
     subscribe: (callback: (value: T, oldValue: T) => void) => void
@@ -15718,11 +17161,11 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
    */
   interface HMCharacteristicMetadata {
     format:
-      | 'bool' | 'int' | 'float' | 'string' | 'tlv8' | 'data' | 'array' | 'dictionary'
-      | 'uint8' | 'uint16' | 'uint32' | 'uint64' | (string & {})
+    | 'bool' | 'int' | 'float' | 'string' | 'tlv8' | 'data' | 'array' | 'dictionary'
+    | 'uint8' | 'uint16' | 'uint32' | 'uint64' | (string & {})
     units?:
-      | 'celsius' | 'fahrenheit' | 'percentage' | 'arcdegree' | 'seconds'
-      | 'lux' | 'partsPerMillion' | 'microgramsPerCubicMeter' | (string & {})
+    | 'celsius' | 'fahrenheit' | 'percentage' | 'arcdegree' | 'seconds'
+    | 'lux' | 'partsPerMillion' | 'microgramsPerCubicMeter' | (string & {})
     minimumValue?: number
     maximumValue?: number
     stepValue?: number
@@ -15911,6 +17354,176 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     readonly uuid: string
     readonly name: string
   }
+}
+
+type SpotlightParameters = Record<string, any>
+
+/**
+ * A Spotlight item. Every field except `id` and `title` maps 1:1 to a
+ * `CSSearchableItemAttributeSet` property in Apple's Core Spotlight framework,
+ * grouped below the same way Apple documents them.
+ *
+ * @see https://developer.apple.com/documentation/corespotlight/cssearchableitemattributeset
+ */
+type SpotlightItem = {
+  /**
+   * Script-local identifier. Required and unique within the current script.
+   * Returned as `Spotlight.current.id` when the item is tapped.
+   */
+  id: string
+  /** Arbitrary data delivered to `spotlight.tsx` as `Spotlight.current.parameters`. */
+  parameters?: SpotlightParameters
+
+  // General
+
+  /** Primary title shown in Spotlight results. Required. */
+  title: string
+  /** Localized display name. */
+  displayName?: string
+  /** Alternate names the item can also be found by. */
+  alternateNames?: string[]
+  /** Uniform Type Identifier used to choose the system icon, e.g. `"public.image"`. */
+  contentType?: UTType
+  /** URL of the underlying content (use a file URL for local content). */
+  contentURL?: string
+  /** Thumbnail image bytes. Takes priority over `thumbnailURL`. */
+  thumbnailData?: Data
+  /** Local file URL string pointing to a thumbnail image. */
+  thumbnailURL?: string
+  /** Extra keywords to match against. */
+  keywords?: string[]
+  /** Higher values rank the item higher in results. */
+  rankingHint?: number
+  /** Whether the item can be navigated to (uses `latitude`/`longitude`). */
+  supportsNavigation?: boolean
+  /** Whether the item can be called (uses `phoneNumbers`). */
+  supportsPhoneCall?: boolean
+
+  // Documents
+
+  /** Long description shown under the title. */
+  contentDescription?: string
+  /** Subject of the content. */
+  subject?: string
+  /** Human-readable kind, e.g. "Note", "Invoice". */
+  kind?: string
+  /** Entity that created the content. */
+  creator?: string
+  /** Number of pages in the document. */
+  pageCount?: number
+  /** Size of the content in bytes. */
+  fileSize?: number
+
+  // Messaging
+
+  /** Full searchable text body. Improves recall for free-text queries. */
+  textContent?: string
+  /** Author display names. */
+  authorNames?: string[]
+  /** Associated email addresses. */
+  emailAddresses?: string[]
+  /** Associated phone numbers. */
+  phoneNumbers?: string[]
+
+  // Media
+
+  /** Free-form comment. */
+  comment?: string
+  /** Content creation date. Defaults to first index time when omitted. */
+  contentCreationDate?: Date | string | number
+  /** Content modification date. Defaults to last index time when omitted. */
+  contentModificationDate?: Date | string | number
+  /** Last used date. */
+  lastUsedDate?: Date | string | number
+
+  // Events
+
+  /** Start date, for event-like items. */
+  startDate?: Date | string | number
+  /** End date, for event-like items. */
+  endDate?: Date | string | number
+  /** Due date, for task-like items. */
+  dueDate?: Date | string | number
+  /** Completion date, for task-like items. */
+  completionDate?: Date | string | number
+  /** Whether the event lasts all day. */
+  allDay?: boolean
+
+  // Places
+
+  /** Latitude in degrees. */
+  latitude?: number
+  /** Longitude in degrees. */
+  longitude?: number
+  /** Altitude in meters. */
+  altitude?: number
+  /** Human-readable place name. */
+  namedLocation?: string
+  /** City of the place. */
+  city?: string
+  /** State or province of the place. */
+  stateOrProvince?: string
+  /** Country of the place. */
+  country?: string
+  /** Postal code of the place. */
+  postalCode?: string
+  /** Fully formatted address of the place. */
+  fullyFormattedAddress?: string
+
+  // Item-level
+
+  /** When the item should be removed from the index. */
+  expirationDate?: Date | string | number
+}
+
+type SpotlightCurrent = {
+  id: string
+  parameters: SpotlightParameters
+}
+
+type SpotlightIndexedItem = Omit<SpotlightItem, "thumbnailData" | "contentCreationDate" | "contentModificationDate"> & {
+  scriptName: string
+  uniqueIdentifier: string
+  contentCreationDate: number
+  contentModificationDate: number
+}
+
+declare namespace Spotlight {
+  /**
+   * Spotlight launch context. This is non-null when the current script is
+   * running from `spotlight.tsx` after a user taps a Spotlight result.
+   */
+  const current: SpotlightCurrent | null
+
+  /**
+   * Index or update one item for the current script. Requires Scripting PRO.
+   */
+  function index(item: SpotlightItem): Promise<void>
+
+  /**
+   * Index or update multiple items for the current script. Requires Scripting PRO.
+   */
+  function indexItems(items: SpotlightItem[]): Promise<void>
+
+  /**
+   * Delete one indexed item by its script-local id. Requires Scripting PRO.
+   */
+  function delete(id: string): Promise<void>
+
+  /**
+   * Delete indexed items by their script-local ids. Requires Scripting PRO.
+   */
+  function deleteItems(ids: string[]): Promise<void>
+
+  /**
+   * Delete all Spotlight items registered by the current script. Requires Scripting PRO.
+   */
+  function deleteAll(): Promise<void>
+
+  /**
+   * List Spotlight items registered by the current script. Requires Scripting PRO.
+   */
+  function getItems(): Promise<SpotlightIndexedItem[]>
 }
 
 export { }

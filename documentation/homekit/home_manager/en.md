@@ -1,6 +1,6 @@
 `HMHomeManager` is the top-level entry into HomeKit. It exposes the user's homes and home-update events.
 
-> ⚠️ HomeKit access requires the Scripting PRO upgrade and the system HomeKit permission. The system permission prompt is triggered automatically the first time you call any `HMHomeManager.*` API — you do not need to request it manually. Toggle the permission later from **Settings → Permissions → HomeKit** or **Settings → Privacy & Security → HomeKit**.
+> The system permission prompt is triggered automatically the first time you call any `HMHomeManager.*` API — you do not need to request it manually. Toggle the permission later from **Settings → Permissions → HomeKit** or **Settings → Privacy & Security → HomeKit**.
 
 ---
 

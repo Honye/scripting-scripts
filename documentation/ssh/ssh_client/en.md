@@ -62,7 +62,7 @@ ssh.onDisconnect = () => {
 
 ## Instance Methods
 
-### `executeCommand(command: string, options?): Promise<string>`
+### `executeCommand(command: string, options?): Promise<string | Data>`
 
 Executes a shell command on the remote server and returns its output.
 
@@ -82,14 +82,25 @@ Executes a shell command on the remote server and returns its output.
   * `inShell?` (`boolean`):
     If `true`, executes the command inside a shell (e.g., `sh -c`). Default is `false`.
 
+  * `encoding?` (`"utf8" | "ascii" | "binary"`):
+    How to decode the command output. Defaults to `"utf8"`.
+    - `"utf8"` and `"ascii"`: lossy decode — invalid bytes are replaced with `U+FFFD`. The result is a `string`.
+    - `"binary"`: returns raw bytes as `Data` with no decoding. Use this for commands whose output may contain binary or terminal control characters (e.g. `softwareupdate -l`, commands that emit `\r` progress bars or ANSI escapes). You can then post-process the bytes yourself (strip control chars, decode with a different encoding, etc.).
+
 #### Returns:
 
-* A `Promise` that resolves to the command output as a string.
+* A `Promise` that resolves to the command output. Returns `string` when `encoding` is `"utf8"` (default) or `"ascii"`, `Data` when `encoding` is `"binary"`.
 
 #### Example:
 
 ```ts
+// default utf8 decoding
 const result = await ssh.executeCommand("uname -a")
+
+// binary mode: keep raw bytes so control characters can be stripped manually
+const raw = await ssh.executeCommand("softwareupdate -l", { encoding: "binary" })
+// raw is Data — decode after cleaning if needed
+const clean = raw.toDecodedString()
 ```
 
 ---

@@ -170,7 +170,7 @@ setInterval(() => {
 电平定时器在 `pause()` / `stop()` / `dispose()` 时自动停止，下一次 `record()` 时
 若 `onLevelUpdate` 仍然存在则会自动恢复。
 
-> 如果需要原始 PCM 采样、实时波形数据或音高检测，请改用 [`AudioCapture`](audio_capture/) 。
+> 如果需要原始 PCM 采样、实时波形数据或音高检测，请改用 `AudioCapture` 。
 > `AudioRecorder` 主要用于把编码后的音频写入文件（m4a / aac / flac / opus / mp3 / wav）。
 
 ---

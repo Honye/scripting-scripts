@@ -4,6 +4,7 @@ It serves a role similar to SwiftUI’s `.environment()`, but with a more explic
 Currently, the modifier supports:
 
 * `editMode` — controls editing behavior in views such as `List`
+* `layoutDirection` — sets the layout direction for descendant views
 * `openURL` — customizes how links are handled when tapped
 
 These environment values affect all descendants within the modified view subtree.
@@ -15,6 +16,7 @@ These environment values affect all descendants within the modified view subtree
 ```ts
 environments?: {
   editMode?: Observable<EditMode>;
+  layoutDirection?: "leftToRight" | "rightToLeft";
   openURL?: (url: string) => OpenURLActionResult;
 };
 ```
@@ -71,7 +73,32 @@ const editMode = useObservable(() => EditMode.active())
 
 ---
 
-## 2. openURL Environment
+## 2. layoutDirection Environment
+
+The `layoutDirection` environment value controls whether descendant views lay out from left to right or from right to left.
+
+## Type
+
+```ts
+layoutDirection?: "leftToRight" | "rightToLeft";
+```
+
+## layoutDirection Example
+
+```tsx
+<HStack
+  environments={{
+    layoutDirection: "rightToLeft"
+  }}
+>
+  <Text>First</Text>
+  <Text>Second</Text>
+</HStack>
+```
+
+---
+
+## 3. openURL Environment
 
 The `openURL` environment value customizes how URLs are handled when interacted with inside the view tree.
 It overrides the default behavior of components such as `<Link>`.
@@ -154,6 +181,7 @@ const editMode = useObservable(() => EditMode.inactive())
 <VStack
   environments={{
     editMode,
+    layoutDirection: "leftToRight",
     openURL: (url) => {
       if (url.startsWith("https://safe.com")) {
         return OpenURLActionResult.systemAction({
@@ -189,8 +217,9 @@ const editMode = useObservable(() => EditMode.inactive())
 
 1. The `environments` modifier applies only to the subtree where it is used.
 2. `editMode` must be an `Observable<EditMode>` for reactive updates.
-3. `openURL` replaces default URL-handling behavior for all descendant views.
-4. Returning `handled()` stops further URL processing.
-5. `systemAction()` delegates handling back to the system.
-6. **`prefersInApp` requires iOS 26.0+** and may be ignored on earlier versions.
-7. Scripting’s environment system is explicit—only the values you define are injected.
+3. `layoutDirection` accepts `"leftToRight"` or `"rightToLeft"`.
+4. `openURL` replaces default URL-handling behavior for all descendant views.
+5. Returning `handled()` stops further URL processing.
+6. `systemAction()` delegates handling back to the system.
+7. **`prefersInApp` requires iOS 26.0+** and may be ignored on earlier versions.
+8. Scripting’s environment system is explicit—only the values you define are injected.

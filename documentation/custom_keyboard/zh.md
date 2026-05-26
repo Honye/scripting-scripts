@@ -114,6 +114,46 @@ CustomKeyboard.present(<MyKeyboard />)
 
 ## 七、导航控制
 
+### `allScripts: KeyboardScriptInfo[]`
+
+列出所有可以在自定义键盘扩展中运行的脚本。
+
+```ts
+const scripts = CustomKeyboard.allScripts
+```
+
+每一项包含：
+
+| 属性              | 类型       | 说明               |
+| ----------------- | ---------- | ------------------ |
+| `name`            | `string`   | 脚本的稳定名称     |
+| `localizedName`   | `string`   | 当前语言下的显示名 |
+| `icon`            | `string`   | 脚本的 SF Symbol   |
+| `color`           | `string`   | 脚本颜色名称       |
+
+### `switchToScript(scriptName: string, queryParameters?: Record<string, string>): Promise<void>`
+
+关闭当前键盘脚本，并按脚本名称运行另一个键盘脚本。
+可选的 `queryParameters` 会作为目标脚本的 `Script.queryParameters` 暴露。
+
+```ts
+await CustomKeyboard.switchToScript("Rime Pinyin DEMO", {
+  source: Script.name,
+  mode: "symbols",
+})
+```
+
+### `nextScript(queryParameters?: Record<string, string>): Promise<void>`
+
+关闭当前键盘脚本，并运行下一个可用的键盘脚本。
+可选的 `queryParameters` 会作为目标脚本的 `Script.queryParameters` 暴露。
+
+```ts
+await CustomKeyboard.nextScript({
+  source: Script.name,
+})
+```
+
 ### `dismissToHome(): void`
 
 关闭当前键盘脚本，返回 Scripting 键盘首页（脚本列表）。适用于用户在多个脚本之间自由切换的场景。

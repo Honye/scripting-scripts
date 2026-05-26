@@ -29,6 +29,210 @@
           {
             "pro": true,
             "title": {
+              "en": "Remote Push",
+              "zh": "远程推送"
+            },
+            "subtitle": {
+              "en": "Send push notifications to your own devices from your servers and automations using an API key.",
+              "zh": "使用 API key，从你自己的服务器和自动化流程向自己的设备发送推送通知。"
+            },
+            "keywords": [
+              "Remote Push",
+              "push notification",
+              "APNs",
+              "api key",
+              "deviceIds",
+              "远程推送",
+              "推送",
+              "通知"
+            ],
+            "readme": "remote_push/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Haptics",
+              "zh": "触觉反馈"
+            },
+            "subtitle": {
+              "en": "Create and play custom Core Haptics patterns with engines, events, parameters, players, and AHAP data.",
+              "zh": "使用 engine、event、parameter、player 和 AHAP 数据创建并播放自定义 Core Haptics 触觉 pattern。"
+            },
+            "keywords": [
+              "Haptics",
+              "CoreHaptics",
+              "HapticEngine",
+              "HapticPattern",
+              "HapticEvent",
+              "HapticEventParameter",
+              "HapticDynamicParameter",
+              "HapticPatternPlayer",
+              "AHAP",
+              "taptic",
+              "vibration",
+              "触觉",
+              "震动",
+              "触感",
+              "触觉反馈"
+            ],
+            "readme": "haptics/",
+            "example": "haptics/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Spotlight",
+              "zh": "Spotlight"
+            },
+            "subtitle": {
+              "en": "Index script-defined items into system Spotlight and handle taps with spotlight.tsx through Spotlight.current.",
+              "zh": "将脚本定义的资源加入系统 Spotlight，并通过 spotlight.tsx 与 Spotlight.current 处理点击。"
+            },
+            "keywords": [
+              "Spotlight",
+              "CoreSpotlight",
+              "search",
+              "index",
+              "spotlight.tsx",
+              "Spotlight.current",
+              "搜索",
+              "索引"
+            ],
+            "readme": "spotlight/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "NaturalLanguage",
+              "zh": "自然语言"
+            },
+            "subtitle": {
+              "en": "On-device language ID, tokenization, POS / NER / sentiment tagging, word & sentence embeddings, gazetteers, and contextual embeddings .",
+              "zh": "端上语言识别、分词、词性 / 命名实体 / 情感标注、词与句嵌入、Gazetteer 自定义词典,以及上下文嵌入。"
+            },
+            "keywords": [
+              "NaturalLanguage",
+              "Tagger",
+              "Embedding",
+              "Gazetteer",
+              "ContextualEmbedding",
+              "NLTokenizer",
+              "LanguageRecognizer",
+              "language identification",
+              "tokenization",
+              "named entity",
+              "NER",
+              "sentiment",
+              "part of speech",
+              "word embedding",
+              "sentence embedding",
+              "contextual embedding",
+              "lemma",
+              "gazetteer",
+              "语言识别",
+              "分词",
+              "命名实体",
+              "情感分析",
+              "词性",
+              "词嵌入",
+              "句嵌入",
+              "上下文嵌入",
+              "词典"
+            ],
+            "children": [
+              {
+                "title": {
+                  "en": "Language Recognition",
+                  "zh": "语言识别"
+                },
+                "subtitle": {
+                  "en": "Detect the dominant language or rank candidates by confidence.",
+                  "zh": "检测主语言或按置信度排序候选语言。"
+                },
+                "readme": "natural_language/language_recognition/"
+              },
+              {
+                "title": {
+                  "en": "Tokenizer",
+                  "zh": "分词"
+                },
+                "subtitle": {
+                  "en": "Split text into words, sentences, paragraphs, or documents.",
+                  "zh": "按 word / sentence / paragraph / document 切分文本。"
+                },
+                "readme": "natural_language/tokenizer/"
+              },
+              {
+                "title": {
+                  "en": "Tagger",
+                  "zh": "标注 (Tagger)"
+                },
+                "subtitle": {
+                  "en": "Part-of-speech, lemma, named-entity, sentiment, custom tags from gazetteers.",
+                  "zh": "词性、词元、命名实体、情感打分,以及来自 Gazetteer 的自定义标签。"
+                },
+                "readme": "natural_language/tagger/"
+              },
+              {
+                "title": {
+                  "en": "Embedding",
+                  "zh": "词与句嵌入"
+                },
+                "subtitle": {
+                  "en": "Built-in word and sentence vectors for similarity, neighbors, distance.",
+                  "zh": "内置词向量与句向量,用于相似度、邻居与距离计算。"
+                },
+                "readme": "natural_language/embedding/"
+              },
+              {
+                "title": {
+                  "en": "Gazetteer",
+                  "zh": "Gazetteer 词典"
+                },
+                "subtitle": {
+                  "en": "User-supplied lexicon that overrides the system tagger for custom vocabularies.",
+                  "zh": "用户提供的自定义词典,用于覆盖系统模型的标注结果。"
+                },
+                "readme": "natural_language/gazetteer/"
+              },
+              {
+                "title": {
+                  "en": "Contextual Embedding",
+                  "zh": "上下文嵌入"
+                },
+                "subtitle": {
+                  "en": "Transformer-style sequence embeddings.",
+                  "zh": "transformer 风格的序列嵌入。"
+                },
+                "readme": "natural_language/contextual_embedding/"
+              }
+            ],
+            "readme": "natural_language/",
+            "example": "natural_language/index"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Safari Browser Scripts",
+              "zh": "Safari 浏览器脚本"
+            },
+            "subtitle": {
+              "en": "Run userscripts in Safari, use GM APIs, and access Scripting.FileManager.",
+              "zh": "在 Safari 中运行用户脚本，使用 GM API，并访问 Scripting.FileManager。"
+            },
+            "readme": "safari_browser_scripts/",
+            "keywords": [
+              "Safari",
+              "Userscript",
+              "Greasemonkey",
+              "Tampermonkey",
+              "GM",
+              "Scripting.FileManager"
+            ]
+          },
+          {
+            "pro": true,
+            "title": {
               "en": "AVCaptureSession & Camera Control",
               "zh": "AVCaptureSession 与 Camera Control"
             },
@@ -485,6 +689,227 @@
           },
           {
             "title": {
+              "en": "Canvas (Web 2D drawing context)",
+              "zh": "Canvas（Web 2D 绘图上下文）"
+            },
+            "subtitle": {
+              "en": "A SwiftUI Canvas–backed view with a Web-Canvas-style imperative API. Drive `ctx.fillStyle / fillRect / arc / stroke / drawImage` etc.; the JS context collects commands and Swift replays them onto a real GraphicsContext on every redraw. Use `<TimelineCanvas>` for per-frame animation (60fps via SwiftUI TimelineView).",
+              "zh": "基于 SwiftUI Canvas 的视图,提供与 Web Canvas 一致的命令式 API。`ctx.fillStyle / fillRect / arc / stroke / drawImage` 等指令在 JS 端收集,SwiftUI 每次重绘时由 Swift 端回放到 GraphicsContext。逐帧动画请用 `<TimelineCanvas>`(基于 SwiftUI TimelineView 的 60fps 路径)。"
+            },
+            "keywords": [
+              "Canvas",
+              "TimelineCanvas",
+              "CanvasRenderingContext",
+              "drawing",
+              "graphics",
+              "2D",
+              "path",
+              "stroke",
+              "fill",
+              "gradient",
+              "drawImage",
+              "measureText",
+              "TextMetrics",
+              "GraphicsContext",
+              "TimelineView",
+              "requestAnimationFrame",
+              "animation"
+            ],
+            "example": "views/canvas/index",
+            "readme": "views/canvas/"
+          },
+          {
+            "title": {
+              "en": "MapKit",
+              "zh": "MapKit"
+            },
+            "subtitle": {
+              "en": "Initial MapKit support — a SwiftUI Map view (camera binding, styles, controls, marker / feature selection with Apple's auto detail card), plus `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` global namespaces.",
+              "zh": "首次引入 MapKit：SwiftUI Map 视图(相机绑定、样式、控件、marker / feature 选中与 Apple 原生 detail 卡),以及 `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` 全局命名空间。"
+            },
+            "children": [
+              {
+                "title": {
+                  "en": "Map",
+                  "zh": "Map"
+                },
+                "subtitle": {
+                  "en": "A SwiftUI MapKit view  with two-way camera binding via `Observable<MapCameraPosition>`, three map styles (standard / imagery / hybrid) with elevation and POI filters, `MapContent` children (`Marker`, `MapPolyline`, `MapPolygon`, `MapCircle`), and built-in controls (user location button, compass, pitch toggle, scale bar).",
+                  "zh": "基于 SwiftUI MapKit 的视图,通过 `Observable<MapCameraPosition>` 实现双向相机绑定;支持 standard / imagery / hybrid 三种地图样式与高程、POI 过滤;`MapContent` 子组件(`Marker` / `MapPolyline` / `MapPolygon` / `MapCircle`)与内置控件(用户位置按钮、罗盘、俯仰切换、比例尺)。"
+                },
+                "keywords": [
+                  "Map",
+                  "MapKit",
+                  "Marker",
+                  "MapPolyline",
+                  "MapPolygon",
+                  "MapCircle",
+                  "MapCameraPosition",
+                  "MapCamera",
+                  "MapCameraBounds",
+                  "cameraBounds",
+                  "MapStyleSpec",
+                  "MapUserLocationButton",
+                  "MapCompass",
+                  "MapPitchToggle",
+                  "MapScaleView",
+                  "coordinate",
+                  "region",
+                  "annotation",
+                  "geodesic"
+                ],
+                "example": "mapkit/map_view/index",
+                "readme": "mapkit/map_view/"
+              },
+              {
+                "title": {
+                  "en": "MapSearch",
+                  "zh": "MapSearch"
+                },
+                "subtitle": {
+                  "en": "MapKit on-device keyword search. `MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` for one-shot lookups; `MapSearch.createCompleter(...)` for stateful autocomplete with `setQuery / addListener / resolve / dispose`. Results return `MapItem[]` whose coordinates flow directly into `<Marker>` / `<Map>`. No permissions required.",
+                  "zh": "MapKit 系统级地图关键字搜索。`MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` 做一次性搜索;`MapSearch.createCompleter(...)` 返回带 `setQuery / addListener / resolve / dispose` 的状态化自动补全器。结果是 `MapItem[]`,坐标直接灌入视图层 `<Marker>` / `<Map>`。无需任何系统权限。"
+                },
+                "keywords": [
+                  "MapSearch",
+                  "MapKit",
+                  "MKLocalSearch",
+                  "MKLocalSearchCompleter",
+                  "autocomplete",
+                  "MapItem",
+                  "MapSearchCompletion",
+                  "POI",
+                  "pointOfInterest",
+                  "address",
+                  "search"
+                ],
+                "example": "mapkit/search/index",
+                "readme": "mapkit/search/"
+              },
+              {
+                "title": {
+                  "en": "MapUtils",
+                  "zh": "MapUtils"
+                },
+                "subtitle": {
+                  "en": "Synchronous geometry helpers for MapKit coordinate / region types: `distance(a, b)` (Haversine, meters), `bearing(a, b)` (degrees), `regionContains(region, coordinate)`, `regionFromCoordinates(coords, paddingFactor?)`. Pure functions, safe during render.",
+                  "zh": "针对 MapKit 坐标/region 的同步几何工具:`distance(a, b)`(Haversine,米)、`bearing(a, b)`(度)、`regionContains(region, coordinate)`、`regionFromCoordinates(coords, paddingFactor?)`。纯函数,可在 render 中安全调用。"
+                },
+                "keywords": [
+                  "MapUtils",
+                  "distance",
+                  "bearing",
+                  "haversine",
+                  "regionContains",
+                  "regionFromCoordinates",
+                  "geometry"
+                ],
+                "example": "mapkit/utils/index",
+                "readme": "mapkit/utils/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "MapDirections",
+                  "zh": "MapDirections"
+                },
+                "subtitle": {
+                  "en": "Route planning on top of MapKit. `MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` returns full routes whose `coordinates` polyline feeds directly into `<MapPolyline coordinates={route.coordinates}>`. `MapDirections.calculateETA(...)` returns travel time / distance / arrival window only — cheaper for ETA-only UI. No permissions required.",
+                  "zh": "基于 MapKit 的路线规划。`MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` 返回完整路线,`coordinates` 折线坐标可直接喂给 `<MapPolyline coordinates={route.coordinates}>` 渲染。`MapDirections.calculateETA(...)` 只返回耗时/距离/到达窗口,适合纯 ETA 场景。无需任何系统权限。"
+                },
+                "keywords": [
+                  "MapDirections",
+                  "MapKit",
+                  "MKDirections",
+                  "calculate",
+                  "calculateETA",
+                  "route",
+                  "directions",
+                  "transportType",
+                  "automobile",
+                  "walking",
+                  "transit",
+                  "polyline",
+                  "alternates",
+                  "ETA"
+                ],
+                "example": "mapkit/directions/index",
+                "readme": "mapkit/directions/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "MapSnapshotter",
+                  "zh": "MapSnapshotter"
+                },
+                "subtitle": {
+                  "en": "Render a static map image offscreen via MapKit's snapshotter. `MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` returns a `MapSnapshot` with `pngBase64`, `size`, and `pointForCoordinate(coord)` — feed the PNG straight into an `<Image>` view and overlay pins using `pointForCoordinate`.",
+                  "zh": "通过 MapKit Snapshotter 在后台离屏渲染静态地图。`MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` 返回 `MapSnapshot`，含 `pngBase64`、`size` 与 `pointForCoordinate(coord)`，PNG 可直接喂给 `<Image>` 显示，用 `pointForCoordinate` 在图上叠 pin。"
+                },
+                "keywords": [
+                  "MapSnapshotter",
+                  "MapSnapshot",
+                  "MapKit",
+                  "MKMapSnapshotter",
+                  "static map",
+                  "pngBase64",
+                  "pointForCoordinate",
+                  "offscreen render",
+                  "widget preview"
+                ],
+                "example": "mapkit/snapshotter/index",
+                "readme": "mapkit/snapshotter/"
+              },
+              {
+                "pro": true,
+                "title": {
+                  "en": "MapLookAround",
+                  "zh": "MapLookAround"
+                },
+                "subtitle": {
+                  "en": "Street-level LookAround scenes. `MapLookAround.request({ latitude, longitude })` resolves a `MapLookAroundScene` reference (or `null` when no street view); render it interactively with `<LookAroundPreview scene>` from the views layer.",
+                  "zh": "MapKit LookAround 街景。`MapLookAround.request({ latitude, longitude })` 拿到 `MapLookAroundScene` 引用（无街景时为 `null`），通过视图层 `<LookAroundPreview scene>` 渲染交互式预览。"
+                },
+                "keywords": [
+                  "MapLookAround",
+                  "MapLookAroundScene",
+                  "LookAroundPreview",
+                  "MapKit",
+                  "MKLookAroundSceneRequest",
+                  "MKLookAroundScene",
+                  "street view",
+                  "look around"
+                ],
+                "example": "mapkit/lookaround/index",
+                "readme": "mapkit/lookaround/"
+              },
+              {
+                "title": {
+                  "en": "Annotation",
+                  "zh": "Annotation"
+                },
+                "subtitle": {
+                  "en": "`<Annotation>` anchors any SwiftUI view tree at a map coordinate — chips, badges, photos, custom shapes — whenever the pin needs to look like something other than a stock MapKit `<Marker>` glyph. Supports a `KeywordPoint`/`Point` `anchor`, a `tag` for `<Map selection>`, and an optional `title` label. iOS 17+; selection requires iOS 18+. `<Map>` also gains `annotationTitles` / `annotationSubtitles` for hiding the MapKit-rendered text labels globally.",
+                  "zh": "`<Annotation>` 把任意 SwiftUI 视图树锚定到地图坐标 —— chip / badge / 照片 / 异形装饰,凡是 pin 需要长得不像 MapKit 原生 `<Marker>` 的场景都用它。支持 `KeywordPoint` / `Point` `anchor`、`tag`(走 `<Map selection>`)与可选 `title` 标签。iOS 17+;选中要 iOS 18+。`<Map>` 同时新增 `annotationTitles` / `annotationSubtitles` 两个 prop,用于全局隐藏 MapKit 渲染的文本标签。"
+                },
+                "keywords": [
+                  "Annotation",
+                  "MapKit",
+                  "MKAnnotation",
+                  "custom marker",
+                  "anchor",
+                  "UnitPoint",
+                  "annotationTitles",
+                  "annotationSubtitles",
+                  "Visibility"
+                ],
+                "example": "mapkit/annotation/index",
+                "readme": "mapkit/annotation/"
+              }
+            ]
+          },
+          {
+            "title": {
               "en": "Script (Python)",
               "zh": "Script（Python）"
             },
@@ -573,6 +998,28 @@
               "Chinese input"
             ],
             "readme": "rime/"
+          },
+          {
+            "title": {
+              "en": "Custom Keyboard",
+              "zh": "自定义键盘"
+            },
+            "subtitle": {
+              "en": "Keyboard scripts can list available keyboard scripts and switch directly with CustomKeyboard.allScripts, switchToScript(scriptName, queryParameters?), and nextScript(queryParameters?).",
+              "zh": "键盘脚本现在可通过 CustomKeyboard.allScripts、switchToScript(scriptName, queryParameters?) 和 nextScript(queryParameters?) 列出并直接切换可用键盘脚本。"
+            },
+            "keywords": [
+              "CustomKeyboard",
+              "allScripts",
+              "switchToScript",
+              "nextScript",
+              "custom keyboard",
+              "keyboard script",
+              "自定义键盘",
+              "键盘脚本",
+              "切换脚本"
+            ],
+            "readme": "custom_keyboard/"
           }
         ]
       },
@@ -2492,6 +2939,35 @@
         ],
         "example": "views/menu/index",
         "readme": "views/menu/"
+      },
+      {
+        "title": {
+          "en": "DirectoryBrowserView",
+          "zh": "目录浏览器"
+        },
+        "subtitle": {
+          "en": "Browse, preview, import, export, rename, and delete files in a local directory.",
+          "zh": "浏览、预览、导入、导出、重命名和删除本地目录中的文件。"
+        },
+        "keywords": [
+          "DirectoryBrowserView",
+          "directory",
+          "file browser",
+          "files",
+          "import",
+          "export",
+          "rename",
+          "delete",
+          "目录浏览",
+          "文件浏览",
+          "文件",
+          "导入",
+          "导出",
+          "重命名",
+          "删除"
+        ],
+        "example": "views/directory_browser_view/index",
+        "readme": "views/directory_browser_view/"
       },
       {
         "title": {
@@ -4437,6 +4913,28 @@
       },
       {
         "title": {
+          "en": "layoutDirectionBehavior",
+          "zh": "layoutDirectionBehavior"
+        },
+        "subtitle": {
+          "en": "Controls how a view mirrors its contents for left-to-right and right-to-left layout directions.",
+          "zh": "控制视图如何根据从左到右或从右到左的布局方向镜像内容。"
+        },
+        "keywords": [
+          "layoutDirectionBehavior",
+          "layout direction",
+          "RTL",
+          "LTR",
+          "mirrors",
+          "布局方向",
+          "从右到左",
+          "从左到右",
+          "镜像"
+        ],
+        "readme": "view_modifiers/layout_direction_behavior/"
+      },
+      {
+        "title": {
           "en": "Redaction View Modifiers",
           "zh": "数据遮罩视图修饰符"
         },
@@ -4943,6 +5441,26 @@
         ]
       },
       {
+        "pro": true,
+        "title": {
+          "en": "Safari Browser Scripts",
+          "zh": "Safari 浏览器脚本"
+        },
+        "subtitle": {
+          "en": "Run userscripts in Safari, use GM APIs, and access Scripting.FileManager.",
+          "zh": "在 Safari 中运行用户脚本，使用 GM API，并访问 Scripting.FileManager。"
+        },
+        "readme": "safari_browser_scripts/",
+        "keywords": [
+          "Safari",
+          "Userscript",
+          "Greasemonkey",
+          "Tampermonkey",
+          "GM",
+          "Scripting.FileManager"
+        ]
+      },
+      {
         "title": {
           "en": "FileEntity",
           "zh": "FileEntity"
@@ -5205,7 +5723,8 @@
               "en": "This interface provides a lightweight local HTTP server that can handle HTTP requests, serve static files, and manage WebSocket connections",
               "zh": "该接口提供了在本地或局域网中启动一个轻量级 HTTP 服务器的能力，可用于处理 HTTP 请求、静态文件服务、WebSocket 通信等场景。"
             },
-            "readme": "http_server/http_server/"
+            "readme": "http_server/http_server/",
+            "example": "http_server/index"
           },
           {
             "pro": true,
@@ -5375,6 +5894,18 @@
           "zh": "用于签发、验证和解码 JSON Web Token 的同步接口。"
         },
         "readme": "jwt/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "Remote Push",
+          "zh": "远程推送"
+        },
+        "subtitle": {
+          "en": "Send push notifications to your own devices from your servers and automations using an API key.",
+          "zh": "使用 API key，从你自己的服务器和自动化流程向自己的设备发送推送通知。"
+        },
+        "readme": "remote_push/"
       },
       {
         "pro": true,
@@ -5763,6 +6294,196 @@
       },
       {
         "title": {
+          "en": "MapKit",
+          "zh": "MapKit"
+        },
+        "subtitle": {
+          "en": "SwiftUI MapKit integration: an iOS 17+ `<Map>` view (camera binding, styles, controls, marker / feature selection with Apple's auto detail card), plus `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` global namespaces.",
+          "zh": "SwiftUI MapKit 集成:iOS 17+ `<Map>` 视图(相机绑定、样式、控件、marker / feature 选中与 Apple 原生 detail 卡),以及 `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` 全局命名空间。"
+        },
+        "children": [
+          {
+            "title": {
+              "en": "Map",
+              "zh": "Map"
+            },
+            "subtitle": {
+              "en": "A SwiftUI MapKit view with two-way camera binding via `Observable<MapCameraPosition>`, three map styles (standard / imagery / hybrid) with elevation and POI filters, `MapContent` children (`Marker`, `MapPolyline`, `MapPolygon`, `MapCircle`) including the `<Marker item={mapItem}>` form with auto POI glyph, built-in controls (user location button, compass, pitch toggle, scale bar), iOS 18+ `<Map selection>` / `itemSelection` surfacing Apple's built-in detail card via `itemDetailSelectionAccessory` / `featureSelectionAccessory`, and `cameraBounds` for clamping user pan / zoom via `MapCameraBounds`.",
+              "zh": "基于 SwiftUI MapKit 的视图,通过 `Observable<MapCameraPosition>` 实现双向相机绑定;支持 standard / imagery / hybrid 三种地图样式与高程、POI 过滤;`MapContent` 子组件(`Marker` / `MapPolyline` / `MapPolygon` / `MapCircle`),其中 `<Marker item={mapItem}>` 可从 `MapItem` 自动选 POI glyph;内置控件(用户位置按钮、罗盘、俯仰切换、比例尺);iOS 18+ `<Map selection>` / `itemSelection` 配合 `itemDetailSelectionAccessory` / `featureSelectionAccessory` 直接弹 Apple 原生 detail 卡;`cameraBounds` 通过 `MapCameraBounds` 限制用户的 pan / zoom 范围。"
+            },
+            "keywords": [
+              "Map",
+              "MapKit",
+              "Marker",
+              "MapPolyline",
+              "MapPolygon",
+              "MapCircle",
+              "MapCameraPosition",
+              "MapCamera",
+              "MapCameraBounds",
+              "cameraBounds",
+              "MapStyleSpec",
+              "MapUserLocationButton",
+              "MapCompass",
+              "MapPitchToggle",
+              "MapScaleView",
+              "coordinate",
+              "region",
+              "annotation",
+              "geodesic"
+            ],
+            "example": "mapkit/map_view/index",
+            "readme": "mapkit/map_view/"
+          },
+          {
+            "title": {
+              "en": "MapSearch",
+              "zh": "MapSearch"
+            },
+            "subtitle": {
+              "en": "MapKit on-device keyword search. `MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` for one-shot lookups; `MapSearch.createCompleter(...)` for stateful autocomplete with `setQuery / addListener / resolve / dispose`. Results return `MapItem[]` whose coordinates flow directly into `<Marker>` / `<Map>`. No permissions required.",
+              "zh": "MapKit 系统级地图关键字搜索。`MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` 做一次性搜索;`MapSearch.createCompleter(...)` 返回带 `setQuery / addListener / resolve / dispose` 的状态化自动补全器。结果是 `MapItem[]`,坐标直接灌入视图层 `<Marker>` / `<Map>`。无需任何系统权限。"
+            },
+            "keywords": [
+              "MapSearch",
+              "MapKit",
+              "MKLocalSearch",
+              "MKLocalSearchCompleter",
+              "autocomplete",
+              "MapItem",
+              "MapSearchCompletion",
+              "POI",
+              "pointOfInterest",
+              "address",
+              "search"
+            ],
+            "example": "mapkit/search/index",
+            "readme": "mapkit/search/"
+          },
+          {
+            "title": {
+              "en": "MapUtils",
+              "zh": "MapUtils"
+            },
+            "subtitle": {
+              "en": "Synchronous geometry helpers for MapKit coordinate / region types: `distance(a, b)` (Haversine, meters), `bearing(a, b)` (degrees), `regionContains(region, coordinate)`, `regionFromCoordinates(coords, paddingFactor?)`. Pure functions, safe during render.",
+              "zh": "针对 MapKit 坐标/region 的同步几何工具:`distance(a, b)`(Haversine,米)、`bearing(a, b)`(度)、`regionContains(region, coordinate)`、`regionFromCoordinates(coords, paddingFactor?)`。纯函数,可在 render 中安全调用。"
+            },
+            "keywords": [
+              "MapUtils",
+              "distance",
+              "bearing",
+              "haversine",
+              "regionContains",
+              "regionFromCoordinates",
+              "geometry"
+            ],
+            "example": "mapkit/utils/index",
+            "readme": "mapkit/utils/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "MapDirections",
+              "zh": "MapDirections"
+            },
+            "subtitle": {
+              "en": "Route planning on top of MapKit. `MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` returns full routes whose `coordinates` polyline feeds directly into `<MapPolyline coordinates={route.coordinates}>`. `MapDirections.calculateETA(...)` returns travel time / distance / arrival window only — cheaper for ETA-only UI. No permissions required.",
+              "zh": "基于 MapKit 的路线规划。`MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` 返回完整路线,`coordinates` 折线坐标可直接喂给 `<MapPolyline coordinates={route.coordinates}>` 渲染。`MapDirections.calculateETA(...)` 只返回耗时/距离/到达窗口,适合纯 ETA 场景。无需任何系统权限。"
+            },
+            "keywords": [
+              "MapDirections",
+              "MapKit",
+              "MKDirections",
+              "calculate",
+              "calculateETA",
+              "route",
+              "directions",
+              "transportType",
+              "automobile",
+              "walking",
+              "transit",
+              "polyline",
+              "alternates",
+              "ETA"
+            ],
+            "example": "mapkit/directions/index",
+            "readme": "mapkit/directions/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "MapSnapshotter",
+              "zh": "MapSnapshotter"
+            },
+            "subtitle": {
+              "en": "Render a static map image offscreen via MapKit's snapshotter. `MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` returns a `MapSnapshot` with `pngBase64`, `size`, and `pointForCoordinate(coord)` — feed the PNG straight into an `<Image>` view and overlay pins using `pointForCoordinate`.",
+              "zh": "通过 MapKit Snapshotter 在后台离屏渲染静态地图。`MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` 返回 `MapSnapshot`，含 `pngBase64`、`size` 与 `pointForCoordinate(coord)`，PNG 可直接喂给 `<Image>` 显示，用 `pointForCoordinate` 在图上叠 pin。"
+            },
+            "keywords": [
+              "MapSnapshotter",
+              "MapSnapshot",
+              "MapKit",
+              "MKMapSnapshotter",
+              "static map",
+              "pngBase64",
+              "pointForCoordinate",
+              "offscreen render",
+              "widget preview"
+            ],
+            "example": "mapkit/snapshotter/index",
+            "readme": "mapkit/snapshotter/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "MapLookAround",
+              "zh": "MapLookAround"
+            },
+            "subtitle": {
+              "en": "Street-level LookAround scenes. `MapLookAround.request({ latitude, longitude })` resolves a `MapLookAroundScene` reference (or `null` when no street view); render it interactively with `<LookAroundPreview scene>` from the views layer.",
+              "zh": "MapKit LookAround 街景。`MapLookAround.request({ latitude, longitude })` 拿到 `MapLookAroundScene` 引用（无街景时为 `null`），通过视图层 `<LookAroundPreview scene>` 渲染交互式预览。"
+            },
+            "keywords": [
+              "MapLookAround",
+              "MapLookAroundScene",
+              "LookAroundPreview",
+              "MapKit",
+              "MKLookAroundSceneRequest",
+              "MKLookAroundScene",
+              "street view",
+              "look around"
+            ],
+            "example": "mapkit/lookaround/index",
+            "readme": "mapkit/lookaround/"
+          },
+          {
+            "title": {
+              "en": "Annotation",
+              "zh": "Annotation"
+            },
+            "subtitle": {
+              "en": "`<Annotation>` anchors any SwiftUI view tree at a map coordinate — chips, badges, photos, custom shapes — whenever the pin needs to look like something other than a stock MapKit `<Marker>` glyph. Supports a `KeywordPoint`/`Point` `anchor`, a `tag` for `<Map selection>`, and an optional `title` label. iOS 17+; selection requires iOS 18+. `<Map>` also gains `annotationTitles` / `annotationSubtitles` for hiding the MapKit-rendered text labels globally.",
+              "zh": "`<Annotation>` 把任意 SwiftUI 视图树锚定到地图坐标 —— chip / badge / 照片 / 异形装饰,凡是 pin 需要长得不像 MapKit 原生 `<Marker>` 的场景都用它。支持 `KeywordPoint` / `Point` `anchor`、`tag`(走 `<Map selection>`)与可选 `title` 标签。iOS 17+;选中要 iOS 18+。`<Map>` 同时新增 `annotationTitles` / `annotationSubtitles` 两个 prop,用于全局隐藏 MapKit 渲染的文本标签。"
+            },
+            "keywords": [
+              "Annotation",
+              "MapKit",
+              "MKAnnotation",
+              "custom marker",
+              "anchor",
+              "UnitPoint",
+              "annotationTitles",
+              "annotationSubtitles",
+              "Visibility"
+            ],
+            "example": "mapkit/annotation/index",
+            "readme": "mapkit/annotation/"
+          }
+        ]
+      },
+      {
+        "title": {
           "en": "Notification",
           "zh": "通知"
         },
@@ -5772,6 +6493,28 @@
         },
         "readme": "notification/",
         "example": "notification/index"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "Spotlight",
+          "zh": "Spotlight"
+        },
+        "subtitle": {
+          "en": "Index script-defined items into system Spotlight and handle result taps with spotlight.tsx.",
+          "zh": "将脚本定义的资源加入系统 Spotlight，并用 spotlight.tsx 处理搜索结果点击。"
+        },
+        "readme": "spotlight/",
+        "keywords": [
+          "Spotlight",
+          "CoreSpotlight",
+          "search",
+          "index",
+          "spotlight.tsx",
+          "Spotlight.current",
+          "搜索",
+          "索引"
+        ]
       },
       {
         "title": {
@@ -6650,6 +7393,116 @@
           "扫描文档"
         ],
         "readme": "vision/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "NaturalLanguage",
+          "zh": "自然语言"
+        },
+        "subtitle": {
+          "en": "On-device language ID, tokenization, POS / NER / sentiment tagging, word & sentence embeddings, gazetteers, and contextual embeddings .",
+          "zh": "端上语言识别、分词、词性 / 命名实体 / 情感标注、词与句嵌入、Gazetteer 自定义词典,以及上下文嵌入。"
+        },
+        "keywords": [
+          "NaturalLanguage",
+          "Tagger",
+          "Embedding",
+          "Gazetteer",
+          "ContextualEmbedding",
+          "NLTokenizer",
+          "LanguageRecognizer",
+          "language identification",
+          "tokenization",
+          "named entity",
+          "NER",
+          "sentiment",
+          "part of speech",
+          "word embedding",
+          "sentence embedding",
+          "contextual embedding",
+          "lemma",
+          "gazetteer",
+          "语言识别",
+          "分词",
+          "命名实体",
+          "情感分析",
+          "词性",
+          "词嵌入",
+          "句嵌入",
+          "上下文嵌入",
+          "词典"
+        ],
+        "children": [
+          {
+            "title": {
+              "en": "Language Recognition",
+              "zh": "语言识别"
+            },
+            "subtitle": {
+              "en": "Detect the dominant language or rank candidates by confidence.",
+              "zh": "检测主语言或按置信度排序候选语言。"
+            },
+            "readme": "natural_language/language_recognition/"
+          },
+          {
+            "title": {
+              "en": "Tokenizer",
+              "zh": "分词"
+            },
+            "subtitle": {
+              "en": "Split text into words, sentences, paragraphs, or documents.",
+              "zh": "按 word / sentence / paragraph / document 切分文本。"
+            },
+            "readme": "natural_language/tokenizer/"
+          },
+          {
+            "title": {
+              "en": "Tagger",
+              "zh": "标注 (Tagger)"
+            },
+            "subtitle": {
+              "en": "Part-of-speech, lemma, named-entity, sentiment, custom tags from gazetteers.",
+              "zh": "词性、词元、命名实体、情感打分,以及来自 Gazetteer 的自定义标签。"
+            },
+            "readme": "natural_language/tagger/"
+          },
+          {
+            "title": {
+              "en": "Embedding",
+              "zh": "词与句嵌入"
+            },
+            "subtitle": {
+              "en": "Built-in word and sentence vectors for similarity, neighbors, distance.",
+              "zh": "内置词向量与句向量,用于相似度、邻居与距离计算。"
+            },
+            "readme": "natural_language/embedding/"
+          },
+          {
+            "title": {
+              "en": "Gazetteer",
+              "zh": "Gazetteer 词典"
+            },
+            "subtitle": {
+              "en": "User-supplied lexicon that overrides the system tagger for custom vocabularies.",
+              "zh": "用户提供的自定义词典,用于覆盖系统模型的标注结果。"
+            },
+            "readme": "natural_language/gazetteer/"
+          },
+          {
+            "title": {
+              "en": "Contextual Embedding",
+              "zh": "上下文嵌入"
+            },
+            "subtitle": {
+              "en": "Transformer-style sequence embeddings.",
+              "zh": "transformer 风格的序列嵌入。"
+            },
+            "readme": "natural_language/contextual_embedding/"
+          }
+        ],
+        "readme": "natural_language/",
+        "example": "natural_language/index"
       },
       {
         "title": {

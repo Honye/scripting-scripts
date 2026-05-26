@@ -172,7 +172,7 @@ The level timer stops automatically on `pause()` / `stop()` / `dispose()`
 and resumes on the next `record()` while `onLevelUpdate` is set.
 
 > If you need raw PCM samples, real-time waveform data, or pitch
-> detection, use the [`AudioCapture`](audio_capture/) class instead.
+> detection, use the `AudioCapture` class instead.
 > `AudioRecorder` is optimized for writing encoded audio files
 > (m4a / aac / flac / opus / mp3 / wav).
 

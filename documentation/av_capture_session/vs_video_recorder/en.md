@@ -29,7 +29,7 @@ Most VideoRecorder users do **not** need to migrate. Migrate if you find yoursel
 * Working around the state machine (e.g. wanting `recording` and `paused` to be flipped over multiple files).
 * Needing `AVCaptureMetadataOutput` (QR scanning while recording).
 
-Migration is a per-feature port: enumerate the device with `AVCaptureDevice`, wrap it with `AVCaptureDeviceInput`, attach `AVCaptureMovieFileOutput`, and replace state-listener calls with explicit promise chaining. See the [Quick Start](../quick_start/) for the full pattern.
+Migration is a per-feature port: enumerate the device with `AVCaptureDevice`, wrap it with `AVCaptureDeviceInput`, attach `AVCaptureMovieFileOutput`, and replace state-listener calls with explicit promise chaining. See the `Quick Start` for the full pattern.
 
 ## Both at once
 

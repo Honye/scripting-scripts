@@ -2,8 +2,6 @@ The `HeadphoneMotionManager` namespace streams motion data from headphones that 
 
 It wraps Apple's `CMHeadphoneMotionManager` and exposes attitude, rotation rate, user acceleration, gravity, and connection events to your scripts.
 
-> **Requires Scripting Pro.** iOS 14.0+. The Motion & Fitness permission is handled automatically — your script does not need to request authorization.
-
 ---
 
 ## Properties

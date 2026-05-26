@@ -4,6 +4,7 @@
 目前 `environments` 支持以下 environment 值：
 
 * `editMode`: 控制视图的编辑模式（如 List 的编辑状态）
+* `layoutDirection`: 设置子视图的布局方向
 * `openURL`: 自定义打开链接（URL）的处理方式
 
 这些 environment 值会影响其子视图中的行为与交互能力。
@@ -15,6 +16,7 @@
 ```ts
 environments?: {
   editMode?: Observable<EditMode>;
+  layoutDirection?: "leftToRight" | "rightToLeft";
   openURL?: (url: string) => OpenURLActionResult;
 };
 ```
@@ -85,7 +87,32 @@ const editMode = useObservable(() => EditMode.active())
 
 ---
 
-## 二、openURL（自定义 URL 打开行为）
+## 二、layoutDirection（布局方向）
+
+`layoutDirection` 用于设置子视图从左到右或从右到左布局。
+
+## 类型定义
+
+```ts
+layoutDirection?: "leftToRight" | "rightToLeft";
+```
+
+## layoutDirection 使用示例
+
+```tsx
+<HStack
+  environments={{
+    layoutDirection: "rightToLeft"
+  }}
+>
+  <Text>First</Text>
+  <Text>Second</Text>
+</HStack>
+```
+
+---
+
+## 三、openURL（自定义 URL 打开行为）
 
 `openURL` environment 允许为当前视图树定义一套自定义的 URL 打开逻辑。
 这会覆盖如 `<Link>`、`Text(url:)` 等组件的默认行为。
@@ -163,6 +190,7 @@ class OpenURLActionResult {
 | environment key | 类型                             | 作用范围      | 使用场景         |
 | --------------- | ------------------------------ | --------- | ------------ |
 | `editMode`      | `Observable<EditMode>`         | 影响所有可编辑组件 | List 编辑、批量操作 |
+| `layoutDirection` | `"leftToRight" \| "rightToLeft"` | 子视图布局 | RTL/LTR 布局测试与本地化 |
 | `openURL`       | `(url) => OpenURLActionResult` | 所有链接组件    | 自定义 URL 处理逻辑 |
 
 ---
@@ -175,6 +203,7 @@ const editMode = useObservable(() => EditMode.inactive())
 <VStack
   environments={{
     editMode,
+    layoutDirection: "leftToRight",
     openURL: (url) => {
       if (url.startsWith("https://safe.com")) {
         return OpenURLActionResult.systemAction({ url, prefersInApp: true })
@@ -207,6 +236,7 @@ const editMode = useObservable(() => EditMode.inactive())
 
 1. `environments` 为局部作用域，仅影响其子视图。
 2. `editMode` 必须是 `Observable<EditMode>` 才能触发界面更新。
-3. `openURL` 若返回 `handled()`，将阻止默认行为。
-4. `systemAction` 中的 `prefersInApp` 会影响是否在 App 内打开链接。
-5. 与 SwiftUI 不同，Scripting 的 `environment` 是显式声明，不会隐式传播所有 key。
+3. `layoutDirection` 只接受 `"leftToRight"` 或 `"rightToLeft"`。
+4. `openURL` 若返回 `handled()`，将阻止默认行为。
+5. `systemAction` 中的 `prefersInApp` 会影响是否在 App 内打开链接。
+6. 与 SwiftUI 不同，Scripting 的 `environment` 是显式声明，不会隐式传播所有 key。

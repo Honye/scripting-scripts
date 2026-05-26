@@ -18,6 +18,7 @@ type EnvironmentValues = {
     dismiss: () => void;
     dismissSearch: () => void;
     editMode: EditMode | null;
+    layoutDirection: "leftToRight" | "rightToLeft";
     widgetRenderingMode: WidgetRenderingMode;
     showsWidgetContainerBackground: boolean;
     isSearching: boolean;
@@ -90,42 +91,49 @@ type EnvironmentValues = {
 
 ---
 
-### 9. widgetRenderingMode
+### 9. layoutDirection
+
+类型：`"leftToRight" | "rightToLeft"`
+说明：当前视图层级的布局方向。
+
+---
+
+### 10. widgetRenderingMode
 
 类型：`WidgetRenderingMode`
 说明：Widget 渲染模式，例如 `fullColor`、`accented` 等。
 
 ---
 
-### 10. showsWidgetContainerBackground
+### 11. showsWidgetContainerBackground
 
 类型：`boolean`
 说明：指示 widget 是否显示系统容器背景。
 
 ---
 
-### 11. isSearching
+### 12. isSearching
 
 类型：`boolean`
 说明：当前 view 是否处于搜索状态（来自 `searchable`）。
 
 ---
 
-### 12. isPresented
+### 13. isPresented
 
 类型：`boolean`
 说明：当前 view 是否已呈现，和 `onAppear` 回调不同，不像 `onAppear` 会多次触发。
 
 ---
 
-### 13. activityFamily
+### 14. activityFamily
 
 类型：`"small" | "medium"`
 说明：当前LiveActivity的尺寸，同 SwiftUI 中的 `activityFamily`，用于根据些大小渲染 LiveActivity UI。
 
 ---
 
-### 14. tabViewBottomAccessoryPlacement
+### 15. tabViewBottomAccessoryPlacement
 
 类型：`'expanded' | 'inline'`
 说明：当前 TabView 的底部辅助栏的显示方式，同 SwiftUI 中的 `tabViewBottomAccessoryPlacement`。

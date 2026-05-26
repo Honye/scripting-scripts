@@ -34,6 +34,24 @@ Indicates whether WebDAV has been configured and is available for use.
 Returns the path to the WebDAV-backed `Documents` cache directory.
 Files written here will be queued for WebDAV sync after WebDAV is configured.
 
+### `FileManager.safariBrowserDirectory: string`
+
+Returns the Safari browser userscript data root. This directory follows the Safari Browser Data storage location configured in Settings and contains `userscripts/`, `storages/`, and `downloads/`.
+
+Use this when an app script needs to inspect or maintain the whole Safari extension data area.
+
+### `FileManager.safariBrowserStorageDirectory: string`
+
+Returns the directory where Safari browser userscripts store GM value JSON files. This points to `scripting-safari-extension/storages/`.
+
+### `FileManager.safariBrowserDownloadsDirectory: string`
+
+Returns the directory where Safari browser userscripts save files through `GM.download`. This points to `scripting-safari-extension/downloads/`.
+
+### `FileManager.safariBrowserUserscriptsDirectory: string`
+
+Returns the directory where Safari browser userscripts installed from the extension popup are stored. This points to `scripting-safari-extension/userscripts/`.
+
 ### `FileManager.documentsDirectory: string`
 
 Returns the path to the local `Documents` directory.

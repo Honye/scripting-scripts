@@ -117,6 +117,46 @@ Show or hide the custom keyboard toolbar. Useful for debugging.
 
 ## 7. Navigation
 
+### `allScripts: KeyboardScriptInfo[]`
+
+Lists all scripts that can run in the custom keyboard extension.
+
+```ts
+const scripts = CustomKeyboard.allScripts
+```
+
+Each item contains:
+
+| Property        | Type     | Description                         |
+| --------------- | -------- | ----------------------------------- |
+| `name`          | `string` | The script's stable name            |
+| `localizedName` | `string` | The localized display name          |
+| `icon`          | `string` | The script's SF Symbol name         |
+| `color`         | `string` | The script color name               |
+
+### `switchToScript(scriptName: string, queryParameters?: Record<string, string>): Promise<void>`
+
+Dismisses the current keyboard script and runs another keyboard script by name.
+The optional `queryParameters` object is exposed to the target script as `Script.queryParameters`.
+
+```ts
+await CustomKeyboard.switchToScript("Rime Pinyin DEMO", {
+  source: Script.name,
+  mode: "symbols",
+})
+```
+
+### `nextScript(queryParameters?: Record<string, string>): Promise<void>`
+
+Dismisses the current keyboard script and runs the next available keyboard script.
+The optional `queryParameters` object is exposed to the target script as `Script.queryParameters`.
+
+```ts
+await CustomKeyboard.nextScript({
+  source: Script.name,
+})
+```
+
 ### `dismissToHome(): void`
 
 Dismisses the currently active keyboard script and returns to the **Scripting keyboard home screen** (script list). Useful for letting users choose another script.

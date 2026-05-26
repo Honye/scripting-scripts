@@ -151,7 +151,7 @@ Set `rectOfInterest = { x, y, width, height }` (normalized 0..1) to limit detect
 
 ## Showing a preview
 
-Use `<CaptureVideoPreviewView session={session} videoDevice={camera}/>` in any UI you build with Scripting's view layer. See the [Preview View](preview_view/) page for the full prop list.
+Use `<CaptureVideoPreviewView session={session} videoDevice={camera}/>` in any UI you build with Scripting's view layer. See the `Preview View` page for the full prop list.
 
 ---
 

@@ -60,9 +60,9 @@ ssh.onDisconnect = () => {
 
 ## 实例方法
 
-### `executeCommand(command: string, options?): Promise<string>`
+### `executeCommand(command: string, options?): Promise<string | Data>`
 
-在远程服务器上执行命令，并返回结果字符串。
+在远程服务器上执行命令，并返回结果。
 
 #### 参数：
 
@@ -80,14 +80,25 @@ ssh.onDisconnect = () => {
   * `inShell?`（布尔）：
     是否在 shell 中执行命令（如 `sh -c`），默认是 `false`。
 
+  * `encoding?`（`"utf8" | "ascii" | "binary"`）：
+    输出编码方式，默认为 `"utf8"`。
+    - `"utf8"` 与 `"ascii"`：以 lossy 方式解码——非法字节会被替换为 `U+FFFD`，返回 `string`。
+    - `"binary"`：不做任何解码，直接返回原始字节 `Data`。适合命令输出可能包含二进制或终端控制字符的场景（例如 `softwareupdate -l`，或带 `\r` 进度条/ANSI 转义的命令）。拿到字节后可自行处理（剥除控制字符、用其他编码解码等）。
+
 #### 返回值：
 
-* 返回一个 `Promise<string>`，为命令的输出。
+* 返回一个 `Promise`，当 `encoding` 为 `"utf8"`（默认）或 `"ascii"` 时为 `string`；当 `encoding` 为 `"binary"` 时为 `Data`。
 
 #### 示例：
 
 ```ts
+// 默认 utf8 解码
 const result = await ssh.executeCommand("uname -a")
+
+// binary 模式：保留原始字节,便于手动清洗控制字符
+const raw = await ssh.executeCommand("softwareupdate -l", { encoding: "binary" })
+// raw 是 Data —— 清洗后再解码
+const clean = raw.toDecodedString()
 ```
 
 ---
