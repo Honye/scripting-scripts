@@ -43,19 +43,20 @@ export function lunar(date: Date = new Date()): LunarDate {
     const monthName = (monthMap[parts.month] || parts.month).replace(/月$/, '')
 
     const dayChars = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
-    const day = Number.parseInt(parts.day)
-    let dayName = ""
-    if (day <= 10) {
-        dayName = `初${dayChars[day]}`
-    } else if (day < 20) {
-        dayName = `十${dayChars[day - 10]}`
-    } else if (day === 20) {
-        dayName = "二十"
-    } else if (day < 30) {
-        dayName = `廿${dayChars[day - 20]}`
-    } else {
-        dayName = `三十${dayChars[day - 30]}`
+    let dayName = parts.day
+    if (/\d+/.test(parts.day)) {
+      const day = Number.parseInt(parts.day)
+      if (day <= 10) {
+          dayName = `初${dayChars[day]}`
+      } else if (day < 20) {
+          dayName = `十${dayChars[day - 10]}`
+      } else if (day === 20) {
+          dayName = "二十"
+      } else if (day < 30) {
+          dayName = `廿${dayChars[day - 20]}`
+      } else {
+          dayName = `三十${dayChars[day - 30]}`
+      }
     }
-   
     return { ...parts, yearZodiac, monthName, dayName }
 }
