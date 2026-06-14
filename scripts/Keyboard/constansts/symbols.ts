@@ -154,3 +154,18 @@ export function getLettersInRow3(isUpperCase: boolean, font: string) {
 export function getNumbers(font: string) {
   return getLetters("1234567890", font)
 }
+
+/**
+ * 取某个基础字符在所有字体下的样式变体（去重，纯文本基础字符排在最前）。
+ * 严格区分大小写：按下小写只取该字体的小写字形，不回退到大写
+ * （仅含大写映射的字体，对小写输入不产生候选）。
+ */
+export function getCandidates(base: string): string[] {
+  const out: string[] = [base]
+  for (const fontName of Object.keys(Alphabet)) {
+    const map = Alphabet[fontName as keyof typeof Alphabet] as Record<string, string>
+    const g = map[base]
+    if (g && !out.includes(g)) out.push(g)
+  }
+  return out
+}

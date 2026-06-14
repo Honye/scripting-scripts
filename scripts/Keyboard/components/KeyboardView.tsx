@@ -8,21 +8,27 @@ import {
   Text,
   useCallback,
   useMemo,
+  useRef,
   useState,
   VStack,
 } from 'scripting'
 import { Colors } from '../constansts/colors'
 import {
   Alphabet,
-  getLettersInRow1,
-  getLettersInRow2,
-  getLettersInRow3,
-  getNumbers,
+  getCandidates,
 } from '../constansts/symbols'
 import Key from './Key'
 import { useFontConfig } from '../hooks/useFontConfig'
 import { FontSelect } from './FontSelect'
 import { getChars } from '../utils'
+import { POPUP_RISE } from '../constansts/layout'
+import CandidateBar from './CandidateBar'
+
+type KeyItem = { base: string; display: string }
+
+/** 把基础字符数组转成 { 基础字符, 当前字体显示字形 } 列表 */
+const toItems = (bases: string[], font: string): KeyItem[] =>
+  bases.map((base) => ({ base, display: getChars(base, font) }))
 
 // 字母键宽：70
 // 符号键宽：90
@@ -55,7 +61,10 @@ const insertSpace = (() => {
 })()
 
 export default function KeyboardView() {
-  const [hasShiftFlag, setHasShiftFlag] = useState(false)
+  // 大小写状态：off 小写 / once 单次大写(输入一个字符后回小写) / lock 固定大写
+  const [shiftState, setShiftState] = useState<'off' | 'once' | 'lock'>('off')
+  const hasShiftFlag = shiftState !== 'off'
+  const lastShiftTapRef = useRef(0)
   const [numFlag, setNumFlag] = useState(false)
   const [charsFlag, setCharsFlag] = useState(false)
   const padding = Number.parseInt(Device.systemVersion) > 18 ? 8 : 4
@@ -67,38 +76,68 @@ export default function KeyboardView() {
   types.unshift('Standard')
 
   const { config, setFont } = useFontConfig()
+  const font = config?.font || 'Standard'
 
-  const charsInRow1 = useMemo(() => {
-    return numFlag
+  // 候选词栏：当前按键的所有字体样式变体
+  const [candidates, setCandidates] = useState<string[]>([])
+
+  const charsInRow1 = useMemo<KeyItem[]>(() => {
+    const bases = numFlag
       ? charsFlag
         ? ['[', ']', '{', '}', '#', '%', '^', '*', '+', '=']
-        : getNumbers(config?.font || 'Standard')
-      : getLettersInRow1(hasShiftFlag, config?.font || 'Standard')
-  }, [hasShiftFlag, config?.font, numFlag, charsFlag])
-  const charsInRow2 = useMemo(() => {
-    return numFlag
+        : '1234567890'.split('')
+      : (hasShiftFlag ? 'QWERTYUIOP' : 'qwertyuiop').split('')
+    return toItems(bases, font)
+  }, [hasShiftFlag, font, numFlag, charsFlag])
+  const charsInRow2 = useMemo<KeyItem[]>(() => {
+    const bases = numFlag
       ? charsFlag
         ? ['_', '\\', '|', '~', '<', '>', '€', '£', '¥', '•']
         : ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"']
-      : getLettersInRow2(hasShiftFlag, config?.font || 'Standard')
-  }, [hasShiftFlag, config?.font, numFlag, charsFlag])
-  const charsInRow3 = useMemo(() => {
-    return numFlag
+      : (hasShiftFlag ? 'ASDFGHJKL' : 'asdfghjkl').split('')
+    return toItems(bases, font)
+  }, [hasShiftFlag, font, numFlag, charsFlag])
+  const charsInRow3 = useMemo<KeyItem[]>(() => {
+    const bases = numFlag
       ? ['.', ',', '{', '}', '?', '!', "'"]
-      : getLettersInRow3(hasShiftFlag, config?.font || 'Standard')
-  }, [hasShiftFlag, config?.font, numFlag])
+      : (hasShiftFlag ? 'ZXCVBNM' : 'zxcvbnm').split('')
+    return toItems(bases, font)
+  }, [hasShiftFlag, font, numFlag])
+
   const insertText = (char: string) => CustomKeyboard.insertText(char)
+
+  // 按键按下：刷新候选词；若处于单次大写则输入后回到小写
+  const handleKeyPress = useCallback((base: string, _inserted: string) => {
+    setCandidates(getCandidates(base))
+    setShiftState((prev) => (prev === 'once' ? 'off' : prev))
+  }, [])
+
+  // 点候选：删除刚输入（或上一次所选）的字形，插入所选样式（可连续重选）
+  const handleCandidateTap = (glyph: string) => {
+    HapticFeedback.selection()
+    CustomKeyboard.deleteBackward()
+    CustomKeyboard.insertText(glyph)
+  }
+
   const onShiftTap = useCallback(() => {
     HapticFeedback.selection()
+    setCandidates([])
     if (numFlag) {
       setCharsFlag(!charsFlag)
-    } else {
-      setHasShiftFlag(!hasShiftFlag)
+      return
     }
-  }, [charsFlag, hasShiftFlag, numFlag])
+    // 300ms 内连按两次 = 双击 → 固定大写；否则单击在 小写/单次大写 间切换
+    const now = Date.now()
+    const isDouble = now - lastShiftTapRef.current < 300
+    lastShiftTapRef.current = now
+    setShiftState((prev) =>
+      isDouble ? 'lock' : prev === 'off' ? 'once' : 'off'
+    )
+  }, [charsFlag, numFlag])
 
   const toggleNumFlag = useCallback(() => {
     HapticFeedback.selection()
+    setCandidates([])
     if (numFlag) {
       setCharsFlag(false)
     }
@@ -107,10 +146,14 @@ export default function KeyboardView() {
 
   const handleReturn = () => {
     HapticFeedback.selection()
+    setCandidates([])
     insertText('\n')
   }
-  const deleteBackward = () => {
-    let interval: number | null
+  // 删除键的按住连删处理器。必须在多次 render 间保持同一实例：
+  // 否则按下时 setCandidates([]) 触发的重渲染会换掉处理器实例，
+  // 使旧实例启动的 setTimeout 连删循环无人清除而一直删除。
+  const deletePressHandler = useMemo(() => {
+    let interval: number | null = null
     const del = () => {
       CustomKeyboard.deleteBackward()
       interval = setTimeout(del, 100)
@@ -118,6 +161,7 @@ export default function KeyboardView() {
     return (state: boolean) => {
       if (state) {
         HapticFeedback.selection()
+        setCandidates([])
         if (interval !== null) {
           clearTimeout(interval)
           interval = null
@@ -128,7 +172,7 @@ export default function KeyboardView() {
         interval = null
       }
     }
-  }
+  }, [])
 
   return (
     <VStack
@@ -139,22 +183,32 @@ export default function KeyboardView() {
       }}
       spacing={gapY}
     >
-      {/* <HStack spacing={gapX}>
-        {getNumbers(config?.font || 'Standard').map((n) => (
-          <Key key={n} title={`${n}`} font={22} />
-        ))}
-      </HStack> */}
-      <HStack spacing={gapX}>
-        {charsInRow1.map((char) => (
-          <Key key={char} title={char} font={hasShiftFlag ? 22 : 26} />
+      {/* 候选词栏：占据顶部一条区域，第一排气泡可向上覆盖在它之上 */}
+      <CandidateBar candidates={candidates} onSelect={handleCandidateTap} />
+      {/* 气泡向上鼓起、覆盖上一排，故各排 zIndex 递增，保证下排绘制在上排之上 */}
+      <HStack spacing={gapX} zIndex={1}>
+        {charsInRow1.map((item) => (
+          <Key
+            key={item.base}
+            char={item.base}
+            title={item.display}
+            onPress={handleKeyPress}
+            font={hasShiftFlag ? 22 : 26}
+          />
         ))}
       </HStack>
-      <HStack spacing={gapX}>
-        {charsInRow2.map((char) => (
-          <Key key={char} title={char} font={hasShiftFlag ? 22 : 26} />
+      <HStack spacing={gapX} zIndex={2}>
+        {charsInRow2.map((item) => (
+          <Key
+            key={item.base}
+            char={item.base}
+            title={item.display}
+            onPress={handleKeyPress}
+            font={hasShiftFlag ? 22 : 26}
+          />
         ))}
       </HStack>
-      <HStack spacing={6}>
+      <HStack spacing={6} zIndex={3}>
         <Button
           background={
             <RoundedRectangle
@@ -177,13 +231,25 @@ export default function KeyboardView() {
           ) : (
             <Image
               frame={{ width: 45, height: itemHeight }}
-              systemName={hasShiftFlag ? 'shift.fill' : 'shift'}
+              systemName={
+                shiftState === 'lock'
+                  ? 'capslock.fill'
+                  : shiftState === 'once'
+                    ? 'shift.fill'
+                    : 'shift'
+              }
             />
           )}
         </Button>
         <Spacer minLength={0} />
-        {charsInRow3.map((char) => (
-          <Key key={char} title={char} font={hasShiftFlag ? 22 : 26} />
+        {charsInRow3.map((item) => (
+          <Key
+            key={item.base}
+            char={item.base}
+            title={item.display}
+            onPress={handleKeyPress}
+            font={hasShiftFlag ? 22 : 26}
+          />
         ))}
         <Spacer minLength={0} />
         <Button
@@ -204,7 +270,7 @@ export default function KeyboardView() {
           action={() => {}}
           onLongPressGesture={{
             perform: () => {},
-            onPressingChanged: deleteBackward(),
+            onPressingChanged: deletePressHandler,
           }}
         >
           <Image frame={{ width: 45, height: itemHeight }} systemName='delete.left' />
@@ -278,7 +344,10 @@ export default function KeyboardView() {
           action={() => {}}
           onLongPressGesture={{
             perform: () => {},
-            onPressingChanged: insertSpace,
+            onPressingChanged: (s) => {
+              if (s) setCandidates([])
+              insertSpace(s)
+            },
           }}
         >
           <Text frame={{ maxWidth: 'infinity', maxHeight: itemHeight }}>
