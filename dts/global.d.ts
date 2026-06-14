@@ -830,6 +830,80 @@ declare global {
   }
 
   /**
+   * The encoded container format for `ImageIO.writeImage(...)`.
+   */
+  type ImageFormat = 'jpeg' | 'png' | 'heic' | 'tiff' | 'gif'
+
+  /**
+   * Container-level image metadata, as read from / written to an encoded image file.
+   *
+   * The well-known dictionaries (`exif` / `gps` / `tiff` / `iptc`) use Apple's CGImageProperties
+   * key names (e.g. `gps.Latitude`, `exif.DateTimeOriginal`). Top-level scalars describe the
+   * image itself. All fields are optional; only what the source provides is returned.
+   */
+  type ImageMetadata = {
+    pixelWidth?: number
+    pixelHeight?: number
+    dpiWidth?: number
+    dpiHeight?: number
+    depth?: number
+    colorModel?: string
+    /** EXIF/TIFF orientation value (1â€“8). */
+    orientation?: number
+    hasAlpha?: boolean
+    profileName?: string
+    exif?: Record<string, any>
+    gps?: Record<string, any>
+    tiff?: Record<string, any>
+    iptc?: Record<string, any>
+  }
+
+  /**
+   * Options for `ImageIO.writeImage(...)`. Provide exactly one of `image` or `source`.
+   */
+  type ImageWriteOptions = {
+    /**
+     * Re-encode from a decoded `UIImage`. NOTE: a `UIImage` is a decoded bitmap, so the
+     * original file's metadata is NOT preserved â€” only `metadata` you pass here is written.
+     */
+    image?: UIImage
+    /**
+     * Copy from an original encoded image (file path or `Data`), preserving its existing
+     * metadata, then overlay the `metadata` you pass. Use this to e.g. tag a photo with GPS
+     * while keeping its original EXIF.
+     */
+    source?: string | Data
+    /** Destination file path. An existing file is overwritten. */
+    to: string
+    /** Output format. Required when writing from `image`; defaults to the source's format when using `source`. */
+    format?: ImageFormat
+    /** Lossy compression quality 0..1 (jpeg / heic only). */
+    quality?: number
+    /** Metadata to write. Merged on top of the source's metadata when using `source`. */
+    metadata?: ImageMetadata
+  }
+
+  /**
+   * Low-level image container I/O backed by iOS ImageIO (CGImageSource / CGImageDestination).
+   *
+   * Use this when you need to read EXIF/GPS/TIFF/IPTC metadata, or write formats / metadata
+   * that `UIImage.toPNGData` / `toJPEGData` cannot (HEIC, TIFF, GIF, embedded metadata).
+   */
+  namespace ImageIO {
+    /**
+     * Reads container-level metadata from an image file path or `Data`.
+     * Rejects if the source cannot be decoded as an image.
+     */
+    function readMetadata(source: string | Data): Promise<ImageMetadata>
+
+    /**
+     * Encodes and writes an image to a file, optionally with metadata.
+     * See `ImageWriteOptions` for the `image` vs `source` distinction.
+     */
+    function writeImage(options: ImageWriteOptions): Promise<void>
+  }
+
+  /**
    * Read and set the clipboard
    *
    * If you want to quickly paste text from other apps, you can go to
@@ -2957,6 +3031,266 @@ declare global {
   }
 
   /**
+   * The media subtype of a photo asset.
+   */
+  type PHAssetMediaSubtype =
+    | "photoPanorama"
+    | "photoHDR"
+    | "photoScreenshot"
+    | "photoLive"
+    | "photoDepthEffect"
+    | "videoStreamed"
+    | "videoHighFrameRate"
+    | "videoTimelapse"
+
+  /**
+   * Options for fetching photo assets from the library.
+   */
+  type PHFetchOptions = {
+    /**
+     * Only fetch assets of this media type.
+     */
+    mediaType?: "image" | "video" | "audio"
+    /**
+     * Only fetch assets matching any of these media subtypes.
+     */
+    mediaSubtypes?: PHAssetMediaSubtype[]
+    /**
+     * Only fetch favorite assets.
+     */
+    favoritesOnly?: boolean
+    /**
+     * Whether to include hidden assets. Defaults to false.
+     */
+    includeHidden?: boolean
+    /**
+     * Whether to include all assets from bursts. Defaults to false.
+     */
+    includeAllBurstAssets?: boolean
+    /**
+     * The key to sort by. Defaults to "creationDate".
+     */
+    sortBy?: "creationDate" | "modificationDate"
+    /**
+     * Whether to sort in ascending order. Defaults to false (newest first).
+     */
+    ascending?: boolean
+    /**
+     * The maximum number of assets to fetch. 0 means no limit.
+     */
+    limit?: number
+    /**
+     * Only fetch assets created at or after this timestamp (milliseconds since epoch).
+     */
+    createdAfter?: number
+    /**
+     * Only fetch assets created at or before this timestamp (milliseconds since epoch).
+     */
+    createdBefore?: number
+  }
+
+  /**
+   * The geographic location attached to a photo asset.
+   */
+  type PHAssetLocation = {
+    latitude: number
+    longitude: number
+    altitude: number
+    horizontalAccuracy: number
+    verticalAccuracy: number
+    speed: number
+    course: number
+    /**
+     * The time at which this location was determined (milliseconds since epoch).
+     */
+    timestamp: number
+  }
+
+  /**
+   * A representation of an image, video, or Live Photo in the user's photo library.
+   * Obtain instances via `Photos.fetchAssets`, `Photos.fetchAsset`, or `PHAssetCollection.fetchAssets`.
+   */
+  class PHAsset {
+    private constructor()
+
+    /**
+     * The unique, persistent identifier of the asset. You can store this and use
+     * `Photos.fetchAsset(localIdentifier)` to retrieve the asset later.
+     */
+    readonly localIdentifier: string
+    /**
+     * The media type of the asset.
+     */
+    readonly mediaType: "image" | "video" | "audio" | "unknown"
+    /**
+     * The media subtypes of the asset (e.g. "photoLive", "photoHDR", "photoScreenshot").
+     */
+    readonly mediaSubtypes: PHAssetMediaSubtype[]
+    /**
+     * The width, in pixels, of the asset.
+     */
+    readonly pixelWidth: number
+    /**
+     * The height, in pixels, of the asset.
+     */
+    readonly pixelHeight: number
+    /**
+     * The date the asset was created (milliseconds since epoch), or null if unknown.
+     */
+    readonly creationDate: number | null
+    /**
+     * The date the asset was last modified (milliseconds since epoch), or null if unknown.
+     */
+    readonly modificationDate: number | null
+    /**
+     * The duration, in seconds, of the asset. 0 for images.
+     */
+    readonly duration: number
+    /**
+     * Whether the asset is marked as a favorite.
+     */
+    readonly isFavorite: boolean
+    /**
+     * Whether the asset is hidden.
+     */
+    readonly isHidden: boolean
+    /**
+     * The geographic location attached to the asset, or null if none.
+     */
+    readonly location: PHAssetLocation | null
+    /**
+     * The unique identifier shared by photos in the same burst sequence, or null.
+     */
+    readonly burstIdentifier: string | null
+    /**
+     * Whether the asset is the representative photo of a burst sequence.
+     */
+    readonly representsBurst: boolean
+    /**
+     * The source of the asset.
+     */
+    readonly sourceType: "userLibrary" | "cloudShared" | "itunesSynced" | "unknown"
+
+    /**
+     * Request a UIImage representation of the asset.
+     * @param options Request options.
+     * @param options.targetWidth The desired width in pixels. Omit to use the original size.
+     * @param options.targetHeight The desired height in pixels. Omit to use the original size.
+     * @param options.contentMode How the image fits the target size. Defaults to "aspectFit".
+     * @param options.deliveryMode The desired image quality and delivery behavior. Defaults to "highQualityFormat".
+     * @param options.version The version of the asset to request. Defaults to "current".
+     * @param options.allowNetworkAccess Whether to allow downloading from iCloud. Defaults to true.
+     * @returns A promise that resolves to a UIImage, or null if unavailable.
+     */
+    requestImage(options?: {
+      targetWidth?: number
+      targetHeight?: number
+      contentMode?: "aspectFit" | "aspectFill"
+      deliveryMode?: "opportunistic" | "highQualityFormat" | "fastFormat"
+      version?: "current" | "original" | "unadjusted"
+      allowNetworkAccess?: boolean
+    }): Promise<UIImage | null>
+
+    /**
+     * Request the original file data of the asset.
+     * @param options Request options.
+     * @returns A promise that resolves to the data, uniform type identifier, and EXIF orientation, or null.
+     */
+    requestImageData(options?: {
+      version?: "current" | "original" | "unadjusted"
+      allowNetworkAccess?: boolean
+    }): Promise<{ data: Data; uti: UTType; orientation: number } | null>
+
+    /**
+     * Export the video of the asset to a temporary file in the app's sandbox and resolve its path.
+     * You should delete the file when you no longer need it.
+     * @returns A promise that resolves to the file path, or null if the asset has no video.
+     */
+    requestVideoURL(options?: {
+      version?: "current" | "original" | "unadjusted"
+      allowNetworkAccess?: boolean
+    }): Promise<string | null>
+
+    /**
+     * Request a LivePhoto representation of the asset.
+     * @returns A promise that resolves to a LivePhoto, or null if the asset is not a Live Photo.
+     */
+    requestLivePhoto(options?: {
+      targetWidth?: number
+      targetHeight?: number
+      allowNetworkAccess?: boolean
+    }): Promise<LivePhoto | null>
+
+    /**
+     * Mark or unmark the asset as a favorite.
+     * @returns A promise that resolves to whether the change succeeded.
+     */
+    setFavorite(value: boolean): Promise<boolean>
+
+    /**
+     * Delete the asset from the library. The system presents a confirmation prompt.
+     * @returns A promise that resolves to true if deleted, or false if the user cancelled.
+     */
+    delete(): Promise<boolean>
+  }
+
+  /**
+   * A collection of photo assets, such as an album or smart album.
+   * Obtain instances via `Photos.fetchAlbums`, `Photos.fetchAlbum`, or `Photos.createAlbum`.
+   */
+  class PHAssetCollection {
+    private constructor()
+
+    /**
+     * The unique, persistent identifier of the collection.
+     */
+    readonly localIdentifier: string
+    /**
+     * The localized title of the collection, or null.
+     */
+    readonly title: string | null
+    /**
+     * The type of the collection.
+     */
+    readonly type: "album" | "smartAlbum" | "moment"
+    /**
+     * The subtype of the collection (e.g. "smartAlbumUserLibrary", "smartAlbumFavorites", "albumRegular").
+     */
+    readonly subtype: string
+    /**
+     * The number of assets in the collection. Uses the library's fast estimate when
+     * available, otherwise falls back to an exact count (common for smart albums).
+     */
+    readonly estimatedAssetCount: number
+    /**
+     * The earliest creation date among assets in the collection (milliseconds since epoch), or null.
+     */
+    readonly startDate: number | null
+    /**
+     * The latest creation date among assets in the collection (milliseconds since epoch), or null.
+     */
+    readonly endDate: number | null
+
+    /**
+     * Fetch the assets contained in this collection.
+     * @param options Fetch options.
+     */
+    fetchAssets(options?: PHFetchOptions): Promise<PHAsset[]>
+
+    /**
+     * Add assets to this collection. Only valid for user-created albums.
+     * @returns A promise that resolves to whether the change succeeded.
+     */
+    addAssets(assets: PHAsset[]): Promise<boolean>
+
+    /**
+     * Remove assets from this collection. Only valid for user-created albums.
+     * @returns A promise that resolves to whether the change succeeded.
+     */
+    removeAssets(assets: PHAsset[]): Promise<boolean>
+  }
+
+  /**
    * The interface that manages access and changes to the userâ€™s photo library.
    */
   namespace Photos {
@@ -3122,6 +3456,62 @@ declare global {
      * @returns Returns a promise that resolves when the operation is complete, or rejects with an error if the operation fails.
      */
     function saveLivePhoto(options: { imagePath: string, videoPath: string, shouldMoveFile?: boolean }): Promise<void>
+
+    /**
+     * Get the current authorization status for the photo library, without prompting.
+     * Access is requested automatically the first time you read or write the library.
+     * @param accessLevel The access level to query. Defaults to "readWrite".
+     */
+    function authorizationStatus(accessLevel?: "addOnly" | "readWrite"): "notDetermined" | "restricted" | "denied" | "authorized" | "limited"
+
+    /**
+     * Fetch assets from the photo library matching the given options.
+     * @param options Fetch options. Omit to fetch all assets (newest first).
+     */
+    function fetchAssets(options?: PHFetchOptions): Promise<PHAsset[]>
+    /**
+     * Fetch assets by their local identifiers, preserving the requested order where possible.
+     * @param localIdentifiers The local identifiers of the assets to fetch.
+     */
+    function fetchAssets(localIdentifiers: string[]): Promise<PHAsset[]>
+    /**
+     * Fetch a single asset by its local identifier.
+     * @param localIdentifier The local identifier of the asset.
+     * @returns A promise that resolves to the asset, or null if not found.
+     */
+    function fetchAsset(localIdentifier: string): Promise<PHAsset | null>
+
+    /**
+     * Fetch albums and smart albums from the photo library.
+     * @param options Filter options.
+     * @param options.type Only fetch collections of this type. Omit to fetch both albums and smart albums.
+     * @param options.assetCollectionSubtype Only fetch collections of this subtype.
+     */
+    function fetchAlbums(options?: {
+      type?: "album" | "smartAlbum"
+      assetCollectionSubtype?: string
+    }): Promise<PHAssetCollection[]>
+    /**
+     * Fetch a single album by its local identifier.
+     * @returns A promise that resolves to the album, or null if not found.
+     */
+    function fetchAlbum(localIdentifier: string): Promise<PHAssetCollection | null>
+    /**
+     * Create a new user album with the given title.
+     * @returns A promise that resolves to the created album, or null on failure.
+     */
+    function createAlbum(title: string): Promise<PHAssetCollection | null>
+    /**
+     * Delete the given albums. The system presents a confirmation prompt.
+     * @returns A promise that resolves to whether the deletion succeeded.
+     */
+    function deleteAlbums(albums: PHAssetCollection[]): Promise<boolean>
+
+    /**
+     * Delete the given assets from the library. The system presents a confirmation prompt.
+     * @returns A promise that resolves to true if deleted, or false if the user cancelled.
+     */
+    function deleteAssets(assets: PHAsset[]): Promise<boolean>
   }
 
   /**
@@ -3250,6 +3640,50 @@ declare global {
      * Defaults to false.
      */
     allowsMultipleSelection?: boolean
+  }
+
+  type PickFileBookmarkOptions = {
+    /**
+     * The preferred bookmark name. If omitted, the selected file name is used.
+     * When the name already exists, the user will be asked to choose another name.
+     */
+    preferredName?: string
+    /**
+     * The initial directory that the document picker displays.
+     */
+    initialDirectory?: string
+    /**
+     * An array of uniform type identifiers for the document picker to display.
+     * For more information, see [Uniform Type Identifiers.](https://developer.apple.com/documentation/uniformtypeidentifiers/uttype-swift.struct)
+     */
+    types?: UTType[]
+    /**
+     * Defaults to true.
+     */
+    shouldShowFileExtensions?: boolean
+  }
+
+  type PickDirectoryBookmarkOptions = {
+    /**
+     * The preferred bookmark name. If omitted, the selected directory name is used.
+     * When the name already exists, the user will be asked to choose another name.
+     */
+    preferredName?: string
+    /**
+     * The initial directory that the document picker displays.
+     */
+    initialDirectory?: string
+  }
+
+  type DocumentPickerBookmarkResult = {
+    /**
+     * The selected file or directory path.
+     */
+    path: string
+    /**
+     * The bookmark name that was saved. This may differ from the preferred name.
+     */
+    bookmarkName: string
   }
 
   type ExportFilesOptions = {
@@ -3496,6 +3930,22 @@ declare global {
      * ```
      */
     function pickDirectory(initialDirectory?: string): Promise<string | null>
+    /**
+     * Pick a file and save it as a persistent security-scoped bookmark.
+     *
+     * Unlike `pickFiles`, this method stores a bookmark that can be used by
+     * later script runs with `FileManager.bookmarkedPath(bookmarkName)`.
+     * If the preferred name already exists, the user will be asked to rename it.
+     */
+    function pickFileBookmark(options?: PickFileBookmarkOptions): Promise<DocumentPickerBookmarkResult | null>
+    /**
+     * Pick a directory and save it as a persistent security-scoped bookmark.
+     *
+     * Unlike `pickDirectory`, this method stores a bookmark that can be used by
+     * later script runs with `FileManager.bookmarkedPath(bookmarkName)`.
+     * If the preferred name already exists, the user will be asked to rename it.
+     */
+    function pickDirectoryBookmark(options?: PickDirectoryBookmarkOptions): Promise<DocumentPickerBookmarkResult | null>
     /**
      * Exports files.
      * @example
@@ -6254,6 +6704,68 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
   }
 
   /**
+   * Result for a single requested time in `AVAssetImageGenerator.generate(...)`.
+   * Each requested time is reported independently with its own status.
+   */
+  type AVAssetImageGenerationResult =
+    | { requestedTime: MediaTime; actualTime: MediaTime; image: UIImage; status: 'succeeded' }
+    | { requestedTime: MediaTime; status: 'failed'; error: string }
+    | { requestedTime: MediaTime; status: 'cancelled' }
+
+  /**
+   * Extracts still images from an `AVAsset`'s video track.
+   *
+   * Compared to the one-shot `AVAsset.generateImage(...)`, this is a reusable generator that
+   * keeps its configuration across calls, can stream results frame-by-frame as they decode,
+   * and can be cancelled mid-flight. Prefer it for cover/thumbnail extraction at scale or
+   * per-frame ML / OCR pipelines.
+   *
+   * Local files only, like the other low-level AVAsset companions â€” download remote assets first.
+   */
+  class AVAssetImageGenerator {
+    /**
+     * @param asset A non-disposed `AVAsset`. Throws if the asset is invalid or disposed.
+     */
+    constructor(asset: AVAsset)
+
+    /**
+     * Maximum size in pixels for generated images; aspect ratio is preserved.
+     * If omitted, images are generated at the asset's natural size.
+     */
+    maximumSize?: Size
+    /** Tolerance before the requested time the generator may use to find a frame. */
+    requestedTimeToleranceBefore?: MediaTime
+    /** Tolerance after the requested time the generator may use to find a frame. */
+    requestedTimeToleranceAfter?: MediaTime
+    /** Whether to respect the asset's preferred track transform (rotation/mirroring). Defaults to `true`. */
+    appliesPreferredTrackTransform: boolean
+    /** The aperture mode used when generating images. */
+    apertureMode?: 'cleanAperture' | 'productionAperture' | 'encodedPixels'
+
+    /**
+     * Generates a single image at the given time.
+     * @returns The generated image plus the actual time of the chosen frame, or rejects on error.
+     */
+    copyImage(time: MediaTime): Promise<{ image: UIImage; actualTime: MediaTime }>
+
+    /**
+     * Generates images for an array of times, invoking `onFrame` as each one resolves
+     * (succeeded / failed / cancelled). The returned promise resolves once every requested
+     * time has been reported.
+     */
+    generate(
+      times: MediaTime[],
+      onFrame: (frame: AVAssetImageGenerationResult) => void
+    ): Promise<void>
+
+    /** Cancels any in-flight generation. Pending entries report `status: 'cancelled'`. */
+    cancel(): void
+
+    /** Cancels and releases the underlying generator. Auto-called when the script finishes. */
+    dispose(): void
+  }
+
+  /**
    * The export preset for `AVAssetExportSession`. Most presets correspond directly to the
    * AVAssetExportPreset* constants from AVFoundation.
    */
@@ -7458,12 +7970,45 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     readonly device: AVCaptureDevice
   }
 
+  /** A point in normalized (0..1) coordinates. */
+  type AVCapturePoint = { x: number; y: number }
+
+  /**
+   * A live connection between a capture input and this output. Obtained via
+   * `output.connections`; you do not construct it. Most fields are read-only;
+   * `isEnabled` can be toggled.
+   */
+  class AVCaptureConnection {
+    protected constructor()
+    /** Whether the connection is currently carrying data. */
+    readonly isActive: boolean
+    /** Enable / disable data flow through this connection. */
+    isEnabled: boolean
+    /** `true` if the connection is mirroring video (read-only). */
+    readonly isVideoMirrored: boolean
+    /** Clockwise rotation angle in degrees applied to video (iOS 17+, else 0). */
+    readonly videoRotationAngle: number
+  }
+
   /**
    * Base type for capture outputs. You will not construct this directly;
    * use one of the subclasses (PhotoOutput / MovieFileOutput / MetadataOutput).
    */
   class AVCaptureOutput {
     protected constructor()
+    /** Live connections feeding this output. */
+    readonly connections: AVCaptureConnection[]
+    /**
+     * Convert a rectangle from this output's coordinate space into the
+     * metadata output's normalized (0..1) coordinate space. Pass and receive
+     * `{ x, y, width, height }`.
+     */
+    metadataOutputRectConverted(fromOutputRect: AVCaptureRect): AVCaptureRect
+    /**
+     * Inverse of `metadataOutputRectConverted` â€” convert a rectangle from the
+     * metadata output's normalized space back into this output's space.
+     */
+    outputRectConverted(fromMetadataOutputRect: AVCaptureRect): AVCaptureRect
   }
 
   /**
@@ -7507,6 +8052,35 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
      */
     readonly isAutoDeferredPhotoDeliverySupported: boolean
     isAutoDeferredPhotoDeliveryEnabled: boolean
+
+    /**
+     * Codec types the output can currently produce, as native raw values
+     * (e.g. `"hvc1"` for HEVC, `"jpeg"`, `"avc1"` for H.264). Note these are
+     * the AVFoundation raw values, not the friendly names accepted by
+     * `capturePhoto({ codec })`.
+     */
+    readonly availablePhotoCodecTypes: string[]
+    /** Live Photo video codecs available, as native raw values. */
+    readonly availableLivePhotoVideoCodecTypes: string[]
+    /** Flash modes supported by the active device. */
+    readonly supportedFlashModes: ("off" | "on" | "auto")[]
+    /**
+     * Maximum photo dimensions (pixels). Setting a value not present in the
+     * device's supported set is a silent no-op â€” query before relying on it.
+     */
+    maxPhotoDimensions: { width: number; height: number }
+
+    /**
+     * Depth / portrait-effects-matte / Apple ProRAW delivery. Unsupported
+     * configurations report `*Supported` as `false` and the setters are
+     * silent no-ops, so feature-detect via `*Supported` before flipping.
+     */
+    readonly isDepthDataDeliverySupported: boolean
+    isDepthDataDeliveryEnabled: boolean
+    readonly isPortraitEffectsMatteDeliverySupported: boolean
+    isPortraitEffectsMatteDeliveryEnabled: boolean
+    readonly isAppleProRAWSupported: boolean
+    isAppleProRAWEnabled: boolean
 
     capturePhoto(options?: {
       codec?: "hevc" | "jpeg"
@@ -7592,10 +8166,18 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
   class AVCaptureMovieFileOutput extends AVCaptureOutput {
     constructor()
     readonly isRecording: boolean
+    /** `true` while recording is paused via `pauseRecording()`. Always `false` below iOS 18. */
+    readonly isRecordingPaused: boolean
     /** Maximum recorded duration in seconds. `0` = unlimited. */
     maxRecordedDuration: number
     /** Maximum recorded file size in bytes. `0` = unlimited. */
     maxRecordedFileSize: number
+    /** Seconds elapsed in the current recording (`0` when not recording). */
+    readonly recordedDuration: number
+    /** Bytes written so far in the current recording. */
+    readonly recordedFileSize: number
+    /** Video codecs available for recording, as native raw values (e.g. `"hvc1"`, `"avc1"`). */
+    readonly availableVideoCodecTypes: string[]
     /**
      * Active video stabilization mode currently applied by the system.
      * The system may pick a mode different from the one you requested via
@@ -7614,6 +8196,10 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     /** Resolves with the final output path when recording stops successfully. */
     startRecording(toPath: string): Promise<string>
     stopRecording(): Promise<void>
+    /** Pause the current recording. Safe no-op when not recording / already paused / below iOS 18. */
+    pauseRecording(): void
+    /** Resume a paused recording. Safe no-op when not recording / not paused / below iOS 18. */
+    resumeRecording(): void
   }
 
   /** Object types that an `AVCaptureMetadataOutput` can detect. */
@@ -7628,9 +8214,25 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     type: AVMetadataObjectType
     /** Time of detection in seconds, in the session's clock. */
     time: number
+    /** Raw bounding box in normalized (0..1) output coordinates. */
     bounds: AVCaptureRect
     /** Only present for machine-readable code objects (`qr`, barcodes). */
     stringValue?: string
+    /**
+     * Corner points (normalized 0..1) of a machine-readable code, in the same
+     * raw output space as `bounds`. Only present for code objects.
+     */
+    corners?: AVCapturePoint[]
+    /**
+     * Coordinates corrected for the video connection's orientation and
+     * mirroring (via `transformedMetadataObject`). Use these when overlaying
+     * on the displayed preview. Absent if the transform is unavailable.
+     */
+    transformed?: {
+      bounds: AVCaptureRect
+      /** Corrected corner points; only for machine-readable code objects. */
+      corners?: AVCapturePoint[]
+    }
   }
 
   /**
@@ -13174,6 +13776,186 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     yes = 2,
   }
 
+  /**
+   * The manufactured form of a medication.
+   * @see {@link https://developer.apple.com/documentation/healthkit/hkmedicationgeneralform}
+   */
+  type HealthMedicationGeneralForm =
+    | "capsule"
+    | "cream"
+    | "device"
+    | "drops"
+    | "foam"
+    | "gel"
+    | "inhaler"
+    | "injection"
+    | "liquid"
+    | "lotion"
+    | "ointment"
+    | "patch"
+    | "powder"
+    | "spray"
+    | "suppository"
+    | "tablet"
+    | "topical"
+    | "unknown"
+
+  /**
+   * The status the system assigns to a logged medication dose event.
+   * - `notInteracted`: The person didn't interact with a scheduled medication reminder.
+   * - `notificationNotSent`: The system failed to deliver a scheduled medication notification.
+   * - `snoozed`: The person snoozed a scheduled medication notification.
+   * - `taken`: The person logged that they took the medication dose.
+   * - `skipped`: The person logged that they skipped the medication dose.
+   * - `notLogged`: The person undid a previously logged medication status.
+   */
+  type HealthMedicationDoseEventLogStatus =
+    | "notInteracted"
+    | "notificationNotSent"
+    | "snoozed"
+    | "taken"
+    | "skipped"
+    | "notLogged"
+
+  /**
+   * The kind of schedule the system associates with a logged medication dose event.
+   * - `asNeeded`: The person logged this dose event ad-hoc, outside of any scheduled reminder.
+   * - `schedule`: The person logged this dose event in response to a scheduled medication reminder.
+   */
+  type HealthMedicationDoseEventScheduleType = "asNeeded" | "schedule"
+
+  /**
+   * A clinical coding that links a medication to an external medical terminology system, such as RxNorm.
+   * @see {@link https://developer.apple.com/documentation/healthkit/hkclinicalcoding}
+   */
+  class HealthClinicalCoding {
+    private constructor()
+    /**
+     * The terminology system the coding belongs to, for example `"http://www.nlm.nih.gov/research/umls/rxnorm"`.
+     */
+    readonly system: string
+    /**
+     * The version of the terminology system, if any.
+     */
+    readonly version: string | null
+    /**
+     * The code that identifies the medication within the terminology system.
+     */
+    readonly code: string
+  }
+
+  /**
+   * A specific medication concept, such as ibuprofen or insulin.
+   * @see {@link https://developer.apple.com/documentation/healthkit/hkmedicationconcept}
+   */
+  class HealthMedicationConcept {
+    private constructor()
+    /**
+     * A stable identifier for the medication concept. The same medication produces the same
+     * identifier across devices, so you can use it to compare medications, or pass it to
+     * `Health.queryMedicationDoseEvents` via `medicationConceptIdentifiers` to fetch the doses of a medication.
+     */
+    readonly identifier: string
+    /**
+     * The display name for the medication, as the person entered or selected it.
+     */
+    readonly displayText: string
+    /**
+     * The general manufactured form of the medication, such as `"tablet"`, `"capsule"`, or `"injection"`.
+     */
+    readonly generalForm: HealthMedicationGeneralForm
+    /**
+     * The related clinical codings for the medication, such as RxNorm codes.
+     */
+    readonly relatedCodings: HealthClinicalCoding[]
+  }
+
+  /**
+   * A medication a person is tracking in the Health app, together with the details they can customize.
+   * Requires iOS 26.0 or later.
+   * @see {@link https://developer.apple.com/documentation/healthkit/hkuserannotatedmedication}
+   */
+  class HealthUserAnnotatedMedication {
+    private constructor()
+    /**
+     * The nickname the person added to the medication, if any.
+     */
+    readonly nickname: string | null
+    /**
+     * Whether the medication is in the archived section of the Health app (finished or no longer taken).
+     */
+    readonly isArchived: boolean
+    /**
+     * Whether the person set up a reminders schedule for the medication. Scheduled medications can still be taken as needed.
+     */
+    readonly hasSchedule: boolean
+    /**
+     * The specific medication concept the person is tracking.
+     */
+    readonly medication: HealthMedicationConcept
+  }
+
+  /**
+   * A logged dose of a medication â€” taken, skipped, snoozed, or otherwise.
+   * Requires iOS 26.0 or later.
+   * @see {@link https://developer.apple.com/documentation/healthkit/hkmedicationdoseevent}
+   */
+  class HealthMedicationDoseEvent {
+    private constructor()
+    /**
+     * The UUID of the dose event sample.
+     */
+    readonly uuid: string
+    /**
+     * The start date of the dose event.
+     */
+    readonly startDate: Date
+    /**
+     * The end date of the dose event.
+     */
+    readonly endDate: Date
+    /**
+     * The metadata dictionary attached to the dose event, if any.
+     */
+    readonly metadata: Record<string, any> | null
+    /**
+     * The device that generated the dose event, if any.
+     */
+    readonly device: HealthDevice | null
+    /**
+     * The source revision that generated the dose event.
+     */
+    readonly sourceRevision: HealthSourceRevision
+    /**
+     * Whether the dose was logged ad-hoc (`"asNeeded"`) or in response to a scheduled reminder (`"schedule"`).
+     */
+    readonly scheduleType: HealthMedicationDoseEventScheduleType
+    /**
+     * The identifier of the medication concept this dose event belongs to. Matches `HealthMedicationConcept.identifier`.
+     */
+    readonly medicationConceptIdentifier: string
+    /**
+     * The date and time the person was scheduled to take the medication. Non-null only for scheduled dose events.
+     */
+    readonly scheduledDate: Date | null
+    /**
+     * The dose quantity the person was expected to take, based on their schedule. Non-null only for scheduled dose events.
+     */
+    readonly scheduledDoseQuantity: number | null
+    /**
+     * The dose quantity the person reported as taken.
+     */
+    readonly doseQuantity: number | null
+    /**
+     * The log status the system assigned to this dose event.
+     */
+    readonly logStatus: HealthMedicationDoseEventLogStatus
+    /**
+     * The unit associated with the dose quantity.
+     */
+    readonly unit: HealthUnit
+  }
+
   namespace Health {
     /**
      * Indicates whether health data is available on the device.
@@ -13486,6 +14268,61 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     ): Promise<void>
 
     /**
+     * Queries the medications a person is tracking in the Health app.
+     *
+     * Medications use per-object authorization: the first time you call this, the system asks the
+     * person to choose which medications your script may access. Authorization is requested automatically.
+     *
+     * Requires iOS 26.0 or later.
+     * @param options Optional parameters for the query, including:
+     * - isArchived: If set, only returns medications whose archived state matches (archived medications are finished or no longer taken).
+     * - hasSchedule: If set, only returns medications whose schedule state matches (whether a reminders schedule is set up).
+     * - limit: The maximum number of medications to return.
+     * @returns A promise that resolves to an array of the person's tracked medications.
+     * @see {@link https://developer.apple.com/documentation/healthkit/hkuserannotatedmedication}
+     */
+    function queryMedications(
+      options?: {
+        isArchived?: boolean
+        hasSchedule?: boolean
+        limit?: number
+      }
+    ): Promise<HealthUserAnnotatedMedication[]>
+
+    /**
+     * Queries logged medication dose events (each time a medication was taken, skipped, snoozed, etc.).
+     *
+     * Requires iOS 26.0 or later.
+     * @param options Optional parameters for the query, including:
+     * - startDate / endDate: The date range for the dose events.
+     * - limit: The maximum number of dose events to return.
+     * - strictStartDate / strictEndDate: Whether the range bounds match exactly.
+     * - sortDescriptors: How to sort the results by "startDate" or "endDate".
+     * - statuses: If set, only returns dose events whose log status is one of the given values.
+     * - scheduledStartDate / scheduledEndDate: If set, only returns scheduled dose events whose scheduled time falls within the window.
+     * - medicationConceptIdentifiers: If set, only returns dose events belonging to the given medications (use `HealthMedicationConcept.identifier`).
+     * @returns A promise that resolves to an array of medication dose events.
+     * @see {@link https://developer.apple.com/documentation/healthkit/hkmedicationdoseevent}
+     */
+    function queryMedicationDoseEvents(
+      options?: {
+        startDate?: Date
+        endDate?: Date
+        limit?: number
+        strictStartDate?: boolean
+        strictEndDate?: boolean
+        sortDescriptors?: Array<{
+          key: "startDate" | "endDate"
+          order?: "forward" | "reverse"
+        }>
+        statuses?: HealthMedicationDoseEventLogStatus[]
+        scheduledStartDate?: Date
+        scheduledEndDate?: Date
+        medicationConceptIdentifiers?: string[]
+      }
+    ): Promise<HealthMedicationDoseEvent[]>
+
+    /**
      * Retrieves the preferred units for a given array of health quantity types.
      * @param quantityTypes An array of health quantity types for which to retrieve preferred units.
      * @returns A promise that resolves to a record mapping each health quantity type to its preferred unit.
@@ -13696,12 +14533,12 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
      * @param scriptName The target script's stable name.
      * @param queryParameters Parameters passed to the target script, available as `Script.queryParameters`.
      */
-    function switchToScript(scriptName: string, queryParameters?: Record<string, string>): Promise<void>
+    function switchToScript(scriptName: string, queryParameters?: Record<string, any>): Promise<void>
     /**
      * Dismisses the current keyboard script and runs the next available keyboard script.
      * @param queryParameters Parameters passed to the target script, available as `Script.queryParameters`.
      */
-    function nextScript(queryParameters?: Record<string, string>): Promise<void>
+    function nextScript(queryParameters?: Record<string, any>): Promise<void>
     /**
      * Moves the cursor by the specified offset.
      * @param offset The number of characters to move the cursor. A positive value moves the cursor to the right, while a negative value moves it to the left.
@@ -15235,6 +16072,14 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      * @param options The options for the HTTP server.
      * @param options.port The port to listen on. Defaults to 8080, if specified 0, the server will listen on a random port.
      * @param options.forceIPv4 Whether to force the server to listen on IPv4. Defaults to false.
+     * @param options.maxRequestBodySize Maximum accepted request body size in
+     *   bytes. A request whose `Content-Length` exceeds this is rejected with
+     *   413 before the body is read (guards against memory exhaustion).
+     *   Defaults to 50 MB. Values <= 0 are ignored.
+     * @param options.maxWebSocketPayloadSize Maximum WebSocket frame payload /
+     *   accumulated fragmented-message size in bytes. Frames or messages that
+     *   exceed it close the connection with a protocol error. Defaults to
+     *   16 MB. Values <= 0 are ignored.
      * @param options.tls Optional TLS configuration. When provided, the server starts as HTTPS using the supplied PKCS#12 identity.
      * @param options.tls.p12 Either an absolute path to a PKCS#12 file (string)
      *   or the raw P12 bytes (`Data`). The `Data` form is useful when the P12
@@ -15273,6 +16118,8 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     start(options?: {
       port?: number
       forceIPv4?: boolean
+      maxRequestBodySize?: number
+      maxWebSocketPayloadSize?: number
       tls?: {
         p12: string | Data
         password: string
@@ -16342,6 +17189,9 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
         paused?: PausedPresentation | null
         tintColor?: Color
         metadata?: Record<string, string>
+        liveActivity?: {
+          name: string
+        }
       }): Attributes | null
     }
     class Configuration {
@@ -17007,11 +17857,12 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      */
     env?: Record<string, string>;
     /**
-     * String key/value pairs serialized as JSON and exposed to the
-     * subprocess via the `SCRIPTING_QUERY_PARAMETERS` environment variable.
-     * Mirrors `Script.queryParameters` for ad-hoc commands.
+     * Key/value pairs serialized as JSON and exposed to the subprocess via
+     * the `SCRIPTING_QUERY_PARAMETERS` environment variable. Values keep their
+     * JSON types (boolean/number/null/array/object). Mirrors
+     * `Script.queryParameters` for ad-hoc commands.
      */
-    queryParameters?: Record<string, string>;
+    queryParameters?: Record<string, any>;
   };
 
   /**
@@ -17354,176 +18205,176 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     readonly uuid: string
     readonly name: string
   }
-}
 
-type SpotlightParameters = Record<string, any>
-
-/**
- * A Spotlight item. Every field except `id` and `title` maps 1:1 to a
- * `CSSearchableItemAttributeSet` property in Apple's Core Spotlight framework,
- * grouped below the same way Apple documents them.
- *
- * @see https://developer.apple.com/documentation/corespotlight/cssearchableitemattributeset
- */
-type SpotlightItem = {
-  /**
-   * Script-local identifier. Required and unique within the current script.
-   * Returned as `Spotlight.current.id` when the item is tapped.
-   */
-  id: string
-  /** Arbitrary data delivered to `spotlight.tsx` as `Spotlight.current.parameters`. */
-  parameters?: SpotlightParameters
-
-  // General
-
-  /** Primary title shown in Spotlight results. Required. */
-  title: string
-  /** Localized display name. */
-  displayName?: string
-  /** Alternate names the item can also be found by. */
-  alternateNames?: string[]
-  /** Uniform Type Identifier used to choose the system icon, e.g. `"public.image"`. */
-  contentType?: UTType
-  /** URL of the underlying content (use a file URL for local content). */
-  contentURL?: string
-  /** Thumbnail image bytes. Takes priority over `thumbnailURL`. */
-  thumbnailData?: Data
-  /** Local file URL string pointing to a thumbnail image. */
-  thumbnailURL?: string
-  /** Extra keywords to match against. */
-  keywords?: string[]
-  /** Higher values rank the item higher in results. */
-  rankingHint?: number
-  /** Whether the item can be navigated to (uses `latitude`/`longitude`). */
-  supportsNavigation?: boolean
-  /** Whether the item can be called (uses `phoneNumbers`). */
-  supportsPhoneCall?: boolean
-
-  // Documents
-
-  /** Long description shown under the title. */
-  contentDescription?: string
-  /** Subject of the content. */
-  subject?: string
-  /** Human-readable kind, e.g. "Note", "Invoice". */
-  kind?: string
-  /** Entity that created the content. */
-  creator?: string
-  /** Number of pages in the document. */
-  pageCount?: number
-  /** Size of the content in bytes. */
-  fileSize?: number
-
-  // Messaging
-
-  /** Full searchable text body. Improves recall for free-text queries. */
-  textContent?: string
-  /** Author display names. */
-  authorNames?: string[]
-  /** Associated email addresses. */
-  emailAddresses?: string[]
-  /** Associated phone numbers. */
-  phoneNumbers?: string[]
-
-  // Media
-
-  /** Free-form comment. */
-  comment?: string
-  /** Content creation date. Defaults to first index time when omitted. */
-  contentCreationDate?: Date | string | number
-  /** Content modification date. Defaults to last index time when omitted. */
-  contentModificationDate?: Date | string | number
-  /** Last used date. */
-  lastUsedDate?: Date | string | number
-
-  // Events
-
-  /** Start date, for event-like items. */
-  startDate?: Date | string | number
-  /** End date, for event-like items. */
-  endDate?: Date | string | number
-  /** Due date, for task-like items. */
-  dueDate?: Date | string | number
-  /** Completion date, for task-like items. */
-  completionDate?: Date | string | number
-  /** Whether the event lasts all day. */
-  allDay?: boolean
-
-  // Places
-
-  /** Latitude in degrees. */
-  latitude?: number
-  /** Longitude in degrees. */
-  longitude?: number
-  /** Altitude in meters. */
-  altitude?: number
-  /** Human-readable place name. */
-  namedLocation?: string
-  /** City of the place. */
-  city?: string
-  /** State or province of the place. */
-  stateOrProvince?: string
-  /** Country of the place. */
-  country?: string
-  /** Postal code of the place. */
-  postalCode?: string
-  /** Fully formatted address of the place. */
-  fullyFormattedAddress?: string
-
-  // Item-level
-
-  /** When the item should be removed from the index. */
-  expirationDate?: Date | string | number
-}
-
-type SpotlightCurrent = {
-  id: string
-  parameters: SpotlightParameters
-}
-
-type SpotlightIndexedItem = Omit<SpotlightItem, "thumbnailData" | "contentCreationDate" | "contentModificationDate"> & {
-  scriptName: string
-  uniqueIdentifier: string
-  contentCreationDate: number
-  contentModificationDate: number
-}
-
-declare namespace Spotlight {
-  /**
-   * Spotlight launch context. This is non-null when the current script is
-   * running from `spotlight.tsx` after a user taps a Spotlight result.
-   */
-  const current: SpotlightCurrent | null
+  type SpotlightParameters = Record<string, any>
 
   /**
-   * Index or update one item for the current script. Requires Scripting PRO.
+   * A Spotlight item. Every field except `id` and `title` maps 1:1 to a
+   * `CSSearchableItemAttributeSet` property in Apple's Core Spotlight framework,
+   * grouped below the same way Apple documents them.
+   *
+   * @see https://developer.apple.com/documentation/corespotlight/cssearchableitemattributeset
    */
-  function index(item: SpotlightItem): Promise<void>
+  type SpotlightItem = {
+    /**
+     * Script-local identifier. Required and unique within the current script.
+     * Returned as `Spotlight.current.id` when the item is tapped.
+     */
+    id: string
+    /** Arbitrary data delivered to `spotlight.tsx` as `Spotlight.current.parameters`. */
+    parameters?: SpotlightParameters
 
-  /**
-   * Index or update multiple items for the current script. Requires Scripting PRO.
-   */
-  function indexItems(items: SpotlightItem[]): Promise<void>
+    // General
 
-  /**
-   * Delete one indexed item by its script-local id. Requires Scripting PRO.
-   */
-  function delete(id: string): Promise<void>
+    /** Primary title shown in Spotlight results. Required. */
+    title: string
+    /** Localized display name. */
+    displayName?: string
+    /** Alternate names the item can also be found by. */
+    alternateNames?: string[]
+    /** Uniform Type Identifier used to choose the system icon, e.g. `"public.image"`. */
+    contentType?: UTType
+    /** URL of the underlying content (use a file URL for local content). */
+    contentURL?: string
+    /** Thumbnail image bytes. Takes priority over `thumbnailURL`. */
+    thumbnailData?: Data
+    /** Local file URL string pointing to a thumbnail image. */
+    thumbnailURL?: string
+    /** Extra keywords to match against. */
+    keywords?: string[]
+    /** Higher values rank the item higher in results. */
+    rankingHint?: number
+    /** Whether the item can be navigated to (uses `latitude`/`longitude`). */
+    supportsNavigation?: boolean
+    /** Whether the item can be called (uses `phoneNumbers`). */
+    supportsPhoneCall?: boolean
 
-  /**
-   * Delete indexed items by their script-local ids. Requires Scripting PRO.
-   */
-  function deleteItems(ids: string[]): Promise<void>
+    // Documents
 
-  /**
-   * Delete all Spotlight items registered by the current script. Requires Scripting PRO.
-   */
-  function deleteAll(): Promise<void>
+    /** Long description shown under the title. */
+    contentDescription?: string
+    /** Subject of the content. */
+    subject?: string
+    /** Human-readable kind, e.g. "Note", "Invoice". */
+    kind?: string
+    /** Entity that created the content. */
+    creator?: string
+    /** Number of pages in the document. */
+    pageCount?: number
+    /** Size of the content in bytes. */
+    fileSize?: number
 
-  /**
-   * List Spotlight items registered by the current script. Requires Scripting PRO.
-   */
-  function getItems(): Promise<SpotlightIndexedItem[]>
+    // Messaging
+
+    /** Full searchable text body. Improves recall for free-text queries. */
+    textContent?: string
+    /** Author display names. */
+    authorNames?: string[]
+    /** Associated email addresses. */
+    emailAddresses?: string[]
+    /** Associated phone numbers. */
+    phoneNumbers?: string[]
+
+    // Media
+
+    /** Free-form comment. */
+    comment?: string
+    /** Content creation date. Defaults to first index time when omitted. */
+    contentCreationDate?: Date | string | number
+    /** Content modification date. Defaults to last index time when omitted. */
+    contentModificationDate?: Date | string | number
+    /** Last used date. */
+    lastUsedDate?: Date | string | number
+
+    // Events
+
+    /** Start date, for event-like items. */
+    startDate?: Date | string | number
+    /** End date, for event-like items. */
+    endDate?: Date | string | number
+    /** Due date, for task-like items. */
+    dueDate?: Date | string | number
+    /** Completion date, for task-like items. */
+    completionDate?: Date | string | number
+    /** Whether the event lasts all day. */
+    allDay?: boolean
+
+    // Places
+
+    /** Latitude in degrees. */
+    latitude?: number
+    /** Longitude in degrees. */
+    longitude?: number
+    /** Altitude in meters. */
+    altitude?: number
+    /** Human-readable place name. */
+    namedLocation?: string
+    /** City of the place. */
+    city?: string
+    /** State or province of the place. */
+    stateOrProvince?: string
+    /** Country of the place. */
+    country?: string
+    /** Postal code of the place. */
+    postalCode?: string
+    /** Fully formatted address of the place. */
+    fullyFormattedAddress?: string
+
+    // Item-level
+
+    /** When the item should be removed from the index. */
+    expirationDate?: Date | string | number
+  }
+
+  type SpotlightCurrent = {
+    id: string
+    parameters: SpotlightParameters
+  }
+
+  type SpotlightIndexedItem = Omit<SpotlightItem, "thumbnailData" | "contentCreationDate" | "contentModificationDate"> & {
+    scriptName: string
+    uniqueIdentifier: string
+    contentCreationDate: number
+    contentModificationDate: number
+  }
+
+  const Spotlight: {
+    /**
+     * Spotlight launch context. This is non-null when the current script is
+     * running from `spotlight.tsx` after a user taps a Spotlight result.
+     */
+    readonly current: SpotlightCurrent | null
+
+    /**
+     * Index or update one item for the current script. Requires Scripting PRO.
+     */
+    index(item: SpotlightItem): Promise<void>
+
+    /**
+     * Index or update multiple items for the current script. Requires Scripting PRO.
+     */
+    indexItems(items: SpotlightItem[]): Promise<void>
+
+    /**
+     * Delete one indexed item by its script-local id. Requires Scripting PRO.
+     */
+    delete(id: string): Promise<void>
+
+    /**
+     * Delete indexed items by their script-local ids. Requires Scripting PRO.
+     */
+    deleteItems(ids: string[]): Promise<void>
+
+    /**
+     * Delete all Spotlight items registered by the current script. Requires Scripting PRO.
+     */
+    deleteAll(): Promise<void>
+
+    /**
+     * List Spotlight items registered by the current script. Requires Scripting PRO.
+     */
+    getItems(): Promise<SpotlightIndexedItem[]>
+  }
 }
 
 export { }
