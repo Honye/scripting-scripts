@@ -2883,6 +2883,36 @@ declare global {
   }
 
   /**
+   * Presents the system "Open in…" / options menu for a file, letting the user pick an app to
+   * open or copy the file with.
+   *
+   * Note: iOS has no concept of a "default app" for a file type and no API to open a file directly
+   * in its associated app — presenting this menu and letting the user choose is the only supported way.
+   *
+   * On iPad the menu appears as a popover anchored to the center of the current page.
+   */
+  namespace DocumentInteraction {
+    /**
+     * Presents the "Open in…" menu, listing the apps that can open or copy the file.
+     * @param filePath The absolute path of an existing file.
+     * @returns A promise that resolves to the bundle identifier of the app the file was sent to,
+     * or `null` if the user dismissed the menu without choosing an app.
+     * Rejects if the file does not exist, or if no app is available to open it.
+     */
+    function openInMenu(filePath: string): Promise<string | null>
+
+    /**
+     * Presents the full options menu for the file (Open in… plus actions such as Copy, Print,
+     * Save to Files, and Markup, depending on the file type).
+     * @param filePath The absolute path of an existing file.
+     * @returns A promise that resolves to the bundle identifier of the app the file was sent to
+     * if the user chose "Open in" an app, or `null` if the menu was dismissed or a non-open action
+     * was performed. Rejects if the file does not exist.
+     */
+    function optionsMenu(filePath: string): Promise<string | null>
+  }
+
+  /**
    * Parse the QR code image file, or open the scan code page to scan.
    */
   namespace QRCode {
@@ -4056,6 +4086,113 @@ declare global {
      * Returns an array of all keys in the persistent storage.
      */
     function keys(): string[]
+  }
+
+  /**
+   * An iCloud-backed shared data store you can collaborate on with other users.
+   *
+   * Construct one with a store **UUID** that you obtained either by creating a store in
+   * Settings → iCloud Shared Data, or from a share someone sent you. Scripts are pure
+   * consumers: they read, write, and can share a store, but **cannot create or list**
+   * stores — create them in the management page (or ask the assistant), then paste the
+   * store UUID into your script.
+   *
+   * The first time a script touches a given store, the user is asked to grant access for
+   * that script + store; denying makes all calls for that store fail. Across users, a person
+   * only sees a store after they accept a share for it (CloudKit + Apple ID enforced).
+   *
+   * Data lives in CloudKit (the owner's private iCloud database) and syncs across
+   * participants. Requires the user to be signed in to iCloud and a Pro subscription.
+   * The script must declare the `cloudSharedData` permission.
+   *
+   * @example
+   * const store = new CloudSharedData("3F2504E0-4F89-41D3-9A0C-0305E82C3301")
+   * await store.put(new Date().toISOString(), { note: "first tooth" })
+   * const all = await store.entries()
+   */
+  class CloudSharedData {
+    /**
+     * @param storeId A store UUID created in Settings → iCloud Shared Data, or shared with you.
+     */
+    constructor(storeId: string)
+
+    /**
+     * Write (upsert) an entry. Creates the store on first write (if you own it).
+     * @param key Any string key. Re-writing the same key overwrites it (last write wins).
+     * @param value Any JSON-serializable value.
+     * @param blob Optional binary attachment.
+     */
+    put(key: string, value: any, blob?: Data): Promise<void>
+    /**
+     * Read an entry. Returns null if the store or key does not exist.
+     */
+    get(key: string): Promise<{ value: any; blob: Data | null } | null>
+    /**
+     * Remove an entry (no-op if it does not exist).
+     */
+    remove(key: string): Promise<void>
+    /**
+     * List all entries (binary blobs are not loaded; use `get`).
+     */
+    entries(): Promise<CloudSharedData.EntryInfo[]>
+    /**
+     * Overwrite the store's single-file data (independent of entries).
+     */
+    writeFile(data: Data): Promise<void>
+    /**
+     * Read the store's single-file data, or null if not set.
+     */
+    readFile(): Promise<Data | null>
+    /**
+     * Cheaply check whether the store changed since the last `refresh` call.
+     * Returns true on the first call (to prime) and whenever there are remote changes.
+     * Poll this and call `entries`/`get` again when it returns true.
+     */
+    refresh(): Promise<boolean>
+    /**
+     * Register a callback fired when the store changes remotely (push-driven).
+     * Returns a function that unregisters the callback — call it when no longer needed.
+     * Inside the callback, call `entries`/`get` to read the latest data.
+     */
+    onChange(callback: () => void): () => void
+    /**
+     * Start (or fetch) sharing for the store and return its share info, including a link
+     * you can send to invite collaborators. Only the owner can share.
+     */
+    share(options?: { permission?: "readOnly" | "readWrite" }): Promise<CloudSharedData.ShareInfo>
+    /**
+     * Present the system collaboration sheet to invite people to the store.
+     * Available where a presentation context exists (main app, Share/Translation UI extensions);
+     * elsewhere it rejects — use `share` to get a link instead. Only the owner can share.
+     */
+    presentShareSheet(options?: { permission?: "readOnly" | "readWrite" }): Promise<void>
+    /**
+     * Get the current share info of the store, or null if it is not shared.
+     */
+    shareInfo(): Promise<CloudSharedData.ShareInfo | null>
+    /**
+     * Stop sharing the store. Only the owner can do this.
+     */
+    stopSharing(): Promise<void>
+  }
+
+  namespace CloudSharedData {
+    type EntryInfo = {
+      /** The entry key. */
+      key: string
+      /** The decoded JSON value. */
+      value: any
+      /** Whether this entry has an attached binary blob (fetch it with `get`). */
+      hasBlob: boolean
+    }
+    type ShareInfo = {
+      /** The permission granted via the share. */
+      permission: "readOnly" | "readWrite"
+      /** Display names of the participants (may be empty if unavailable). */
+      participants: string[]
+      /** A link to the share, or null. Send it to invite collaborators. */
+      url: string | null
+    }
   }
 
   /**
@@ -8804,13 +8941,13 @@ If the event’s calendar does not support availability settings, this property�
      */
     static passwordBased(username: string, password: string): SSHAuthenticationMethod
     /**
-     * Creates a private key based authentication method.
+     * Creates an RSA private key based authentication method.
      * @param username The username to authenticate with.
      * @param sshRsa The RSA private key in OpenSSH format.
      * @param decryptionKey An optional decryption key for the private key, if it is encrypted.
      * @returns An SSHAuthenticationMethod instance
      */
-    static ras(username: string, sshRsa: Data, decryptionKey?: Data): SSHAuthenticationMethod | null
+    static rsa(username: string, sshRsa: Data, decryptionKey?: Data): SSHAuthenticationMethod | null
     static ed25519(username: string, sshEd25519: Data, decryptionKey?: Data): SSHAuthenticationMethod | null
     static p256(username: string, pemRepresentation: string): SSHAuthenticationMethod | null
     static p384(username: string, pemRepresentation: string): SSHAuthenticationMethod | null
@@ -9033,6 +9170,10 @@ If the event’s calendar does not support availability settings, this property�
      *
      * Output decoding is controlled by `options.encoding`:
      * - `"utf8"` (default): lossy UTF-8 decode. Invalid bytes are replaced with U+FFFD.
+     *   Note: a decoded string can still contain NUL (` `) or other control characters
+     *   that survive lossy decoding. Passing such a string onward through serialization layers
+     *   (e.g. returning it from `Script.exit(...)`) may truncate or corrupt it. For commands whose
+     *   output may contain such bytes, prefer `"binary"` and sanitize the bytes yourself.
      * - `"ascii"`: lossy ASCII decode.
      * - `"binary"`: returns raw bytes as `Data`, no decoding. Use this for commands whose
      *   output may contain binary or terminal control characters (e.g. `softwareupdate -l`,
@@ -9089,8 +9230,10 @@ If the event’s calendar does not support availability settings, this property�
      * @param options.terminalRowHeight The row height of the terminal. Defaults to 24.
      * @param options.terminalPixelWidth The pixel width of the terminal. Defaults to 0.
      * @param options.terminalPixelHeight The pixel height of the terminal. Defaults to 0.
+     * @param options.echo Whether the terminal echoes local input. Defaults to `true`. Set to `false` to disable local echo (e.g. interactive password prompts).
      * @param options.onOutput A callback function that is called for each chunk of output from the PTY session. The function receives the output data and a boolean indicating whether it is standard error output. Return `true` to continue receiving output, or `false` to stop the stream.
      * @param options.onError An optional callback function that is called when an error occurs after the PTY session has started streaming. The function receives the error message as a string. Errors thrown before the session is established cause the returned promise to reject instead.
+     * @param options.onClose An optional callback function that is called when the output stream ends naturally (e.g. the server closes the session). It is not called when you stop the stream yourself by returning `false` from `onOutput`, nor when an error occurs (use `onError` for that).
      * @returns A promise that resolves to a TTYStdinWriter instance if the PTY session is successfully opened, or rejects with an error if the PTY session fails to open.
      */
     withPTY(optoins: {
@@ -9100,8 +9243,10 @@ If the event’s calendar does not support availability settings, this property�
       terminalRowHeight?: number
       terminalPixelWidth?: number
       terminalPixelHeight?: number
+      echo?: boolean
       onOutput: (data: Data, isStderr: boolean) => boolean
       onError?: (error: string) => void
+      onClose?: () => void
     }): Promise<TTYStdinWriter>
 
     /**
@@ -9113,11 +9258,13 @@ If the event’s calendar does not support availability settings, this property�
      * @param options An object containing options for the TTY session.
      * @param options.onOutput A callback function that is called for each chunk of output from the TTY session. The function receives the output data and a boolean indicating whether it is standard error output. Return `true` to continue receiving output, or `false` to stop the stream.
      * @param options.onError An optional callback function that is called when an error occurs after the TTY session has started streaming. The function receives the error message as a string. Errors thrown before the session is established cause the returned promise to reject instead.
+     * @param options.onClose An optional callback function that is called when the output stream ends naturally (e.g. the server closes the session). It is not called when you stop the stream yourself by returning `false` from `onOutput`, nor when an error occurs (use `onError` for that).
      * @returns A promise that resolves to a TTYStdinWriter instance if the TTY session is successfully created, or rejects with an error if the TTY session fails to open.
      */
     withTTY(options: {
       onOutput: (data: Data, isStderr: boolean) => boolean
       onError?: (error: string) => void
+      onClose?: () => void
     }): Promise<TTYStdinWriter>
 
     /**
@@ -15799,9 +15946,16 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   class HttpRequest {
     private constructor()
     /**
-     * The path of the request.
+     * The path of the request, excluding the query string.
      */
     readonly path: string
+    /**
+     * The raw request-target from the request line, including the query string
+     * if present. Unlike `path`, which is stripped of the query, `target`
+     * preserves the original target exactly as the client sent it
+     * (e.g. `"/search?keyword=apple&page=2"`).
+     */
+    readonly target: string
     /**
      * The method of the request.
      */
