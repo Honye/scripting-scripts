@@ -93,7 +93,7 @@ await Spotlight.indexItems([
 
 **Item-level（条目级）**
 
-- `expirationDate` —— Spotlight 何时将该条目移出索引。
+- `expirationDate` —— Spotlight 何时将该条目移出索引。省略则条目一直保留在索引中，直到你显式删除。
 
 说明：
 
@@ -162,6 +162,24 @@ await Spotlight.index({
   expirationDate: new Date(),
 })
 ```
+
+## 搜索可靠性
+
+一条条目能否被搜到由系统决定，而非 Scripting。以下做法有帮助：
+
+- **把每个可搜索的词都作为独立项放进 `keywords`。** Spotlight 匹配整词和词的*前缀*，不匹配任意子串——搜 `"part"` 能命中 `"partner"`，但搜 `"art"` 不能。对词典类数据，请把每种拼写、词形变化、别名各作为一个关键词加入（如 `["run", "runs", "running", "ran"]`）。
+- **`title` 保持简短精确。** 它是匹配权重最高的字段；把规范词放这里，变体放进 `keywords` / `alternateNames`。
+- **用 `rankingHint`**（越大越靠前）在*你自己的条目之间*调整排序。
+- **`textContent`** 能提升较长自由文本查询（释义、正文）的命中率。
+
+需要了解的限制：
+
+- Spotlight 不做子串/模糊匹配，词中间或部分词查询可能不命中。需要时把对应前缀显式加进关键词。
+- Apple 内置结果（词典、通讯录等）是特权系统数据源，单独排序。对于短而常见的词，自定义条目通常无法排到它们前面，无论怎么打标签。
+
+## 大批量索引
+
+`indexItems` 接受很大的数组，并分批提交给系统；每个脚本可索引数千条。请 `await` 调用——它在工作交给 Spotlight 后兑现，await 是确认索引完成并捕获错误的推荐方式。用已有 `id` 再次索引会覆盖原条目，因此重复调用重建索引是安全的。
 
 ## 处理点击
 

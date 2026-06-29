@@ -28,6 +28,24 @@ console.log(request.path)
 
 ---
 
+### `target: string`
+
+请求行中的原始 request-target，若包含查询字符串则一并保留。
+与会被剥掉查询参数的 `path` 不同，`target` 完整保留客户端发送的原始目标。
+
+**示例：**
+
+```ts
+// 请求 URL: /search?keyword=apple&page=2
+console.log(request.target)
+// 输出: "/search?keyword=apple&page=2"
+
+console.log(request.path)
+// 输出: "/search"
+```
+
+---
+
 ### `method: string`
 
 请求的 HTTP 方法，例如 `"GET"`, `"POST"`, `"PUT"`, `"DELETE"` 等。

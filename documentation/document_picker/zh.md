@@ -26,6 +26,56 @@
 
 ---
 
+### `PickFileBookmarkOptions`
+
+用于选择文件并保存为持久 bookmark 的选项。
+
+- **`preferredName`** (可选)
+  - **类型**: `string`
+  - **描述**: 首选 bookmark 名称。如果省略，会使用所选文件名。如果名称已存在，会提示用户重新命名。
+
+- **`initialDirectory`** (可选)
+  - **类型**: `string`
+  - **描述**: 指定文档选择器初次显示的目录。
+
+- **`types`** (可选)
+  - **类型**: `string[]`
+  - **描述**: 要在文档选择器中显示的统一类型标识符（UTI）数组。
+
+- **`shouldShowFileExtensions`** (可选)
+  - **类型**: `boolean`
+  - **描述**: 是否显示文件扩展名。默认为 `true`。
+
+---
+
+### `PickDirectoryBookmarkOptions`
+
+用于选择目录并保存为持久 bookmark 的选项。
+
+- **`preferredName`** (可选)
+  - **类型**: `string`
+  - **描述**: 首选 bookmark 名称。如果省略，会使用所选目录名。如果名称已存在，会提示用户重新命名。
+
+- **`initialDirectory`** (可选)
+  - **类型**: `string`
+  - **描述**: 指定文档选择器初次显示的目录。
+
+---
+
+### `DocumentPickerBookmarkResult`
+
+保存 bookmark 后返回的结果。
+
+- **`path`**
+  - **类型**: `string`
+  - **描述**: 用户选择的文件或目录路径。
+
+- **`bookmarkName`**
+  - **类型**: `string`
+  - **描述**: 实际保存的 bookmark 名称。如果用户因为重名而重新命名，它可能不同于 `preferredName`。
+
+---
+
 ### `ExportFilesOptions`
 
 用于通过 `exportFiles` 导出文件的选项。
@@ -84,6 +134,61 @@ run()
 const selectedDirectory = await DocumentPicker.pickDirectory()
 if (selectedDirectory == null) {
   // 用户取消了选择
+}
+```
+
+---
+
+### `DocumentPicker.pickFileBookmark(options?: PickFileBookmarkOptions): Promise<DocumentPickerBookmarkResult | null>`
+
+允许用户从 Files App 中选择一个文件，并保存为持久的 security-scoped bookmark。
+
+`pickFiles` 只会为当前脚本运行启动访问权限，并在脚本销毁或调用 `stopAcessingSecurityScopedResources()` 时释放。`pickFileBookmark` 会保存 bookmark，后续脚本运行可以通过 `FileManager.bookmarkedPath(bookmarkName)` 访问这个文件。
+
+#### 参数
+- **`options`** (可选): `PickFileBookmarkOptions`
+  - 用于文件选择和 bookmark 命名的配置选项。
+
+#### 返回值
+- 一个 Promise，解析后返回 `{ path, bookmarkName }`；如果用户取消选择或取消命名，则返回 `null`。
+
+#### 示例
+```typescript
+const result = await DocumentPicker.pickFileBookmark({
+  preferredName: "My Config",
+  types: ["public.json"],
+})
+
+if (result != null) {
+  console.log(result.path)
+  console.log(FileManager.bookmarkedPath(result.bookmarkName))
+}
+```
+
+---
+
+### `DocumentPicker.pickDirectoryBookmark(options?: PickDirectoryBookmarkOptions): Promise<DocumentPickerBookmarkResult | null>`
+
+允许用户从 Files App 中选择一个目录，并保存为持久的 security-scoped bookmark。
+
+`pickDirectory` 只会为当前脚本运行启动访问权限，并在脚本销毁或调用 `stopAcessingSecurityScopedResources()` 时释放。`pickDirectoryBookmark` 会保存 bookmark，后续脚本运行可以通过 `FileManager.bookmarkedPath(bookmarkName)` 访问这个目录。
+
+#### 参数
+- **`options`** (可选): `PickDirectoryBookmarkOptions`
+  - 用于目录选择和 bookmark 命名的配置选项。
+
+#### 返回值
+- 一个 Promise，解析后返回 `{ path, bookmarkName }`；如果用户取消选择或取消命名，则返回 `null`。
+
+#### 示例
+```typescript
+const result = await DocumentPicker.pickDirectoryBookmark({
+  preferredName: "Workspace",
+})
+
+if (result != null) {
+  const directory = FileManager.bookmarkedPath(result.bookmarkName)
+  console.log(directory)
 }
 ```
 

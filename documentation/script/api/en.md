@@ -66,12 +66,21 @@ if (Script.widgetParameter) {
 
 ---
 
-### `queryParameters: Record<string, string>`
+### `queryParameters: Record<string, any>`
 
-Key-value pairs parsed from a `run` URL scheme.
+Parameters passed to the script.
+
+When the script is launched with a JSON object — for example `Script.run({ queryParameters })`, the `scripting-ts run ... --queryparameters '<json>'` command, or the keyboard `switchToScript` API — the original JSON value types are preserved (boolean, number, `null`, array, object).
+
+When the script is launched via a `run` URL scheme, every value is a string, because URL query strings cannot carry typed values.
 
 ```ts
-// URL: scripting://run/MyScript?user=John&id=123
+// Launched with a JSON object: { "enabled": true, "count": 3, "user": "John" }
+console.log(Script.queryParameters.enabled) // true (boolean)
+console.log(Script.queryParameters.count)   // 3 (number)
+console.log(Script.queryParameters.user)    // "John" (string)
+
+// Launched via URL: scripting://run/MyScript?user=John&id=123
 console.log(Script.queryParameters.user) // "John"
 console.log(Script.queryParameters.id)   // "123"
 ```
@@ -130,7 +139,7 @@ Script.exit(Intent.json({ status: "ok" }))
 Runs another script programmatically and waits for its result.
 
 * `options.name`: The name of the script to run.
-* `options.queryParameters`: Optional data to pass.
+* `options.queryParameters`: Optional data passed to the target script as `Script.queryParameters`; JSON value types are preserved.
 * `options.singleMode`: If `true`, ensures only one instance of the script runs.
 
 Returns: the value passed from `Script.exit(result)` in the target script.

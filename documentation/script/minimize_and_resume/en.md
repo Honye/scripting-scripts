@@ -91,6 +91,32 @@ async function handleMinimize() {
 
 ---
 
+### `Script.enableMinimize(enabled?: boolean): void`
+
+Enables minimize-on-swipe-dismiss for the script's **root presented UI** (the first page presented with `Navigation.present`, whether a sheet or a full-screen page).
+
+Once enabled, when the user interactively **swipes the root page down to dismiss it**, the script is minimized instead of being ended: the UI is hidden, the script instance keeps running, `Script.onMinimize` is triggered, and the script can be resumed from the running scripts list — exactly as if `Script.minimize()` had been called.
+
+Behavior rules:
+
+* Affects only interactive swipe-down dismissal of the root page. Programmatic dismissal via `Navigation.useDismiss()(result)` still closes the page and resolves the `present` promise with `result` as usual.
+* `Script.exit()` still fully terminates the script.
+* Has no effect when multiple windows mode is enabled.
+* Pass `false` to disable the behavior again. Defaults to `true`.
+* While the script is minimized, the original `Navigation.present` promise stays pending (the same as after `Script.minimize()`). Use `Script.onResume()` to react when the script is restored.
+
+```ts
+// Keep the script alive when the user swipes the sheet away.
+Script.enableMinimize()
+
+await Navigation.present({
+  element: <MyView />,
+  modalPresentationStyle: "pageSheet",
+})
+```
+
+---
+
 ### `Script.onMinimize(callback: () => void): () => void`
 
 Registers a listener for the minimize event.
@@ -139,7 +165,7 @@ type ResumeEventDetails = {
   resumeFromMinimized: boolean
   widgetParameter: string | null
   controlWidgetParameter: string | null
-  queryParameters: Record<string, string> | null
+  queryParameters: Record<string, any> | null
   notificationInfo: NotificationInfo | null
 }
 ```
@@ -163,9 +189,9 @@ Parameter passed when the script is resumed by interacting with a Control Center
 
 ---
 
-### `queryParameters: Record<string, string> | null`
+### `queryParameters: Record<string, any> | null`
 
-Query parameters passed via `scripting://run/...` when the script is resumed.
+Query parameters passed when the script is resumed. Values keep their JSON types when resumed with a JSON object, but are strings when resumed via a `scripting://run/...` URL scheme.
 
 ---
 

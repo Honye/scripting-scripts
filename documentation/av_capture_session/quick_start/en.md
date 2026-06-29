@@ -147,6 +147,19 @@ await session.startRunning()
 
 Set `rectOfInterest = { x, y, width, height }` (normalized 0..1) to limit detection to a region of the frame.
 
+Each detected object carries a raw `bounds` (normalized 0..1) and, for codes, raw `corners`. It also carries a `transformed` field whose `bounds` / `corners` are corrected for the connection's orientation and mirroring — use those when drawing an overlay on top of the preview:
+
+```ts
+metaOutput.setMetadataObjectsListener(objects => {
+  for (const o of objects) {
+    const box = o.transformed?.bounds ?? o.bounds   // {x,y,width,height}, 0..1
+    // map box into your view's pixel rect and draw a highlight
+  }
+})
+```
+
+To convert a rectangle between an output's own coordinate space and the metadata output's normalized space, use `output.metadataOutputRectConverted({ x, y, width, height })` and its inverse `output.outputRectConverted(...)`. Both are available on every output and return `{ x, y, width, height }`.
+
 ---
 
 ## Showing a preview

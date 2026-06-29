@@ -57,8 +57,8 @@ Common metadata keys:
 // @grant
 // @require
 // @resource
-// @run-at document-start | document-end | document-idle
-// @inject-into content | page
+// @run-at document-start | document-body | document-end | document-idle
+// @inject-into auto | content | page
 // @weight 1..999
 // @noframes
 // @homepageURL
@@ -70,7 +70,7 @@ Common metadata keys:
 
 `@weight` controls execution order when multiple scripts match the page. Larger weights run first. If no `@run-at` is provided, scripts run at `document-end`.
 
-Use `@inject-into page` only for page-context scripts that do not need privileged APIs. `GM.*`, `Scripting.*`, and extension messaging are only available in content-context scripts.
+`@inject-into` defaults to `auto`. With `auto`, a script that declares any `@grant` (`GM.*` or `Scripting.*`) runs in the **content world** (privileged APIs available, isolated from the page's JavaScript), while a script with `@grant none` or no grant runs in the **page world** (shares the page's real `window`, can read page globals). Use `@inject-into content` or `@inject-into page` to force a world explicitly. `GM.*`, `Scripting.*`, and extension messaging are only available in the content world; grants are ignored in the page world. On pages whose Content-Security-Policy blocks injected scripts, `auto` page-world scripts automatically fall back to the content world.
 
 ---
 

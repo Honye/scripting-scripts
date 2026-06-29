@@ -1,4 +1,4 @@
-import { Button, List, Navigation, NavigationStack, Script, Section, Text, } from "scripting"
+import { Button, Dialog, List, Navigation, NavigationStack, Script, Section, Text, } from "scripting"
 
 function Example() {
   const dismiss = Navigation.useDismiss()
@@ -106,6 +106,81 @@ function Example() {
                 message: "Canceled"
               })
             }
+          }}
+        />
+      </Section>
+
+      <Section
+        header={<Text>Photo Asset Layer</Text>}
+        footer={
+          <Text>Query the library and read rich metadata (date, dimensions, location, subtypes) from each PHAsset.</Text>
+        }
+      >
+        <Button
+          title={"Photos.fetchAssets"}
+          action={async () => {
+            const status = Photos.authorizationStatus()
+            const assets = await Photos.fetchAssets({ mediaType: "image", limit: 5 })
+            const newest = assets[0]
+
+            if (newest == null) {
+              Dialog.alert({ message: `No photos found. (status: ${status})` })
+              return
+            }
+
+            const created = newest.creationDate != null
+              ? new Date(newest.creationDate).toLocaleString()
+              : "unknown"
+            const where = newest.location != null
+              ? `${newest.location.latitude.toFixed(3)}, ${newest.location.longitude.toFixed(3)}`
+              : "none"
+
+            Dialog.alert({
+              message: [
+                `Fetched ${assets.length} asset(s).`,
+                `Newest: ${newest.pixelWidth}×${newest.pixelHeight}`,
+                `Created: ${created}`,
+                `Favorite: ${newest.isFavorite}`,
+                `Subtypes: ${newest.mediaSubtypes.join(", ") || "none"}`,
+                `Location: ${where}`,
+              ].join("\n")
+            })
+          }}
+        />
+
+        <Button
+          title={"Asset.requestImage (thumbnail)"}
+          action={async () => {
+            const assets = await Photos.fetchAssets({ mediaType: "image", limit: 1 })
+            const asset = assets[0]
+            if (asset == null) {
+              Dialog.alert({ message: "No photos found." })
+              return
+            }
+            const image = await asset.requestImage({
+              targetWidth: 200,
+              targetHeight: 200,
+              contentMode: "aspectFill",
+            })
+            Dialog.alert({
+              message: image != null
+                ? `Loaded thumbnail: ${image.width}×${image.height}`
+                : "Failed to load image."
+            })
+          }}
+        />
+
+        <Button
+          title={"Photos.fetchAlbums"}
+          action={async () => {
+            const albums = await Photos.fetchAlbums({ type: "smartAlbum" })
+            const titles = albums
+              .slice(0, 8)
+              .map(a => `• ${a.title ?? a.subtype} (${a.estimatedAssetCount})`)
+              .join("\n")
+            Dialog.alert({
+              message: `Found ${albums.length} smart album(s):\n${titles}`
+            })
           }}
         />
       </Section>

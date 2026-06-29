@@ -196,6 +196,75 @@ Releases the underlying `AVURLAsset`. Subsequent `loadXxx()` calls will reject. 
 
 ---
 
+## AVAssetImageGenerator
+
+`AVAsset.generateImage(...)` covers the one-shot "grab a cover frame" case. When you need to extract **many** frames — a thumbnail strip, per-frame OCR/ML — reach for the standalone `AVAssetImageGenerator`. Compared to the one-shot method it:
+
+- **reuses one configured generator** across calls,
+- **streams results frame-by-frame** as each one decodes (instead of waiting for the whole batch), and
+- can be **cancelled mid-flight**.
+
+```ts
+const asset = new AVAsset("/path/to/movie.mp4")
+const gen = new AVAssetImageGenerator(asset)
+
+gen.maximumSize = { width: 320, height: 180 }
+gen.requestedTimeToleranceBefore = MediaTime.zero()  // exact-frame
+gen.requestedTimeToleranceAfter = MediaTime.zero()
+
+const times = [0, 1, 2, 3, 4].map(s =>
+  MediaTime.make({ seconds: s, preferredTimescale: 600 })
+)
+
+await gen.generate(times, frame => {
+  switch (frame.status) {
+    case "succeeded":
+      console.log("frame", frame.actualTime.seconds, frame.image.width)
+      break
+    case "failed":
+      console.log("failed", frame.requestedTime.seconds, frame.error)
+      break
+    case "cancelled":
+      break
+  }
+})
+
+gen.dispose()
+asset.dispose()
+```
+
+### Properties
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `maximumSize?` | `Size` | Max output size in pixels; aspect ratio preserved. |
+| `requestedTimeToleranceBefore?` | `MediaTime` | Tolerance before the requested time. `MediaTime.zero()` = exact frame. |
+| `requestedTimeToleranceAfter?` | `MediaTime` | Tolerance after the requested time. |
+| `appliesPreferredTrackTransform` | `boolean` | Respect rotation/mirroring. Defaults to `true`. |
+| `apertureMode?` | `'cleanAperture' \| 'productionAperture' \| 'encodedPixels'` | Aperture mode. |
+
+### Methods
+
+#### `copyImage(time): Promise<{ image, actualTime }>`
+
+Generates a single frame. Rejects with the underlying generator error.
+
+#### `generate(times, onFrame): Promise<void>`
+
+Generates a frame per time. `onFrame` fires once per requested time with a result tagged `succeeded` / `failed` / `cancelled`. The promise resolves once **every** time has been reported.
+
+#### `cancel(): void`
+
+Cancels in-flight generation. Pending times report `status: 'cancelled'` (the `generate` promise still resolves).
+
+#### `dispose(): void`
+
+Cancels and releases. Auto-called when the script finishes.
+
+> **Local files only**, like the other low-level AVAsset companions. Download remote assets first.
+
+---
+
 ## Sharing With AVPlayer
 
 `AVPlayer.setSource(asset)` reuses the underlying media so any property already loaded on the asset is shared:

@@ -30,7 +30,7 @@ const auth = SSHAuthenticationMethod.passwordBased("user1", "mypassword")
 
 ---
 
-### `static ras(username: string, sshRsa: Data, decryptionKey?: Data): SSHAuthenticationMethod | null`
+### `static rsa(username: string, sshRsa: Data, decryptionKey?: Data): SSHAuthenticationMethod | null`
 
 创建一个基于 RSA 私钥的身份验证方法。
 
@@ -53,7 +53,7 @@ const auth = SSHAuthenticationMethod.passwordBased("user1", "mypassword")
 
 ```ts
 const rsaKey = Data.fromString(privateKeyContent)!
-const auth = SSHAuthenticationMethod.ras("user1", rsaKey)
+const auth = SSHAuthenticationMethod.rsa("user1", rsaKey)
 ```
 
 ---
@@ -154,7 +154,7 @@ const passwordAuth = SSHAuthenticationMethod.passwordBased("root", "secret123")
 
 // 使用 RSA 私钥认证
 const privateKey = await FileManager.readAsData("/path/to/id_rsa")
-const rsaAuth = SSHAuthenticationMethod.ras("root", privateKey)
+const rsaAuth = SSHAuthenticationMethod.rsa("root", privateKey)
 
 // 建立 SSH 连接
 const ssh = await SSHClient.connect({

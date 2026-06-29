@@ -5,7 +5,8 @@
 
 * 原生级 **Cookie 访问与解析**
 * **二进制数据 (`Data`)** 支持
-* **流式响应 (`ReadableStream<Data>`)** 读取
+* 兼容 WHATWG 的流式响应 `body`（`ReadableStream<Uint8Array>`）
+* 零拷贝的 `dataStream`（`ReadableStream<Data>`）——以原生 `Data` 流式读取响应体
 * 响应的 MIME 类型、编码信息与预期长度
 * 完整兼容标准 Web Fetch 行为
 
@@ -15,9 +16,10 @@
 
 ```ts
 class Response {
-  readonly body: ReadableStream<Data>
-  
-  constructor(body: ReadableStream<Data>, init?: ResponseInit)
+  readonly body: ReadableStream<Uint8Array>
+  get dataStream(): ReadableStream<Data>
+
+  constructor(body?: BodyInit, init?: ResponseInit)
 
   get bodyUsed(): boolean
   get cookies(): Cookie[]
@@ -44,7 +46,8 @@ class Response {
 
 | 属性                        | 类型                     | 说明                                   |
 | ------------------------- | ---------------------- | ------------------------------------ |
-| **body**                  | `ReadableStream<Data>` | 响应体数据的可读流。                           |
+| **body**                  | `ReadableStream<Uint8Array>` | 响应体的可读流，块类型为 `Uint8Array`（兼容 WHATWG）。   |
+| **dataStream**            | `ReadableStream<Data>` | 响应体的原生 `Data` 块可读流——零拷贝快路径。与 `body` 及各读取方法互斥，响应体只能被消费一次。 |
 | **bodyUsed**              | `boolean`              | 指示响应体是否已被读取。                         |
 | **cookies**               | `Cookie[]`             | 服务器通过 `Set-Cookie` 返回的 Cookie 列表。    |
 | **status**                | `number`               | HTTP 状态码（如 `200`、`404`、`500`）。       |
@@ -127,6 +130,26 @@ console.log("Received", bytes.length, "bytes")
 const response = await fetch("https://example.com/file")
 const buffer = await response.arrayBuffer()
 console.log(buffer.byteLength)
+```
+
+---
+
+### `dataStream: ReadableStream<Data>`
+
+以原生 `Data` 块流式读取响应体。这是零拷贝的快路径：当你以 `Data` 形式处理数据（例如逐块写入文件）时，应优先使用它而非 `body`——`body` 会把每个块转换为 `Uint8Array`。响应体只能被消费一次，因此读取 `dataStream` 后，`body` 与各读取方法（`data()`、`json()` 等）将不可再用。
+
+#### 示例
+
+```tsx
+const response = await fetch("https://example.com/large-file")
+const reader = response.dataStream.getReader()
+const parts: Data[] = []
+while (true) {
+  const { done, value } = await reader.read()
+  if (done) break
+  if (value != null) parts.push(value)
+}
+const data = Data.combine(parts)
 ```
 
 ---

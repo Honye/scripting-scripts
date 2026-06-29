@@ -102,3 +102,23 @@ console.log("active stabilization:", movieOutput.videoStabilizationMode)
 * 还没 `addOutput` 到 session 时,movieOutput 没有 video connection,`setVideoStabilizationMode("...")` 返回 `false`。所以**先 addOutput,再设模式**。
 * 只有 mode 字符串拼错才会抛错。
 * `videoStabilizationMode` 读出的是 **active** 而非 requested。当前 format 不支持时系统会静默降级或关掉。
+
+## 暂停 / 恢复与录制进度
+
+录像可以暂停后恢复,不会另起新文件。两个调用在状态不对时、以及 iOS 18 以下(此时 `isRecordingPaused` 恒为 `false`)都是安全 no-op。
+
+```ts
+await movieOutput.startRecording(filePath)
+
+movieOutput.pauseRecording()
+console.log(movieOutput.isRecordingPaused)   // true
+movieOutput.resumeRecording()
+
+// 录制中的实时进度:
+console.log("秒:", movieOutput.recordedDuration)
+console.log("字节:", movieOutput.recordedFileSize)
+
+const path = await movieOutput.stopRecording()  // startRecording 返回的 promise 在此 resolve
+```
+
+`recordedDuration`(秒)和 `recordedFileSize`(字节)反映当前这次录制,未录制时返回 `0`。`availableVideoCodecTypes` 列出可录制的 codec(native rawValue,如 `"hvc1"` / `"avc1"`)。

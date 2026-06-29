@@ -622,6 +622,9 @@ class Attributes {
     paused?: PausedPresentation | null
     tintColor?: Color
     metadata?: Record<string, string>
+    liveActivity?: {
+      name: string
+    }
   }): Attributes | null
 }
 ```
@@ -656,6 +659,18 @@ class Attributes {
 
 附加元数据，可用于记录业务信息。
 
+#### `liveActivity`
+
+可选的自定义 Live Activity UI 绑定。如果当前脚本提供了 `alarm_live_activity.tsx`，并用 `AlarmLiveActivity.register` 注册了同名 UI，Scripting 会在锁屏和灵动岛渲染该 UI；否则使用内置闹钟 UI。
+
+```tsx
+liveActivity: {
+  name: "FocusTimerActivity"
+}
+```
+
+完整 UI builder API 请参考 **Alarm Live Activity** 文档。
+
 ### `Attributes.create(options)`
 
 ```tsx
@@ -665,6 +680,9 @@ static create(options: {
   paused?: PausedPresentation | null
   tintColor?: Color
   metadata?: Record<string, string>
+  liveActivity?: {
+    name: string
+  }
 }): Attributes | null
 ```
 
@@ -698,6 +716,9 @@ const attributes = AlarmManager.Attributes.create({
   metadata: {
     type: "pomodoro",
     source: "study-script"
+  },
+  liveActivity: {
+    name: "FocusTimerActivity"
   }
 })
 ```

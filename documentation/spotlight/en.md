@@ -93,11 +93,11 @@ Only `id` and `title` are required. Apart from the two Scripting-only fields bel
 
 **Item-level**
 
-- `expirationDate` — When Spotlight should drop the item from the index.
+- `expirationDate` — When Spotlight should drop the item from the index. Omit it to keep the item indexed until you delete it explicitly.
 
 Notes:
 
-- **Dates** (`contentCreationDate`, `lastUsedDate`, `startDate`, `expirationDate`, …) accept a `Date`, an ISO-8601 string, or a numeric timestamp in seconds.
+- **Dates** (`contentCreationDate`, `lastUsedDate`, `startDate`, `expirationDate`, ...) accept a `Date`, an ISO-8601 string, or a numeric timestamp in seconds.
 - **Thumbnails**: `thumbnailData` wins over `thumbnailURL` when both are set.
 
 A full example touching every group:
@@ -162,6 +162,24 @@ await Spotlight.index({
   expirationDate: new Date(),
 })
 ```
+
+## Search Reliability
+
+How well an item surfaces is decided by the system, not by Scripting. A few things help:
+
+- **Put every searchable term in `keywords` as a separate entry.** Spotlight matches whole words and word *prefixes*, not arbitrary substrings — searching `"part"` will match `"partner"` but searching `"art"` will not match it. For dictionary-style data, add each spelling, inflection, and alternate form as its own keyword (e.g. `["run", "runs", "running", "ran"]`).
+- **Keep `title` short and exact.** It is the strongest matching field; put the canonical term there and push variants into `keywords` / `alternateNames`.
+- **Use `rankingHint`** (higher = earlier) to bias ranking *among your own items*.
+- **`textContent`** improves recall for longer free-text queries (definitions, body text).
+
+Limitations to be aware of:
+
+- Spotlight does not do substring/fuzzy matching, so mid-word or partial queries may not match. Add explicit prefixes as keywords if you need them.
+- Apple's built-in results (Dictionary, Contacts, etc.) are privileged system data sources and are ranked separately. Custom items generally cannot outrank them for short, common words, no matter how they are tagged.
+
+## Large Indexes
+
+`indexItems` accepts large arrays and submits them to the system in batches; you can index several thousand items per script. `await` the call — it resolves once the work is handed to Spotlight, and awaiting is the recommended way to know indexing finished and to catch errors. Updating an existing `id` overwrites the previous item, so re-indexing is safe to call repeatedly.
 
 ## Handle Taps
 

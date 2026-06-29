@@ -23,8 +23,13 @@ function View() {
   const lastPOI = useObservable("—")
   const activeStabilization = useObservable("off")
   const recording = useObservable(false)
+  const paused = useObservable(false)
+  const progress = useObservable("—")
   const recordedFile = useObservable("")
   const stabMode = useObservable<StabMode>("auto")
+
+  // 录制进度计时器句柄(稳定引用,跨 render 不重建)。
+  const timer = useMemo<{ id: number | null }>(() => ({ id: null }), [])
 
   const { session, camera, movieOutput } = useMemo(() => {
     const camera = AVCaptureDevice.default("video")!
@@ -61,6 +66,9 @@ function View() {
         // session.addOutput 之后 movieOutput 才有 video connection
         movieOutput.setVideoStabilizationMode(stabMode.value)
         activeStabilization.setValue(movieOutput.videoStabilizationMode)
+        // 新增 API:可录制 codec 列表 + connections
+        console.log("availableVideoCodecTypes:", movieOutput.availableVideoCodecTypes.join(", "))
+        console.log("movieOutput connections:", movieOutput.connections.length)
       } catch (e) {
         await Dialog.alert({ message: `Failed to start: ${String(e)}` })
         dismiss()
@@ -68,6 +76,7 @@ function View() {
     }
     start()
     return () => {
+      stopProgressTimer()
       session.stopRunning().finally(() => session.dispose())
     }
   }, [])
@@ -102,6 +111,24 @@ function View() {
     activeStabilization.setValue(movieOutput.videoStabilizationMode)
   }
 
+  function stopProgressTimer() {
+    if (timer.id != null) {
+      clearTimeout(timer.id)
+      timer.id = null
+    }
+  }
+
+  // 自递归 setTimeout(脚本环境只保证 setTimeout/clearTimeout)。每 0.5s 读一次
+  // 新增的录制进度 API:recordedDuration / recordedFileSize / isRecordingPaused。
+  function tickProgress() {
+    const secs = movieOutput.recordedDuration.toFixed(1)
+    const kb = (movieOutput.recordedFileSize / 1024).toFixed(0)
+    progress.setValue(`${secs}s · ${kb} KB${movieOutput.isRecordingPaused ? " · paused" : ""}`)
+    if (recording.value) {
+      timer.id = setTimeout(tickProgress, 500)
+    }
+  }
+
   async function toggleRecording() {
     if (recording.value) {
       await movieOutput.stopRecording()
@@ -111,6 +138,8 @@ function View() {
       const path = `${FileManager.documentsDirectory}/session_control_clip.mov`
       try { FileManager.removeSync(path) } catch { }
       recording.setValue(true)
+      paused.setValue(false)
+      timer.id = setTimeout(tickProgress, 500)
       const finalPath = await movieOutput.startRecording(path)
       recordedFile.setValue(finalPath)
       // 录制结束后 active 可能与录制中不同, 再读一次
@@ -118,8 +147,21 @@ function View() {
     } catch (e) {
       await Dialog.alert({ message: `Recording failed: ${String(e)}` })
     } finally {
+      stopProgressTimer()
       recording.setValue(false)
+      paused.setValue(false)
     }
+  }
+
+  // 新增 API:暂停 / 恢复当前录制(iOS 18+;更早系统是 no-op)。
+  function togglePause() {
+    if (!recording.value) return
+    if (movieOutput.isRecordingPaused) {
+      movieOutput.resumeRecording()
+    } else {
+      movieOutput.pauseRecording()
+    }
+    paused.setValue(movieOutput.isRecordingPaused)
   }
 
   return (
@@ -150,6 +192,7 @@ function View() {
           </Text>
           <Text font="footnote">interruption: {interruption.value}</Text>
           <Text font="footnote">last POI: {lastPOI.value}</Text>
+          <Text font="footnote">recording progress: {progress.value}</Text>
           {recordedFile.value ? (
             <Text font="footnote" foregroundStyle="secondaryLabel">
               saved → {recordedFile.value}
@@ -190,6 +233,11 @@ function View() {
           <Button
             title={recording.value ? "Stop recording" : "Start recording"}
             action={toggleRecording}
+          />
+          <Button
+            title={paused.value ? "Resume" : "Pause"}
+            action={togglePause}
+            disabled={!recording.value}
           />
           <Spacer />
           <Text font="footnote" foregroundStyle="secondaryLabel">

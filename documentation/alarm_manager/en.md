@@ -620,6 +620,9 @@ class Attributes {
     paused?: PausedPresentation | null
     tintColor?: Color
     metadata?: Record<string, string>
+    liveActivity?: {
+      name: string
+    }
   }): Attributes | null
 }
 ```
@@ -654,6 +657,18 @@ The main tint color. Hex strings are recommended, such as:
 
 Additional metadata for your own business logic.
 
+#### `liveActivity`
+
+Optional custom Live Activity UI binding. If the current script provides `alarm_live_activity.tsx` and registers the same name with `AlarmLiveActivity.register`, Scripting renders that UI on the Lock Screen and Dynamic Island. Otherwise, it uses the built-in alarm UI.
+
+```tsx
+liveActivity: {
+  name: "FocusTimerActivity"
+}
+```
+
+See the **Alarm Live Activity** document for the full UI builder API.
+
 ### `Attributes.create(options)`
 
 ```tsx
@@ -663,6 +678,9 @@ static create(options: {
   paused?: PausedPresentation | null
   tintColor?: Color
   metadata?: Record<string, string>
+  liveActivity?: {
+    name: string
+  }
 }): Attributes | null
 ```
 
@@ -696,6 +714,9 @@ const attributes = AlarmManager.Attributes.create({
   metadata: {
     type: "pomodoro",
     source: "study-script"
+  },
+  liveActivity: {
+    name: "FocusTimerActivity"
   }
 })
 ```

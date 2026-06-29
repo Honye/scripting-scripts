@@ -196,6 +196,75 @@ for (const r of results) {
 
 ---
 
+## AVAssetImageGenerator
+
+`AVAsset.generateImage(...)` 已经覆盖"抽一张封面帧"的一次性场景。当你需要抽**很多**帧——缩略图条、逐帧 OCR / ML——就用独立的 `AVAssetImageGenerator`。相比一次性方法，它：
+
+- **复用同一个配置好的 generator** 跨多次调用；
+- **逐帧流式回调**，每帧解码完就回来（不必等整批结束）；
+- 可以**中途取消**。
+
+```ts
+const asset = new AVAsset("/path/to/movie.mp4")
+const gen = new AVAssetImageGenerator(asset)
+
+gen.maximumSize = { width: 320, height: 180 }
+gen.requestedTimeToleranceBefore = MediaTime.zero()  // 精确帧
+gen.requestedTimeToleranceAfter = MediaTime.zero()
+
+const times = [0, 1, 2, 3, 4].map(s =>
+  MediaTime.make({ seconds: s, preferredTimescale: 600 })
+)
+
+await gen.generate(times, frame => {
+  switch (frame.status) {
+    case "succeeded":
+      console.log("帧", frame.actualTime.seconds, frame.image.width)
+      break
+    case "failed":
+      console.log("失败", frame.requestedTime.seconds, frame.error)
+      break
+    case "cancelled":
+      break
+  }
+})
+
+gen.dispose()
+asset.dispose()
+```
+
+### 属性
+
+| 属性 | 类型 | 说明 |
+| --- | --- | --- |
+| `maximumSize?` | `Size` | 输出最大像素尺寸，保持纵横比。 |
+| `requestedTimeToleranceBefore?` | `MediaTime` | 请求时间之前的容差。`MediaTime.zero()` = 精确帧。 |
+| `requestedTimeToleranceAfter?` | `MediaTime` | 请求时间之后的容差。 |
+| `appliesPreferredTrackTransform` | `boolean` | 是否应用旋转 / 镜像。默认 `true`。 |
+| `apertureMode?` | `'cleanAperture' \| 'productionAperture' \| 'encodedPixels'` | aperture 模式。 |
+
+### 方法
+
+#### `copyImage(time): Promise<{ image, actualTime }>`
+
+抽单帧。失败时以底层 generator 错误 reject。
+
+#### `generate(times, onFrame): Promise<void>`
+
+逐 time 抽帧。`onFrame` 每个请求时间回调一次，结果带 `succeeded` / `failed` / `cancelled` 标记。**所有** time 都被报告后 Promise 才 resolve。
+
+#### `cancel(): void`
+
+取消进行中的生成。pending 的 time 会以 `status: 'cancelled'` 回调（`generate` 的 Promise 仍 resolve）。
+
+#### `dispose(): void`
+
+取消并释放，脚本结束自动调用。
+
+> 与其它低层 AVAsset 伴随 API 一样，**仅支持本地文件**。远程 asset 请先下载到本地。
+
+---
+
 ## 与 AVPlayer 共享
 
 `AVPlayer.setSource(asset)` 直接复用 asset 底层媒体，已加载的属性可以共享：

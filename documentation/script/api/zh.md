@@ -66,12 +66,21 @@ if (Script.widgetParameter) {
 
 ---
 
-### `queryParameters: Record<string, string>`
+### `queryParameters: Record<string, any>`
 
-通过 `run` URL Scheme 传入的键值对参数。
+传入脚本的参数。
+
+当脚本以 JSON 对象方式启动时——例如 `Script.run({ queryParameters })`、`scripting-ts run ... --queryparameters '<json>'` 命令，或键盘的 `switchToScript` API——会保留原始 JSON 值的类型（布尔、数字、`null`、数组、对象）。
+
+当脚本通过 `run` URL Scheme 启动时，所有值都是字符串，因为 URL 查询字符串无法携带带类型的值。
 
 ```ts
-// URL: scripting://run/MyScript?user=John&id=123
+// 以 JSON 对象启动：{ "enabled": true, "count": 3, "user": "John" }
+console.log(Script.queryParameters.enabled) // true（布尔）
+console.log(Script.queryParameters.count)   // 3（数字）
+console.log(Script.queryParameters.user)    // "John"（字符串）
+
+// 通过 URL 启动：scripting://run/MyScript?user=John&id=123
 console.log(Script.queryParameters.user) // "John"
 console.log(Script.queryParameters.id)   // "123"
 ```
@@ -130,7 +139,7 @@ Script.exit(Intent.json({ status: "ok" }))
 以编程方式运行另一个脚本，并等待其结果。
 
 * `options.name`: 要运行的脚本名称
-* `options.queryParameters`: 可选参数，作为 URL 参数传递
+* `options.queryParameters`: 可选参数，作为 `Script.queryParameters` 传给目标脚本，保留 JSON 值的类型
 * `options.singleMode`: 若为 `true`，确保同一脚本只能同时运行一个实例
 
 返回目标脚本中 `Script.exit(result)` 返回的值。

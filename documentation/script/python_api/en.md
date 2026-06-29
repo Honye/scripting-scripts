@@ -17,7 +17,7 @@ print(Script.name)  # "MyAwesomeScript"
 
 ### `Script.queryParameters: dict`
 
-Parameters the JS caller passed via `Script.run({queryParameters})`, or via the `scripting://run/<name>?a=1&b=2` URL scheme. Returns an empty dict if no parameters were provided.
+Parameters the caller passed via `Script.run({queryParameters})`, the `scripting-ts run ... --queryparameters '<json>'` command, or the `scripting://run/<name>?a=1&b=2` URL scheme. JSON value types are preserved (`bool` / `int` / `float` / `None` / `list` / `dict`); values from a URL scheme are always strings, because URL query strings cannot carry typed values. Returns an empty dict if no parameters were provided.
 
 ```python
 import scripting; Script = scripting.Script
@@ -70,7 +70,7 @@ def run(name: str, queryParameters: dict | None = None, singleMode: bool = False
 | Param | Type | Required | Description |
 | --- | --- | --- | --- |
 | name | str | Yes | Name of the script to launch. |
-| queryParameters | dict | No | String-string parameters; the called script reads them via `Script.queryParameters`. |
+| queryParameters | dict | No | Passed to the called script as `Script.queryParameters`; JSON value types are preserved. |
 | singleMode | bool | No | When `True`, exits any currently-running instance of `name` before launching. Defaults to `False`. |
 
 Returns whatever the called script delivered through `Script.exit(value)`, or `None` if the script didn't call `Script.exit` with a value.

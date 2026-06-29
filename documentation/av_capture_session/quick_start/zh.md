@@ -146,6 +146,19 @@ await session.startRunning()
 
 设 `rectOfInterest = { x, y, width, height }`（归一化 0..1）可以限定扫描区域。
 
+每个检测对象都带原始 `bounds`（归一化 0..1）；码类对象还带原始 `corners`。另有一个 `transformed` 字段，其 `bounds` / `corners` 已按连接的方向与镜像做过校正——在预览上画高亮框时用它：
+
+```ts
+metaOutput.setMetadataObjectsListener(objects => {
+  for (const o of objects) {
+    const box = o.transformed?.bounds ?? o.bounds   // {x,y,width,height}，0..1
+    // 把 box 映射到你视图的像素矩形再绘制高亮
+  }
+})
+```
+
+要在某个 output 自身坐标空间与 metadata 输出的归一化空间之间转换矩形，用 `output.metadataOutputRectConverted({ x, y, width, height })` 及其逆向 `output.outputRectConverted(...)`。两者在所有 output 上都可用，返回 `{ x, y, width, height }`。
+
 ---
 
 ## 预览

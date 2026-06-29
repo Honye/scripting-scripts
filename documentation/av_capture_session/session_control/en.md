@@ -103,3 +103,23 @@ Notes:
 * `setVideoStabilizationMode("...")` returns `false` if the movie output isn't attached to a session yet (no video connection exists). Set the mode after `session.addOutput(movieOutput)`.
 * Throwing happens only on an unknown mode string — a misspell will surface immediately.
 * `videoStabilizationMode` is **active**, not requested. The system may downgrade or disable it silently if the active format doesn't support it.
+
+## Pause / resume and recording progress
+
+A movie recording can be paused and resumed without producing a new file. Both calls are safe no-ops if you call them out of state, and on iOS below 18 (where `isRecordingPaused` is always `false`).
+
+```ts
+await movieOutput.startRecording(filePath)
+
+movieOutput.pauseRecording()
+console.log(movieOutput.isRecordingPaused)   // true
+movieOutput.resumeRecording()
+
+// Live progress while recording:
+console.log("seconds:", movieOutput.recordedDuration)
+console.log("bytes:", movieOutput.recordedFileSize)
+
+const path = await movieOutput.stopRecording()  // the promise from startRecording resolves here
+```
+
+`recordedDuration` (seconds) and `recordedFileSize` (bytes) reflect the current recording and return `0` when not recording. Query `availableVideoCodecTypes` for the codecs the output can record (native raw values such as `"hvc1"` / `"avc1"`).

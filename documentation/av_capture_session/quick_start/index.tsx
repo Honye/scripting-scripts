@@ -7,6 +7,8 @@ import {
 function View() {
   const dismiss = Navigation.useDismiss()
   const lastResult = useObservable("")
+  const lastBounds = useObservable("—")
+  const caps = useObservable("—")
   const isRunning = useObservable(false)
   const torchOn = useObservable(false)
   const supportsControls = useObservable(false)
@@ -29,6 +31,14 @@ function View() {
     metaOutput.metadataObjectTypes = ["qr", "code128", "ean13"]
     metaOutput.setMetadataObjectsListener(objects => {
       for (const o of objects) {
+        // 新增 API:transformed 是方向/镜像校正后的坐标(画 overlay 用),
+        // corners 是机读码的四个角点。回退到原始 bounds。
+        const b = o.transformed?.bounds ?? o.bounds
+        lastBounds.setValue(
+          `${o.type} @ ${b.x.toFixed(2)},${b.y.toFixed(2)} ${b.width.toFixed(2)}×${b.height.toFixed(2)}`
+        )
+        if (o.corners?.length) console.log("corners:", JSON.stringify(o.corners))
+        if (o.transformed) console.log("transformed:", JSON.stringify(o.transformed))
         if (o.stringValue) {
           lastResult.setValue(`${o.type}: ${o.stringValue}`)
           break
@@ -47,6 +57,7 @@ function View() {
       try {
         await session.startRunning()
         isRunning.setValue(true)
+        logCapabilities()
       } catch (e) {
         await Dialog.alert({ message: `Failed: ${String(e)}` })
         dismiss()
@@ -89,6 +100,31 @@ function View() {
     }
   }, [])
 
+  // 新增 API 巡检:photo 能力查询 / connections / 坐标转换。startRunning 之后调用,
+  // 此时 output 已有 connection,codec / maxPhotoDimensions 才有效。
+  function logCapabilities() {
+    const dims = photoOutput.maxPhotoDimensions
+    const lines = [
+      `photo codecs: ${photoOutput.availablePhotoCodecTypes.join(", ")}`,
+      `live photo codecs: ${photoOutput.availableLivePhotoVideoCodecTypes.join(", ") || "none"}`,
+      `flash: ${photoOutput.supportedFlashModes.join(", ")}`,
+      `maxPhotoDimensions: ${dims.width}×${dims.height}`,
+      `depth: ${photoOutput.isDepthDataDeliverySupported}, portraitMatte: ${photoOutput.isPortraitEffectsMatteDeliverySupported}, proRAW: ${photoOutput.isAppleProRAWSupported}`,
+      `connections — photo: ${photoOutput.connections.length}, meta: ${metaOutput.connections.length}`,
+    ]
+    // 坐标转换:output 坐标 → metadata 归一化坐标(及其逆向)。
+    const roi = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 }
+    const toMeta = metaOutput.metadataOutputRectConverted(roi)
+    const back = metaOutput.outputRectConverted(toMeta)
+    lines.push(`rect ${JSON.stringify(roi)} → meta ${JSON.stringify(toMeta)} → back ${JSON.stringify(back)}`)
+
+    const c = photoOutput.connections[0]
+    if (c) lines.push(`conn[0]: active=${c.isActive} mirrored=${c.isVideoMirrored} angle=${c.videoRotationAngle}`)
+
+    console.log("[capabilities]\n" + lines.join("\n"))
+    caps.setValue(`${photoOutput.availablePhotoCodecTypes.join("/")} · ${dims.width}×${dims.height} · conn ${photoOutput.connections.length}`)
+  }
+
   async function takePhoto() {
     try {
       const result = await photoOutput.capturePhoto({ codec: "hevc" })
@@ -129,6 +165,12 @@ function View() {
           masksToBounds
         />
         <Text>Last scan: {lastResult.value || "—"}</Text>
+        <Text font="footnote" foregroundStyle="secondaryLabel">
+          Bounds (transformed): {lastBounds.value}
+        </Text>
+        <Text font="footnote" foregroundStyle="secondaryLabel">
+          Capabilities: {caps.value}
+        </Text>
         <Text font="footnote" foregroundStyle="secondaryLabel">
           Camera Control: {supportsControls.value ? "supported" : "not available on this device"}
         </Text>

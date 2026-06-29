@@ -57,8 +57,8 @@ GM.log("loaded", location.href)
 // @grant
 // @require
 // @resource
-// @run-at document-start | document-end | document-idle
-// @inject-into content | page
+// @run-at document-start | document-body | document-end | document-idle
+// @inject-into auto | content | page
 // @weight 1..999
 // @noframes
 // @homepageURL
@@ -70,7 +70,7 @@ GM.log("loaded", location.href)
 
 `@weight` 用于控制多个匹配脚本的执行顺序，数值越大越先执行。如果没有写 `@run-at`，默认在 `document-end` 运行。
 
-只有不需要特权 API 的脚本才建议使用 `@inject-into page`。`GM.*`、`Scripting.*` 和扩展消息能力只在 content 上下文中可用。
+`@inject-into` 默认为 `auto`。在 `auto` 下，声明了任意 `@grant`（`GM.*` 或 `Scripting.*`）的脚本运行在 **content world**（可用特权 API，与页面 JavaScript 隔离）；而 `@grant none` 或未声明 grant 的脚本运行在 **page world**（共享页面真实 `window`，可读页面全局变量）。可用 `@inject-into content` 或 `@inject-into page` 显式指定世界。`GM.*`、`Scripting.*` 和扩展消息能力只在 content world 可用；page world 下 grant 会被忽略。在 Content-Security-Policy 拦截注入脚本的页面上，`auto` 的 page-world 脚本会自动回退到 content world。
 
 ---
 

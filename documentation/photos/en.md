@@ -4,6 +4,9 @@ The `Photos` module provides unified access to the system photo library and came
 * Pick images, videos, or Live Photos from the photo library
 * Retrieve the most recent photos
 * Save images or videos to the Photos app
+* Query the library for assets by media type, album, date, or favorites, and read rich metadata
+* Load image, data, video, or Live Photo representations from a specific asset
+* Browse, create, and delete albums; favorite or delete assets
 
 All APIs are built on top of native iOS frameworks such as Photos and PHPicker, and follow these principles:
 
@@ -385,9 +388,196 @@ Saves raw video data directly to the Photos app.
 
 ---
 
+## Photo Asset Layer
+
+Beyond the transactional pick/capture/save APIs, the module exposes the underlying photo library as addressable assets. This lets scripts enumerate the library, read metadata, load media at controlled sizes, and manage albums.
+
+### authorizationStatus(accessLevel?)
+
+```ts
+function authorizationStatus(
+  accessLevel?: "addOnly" | "readWrite"
+): "notDetermined" | "restricted" | "denied" | "authorized" | "limited"
+```
+
+Returns the current authorization status without prompting. Access is requested automatically the first time you read or write the library. Defaults to `"readWrite"`.
+
+### fetchAssets(options?)
+
+```ts
+function fetchAssets(options?: PHFetchOptions): Promise<PHAsset[]>
+function fetchAssets(localIdentifiers: string[]): Promise<PHAsset[]>
+```
+
+Fetch assets matching `PHFetchOptions`, or fetch specific assets by their local identifiers.
+
+```ts
+type PHFetchOptions = {
+  mediaType?: "image" | "video" | "audio"
+  mediaSubtypes?: PHAssetMediaSubtype[]
+  favoritesOnly?: boolean
+  includeHidden?: boolean
+  includeAllBurstAssets?: boolean
+  sortBy?: "creationDate" | "modificationDate"
+  ascending?: boolean
+  limit?: number
+  createdAfter?: number   // milliseconds since epoch
+  createdBefore?: number
+}
+```
+
+`PHAssetMediaSubtype` is one of `"photoPanorama"`, `"photoHDR"`, `"photoScreenshot"`, `"photoLive"`, `"photoDepthEffect"`, `"videoStreamed"`, `"videoHighFrameRate"`, `"videoTimelapse"`.
+
+```ts
+const recent = await Photos.fetchAssets({
+  mediaType: "image",
+  favoritesOnly: true,
+  limit: 20,
+})
+```
+
+### fetchAsset(localIdentifier)
+
+```ts
+function fetchAsset(localIdentifier: string): Promise<PHAsset | null>
+```
+
+Fetch a single asset by its stable `localIdentifier`. Store the identifier to reference the same asset across script runs.
+
+---
+
+## PHAsset
+
+A reference to an image, video, or Live Photo in the library.
+
+### Properties
+
+* `localIdentifier: string` — stable, persistent identifier.
+* `mediaType: "image" | "video" | "audio" | "unknown"`
+* `mediaSubtypes: PHAssetMediaSubtype[]`
+* `pixelWidth: number`, `pixelHeight: number`
+* `creationDate: number | null`, `modificationDate: number | null` — milliseconds since epoch.
+* `duration: number` — seconds; `0` for images.
+* `isFavorite: boolean`, `isHidden: boolean`
+* `location: PHAssetLocation | null` — latitude, longitude, altitude, accuracies, speed, course, timestamp.
+* `burstIdentifier: string | null`, `representsBurst: boolean`
+* `sourceType: "userLibrary" | "cloudShared" | "itunesSynced" | "unknown"`
+
+### requestImage(options?)
+
+```ts
+requestImage(options?: {
+  targetWidth?: number
+  targetHeight?: number
+  contentMode?: "aspectFit" | "aspectFill"
+  deliveryMode?: "opportunistic" | "highQualityFormat" | "fastFormat"
+  version?: "current" | "original" | "unadjusted"
+  allowNetworkAccess?: boolean
+}): Promise<UIImage | null>
+```
+
+Loads a `UIImage` at the requested size. Omit the target size to load the full resolution. Downloads from iCloud when needed unless `allowNetworkAccess` is `false`.
+
+### requestImageData(options?)
+
+```ts
+requestImageData(options?: {
+  version?: "current" | "original" | "unadjusted"
+  allowNetworkAccess?: boolean
+}): Promise<{ data: Data; uti: UTType; orientation: number } | null>
+```
+
+Loads the original file data, its uniform type identifier, and EXIF orientation.
+
+### requestVideoURL(options?)
+
+```ts
+requestVideoURL(options?: {
+  version?: "current" | "original" | "unadjusted"
+  allowNetworkAccess?: boolean
+}): Promise<string | null>
+```
+
+Exports the asset's video to a temporary file in the app sandbox and resolves its path. Delete the file when no longer needed. Resolves `null` for assets without video.
+
+### requestLivePhoto(options?)
+
+```ts
+requestLivePhoto(options?: {
+  targetWidth?: number
+  targetHeight?: number
+  allowNetworkAccess?: boolean
+}): Promise<LivePhoto | null>
+```
+
+Loads a `LivePhoto` representation, or `null` if the asset is not a Live Photo.
+
+### setFavorite(value) / delete()
+
+```ts
+setFavorite(value: boolean): Promise<boolean>
+delete(): Promise<boolean>
+```
+
+Mark/unmark as favorite, or delete the asset. Deletion presents a system confirmation prompt; resolves `false` if the user cancels.
+
+---
+
+## Albums
+
+### fetchAlbums(options?) / fetchAlbum(localIdentifier)
+
+```ts
+function fetchAlbums(options?: {
+  type?: "album" | "smartAlbum"
+  assetCollectionSubtype?: string
+}): Promise<PHAssetCollection[]>
+
+function fetchAlbum(localIdentifier: string): Promise<PHAssetCollection | null>
+```
+
+Fetch albums and smart albums. Omit `type` to fetch both.
+
+### createAlbum(title) / deleteAlbums(albums) / deleteAssets(assets)
+
+```ts
+function createAlbum(title: string): Promise<PHAssetCollection | null>
+function deleteAlbums(albums: PHAssetCollection[]): Promise<boolean>
+function deleteAssets(assets: PHAsset[]): Promise<boolean>
+```
+
+Create a user album, delete albums, or batch-delete assets. Deletions present a system confirmation prompt.
+
+## PHAssetCollection
+
+* `localIdentifier: string`
+* `title: string | null`
+* `type: "album" | "smartAlbum" | "moment"`
+* `subtype: string` — e.g. `"smartAlbumUserLibrary"`, `"smartAlbumFavorites"`, `"albumRegular"`.
+* `estimatedAssetCount: number` — the asset count; falls back to an exact count when the fast estimate is unavailable (common for smart albums).
+* `startDate: number | null`, `endDate: number | null`
+
+```ts
+fetchAssets(options?: PHFetchOptions): Promise<PHAsset[]>
+addAssets(assets: PHAsset[]): Promise<boolean>
+removeAssets(assets: PHAsset[]): Promise<boolean>
+```
+
+`addAssets` / `removeAssets` are valid only for user-created albums.
+
+```ts
+const album = await Photos.createAlbum("My Script Album")
+const favorites = await Photos.fetchAssets({ favoritesOnly: true, limit: 10 })
+await album?.addAssets(favorites)
+```
+
+---
+
 ## Design Notes
 
 * All APIs are asynchronous and permission-aware
 * All UI is system-managed and not customizable
 * Picker results are lazy and must be explicitly resolved
 * Save APIs return only success status, not asset identifiers
+* `PHAsset` is addressable by `localIdentifier`; persist it to reload the same asset later
+* Mutating operations (favorite, delete, album changes) require write access and may present system prompts

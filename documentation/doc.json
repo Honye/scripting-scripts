@@ -22,6 +22,57 @@
     "children": [
       {
         "title": {
+          "en": "3.2.0",
+          "zh": "3.2.0"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "CloudSharedData",
+              "zh": "iCloud 共享数据"
+            },
+            "subtitle": {
+              "en": "Create iCloud-backed shared data stores and collaborate on them with other users.",
+              "zh": "创建基于 iCloud 的共享数据源，并与其他用户协同维护。"
+            },
+            "keywords": [
+              "CloudSharedData",
+              "icloud share",
+              "collaborate",
+              "CKShare",
+              "共享数据",
+              "协作"
+            ],
+            "readme": "cloud-shared-data/"
+          },
+          {
+            "title": {
+              "en": "DocumentInteraction",
+              "zh": "打开方式菜单"
+            },
+            "subtitle": {
+              "en": "Present the system \"Open in…\" menu so the user can pick an app to open a file with.",
+              "zh": "弹出系统“打开方式…”菜单，让用户选择一个 App 来打开文件。"
+            },
+            "keywords": [
+              "open in",
+              "open in menu",
+              "options menu",
+              "UIDocumentInteractionController",
+              "openInMenu",
+              "optionsMenu",
+              "打开方式",
+              "用其他应用打开",
+              "选择应用打开"
+            ],
+            "example": "document_interaction/index",
+            "readme": "document_interaction/"
+          }
+        ]
+      },
+      {
+        "title": {
           "en": "3.1.0",
           "zh": "3.1.0"
         },
@@ -99,6 +150,35 @@
               "索引"
             ],
             "readme": "spotlight/"
+          },
+          {
+            "title": {
+              "en": "Photos",
+              "zh": "照片"
+            },
+            "subtitle": {
+              "en": "Add new PHAssetCollection, PHAsset APIs.",
+              "zh": "新增 PHAssetCollection， PHAsset 等API。"
+            },
+            "keywords": [
+              "save photo",
+              "pick photos",
+              "take photo",
+              "get latest photos",
+              "fetch assets",
+              "photo metadata",
+              "albums",
+              "PHAsset",
+              "保存照片",
+              "选择照片",
+              "拍照",
+              "获取最新照片",
+              "查询照片",
+              "照片元数据",
+              "相册"
+            ],
+            "readme": "photos/",
+            "example": "photos/index"
           },
           {
             "pro": true,
@@ -228,6 +308,45 @@
               "Tampermonkey",
               "GM",
               "Scripting.FileManager"
+            ]
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Search Shortcuts",
+              "zh": "搜索快捷指令"
+            },
+            "subtitle": {
+              "en": "Type a trigger word in Safari's address bar to jump to a site's search.",
+              "zh": "在 Safari 地址栏输入触发词，直接跳转到站点搜索。"
+            },
+            "readme": "safari_search_shortcuts/",
+            "keywords": [
+              "Safari",
+              "Search Shortcuts",
+              "Trigger",
+              "Address bar",
+              "搜索快捷指令"
+            ]
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Redirect Rules",
+              "zh": "重定向规则"
+            },
+            "subtitle": {
+              "en": "Rewrite matching URLs in Safari and redirect to another address.",
+              "zh": "在 Safari 中改写匹配的 URL 并重定向到另一个地址。"
+            },
+            "readme": "safari_redirect_rules/",
+            "keywords": [
+              "Safari",
+              "Redirect",
+              "URL rewrite",
+              "Wildcard",
+              "Regex",
+              "重定向规则"
             ]
           },
           {
@@ -495,12 +614,13 @@
               "zh": "AVAsset"
             },
             "subtitle": {
-              "en": "New AVAsset / AVAssetTrack APIs: a heavyweight handle to a media asset for loading metadata, tracks, and extracting still images without spinning up an AVPlayer. Pass the same instance to AVPlayer.setSource(asset) to share the underlying media.",
-              "zh": "新增 AVAsset / AVAssetTrack API：媒体资源的重量级句柄，可在不启动 AVPlayer 的前提下加载元数据、轨道并提取静帧。可将同一实例传给 AVPlayer.setSource(asset) 以共享底层媒体。"
+              "en": "A handle to a media asset for loading metadata / tracks and extracting still frames without an AVPlayer.",
+              "zh": "媒体资源句柄:不启动 AVPlayer 即可加载元数据 / 轨道并提取静帧。"
             },
             "keywords": [
               "AVAsset",
               "AVAssetTrack",
+              "AVAssetImageGenerator",
               "loadDuration",
               "loadTracks",
               "generateImage"
@@ -513,8 +633,8 @@
               "zh": "AVAsset 读取 / 写入 / 导出"
             },
             "subtitle": {
-              "en": "New low-level companions to AVAsset: AVAssetExportSession (preset-based transcode), AVAssetReader + Video/AudioOutput (pull decoded frames as UIImage / interleaved Float32 PCM), and AVAssetWriter + AVAssetWriterInput (push frames / samples to mp4 / m4a). Suitable for transcoding, OCR / ML on individual frames, waveform / FFT, and synthesizing media from JS.",
-              "zh": "AVAsset 的低层伴随 API：AVAssetExportSession（按 preset 转码）、AVAssetReader + Video/AudioOutput（拉取已解码帧为 UIImage / 交错 Float32 PCM）、AVAssetWriter + AVAssetWriterInput（向 mp4 / m4a 推帧 / 采样）。适合转码、对单帧做 OCR / ML、波形 / FFT、以及从 JS 端合成媒体。"
+              "en": "Low-level media pipelines: export-session transcode, frame-level read, and frame / sample write to mp4 / m4a.",
+              "zh": "低层媒体管线:export 转码、帧级读取,以及向 mp4 / m4a 写帧 / 采样。"
             },
             "pro": true,
             "keywords": [
@@ -529,6 +649,26 @@
               "Float32Array"
             ],
             "readme": "av_asset_reader_writer/"
+          },
+          {
+            "title": {
+              "en": "ImageIO",
+              "zh": "ImageIO"
+            },
+            "subtitle": {
+              "en": "Read / write image metadata (EXIF / GPS / TIFF / IPTC) and encode formats UIImage can't (HEIC / TIFF / GIF).",
+              "zh": "读写图片元数据(EXIF / GPS / TIFF / IPTC),并编码 UIImage 产不出的格式(HEIC / TIFF / GIF)。"
+            },
+            "keywords": [
+              "ImageIO",
+              "readMetadata",
+              "writeImage",
+              "EXIF",
+              "GPS",
+              "HEIC",
+              "metadata"
+            ],
+            "readme": "image_io/"
           },
           {
             "title": {
@@ -693,8 +833,8 @@
               "zh": "Canvas（Web 2D 绘图上下文）"
             },
             "subtitle": {
-              "en": "A SwiftUI Canvas–backed view with a Web-Canvas-style imperative API. Drive `ctx.fillStyle / fillRect / arc / stroke / drawImage` etc.; the JS context collects commands and Swift replays them onto a real GraphicsContext on every redraw. Use `<TimelineCanvas>` for per-frame animation (60fps via SwiftUI TimelineView).",
-              "zh": "基于 SwiftUI Canvas 的视图,提供与 Web Canvas 一致的命令式 API。`ctx.fillStyle / fillRect / arc / stroke / drawImage` 等指令在 JS 端收集,SwiftUI 每次重绘时由 Swift 端回放到 GraphicsContext。逐帧动画请用 `<TimelineCanvas>`(基于 SwiftUI TimelineView 的 60fps 路径)。"
+              "en": "A SwiftUI-backed view with a Web-Canvas-style imperative 2D drawing API.",
+              "zh": "基于 SwiftUI 的视图,提供与 Web Canvas 一致的命令式 2D 绘图 API。"
             },
             "keywords": [
               "Canvas",
@@ -720,12 +860,44 @@
           },
           {
             "title": {
+              "en": "Path2D (SwiftUI Path)",
+              "zh": "Path2D（SwiftUI Path）"
+            },
+            "subtitle": {
+              "en": "A SwiftUI-`Path`-style vector path you build, render with `<PathShape>`, query, or use as a clip shape.",
+              "zh": "对齐 SwiftUI `Path` 的矢量路径:可构建、用 `<PathShape>` 渲染、查询几何,或当作 clip 形状。"
+            },
+            "keywords": [
+              "Path2D",
+              "PathShape",
+              "Path",
+              "Shape",
+              "vector",
+              "path",
+              "draw",
+              "fill",
+              "stroke",
+              "clipShape",
+              "contentShape",
+              "mask",
+              "boundingRect",
+              "contains",
+              "addCurve",
+              "addArc",
+              "addRoundedRect",
+              "trimmedPath"
+            ],
+            "example": "views/path2d/index",
+            "readme": "views/path2d/"
+          },
+          {
+            "title": {
               "en": "MapKit",
               "zh": "MapKit"
             },
             "subtitle": {
-              "en": "Initial MapKit support — a SwiftUI Map view (camera binding, styles, controls, marker / feature selection with Apple's auto detail card), plus `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` global namespaces.",
-              "zh": "首次引入 MapKit：SwiftUI Map 视图(相机绑定、样式、控件、marker / feature 选中与 Apple 原生 detail 卡),以及 `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` 全局命名空间。"
+              "en": "SwiftUI MapKit support: a `<Map>` view plus `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` namespaces.",
+              "zh": "SwiftUI MapKit 支持:`<Map>` 视图,以及 `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` 命名空间。"
             },
             "children": [
               {
@@ -734,8 +906,8 @@
                   "zh": "Map"
                 },
                 "subtitle": {
-                  "en": "A SwiftUI MapKit view  with two-way camera binding via `Observable<MapCameraPosition>`, three map styles (standard / imagery / hybrid) with elevation and POI filters, `MapContent` children (`Marker`, `MapPolyline`, `MapPolygon`, `MapCircle`), and built-in controls (user location button, compass, pitch toggle, scale bar).",
-                  "zh": "基于 SwiftUI MapKit 的视图,通过 `Observable<MapCameraPosition>` 实现双向相机绑定;支持 standard / imagery / hybrid 三种地图样式与高程、POI 过滤;`MapContent` 子组件(`Marker` / `MapPolyline` / `MapPolygon` / `MapCircle`)与内置控件(用户位置按钮、罗盘、俯仰切换、比例尺)。"
+                  "en": "A SwiftUI MapKit view with camera binding, map styles, `MapContent` children, controls, and selection detail cards.",
+                  "zh": "SwiftUI MapKit 视图:相机绑定、地图样式、`MapContent` 子组件、内置控件与选中 detail 卡。"
                 },
                 "keywords": [
                   "Map",
@@ -767,8 +939,8 @@
                   "zh": "MapSearch"
                 },
                 "subtitle": {
-                  "en": "MapKit on-device keyword search. `MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` for one-shot lookups; `MapSearch.createCompleter(...)` for stateful autocomplete with `setQuery / addListener / resolve / dispose`. Results return `MapItem[]` whose coordinates flow directly into `<Marker>` / `<Map>`. No permissions required.",
-                  "zh": "MapKit 系统级地图关键字搜索。`MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` 做一次性搜索;`MapSearch.createCompleter(...)` 返回带 `setQuery / addListener / resolve / dispose` 的状态化自动补全器。结果是 `MapItem[]`,坐标直接灌入视图层 `<Marker>` / `<Map>`。无需任何系统权限。"
+                  "en": "MapKit keyword search: one-shot `locate(...)` and stateful autocomplete via `createCompleter(...)`.",
+                  "zh": "MapKit 关键字搜索:一次性 `locate(...)` 与状态化自动补全 `createCompleter(...)`。"
                 },
                 "keywords": [
                   "MapSearch",
@@ -792,8 +964,8 @@
                   "zh": "MapUtils"
                 },
                 "subtitle": {
-                  "en": "Synchronous geometry helpers for MapKit coordinate / region types: `distance(a, b)` (Haversine, meters), `bearing(a, b)` (degrees), `regionContains(region, coordinate)`, `regionFromCoordinates(coords, paddingFactor?)`. Pure functions, safe during render.",
-                  "zh": "针对 MapKit 坐标/region 的同步几何工具:`distance(a, b)`(Haversine,米)、`bearing(a, b)`(度)、`regionContains(region, coordinate)`、`regionFromCoordinates(coords, paddingFactor?)`。纯函数,可在 render 中安全调用。"
+                  "en": "Synchronous MapKit geometry helpers: `distance`, `bearing`, `regionContains`, `regionFromCoordinates`.",
+                  "zh": "同步的 MapKit 几何工具:`distance`、`bearing`、`regionContains`、`regionFromCoordinates`。"
                 },
                 "keywords": [
                   "MapUtils",
@@ -814,8 +986,8 @@
                   "zh": "MapDirections"
                 },
                 "subtitle": {
-                  "en": "Route planning on top of MapKit. `MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` returns full routes whose `coordinates` polyline feeds directly into `<MapPolyline coordinates={route.coordinates}>`. `MapDirections.calculateETA(...)` returns travel time / distance / arrival window only — cheaper for ETA-only UI. No permissions required.",
-                  "zh": "基于 MapKit 的路线规划。`MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` 返回完整路线,`coordinates` 折线坐标可直接喂给 `<MapPolyline coordinates={route.coordinates}>` 渲染。`MapDirections.calculateETA(...)` 只返回耗时/距离/到达窗口,适合纯 ETA 场景。无需任何系统权限。"
+                  "en": "MapKit route planning: `calculate(...)` for full routes and `calculateETA(...)` for travel time only.",
+                  "zh": "MapKit 路线规划:`calculate(...)` 取完整路线,`calculateETA(...)` 只取耗时 / 距离。"
                 },
                 "keywords": [
                   "MapDirections",
@@ -843,8 +1015,8 @@
                   "zh": "MapSnapshotter"
                 },
                 "subtitle": {
-                  "en": "Render a static map image offscreen via MapKit's snapshotter. `MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` returns a `MapSnapshot` with `pngBase64`, `size`, and `pointForCoordinate(coord)` — feed the PNG straight into an `<Image>` view and overlay pins using `pointForCoordinate`.",
-                  "zh": "通过 MapKit Snapshotter 在后台离屏渲染静态地图。`MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` 返回 `MapSnapshot`，含 `pngBase64`、`size` 与 `pointForCoordinate(coord)`，PNG 可直接喂给 `<Image>` 显示，用 `pointForCoordinate` 在图上叠 pin。"
+                  "en": "Render a static map image offscreen with `take(...)`, including coordinate-to-point projection.",
+                  "zh": "用 `take(...)` 离屏渲染静态地图图片,并支持坐标到像素的投影。"
                 },
                 "keywords": [
                   "MapSnapshotter",
@@ -867,8 +1039,8 @@
                   "zh": "MapLookAround"
                 },
                 "subtitle": {
-                  "en": "Street-level LookAround scenes. `MapLookAround.request({ latitude, longitude })` resolves a `MapLookAroundScene` reference (or `null` when no street view); render it interactively with `<LookAroundPreview scene>` from the views layer.",
-                  "zh": "MapKit LookAround 街景。`MapLookAround.request({ latitude, longitude })` 拿到 `MapLookAroundScene` 引用（无街景时为 `null`），通过视图层 `<LookAroundPreview scene>` 渲染交互式预览。"
+                  "en": "MapKit LookAround street-level scenes via `request(...)`, rendered with `<LookAroundPreview>`.",
+                  "zh": "MapKit LookAround 街景:`request(...)` 获取场景,用 `<LookAroundPreview>` 渲染。"
                 },
                 "keywords": [
                   "MapLookAround",
@@ -889,8 +1061,8 @@
                   "zh": "Annotation"
                 },
                 "subtitle": {
-                  "en": "`<Annotation>` anchors any SwiftUI view tree at a map coordinate — chips, badges, photos, custom shapes — whenever the pin needs to look like something other than a stock MapKit `<Marker>` glyph. Supports a `KeywordPoint`/`Point` `anchor`, a `tag` for `<Map selection>`, and an optional `title` label. iOS 17+; selection requires iOS 18+. `<Map>` also gains `annotationTitles` / `annotationSubtitles` for hiding the MapKit-rendered text labels globally.",
-                  "zh": "`<Annotation>` 把任意 SwiftUI 视图树锚定到地图坐标 —— chip / badge / 照片 / 异形装饰,凡是 pin 需要长得不像 MapKit 原生 `<Marker>` 的场景都用它。支持 `KeywordPoint` / `Point` `anchor`、`tag`(走 `<Map selection>`)与可选 `title` 标签。iOS 17+;选中要 iOS 18+。`<Map>` 同时新增 `annotationTitles` / `annotationSubtitles` 两个 prop,用于全局隐藏 MapKit 渲染的文本标签。"
+                  "en": "`<Annotation>` anchors a custom SwiftUI view at a map coordinate, beyond the stock `<Marker>` glyph.",
+                  "zh": "`<Annotation>` 把自定义 SwiftUI 视图锚定到地图坐标,突破原生 `<Marker>` 样式限制。"
                 },
                 "keywords": [
                   "Annotation",
@@ -1044,14 +1216,38 @@
           {
             "pro": true,
             "title": {
-              "en": "AlarmManager",
-              "zh": "AlarmManager (闹钟)"
+              "en": "Alarm",
+              "zh": "Alarm (闹钟)"
             },
             "subtitle": {
-              "en": "For creating and managing AlarmKit-based alarms, timers, and countdown reminders.",
-              "zh": "为创建和管理基于 AlarmKit 的闹钟、定时器和倒计时提醒。"
+              "en": "Create AlarmKit alarms and customize their Live Activity UI.",
+              "zh": "创建 AlarmKit 闹钟，并自定义它们的 Live Activity UI。"
             },
-            "readme": "alarm_manager/"
+            "children": [
+              {
+                "title": {
+                  "en": "AlarmManager",
+                  "zh": "AlarmManager (闹钟)"
+                },
+                "subtitle": {
+                  "en": "For creating and managing AlarmKit-based alarms, timers, and countdown reminders.",
+                  "zh": "为创建和管理基于 AlarmKit 的闹钟、定时器和倒计时提醒。"
+                },
+                "readme": "alarm_manager/"
+              },
+              {
+                "title": {
+                  "en": "Alarm Live Activity",
+                  "zh": "Alarm Live Activity"
+                },
+                "subtitle": {
+                  "en": "Register a custom Lock Screen and Dynamic Island UI for AlarmKit alarms.",
+                  "zh": "为 AlarmKit 闹钟注册自定义锁屏和灵动岛 UI。"
+                },
+                "readme": "alarm_live_activity/",
+                "example": "Alarm Live Activity DEMO/index"
+              }
+            ]
           },
           {
             "title": {
@@ -1277,975 +1473,6 @@
             },
             "example": "views/controls/slider/index",
             "readme": "views/controls/slider/"
-          }
-        ]
-      },
-      {
-        "title": {
-          "en": "2.4.7",
-          "zh": "2.4.7"
-        },
-        "children": [
-          {
-            "pro": true,
-            "title": {
-              "en": "SQLite",
-              "zh": "SQLite"
-            },
-            "subtitle": {
-              "zh": "SQLite 模块为 Scripting 提供了一套完整的本地数据库访问能力，适用于数据持久化、结构化查询、事务处理以及高并发读取等场景。",
-              "en": "This module provides a complete local database solution for Scripting."
-            },
-            "children": [
-              {
-                "pro": true,
-                "title": {
-                  "en": "Overview",
-                  "zh": "概述"
-                },
-                "subtitle": {
-                  "en": "Quickly master the use of SQLite.",
-                  "zh": "快速掌握SQLite的使用"
-                },
-                "readme": "sqlite/overview/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "Database and Connection",
-                  "zh": "数据库和连接"
-                },
-                "subtitle": {
-                  "en": "Introduces SQLite database opening mode, connection configuration and behaviors related to connection lifecycle",
-                  "zh": "介绍 SQLite 数据库的打开方式、连接配置以及与连接生命周期相关的行为说明"
-                },
-                "readme": "sqlite/connection/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "Executing SQL and Query",
-                  "zh": "执行 SQL 和查询"
-                },
-                "subtitle": {
-                  "en": "This section explains how to execute SQL statements, bind parameters, and query data using SQLite.",
-                  "zh": "介绍如何使用 SQLite 执行 SQL 语句、绑定参数以及查询数据。"
-                },
-                "readme": "sqlite/execute/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "Transaction",
-                  "zh": "事务（Transaction）"
-                },
-                "subtitle": {
-                  "en": "This section describes the transaction model, transaction types.",
-                  "zh": "介绍了 SQLite 的事务模型以及事务类型。"
-                },
-                "readme": "sqlite/transaction/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "Schema Management",
-                  "zh": "模式管理（Schema Management）"
-                },
-                "subtitle": {
-                  "en": "This section explains how to create, modify, and remove tables and indexes using SQLite’s structured schema APIs.",
-                  "zh": "介绍如何使用 SQLite 的结构化模式 API 创建、修改和删除表和索引。"
-                },
-                "readme": "sqlite/schema_management/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "Schema Introspection",
-                  "zh": "模式探测（Schema Introspection）"
-                },
-                "subtitle": {
-                  "en": "This section explains how to inspect and analyze database structures using SQLite’s schema introspection APIs.",
-                  "zh": "介绍如何使用 SQLite 的模式探测 API 查询和分析数据库结构。"
-                },
-                "readme": "sqlite/schema_introspection/"
-              }
-            ]
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "VideoRecorder",
-              "zh": "视频录制（VideoRecorder）"
-            },
-            "subtitle": {
-              "en": "To improve the stability and ease of use of VideoRecorder, VideoRecorder has been refactored, and the relevant API has been significantly modified.",
-              "zh": "为了提升 VideoRecorder 的稳定性和易用性， VideoRecorder 已进行重构，相关的 API 已有重大调整。"
-            },
-            "children": [
-              {
-                "pro": true,
-                "title": {
-                  "en": "Quick Start",
-                  "zh": "快速掌握视频录制"
-                },
-                "subtitle": {
-                  "en": "Learn how to use VideoRecorder.",
-                  "zh": "了解VideoRecorder的API"
-                },
-                "readme": "video_recorder/quick_start/",
-                "example": "video_recorder/quick_start/index"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "VideoRecorderPreviewView",
-                  "zh": "视频预览"
-                },
-                "subtitle": {
-                  "en": "Learn how to use VideoRecorderPreviewView.",
-                  "zh": "使用 VideoRecorderPreviewView UI组件进行视频预览"
-                },
-                "readme": "video_recorder/preview_view/"
-              }
-            ]
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "AssistantTool User-Initiated Cancellation",
-              "zh": "处理用户主动取消智能助手工具"
-            },
-            "subtitle": {
-              "en": "To improve the user experience of long-running tools, AssistantTool introduces support for user-initiated cancellation.",
-              "zh": "为了提高用户使用长时间运行的工具的体验，智能助手工具引入了用户主动取消的支持。"
-            },
-            "readme": "assistant_tool/cancellation/"
-          },
-          {
-            "title": {
-              "en": "AVPlayer",
-              "zh": "音视频播放器"
-            },
-            "subtitle": {
-              "en": "Added defaultRate property, and added an optional rate parameter for play method.",
-              "zh": "新增 defaultRate 属性，以及 play 方法新增可选的 rate 参数。"
-            },
-            "keywords": [
-              "AVPlayer"
-            ],
-            "readme": "audio_player/"
-          },
-          {
-            "title": {
-              "en": "Widget API",
-              "zh": "小组件 API"
-            },
-            "subtitle": {
-              "en": "Widget.present method adds relevance parameter to control widget priority.",
-              "zh": "Widget.present 方法新增 relevance 参数，用于控制小组件的优先级。"
-            },
-            "readme": "widget_api/"
-          },
-          {
-            "title": {
-              "en": "Device",
-              "zh": "设备"
-            },
-            "subtitle": {
-              "en": "Add proximityState, orientation, supportedInterfaceOrientations and addProximityListener, etc.",
-              "zh": "新增 proximityState、orientation、supportedInterfaceOrientations 属性以及 addProximityListener 等监听方法。"
-            },
-            "readme": "device/"
-          }
-        ]
-      },
-      {
-        "title": {
-          "en": "2.4.6",
-          "zh": "2.4.6"
-        },
-        "children": [
-          {
-            "pro": true,
-            "title": {
-              "en": "MediaComposer",
-              "zh": "音视频合成器（MediaComposer）"
-            },
-            "subtitle": {
-              "en": "This interface is used to combine video, image and audio timeline and export the final media file.",
-              "zh": "该接口用于组合视频、图片与音频时间线并导出最终媒体文件。"
-            },
-            "children": [
-              {
-                "title": {
-                  "en": "Quick Start",
-                  "zh": "快速开始"
-                },
-                "subtitle": {
-                  "en": "Quickly master the use of MediaComposer.",
-                  "zh": "快速掌握 MediaComposer 的使用。"
-                },
-                "readme": "media_composer/quick_start/"
-              },
-              {
-                "title": {
-                  "en": "MediaComposer Example",
-                  "zh": "MediaComposer 示例"
-                },
-                "subtitle": {
-                  "en": "This example shows how to use MediaComposer.",
-                  "zh": "该示例展示如何使用 MediaComposer。"
-                },
-                "readme": "media_composer/example/"
-              },
-              {
-                "title": {
-                  "en": "MediaTime",
-                  "zh": "MediaTime"
-                },
-                "subtitle": {
-                  "en": "This class represents a media time.",
-                  "zh": "该类表示媒体时间。"
-                },
-                "readme": "media_composer/media_time/"
-              }
-            ]
-          },
-          {
-            "title": {
-              "en": "onDrag and onDrop View Modifiers",
-              "zh": "onDrag 和 onDrop 修饰符"
-            },
-            "subtitle": {
-              "en": "These APIs enable views to act as drag sources, drop destinations, or both, supporting intra-app and cross-app drag-and-drop scenarios.",
-              "zh": "这些 API 允许视图作为拖动源、拖放目标或者同时，支持内部应用和跨应用拖拽。"
-            },
-            "readme": "view_modifiers/ondrag_and_ondrop/"
-          },
-          {
-            "title": {
-              "en": "onDropContent",
-              "zh": "接收外部拖拽内容"
-            },
-            "subtitle": {
-              "en": "New Observable support, perform function has been adjusted, return an array of ItemProvider objects for deferred loading data.",
-              "zh": "新增Observable支持，perform 函数有调整，返回一个 ItemProvider 对象的数组，用于延迟加载数据。"
-            },
-            "readme": "view_modifiers/on_drop_content/"
-          },
-          {
-            "title": {
-              "en": "ItemProvider",
-              "zh": "ItemProvider"
-            },
-            "subtitle": {
-              "en": "This class represents a deferred data provider.",
-              "zh": "该类表示一个延迟数据提供者。"
-            },
-            "readme": "item_provider/"
-          },
-          {
-            "title": {
-              "en": "Intent",
-              "zh": "Intent"
-            },
-            "subtitle": {
-              "en": "New Intent.image method for returning images to Shortcuts.",
-              "zh": "新增 Intent.image 方法，用于为快捷指令返回图像。"
-            },
-            "readme": "intent/quick_start/"
-          },
-          {
-            "title": {
-              "en": "SharedAudioSession",
-              "zh": "SharedAudioSession"
-            },
-            "subtitle": {
-              "en": "New outputVolume property and addOutputVolumeChangedListener and removeOutputVolumeChangedListener methods.",
-              "zh": "新增 outputVolume 属性，以及 addOutputVolumeChangedListener 和 removeOutputVolumeChangedListener 方法。"
-            },
-            "readme": "shared_audio_session/"
-          },
-          {
-            "title": {
-              "en": "Device",
-              "zh": "设备"
-            },
-            "subtitle": {
-              "en": "New networkInterfaces method.",
-              "zh": "新增 networkInterfaces 方法。"
-            },
-            "readme": "device/",
-            "example": "device/index"
-          },
-          {
-            "title": {
-              "en": "Device (Python)",
-              "zh": "Device（Python）"
-            },
-            "subtitle": {
-              "en": "Python-side Device API mirroring the JS Device namespace: read-only model / system / screen / battery / orientation / locale info.",
-              "zh": "Python 索引脚本可用的 Device API,与 JS 端语义一致:只读获取设备型号 / 系统 / 屏幕 / 电池 / 方向 / 语言等信息。"
-            },
-            "keywords": [
-              "Python",
-              "scripting",
-              "Device.model",
-              "Device.systemName",
-              "Device.screen"
-            ],
-            "readme": "device/python_api/"
-          }
-        ]
-      },
-      {
-        "title": {
-          "en": "2.4.5",
-          "zh": "2.4.5"
-        },
-        "children": [
-          {
-            "pro": true,
-            "title": {
-              "en": "Assistant",
-              "zh": "智能助手"
-            },
-            "subtitle": {
-              "en": "Request structured JSON data, or open a chat page.",
-              "zh": "请求结构化的 JSON 数据，或者唤起聊天页面。"
-            },
-            "children": [
-              {
-                "pro": true,
-                "title": {
-                  "en": "Assistant Quick Start",
-                  "zh": "快速了解智能助手"
-                },
-                "subtitle": {
-                  "en": "Quickly master the use of Assistant.",
-                  "zh": "快速掌握智能助手的使用。"
-                },
-                "readme": "assistant/quick_start/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "requestStructuredData",
-                  "zh": "请求结构化数据"
-                },
-                "subtitle": {
-                  "en": "Request structured JSON data.",
-                  "zh": "请求结构化的 JSON 数据。"
-                },
-                "readme": "assistant/request_structured_data/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "requestStreaming",
-                  "zh": "请求流式数据"
-                },
-                "subtitle": {
-                  "en": "Requests a streaming response from the Assistant.",
-                  "zh": "请求从智能助手获取流式响应。"
-                },
-                "readme": "assistant/request_streaming/"
-              },
-              {
-                "pro": true,
-                "title": {
-                  "en": "Assistant Conversation APIs",
-                  "zh": "智能助手会话 API"
-                },
-                "subtitle": {
-                  "en": "The Conversation APIs are used to start, control, and present a system-hosted Assistant chat session.",
-                  "zh": "会话 API 用于启动、控制和展示系统托管的智能助手聊天会话。"
-                },
-                "readme": "assistant/conversation/"
-              }
-            ]
-          },
-          {
-            "title": {
-              "en": "NavigationStack with path",
-              "zh": "NavigationStack 配合 path"
-            },
-            "subtitle": {
-              "en": "It allows direct manipulation of the navigation history using a bound observable array.",
-              "zh": "允许使用绑定的可观察数组直接操作导航历史。"
-            },
-            "readme": "views/navigation/navigation_stack/"
-          },
-          {
-            "title": {
-              "en": "Selectable List",
-              "zh": "可选择的列表"
-            },
-            "subtitle": {
-              "en": "Implements selectable and multiselectable list features.",
-              "zh": "实现单选和多选的列表功能。"
-            },
-            "readme": "views/list/with_selection/"
-          },
-          {
-            "title": {
-              "en": "ReorderableForEach",
-              "zh": "可拖拽的 ForEach (ReorderableForEach)"
-            },
-            "subtitle": {
-              "en": "A high-level component in Scripting that provides built-in drag-to-reorder capability.",
-              "zh": "提供内置的拖拽重排功能的高级组件。"
-            },
-            "readme": "views/reorderable_foreach/",
-            "example": "views/reorderable_foreach/index"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "Picture in Pictuer View Modifiers",
-              "zh": "Picture in Picture （画中画）"
-            },
-            "subtitle": {
-              "en": "These apis allow developers to render any view inside a system PiP window.",
-              "zh": "这些 API 允许开发者在系统画中画窗口中渲染任何视图。"
-            },
-            "readme": "view_modifiers/pip/",
-            "keywords": [
-              "pip",
-              "onPipStart",
-              "onPipStop",
-              "onPipPlayPauseToggle",
-              "onPipSkip",
-              "onPipRenderSizeChanged",
-              "pipHideOnForeground",
-              "pipShowOnBackground"
-            ]
-          },
-          {
-            "title": {
-              "en": "LivePhotoView",
-              "zh": "LivePhotoView"
-            },
-            "subtitle": {
-              "en": "This component is intended for media-centric scenarios where Live Photo playback is required.",
-              "zh": "该组件适用于在界面中展示 Live Photo 的媒体中心场景。"
-            },
-            "readme": "views/live_photo_view/"
-          },
-          {
-            "title": {
-              "en": "AVPlayerView",
-              "zh": "视频播放组件(AVPlayerView)"
-            },
-            "subtitle": {
-              "en": "This component is intended for media-centric scenarios where native playback behavior, PiP, Now Playing integration, and background playback are required.",
-              "zh": "该组件适用于需要原生播放行为、画中画、Now Playing 集成以及后台播放的媒体中心场景。"
-            },
-            "readme": "views/avplayer_view/"
-          },
-          {
-            "title": {
-              "en": "Keychain",
-              "zh": "钥匙串"
-            },
-            "subtitle": {
-              "en": "The interface to store data in Keychain.",
-              "zh": "存储数据到钥匙串的接口。"
-            },
-            "keywords": [
-              "securestorage",
-              "安全存储"
-            ],
-            "readme": "keychain/"
-          },
-          {
-            "title": {
-              "en": "CalendarEvent",
-              "zh": "日历事件"
-            },
-            "subtitle": {
-              "en": "This interface enables you to create and manage events in iOS calendars, with properties like title, location, dates, attendees, and recurrence.",
-              "zh": "该接口允许您在 iOS 日历中创建和管理事件，设置标题、位置、日期、参与者和重复规则等属性。"
-            },
-            "readme": "calendar_event/"
-          },
-          {
-            "title": {
-              "en": "Reminder",
-              "zh": "提醒事项"
-            },
-            "subtitle": {
-              "en": "This interface allows you to create, edit, and manage reminders in a calendar. This includes setting titles, due dates, priorities, and recurrence rules.",
-              "zh": "该接口允许您在日历中创建、编辑和管理提醒事项，包括设置标题、到期日、优先级和重复规则。"
-            },
-            "readme": "reminder/"
-          },
-          {
-            "title": {
-              "en": "EventAlarm",
-              "zh": "事件闹钟"
-            },
-            "subtitle": {
-              "en": "This class represents a reminder rule that can be attached to both CalendarEvent and Reminder objects.",
-              "zh": "该类表示可以附加到 CalendarEvent 和 Reminder 对象的提醒规则。"
-            },
-            "readme": "event_alarm/"
-          },
-          {
-            "title": {
-              "en": "DateFormatter",
-              "zh": "日期格式化（DateFormatter）"
-            },
-            "subtitle": {
-              "en": "This class is used to format Date objects into strings, or parse strings into Date objects.",
-              "zh": "用于将 Date 类型格式化为字符串，或将字符串解析为 Date。"
-            },
-            "readme": "date_formatter/"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "AppStore",
-              "zh": "AppStore"
-            },
-            "subtitle": {
-              "en": "This API is used to display the details of an app in the App Store, without leaving the Scripting app.",
-              "zh": "用于在不离开 Scripting 应用的情况下，展示 App Store 中某个应用的详情页面。"
-            },
-            "readme": "app_store/"
-          },
-          {
-            "title": {
-              "en": "WebViewController",
-              "zh": "WebView 控制器"
-            },
-            "subtitle": {
-              "en": "It is designed for use cases like custom in-app browsers, rendering dynamic HTML, or communicating with JavaScript running in a web context.",
-              "zh": "它允许你在脚本中加载 HTML、展示 Web 页面、执行 JavaScript 脚本，并与页面中的 JavaScript 进行消息通信。"
-            },
-            "readme": "webview_controller/"
-          },
-          {
-            "title": {
-              "en": "Photos",
-              "zh": "照片"
-            },
-            "subtitle": {
-              "en": "The interface that manages access and changes to the user’s photo library.",
-              "zh": "用于管理用户照片库的访问和变更的接口。"
-            },
-            "keywords": [
-              "save photo",
-              "pick photos",
-              "take photo",
-              "get latest photos",
-              "保存照片",
-              "选择照片",
-              "拍照",
-              "获取最新照片"
-            ],
-            "readme": "photos/",
-            "example": "photos/index"
-          }
-        ]
-      },
-      {
-        "title": {
-          "en": "2.4.4",
-          "zh": "2.4.4"
-        },
-        "children": [
-          {
-            "pro": true,
-            "title": {
-              "en": "SnippetIntent",
-              "zh": "SnippetIntent"
-            },
-            "subtitle": {
-              "en": "SnippetIntent is a special kind of AppIntent whose purpose is to render interactive Snippet UI cards inside the Shortcuts app (iOS 26+).",
-              "zh": "SnippetIntent 是一种特殊类型的 AppIntent，可在 Shortcuts 中生成原生的 Snippet UI 卡片。"
-            },
-            "readme": "intent/snippet_intent/"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "Intent.continueInForeground",
-              "zh": "Intent.continueInForeground"
-            },
-            "subtitle": {
-              "en": "This method requests the system to bring the Scripting app to the foreground while a Shortcut is running.",
-              "zh": "此方法请求系统将 Scripting 应用程序调至前台，同时运行快捷指令。"
-            },
-            "readme": "intent/continue_in_foreground/"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "Intent.requestConfirmation",
-              "zh": "Intent.requestConfirmation"
-            },
-            "subtitle": {
-              "en": "This method pauses script execution and asks the user to confirm an action through a system-managed confirmation UI.",
-              "zh": "此方法暂停脚本执行，请求用户通过系统管理的确认 UI 确认动作。"
-            },
-            "readme": "intent/request_confirmation/"
-          },
-          {
-            "title": {
-              "en": "IntentMemoryStorage",
-              "zh": "IntentMemoryStorage"
-            },
-            "subtitle": {
-              "en": "A lightweight, session-based storage for sharing state across multiple AppIntents during a single Shortcut execution.",
-              "zh": "一个轻量级，会话级的存储，可在单个快捷指令执行过程中跨多 AppIntent 共享状态。"
-            },
-            "readme": "intent/intent_memory_storage/"
-          },
-          {
-            "title": {
-              "en": "Liquid Glass Effect",
-              "zh": "液态玻璃效果"
-            },
-            "subtitle": {
-              "en": "Liquid Glass visual system introduced in iOS 26.",
-              "zh": "在 iOS 26 中引入的液态玻璃视觉系统。"
-            },
-            "readme": "view_modifiers/liquid_glass/glass_effect/",
-            "example": "view_modifiers/liquid_glass/glass_effect/index",
-            "keywords": [
-              "glassEffect",
-              "glassEffectID",
-              "glassEffectUnion",
-              "glassEffectTransition",
-              "GlassEffectContainer"
-            ]
-          },
-          {
-            "title": {
-              "en": "Glass Effect Transition",
-              "zh": "玻璃效果过渡效果"
-            },
-            "subtitle": {
-              "en": "How Liquid Glass materials animate during view changes.",
-              "zh": "视图变化过程中液态玻璃材料的动画效果。"
-            },
-            "readme": "view_modifiers/liquid_glass/glass_effect_transition/",
-            "example": "view_modifiers/liquid_glass/glass_effect_transition/index",
-            "keywords": [
-              "glassEffect",
-              "glassEffectID",
-              "glassEffectUnion",
-              "glassEffectTransition",
-              "NamepaceReader"
-            ]
-          },
-          {
-            "title": {
-              "en": "Use with Toolbar Component",
-              "zh": "使用 Toolbar 组件"
-            },
-            "subtitle": {
-              "en": "Use the Toolbar component to populate a view’s navigation or toolbar area with various items.",
-              "zh": "使用 Toolbar 组件在视图的导航栏或工具栏区域中添加各种项目。"
-            },
-            "readme": "view_modifiers/toolbar/toolbar_view/",
-            "keywords": [
-              "toolbar",
-              "Toolbar",
-              "ToolbarItem",
-              "ToolbarItemGroup",
-              "DefaultToolbarItem",
-              "ToolbarSpacer"
-            ]
-          },
-          {
-            "title": {
-              "en": "TabView",
-              "zh": "TabView"
-            },
-            "subtitle": {
-              "en": "Displays a set of child views in a tabbed interface.",
-              "zh": "在标签界面中显示子视图集。"
-            },
-            "readme": "views/tabview/",
-            "keywords": [
-              "TabView",
-              "Tab",
-              "TabSection",
-              "TabViewCustomization"
-            ]
-          },
-          {
-            "title": {
-              "en": "New List View Modifiers",
-              "zh": "新的 List 视图修饰符"
-            },
-            "subtitle": {
-              "en": "These modifiers allow you to customize how sections behave and appear inside a <List> component.",
-              "zh": "这些修饰符可用于精细控制 <List> 中每一个区块（Section）的布局与样式。"
-            },
-            "readme": "view_modifiers/list/new/",
-            "keywords": [
-              "listSectionIndexVisibility",
-              "listSectionMargins",
-              "sectionIndexLabel",
-              "sectionActions"
-            ]
-          },
-          {
-            "title": {
-              "en": "ConcentricRectangle",
-              "zh": "同心圆矩形（ConcentricRectangle）"
-            },
-            "subtitle": {
-              "en": "It is designed to create rectangles with progressively inset (concentric) corner geometry, which adapts naturally to modern UI designs.",
-              "zh": "它是用于创建逐步缩进（浓缩）角几何形状的矩形，适合现代 UI 设计。"
-            },
-            "keywords": [
-              "EdgeCornerStyle",
-              "ConcentricRectangleShape"
-            ],
-            "readme": "views/concentric_rectangle/"
-          },
-          {
-            "title": {
-              "en": "matchedGeometryEffect",
-              "zh": "匹配几何效果（matchedGeometryEffect）"
-            },
-            "subtitle": {
-              "en": "This view modifier establishes a geometric relationship between different views, allowing them to animate smoothly when transitioning across different layouts, different containers, different conditional render states, different size and position configurations.",
-              "zh": "该视图修饰符允许你在不同的布局，不同的容器，不同的条件渲染状态，不同的尺寸和位置配置之间进行平滑的过渡动画。"
-            },
-            "readme": "view_modifiers/matched_geometry_effect/"
-          },
-          {
-            "title": {
-              "en": "matchedTransitionSource",
-              "zh": "匹配过渡源（matchedTransitionSource）"
-            },
-            "subtitle": {
-              "en": "This view modifier marks a view as the geometric source of a navigation transition.",
-              "zh": "该视图修饰符允许你标记一个视图为导航过渡的几何源。"
-            },
-            "readme": "view_modifiers/matched_transition_source/",
-            "keywords": [
-              "navigationTransition"
-            ]
-          },
-          {
-            "title": {
-              "en": "NamespaceReader",
-              "zh": "命名空间读取器（NamespaceReader）"
-            },
-            "subtitle": {
-              "en": "This view is used to create and manage a geometry animation namespace.",
-              "zh": "该视图用于创建和管理几何动画命名空间。"
-            },
-            "readme": "views/namespace_reader/"
-          },
-          {
-            "title": {
-              "en": "Notification",
-              "zh": "通知"
-            },
-            "subtitle": {
-              "en": "The interface for managing local notification-related activities.",
-              "zh": "用于管理本地通知相关活动的接口。"
-            },
-            "readme": "notification/",
-            "example": "notification/index"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "AlarmManager",
-              "zh": "AlarmManager (闹钟)"
-            },
-            "subtitle": {
-              "en": "For creating and managing AlarmKit-based alarms, timers, and countdown reminders.",
-              "zh": "为创建和管理基于 AlarmKit 的闹钟、定时器和倒计时提醒。"
-            },
-            "readme": "alarm_manager/"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "SFTP File",
-              "zh": "SFTP 文件"
-            },
-            "subtitle": {
-              "en": "This interface provides low-level operations such as reading, writing, retrieving attributes, and closing the file.",
-              "zh": "通过该类，你可以对文件执行读取、写入、获取属性、关闭等底层操作。"
-            },
-            "readme": "ssh/sftp_file/"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "SFTP Client",
-              "zh": "SFTP 客户端"
-            },
-            "subtitle": {
-              "en": "This interface provides a simple way to transfer files securely over SSH using SFTP protocol.",
-              "zh": "该接口提供了一种简单的方法来使用 SFTP 协议通过 SSH 安全地传输文件。"
-            },
-            "readme": "ssh/sftp_client/"
-          }
-        ]
-      },
-      {
-        "title": {
-          "en": "2.4.3",
-          "zh": "2.4.3"
-        },
-        "children": [
-          {
-            "title": {
-              "en": "LiveActivity",
-              "zh": "实时活动（灵动岛）"
-            },
-            "subtitle": {
-              "en": "To improve the stability and performance of LiveActivity, the API has been redesigned.",
-              "zh": "为了实现更稳定和性能更好的 LiveActivity，对 API 进行了重新设计。"
-            },
-            "readme": "live_activity/"
-          },
-          {
-            "title": {
-              "en": "LiveActivity View Modifiers",
-              "zh": "实时活动（LiveActivity）修饰符"
-            },
-            "subtitle": {
-              "en": "These modifiers used to customize the appearance of Live Activities on the Lock Screen.",
-              "zh": "这些修饰符可用于在锁屏上自定义实时活动（LiveActivity）的外观。"
-            },
-            "keywords": [
-              "activityBackgroundTint",
-              "activitySystemActionForegroundColor"
-            ],
-            "readme": "view_modifiers/live_activity/"
-          },
-          {
-            "title": {
-              "en": "useObservable",
-              "zh": "useObservable"
-            },
-            "subtitle": {
-              "en": "Used to drive UI rendering and work with the animation system.",
-              "zh": "用于驱动 UI 渲染、与动画系统协同工作。"
-            },
-            "readme": "use_observable/"
-          },
-          {
-            "title": {
-              "en": "Animation and Transition",
-              "zh": "动画和过渡"
-            },
-            "subtitle": {
-              "en": "These interfaces define how view transitions occur when their properties change.",
-              "zh": "这些接口用于定义视图在属性发生变化时的过渡效果。"
-            },
-            "keywords": [
-              "animation",
-              "Animation",
-              "transition",
-              "withAnimation",
-              "动画",
-              "过渡"
-            ],
-            "readme": "view_modifiers/animation/"
-          },
-          {
-            "title": {
-              "en": "ScrollViewReader",
-              "zh": "ScrollViewReader"
-            },
-            "subtitle": {
-              "en": "Allowing scripts to programmatically control scrolling position within scrollable content such as List or ScrollView.",
-              "zh": "允许脚本在可滚动内容（例如 List 或 ScrollView）内控制滚动位置。"
-            },
-            "readme": "views/scroll_view_reader/"
-          },
-          {
-            "title": {
-              "en": "GeometryReader",
-              "zh": "GeometryReader"
-            },
-            "subtitle": {
-              "en": "It provides information about the size, padding, safe area, and safe area insets of the current container.",
-              "zh": "它能够在视图构建阶段提供当前容器的尺寸、边距、安全区域和角落内边距等信息。"
-            },
-            "readme": "views/geometry_reader/"
-          },
-          {
-            "title": {
-              "en": "EnvironmentValuesReader",
-              "zh": "EnvironmentValuesReader"
-            },
-            "subtitle": {
-              "en": "This view allows you to read environment values from the current view hierarchy.",
-              "zh": "它允许脚本在视图层级中访问当前环境的上下文信息，例如颜色模式、尺寸类别、是否正在搜索、是否被呈现、编辑模式等。"
-            },
-            "readme": "views/environment_values_reader/"
-          },
-          {
-            "title": {
-              "en": "ForEach",
-              "zh": "ForEach"
-            },
-            "subtitle": {
-              "en": "Iterating over dynamic data",
-              "zh": "迭代动态数据"
-            },
-            "example": "views/view_groupings/iterating",
-            "readme": "views/for_each/"
-          },
-          {
-            "title": {
-              "en": "ReorderableForEach",
-              "zh": "可拖拽的 ForEach (ReorderableForEach)"
-            },
-            "subtitle": {
-              "en": "A high-level component in Scripting that provides built-in drag-to-reorder capability.",
-              "zh": "提供内置的拖拽重排功能的高级组件。"
-            },
-            "readme": "views/reorderable_foreach/",
-            "example": "views/reorderable_foreach/index"
-          },
-          {
-            "title": {
-              "en": "Set environment values (environments)",
-              "zh": "设置环境变量 (environments)"
-            },
-            "subtitle": {
-              "en": "This view modifier allows you to set environment values for a view hierarchy.",
-              "zh": "该修饰符用于为视图层级设置环境变量。"
-            },
-            "readme": "view_modifiers/environments/"
-          },
-          {
-            "title": {
-              "en": "Thread",
-              "zh": "线程（Thread）"
-            },
-            "subtitle": {
-              "en": "This interface provides a simple way to let you manually switch threads.",
-              "zh": "该接口提供了一种简单的方法来让你手动切换线程。"
-            },
-            "readme": "thread/"
-          },
-          {
-            "pro": true,
-            "title": {
-              "en": "SSH Client",
-              "zh": "SSH 客户端"
-            },
-            "subtitle": {
-              "en": "This interface provides a simple way to connect to remote servers using SSH protocol.",
-              "zh": "该接口提供了一种简单的方法来使用 SSH 协议连接到远程服务器。"
-            },
-            "readme": "ssh/ssh_client/"
           }
         ]
       }
@@ -3218,6 +2445,17 @@
               "zh": "将视图分组到一个方框中"
             },
             "example": "views/view_groupings/group_box"
+          },
+          {
+            "title": {
+              "en": "LabeledContent",
+              "zh": "LabeledContent"
+            },
+            "subtitle": {
+              "en": "Pairing a label with a value or content",
+              "zh": "为标签搭配一个值或内容"
+            },
+            "example": "views/view_groupings/labeled_content"
           },
           {
             "title": {
@@ -4292,6 +3530,28 @@
       },
       {
         "title": {
+          "en": "Status Bar & System Overlays",
+          "zh": "状态栏与系统覆盖层"
+        },
+        "subtitle": {
+          "en": "Hide the status bar or auto-hide system overlays such as the Home indicator for immersive full-screen pages.",
+          "zh": "为沉浸式全屏页面隐藏状态栏，或自动隐藏 Home 指示器等系统覆盖层。"
+        },
+        "keywords": [
+          "statusBarHidden",
+          "persistentSystemOverlays",
+          "status bar",
+          "home indicator",
+          "immersive",
+          "fullScreen",
+          "状态栏",
+          "全屏",
+          "沉浸式"
+        ],
+        "readme": "view_modifiers/status_bar/"
+      },
+      {
+        "title": {
           "en": "tint",
           "zh": "强调色"
         },
@@ -5296,6 +4556,7 @@
         },
         "keywords": [
           "Script.minimize()",
+          "Script.enableMinimize()",
           "Script.onResume()"
         ],
         "readme": "script/minimize_and_resume/"
@@ -5317,6 +4578,23 @@
           "Script.queryParameters"
         ],
         "readme": "script/python_api/"
+      },
+      {
+        "title": {
+          "en": "Per-Script Permissions",
+          "zh": "按脚本权限"
+        },
+        "subtitle": {
+          "en": "Request per-script access to sensitive capabilities up front with Script.requestAccess, and declare the permissions a script requires.",
+          "zh": "用 Script.requestAccess 提前申请敏感能力的按脚本访问权限,并声明脚本所需的权限。"
+        },
+        "keywords": [
+          "Script.requestAccess",
+          "ScriptingApi",
+          "Permissions",
+          "requestAccess"
+        ],
+        "readme": "script/permissions/"
       }
     ]
   },
@@ -5461,6 +4739,45 @@
         ]
       },
       {
+        "pro": true,
+        "title": {
+          "en": "Search Shortcuts",
+          "zh": "搜索快捷指令"
+        },
+        "subtitle": {
+          "en": "Type a trigger word in Safari's address bar to jump to a site's search.",
+          "zh": "在 Safari 地址栏输入触发词，直接跳转到站点搜索。"
+        },
+        "readme": "safari_search_shortcuts/",
+        "keywords": [
+          "Safari",
+          "Search Shortcuts",
+          "Trigger",
+          "Address bar",
+          "搜索快捷指令"
+        ]
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "Redirect Rules",
+          "zh": "重定向规则"
+        },
+        "subtitle": {
+          "en": "Rewrite matching URLs in Safari and redirect to another address.",
+          "zh": "在 Safari 中改写匹配的 URL 并重定向到另一个地址。"
+        },
+        "readme": "safari_redirect_rules/",
+        "keywords": [
+          "Safari",
+          "Redirect",
+          "URL rewrite",
+          "Wildcard",
+          "Regex",
+          "重定向规则"
+        ]
+      },
+      {
         "title": {
           "en": "FileEntity",
           "zh": "FileEntity"
@@ -5501,6 +4818,26 @@
           "本地存储"
         ],
         "readme": "storage/"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "CloudSharedData",
+          "zh": "iCloud 共享数据"
+        },
+        "subtitle": {
+          "en": "Create iCloud-backed shared data stores and collaborate on them with other users.",
+          "zh": "创建基于 iCloud 的共享数据源，并与其他用户协同维护。"
+        },
+        "keywords": [
+          "CloudSharedData",
+          "icloud share",
+          "collaborate",
+          "CKShare",
+          "共享数据",
+          "协作"
+        ],
+        "readme": "cloud-shared-data/"
       },
       {
         "title": {
@@ -6140,10 +5477,17 @@
           "pick photos",
           "take photo",
           "get latest photos",
+          "fetch assets",
+          "photo metadata",
+          "albums",
+          "PHAsset",
           "保存照片",
           "选择照片",
           "拍照",
-          "获取最新照片"
+          "获取最新照片",
+          "查询照片",
+          "照片元数据",
+          "相册"
         ],
         "readme": "photos/",
         "example": "photos/index"
@@ -6298,8 +5642,8 @@
           "zh": "MapKit"
         },
         "subtitle": {
-          "en": "SwiftUI MapKit integration: an iOS 17+ `<Map>` view (camera binding, styles, controls, marker / feature selection with Apple's auto detail card), plus `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` global namespaces.",
-          "zh": "SwiftUI MapKit 集成:iOS 17+ `<Map>` 视图(相机绑定、样式、控件、marker / feature 选中与 Apple 原生 detail 卡),以及 `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` 全局命名空间。"
+          "en": "SwiftUI MapKit support: a `<Map>` view plus `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` namespaces.",
+          "zh": "SwiftUI MapKit 支持:`<Map>` 视图,以及 `MapSearch` / `MapUtils` / `MapDirections` / `MapSnapshotter` / `MapLookAround` 命名空间。"
         },
         "children": [
           {
@@ -6308,8 +5652,8 @@
               "zh": "Map"
             },
             "subtitle": {
-              "en": "A SwiftUI MapKit view with two-way camera binding via `Observable<MapCameraPosition>`, three map styles (standard / imagery / hybrid) with elevation and POI filters, `MapContent` children (`Marker`, `MapPolyline`, `MapPolygon`, `MapCircle`) including the `<Marker item={mapItem}>` form with auto POI glyph, built-in controls (user location button, compass, pitch toggle, scale bar), iOS 18+ `<Map selection>` / `itemSelection` surfacing Apple's built-in detail card via `itemDetailSelectionAccessory` / `featureSelectionAccessory`, and `cameraBounds` for clamping user pan / zoom via `MapCameraBounds`.",
-              "zh": "基于 SwiftUI MapKit 的视图,通过 `Observable<MapCameraPosition>` 实现双向相机绑定;支持 standard / imagery / hybrid 三种地图样式与高程、POI 过滤;`MapContent` 子组件(`Marker` / `MapPolyline` / `MapPolygon` / `MapCircle`),其中 `<Marker item={mapItem}>` 可从 `MapItem` 自动选 POI glyph;内置控件(用户位置按钮、罗盘、俯仰切换、比例尺);iOS 18+ `<Map selection>` / `itemSelection` 配合 `itemDetailSelectionAccessory` / `featureSelectionAccessory` 直接弹 Apple 原生 detail 卡;`cameraBounds` 通过 `MapCameraBounds` 限制用户的 pan / zoom 范围。"
+              "en": "A SwiftUI MapKit view with camera binding, map styles, `MapContent` children, controls, and selection detail cards.",
+              "zh": "SwiftUI MapKit 视图:相机绑定、地图样式、`MapContent` 子组件、内置控件与选中 detail 卡。"
             },
             "keywords": [
               "Map",
@@ -6341,8 +5685,8 @@
               "zh": "MapSearch"
             },
             "subtitle": {
-              "en": "MapKit on-device keyword search. `MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` for one-shot lookups; `MapSearch.createCompleter(...)` for stateful autocomplete with `setQuery / addListener / resolve / dispose`. Results return `MapItem[]` whose coordinates flow directly into `<Marker>` / `<Map>`. No permissions required.",
-              "zh": "MapKit 系统级地图关键字搜索。`MapSearch.locate({ query, region?, resultTypes?, pointOfInterestFilter? })` 做一次性搜索;`MapSearch.createCompleter(...)` 返回带 `setQuery / addListener / resolve / dispose` 的状态化自动补全器。结果是 `MapItem[]`,坐标直接灌入视图层 `<Marker>` / `<Map>`。无需任何系统权限。"
+              "en": "MapKit keyword search: one-shot `locate(...)` and stateful autocomplete via `createCompleter(...)`.",
+              "zh": "MapKit 关键字搜索:一次性 `locate(...)` 与状态化自动补全 `createCompleter(...)`。"
             },
             "keywords": [
               "MapSearch",
@@ -6366,8 +5710,8 @@
               "zh": "MapUtils"
             },
             "subtitle": {
-              "en": "Synchronous geometry helpers for MapKit coordinate / region types: `distance(a, b)` (Haversine, meters), `bearing(a, b)` (degrees), `regionContains(region, coordinate)`, `regionFromCoordinates(coords, paddingFactor?)`. Pure functions, safe during render.",
-              "zh": "针对 MapKit 坐标/region 的同步几何工具:`distance(a, b)`(Haversine,米)、`bearing(a, b)`(度)、`regionContains(region, coordinate)`、`regionFromCoordinates(coords, paddingFactor?)`。纯函数,可在 render 中安全调用。"
+              "en": "Synchronous MapKit geometry helpers: `distance`, `bearing`, `regionContains`, `regionFromCoordinates`.",
+              "zh": "同步的 MapKit 几何工具:`distance`、`bearing`、`regionContains`、`regionFromCoordinates`。"
             },
             "keywords": [
               "MapUtils",
@@ -6388,8 +5732,8 @@
               "zh": "MapDirections"
             },
             "subtitle": {
-              "en": "Route planning on top of MapKit. `MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` returns full routes whose `coordinates` polyline feeds directly into `<MapPolyline coordinates={route.coordinates}>`. `MapDirections.calculateETA(...)` returns travel time / distance / arrival window only — cheaper for ETA-only UI. No permissions required.",
-              "zh": "基于 MapKit 的路线规划。`MapDirections.calculate({ source, destination, transportType?, requestsAlternateRoutes?, ... })` 返回完整路线,`coordinates` 折线坐标可直接喂给 `<MapPolyline coordinates={route.coordinates}>` 渲染。`MapDirections.calculateETA(...)` 只返回耗时/距离/到达窗口,适合纯 ETA 场景。无需任何系统权限。"
+              "en": "MapKit route planning: `calculate(...)` for full routes and `calculateETA(...)` for travel time only.",
+              "zh": "MapKit 路线规划:`calculate(...)` 取完整路线,`calculateETA(...)` 只取耗时 / 距离。"
             },
             "keywords": [
               "MapDirections",
@@ -6417,8 +5761,8 @@
               "zh": "MapSnapshotter"
             },
             "subtitle": {
-              "en": "Render a static map image offscreen via MapKit's snapshotter. `MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` returns a `MapSnapshot` with `pngBase64`, `size`, and `pointForCoordinate(coord)` — feed the PNG straight into an `<Image>` view and overlay pins using `pointForCoordinate`.",
-              "zh": "通过 MapKit Snapshotter 在后台离屏渲染静态地图。`MapSnapshotter.take({ region|camera, size, mapStyle?, appearance? })` 返回 `MapSnapshot`，含 `pngBase64`、`size` 与 `pointForCoordinate(coord)`，PNG 可直接喂给 `<Image>` 显示，用 `pointForCoordinate` 在图上叠 pin。"
+              "en": "Render a static map image offscreen with `take(...)`, including coordinate-to-point projection.",
+              "zh": "用 `take(...)` 离屏渲染静态地图图片,并支持坐标到像素的投影。"
             },
             "keywords": [
               "MapSnapshotter",
@@ -6441,8 +5785,8 @@
               "zh": "MapLookAround"
             },
             "subtitle": {
-              "en": "Street-level LookAround scenes. `MapLookAround.request({ latitude, longitude })` resolves a `MapLookAroundScene` reference (or `null` when no street view); render it interactively with `<LookAroundPreview scene>` from the views layer.",
-              "zh": "MapKit LookAround 街景。`MapLookAround.request({ latitude, longitude })` 拿到 `MapLookAroundScene` 引用（无街景时为 `null`），通过视图层 `<LookAroundPreview scene>` 渲染交互式预览。"
+              "en": "MapKit LookAround street-level scenes via `request(...)`, rendered with `<LookAroundPreview>`.",
+              "zh": "MapKit LookAround 街景:`request(...)` 获取场景,用 `<LookAroundPreview>` 渲染。"
             },
             "keywords": [
               "MapLookAround",
@@ -6463,8 +5807,8 @@
               "zh": "Annotation"
             },
             "subtitle": {
-              "en": "`<Annotation>` anchors any SwiftUI view tree at a map coordinate — chips, badges, photos, custom shapes — whenever the pin needs to look like something other than a stock MapKit `<Marker>` glyph. Supports a `KeywordPoint`/`Point` `anchor`, a `tag` for `<Map selection>`, and an optional `title` label. iOS 17+; selection requires iOS 18+. `<Map>` also gains `annotationTitles` / `annotationSubtitles` for hiding the MapKit-rendered text labels globally.",
-              "zh": "`<Annotation>` 把任意 SwiftUI 视图树锚定到地图坐标 —— chip / badge / 照片 / 异形装饰,凡是 pin 需要长得不像 MapKit 原生 `<Marker>` 的场景都用它。支持 `KeywordPoint` / `Point` `anchor`、`tag`(走 `<Map selection>`)与可选 `title` 标签。iOS 17+;选中要 iOS 18+。`<Map>` 同时新增 `annotationTitles` / `annotationSubtitles` 两个 prop,用于全局隐藏 MapKit 渲染的文本标签。"
+              "en": "`<Annotation>` anchors a custom SwiftUI view at a map coordinate, beyond the stock `<Marker>` glyph.",
+              "zh": "`<Annotation>` 把自定义 SwiftUI 视图锚定到地图坐标,突破原生 `<Marker>` 样式限制。"
             },
             "keywords": [
               "Annotation",
@@ -6538,6 +5882,29 @@
           "zh": "您可以通过此接口从脚本中共享数据。"
         },
         "example": "share_sheet/index"
+      },
+      {
+        "title": {
+          "en": "DocumentInteraction",
+          "zh": "打开方式菜单"
+        },
+        "subtitle": {
+          "en": "Present the system \"Open in…\" menu so the user can pick an app to open a file with.",
+          "zh": "弹出系统“打开方式…”菜单，让用户选择一个 App 来打开文件。"
+        },
+        "keywords": [
+          "open in",
+          "open in menu",
+          "options menu",
+          "UIDocumentInteractionController",
+          "openInMenu",
+          "optionsMenu",
+          "打开方式",
+          "用其他应用打开",
+          "选择应用打开"
+        ],
+        "example": "document_interaction/index",
+        "readme": "document_interaction/"
       },
       {
         "title": {
@@ -6797,12 +6164,13 @@
           "zh": "AVAsset"
         },
         "subtitle": {
-          "en": "A heavyweight handle to a media asset (audio / video) for loading metadata, tracks, and extracting still images without spinning up an AVPlayer.",
-          "zh": "音视频资源的重量级句柄，用于在不启动 AVPlayer 的前提下加载元数据、轨道并提取静帧。"
+          "en": "A handle to a media asset for loading metadata / tracks and extracting still frames without an AVPlayer.",
+          "zh": "媒体资源句柄:不启动 AVPlayer 即可加载元数据 / 轨道并提取静帧。"
         },
         "keywords": [
           "AVAsset",
-          "AVAssetTrack"
+          "AVAssetTrack",
+          "AVAssetImageGenerator"
         ],
         "readme": "av_asset/"
       },
@@ -6812,8 +6180,8 @@
           "zh": "AVAsset 读取 / 写入 / 导出"
         },
         "subtitle": {
-          "en": "Low-level companions to AVAsset: AVAssetExportSession (preset-based transcode), AVAssetReader + Video/AudioOutput (pull decoded frames as UIImage / interleaved Float32 PCM), and AVAssetWriter + AVAssetWriterInput (push frames / samples into mp4 / m4a).",
-          "zh": "AVAsset 的低层伴随 API：AVAssetExportSession（按 preset 转码）、AVAssetReader + Video/AudioOutput（拉取已解码帧为 UIImage / 交错 Float32 PCM）、AVAssetWriter + AVAssetWriterInput（向 mp4 / m4a 推帧 / 采样）。"
+          "en": "Low-level media pipelines: export-session transcode, frame-level read, and frame / sample write to mp4 / m4a.",
+          "zh": "低层媒体管线:export 转码、帧级读取,以及向 mp4 / m4a 写帧 / 采样。"
         },
         "pro": true,
         "keywords": [
@@ -6828,6 +6196,26 @@
           "Float32Array"
         ],
         "readme": "av_asset_reader_writer/"
+      },
+      {
+        "title": {
+          "en": "ImageIO",
+          "zh": "ImageIO"
+        },
+        "subtitle": {
+          "en": "Read / write image metadata (EXIF / GPS / TIFF / IPTC) and encode formats UIImage can't (HEIC / TIFF / GIF).",
+          "zh": "读写图片元数据(EXIF / GPS / TIFF / IPTC),并编码 UIImage 产不出的格式(HEIC / TIFF / GIF)。"
+        },
+        "keywords": [
+          "ImageIO",
+          "readMetadata",
+          "writeImage",
+          "EXIF",
+          "GPS",
+          "HEIC",
+          "metadata"
+        ],
+        "readme": "image_io/"
       },
       {
         "title": {
@@ -7017,6 +6405,19 @@
           {
             "pro": true,
             "title": {
+              "en": "Requesting Multiple Permissions at Once",
+              "zh": "一次性请求多个权限"
+            },
+            "subtitle": {
+              "en": "Trigger several permission-requiring Health APIs together and have them share a single HealthKit authorization sheet.",
+              "zh": "同时触发多个需要授权的 Health API，让它们合并到一个 HealthKit 授权弹框中。"
+            },
+            "example": "health/request_multiple_permissions/index",
+            "readme": "health/request_multiple_permissions/"
+          },
+          {
+            "pro": true,
+            "title": {
               "en": "Reading Characteristic Data",
               "zh": "读取特征数据"
             },
@@ -7097,6 +6498,28 @@
               "zh": "该接口允许您从 HealthKit 存储中读取健康活动摘要。"
             },
             "readme": "health/read_activity_summary/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Reading Medications and Dose Events",
+              "zh": "读取用药与服药事件（Medications）"
+            },
+            "subtitle": {
+              "en": "Read the medications a person tracks in the Health app and their logged dose events. Requires iOS 26.0 or later.",
+              "zh": "读取用户在「健康」App 中跟踪的用药及其记录的服药事件。需要 iOS 26.0 或更高版本。"
+            },
+            "example": "health/read_medications/index",
+            "readme": "health/read_medications/",
+            "keywords": [
+              "medications",
+              "medication dose event",
+              "用药",
+              "服药",
+              "药物",
+              "HealthUserAnnotatedMedication",
+              "HealthMedicationDoseEvent"
+            ]
           },
           {
             "pro": true,
@@ -7204,6 +6627,7 @@
               "en": "This interface provides a way to define and manage health units, which represent the measurement units for health data such as kilograms, meters, or beats per minute.",
               "zh": "该接口提供了一种定义和管理健康单位的方法，表示健康数据的测量单位，如千克、米或每分钟心跳次数。"
             },
+            "example": "health/health_unit/index",
             "readme": "health/health_unit/"
           },
           {

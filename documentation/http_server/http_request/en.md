@@ -30,6 +30,24 @@ console.log(request.path)
 
 ---
 
+### `target: string`
+
+The raw request-target from the request line, including the query string if present.
+Unlike `path`, which is stripped of the query, `target` preserves the original target exactly as the client sent it.
+
+**Example:**
+
+```ts
+// Request URL: /search?keyword=apple&page=2
+console.log(request.target)
+// Output: "/search?keyword=apple&page=2"
+
+console.log(request.path)
+// Output: "/search"
+```
+
+---
+
 ### `method: string`
 
 The HTTP method of the request (e.g., `"GET"`, `"POST"`, `"PUT"`, `"DELETE"`).

@@ -17,7 +17,7 @@ print(Script.name)  # "MyAwesomeScript"
 
 ### `Script.queryParameters: dict`
 
-JS 调用方通过 `Script.run({queryParameters})` 或 `scripting://run/<name>?a=1&b=2` URL Scheme 传入的参数。无参数时返回空 dict。
+调用方通过 `Script.run({queryParameters})`、`scripting-ts run ... --queryparameters '<json>'` 命令，或 `scripting://run/<name>?a=1&b=2` URL Scheme 传入的参数。会保留 JSON 值的类型（`bool` / `int` / `float` / `None` / `list` / `dict`）；经 URL Scheme 传入的值始终是字符串，因为 URL 查询字符串无法携带带类型的值。无参数时返回空 dict。
 
 ```python
 import scripting; Script = scripting.Script
@@ -70,7 +70,7 @@ def run(name: str, queryParameters: dict | None = None, singleMode: bool = False
 | 参数 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | name | str | 是 | 要运行的脚本名。 |
-| queryParameters | dict | 否 | 字符串到字符串的参数表;被调脚本通过 `Script.queryParameters` 读取。 |
+| queryParameters | dict | 否 | 作为 `Script.queryParameters` 传给被调脚本;保留 JSON 值的类型。 |
 | singleMode | bool | 否 | `True` 时先退出 `name` 已有实例再启动新的。默认 `False`。 |
 
 返回值为被调脚本通过 `Script.exit(value)` 传出的值;若未调 `Script.exit` 或未提供 value,则返回 `None`。

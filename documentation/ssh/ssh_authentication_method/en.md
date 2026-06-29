@@ -28,7 +28,7 @@ const auth = SSHAuthenticationMethod.passwordBased("user1", "mypassword")
 
 ---
 
-### `static ras(username: string, sshRsa: Data, decryptionKey?: Data): SSHAuthenticationMethod | null`
+### `static rsa(username: string, sshRsa: Data, decryptionKey?: Data): SSHAuthenticationMethod | null`
 
 Creates an RSA private key–based authentication method.
 
@@ -51,7 +51,7 @@ Creates an RSA private key–based authentication method.
 
 ```ts
 const rsaKey = Data.fromString(privateKeyContent)!
-const auth = SSHAuthenticationMethod.ras("user1", rsaKey)
+const auth = SSHAuthenticationMethod.rsa("user1", rsaKey)
 ```
 
 ---
@@ -152,7 +152,7 @@ const passwordAuth = SSHAuthenticationMethod.passwordBased("root", "secret123")
 
 // Example with RSA private key
 const privateKey = await FileManager.readAsData("/path/to/id_rsa")
-const rsaAuth = SSHAuthenticationMethod.ras("root", privateKey)
+const rsaAuth = SSHAuthenticationMethod.rsa("root", privateKey)
 
 // Connect to server
 const ssh = await SSHClient.connect({

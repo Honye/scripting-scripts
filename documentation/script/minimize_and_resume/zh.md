@@ -88,6 +88,32 @@ async function handleMinimize() {
 
 ---
 
+### `Script.enableMinimize(enabled?: boolean): void`
+
+为脚本的**根界面**（用 `Navigation.present` 展示的第一个页面，无论是 sheet 还是全屏页面）开启“下拉关闭即最小化”。
+
+开启后，当用户通过**手势下拉关闭根页面**时，脚本会被最小化而不是结束：界面隐藏、脚本实例继续运行、触发 `Script.onMinimize`，并可从运行中脚本列表恢复——效果等同于调用了 `Script.minimize()`。
+
+行为规则：
+
+* 仅影响根页面的交互式下拉关闭。通过 `Navigation.useDismiss()(result)` 进行的程序化关闭仍会正常关闭页面，并以 `result` 兑现 `present` 的 promise。
+* `Script.exit()` 仍会完全终止脚本。
+* 在多窗口模式下不生效。
+* 传入 `false` 可再次关闭该行为；默认值为 `true`。
+* 脚本处于最小化状态时，原 `Navigation.present` 的 promise 会保持 pending（与 `Script.minimize()` 一致）。请用 `Script.onResume()` 在脚本恢复时进行处理。
+
+```ts
+// 用户下拉收起 sheet 时让脚本继续存活。
+Script.enableMinimize()
+
+await Navigation.present({
+  element: <MyView />,
+  modalPresentationStyle: "pageSheet",
+})
+```
+
+---
+
 ### `Script.onMinimize(callback: () => void): () => void`
 
 监听脚本进入最小化状态。
@@ -136,7 +162,7 @@ type ResumeEventDetails = {
   resumeFromMinimized: boolean
   widgetParameter: string | null
   controlWidgetParameter: string | null
-  queryParameters: Record<string, string> | null
+  queryParameters: Record<string, any> | null
   notificationInfo: NotificationInfo | null
 }
 ```
@@ -162,9 +188,9 @@ type ResumeEventDetails = {
 
 ---
 
-### `queryParameters: Record<string, string> | null`
+### `queryParameters: Record<string, any> | null`
 
-通过 `scripting://run/...` URL Scheme 触发恢复时传入的参数。
+恢复时传入的参数。以 JSON 对象方式恢复时保留 JSON 值的类型；通过 `scripting://run/...` URL Scheme 恢复时所有值都是字符串。
 
 ---
 

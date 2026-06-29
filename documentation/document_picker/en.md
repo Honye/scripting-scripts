@@ -22,6 +22,50 @@ Options for configuring file selection with `pickFiles`.
   - *Type*: `boolean`
   - *Description*: Allows selecting multiple files. Defaults to `false`.
 
+### `PickFileBookmarkOptions`
+
+Options for picking a file and saving it as a persistent bookmark.
+
+- **`preferredName`** (optional)
+  - *Type*: `string`
+  - *Description*: The preferred bookmark name. If omitted, the selected file name is used. If the name already exists, the user will be asked to choose another name.
+
+- **`initialDirectory`** (optional)
+  - *Type*: `string`
+  - *Description*: Specifies the initial directory that the document picker displays.
+
+- **`types`** (optional)
+  - *Type*: `string[]`
+  - *Description*: An array of uniform type identifiers (UTIs) for the document picker to display.
+
+- **`shouldShowFileExtensions`** (optional)
+  - *Type*: `boolean`
+  - *Description*: Indicates if file extensions should be visible. Defaults to `true`.
+
+### `PickDirectoryBookmarkOptions`
+
+Options for picking a directory and saving it as a persistent bookmark.
+
+- **`preferredName`** (optional)
+  - *Type*: `string`
+  - *Description*: The preferred bookmark name. If omitted, the selected directory name is used. If the name already exists, the user will be asked to choose another name.
+
+- **`initialDirectory`** (optional)
+  - *Type*: `string`
+  - *Description*: Specifies the initial directory that the document picker displays.
+
+### `DocumentPickerBookmarkResult`
+
+The result returned after saving a bookmark.
+
+- **`path`**
+  - *Type*: `string`
+  - *Description*: The selected file or directory path.
+
+- **`bookmarkName`**
+  - *Type*: `string`
+  - *Description*: The saved bookmark name. This may differ from `preferredName` if the user renamed it.
+
 ### `ExportFilesOptions`
 
 Options for exporting files using `exportFiles`.
@@ -76,6 +120,57 @@ Allows users to pick a directory from the Files app.
 const selectedDirectory = await DocumentPicker.pickDirectory()
 if (selectedDirectory == null) {
   // User canceled the picker
+}
+```
+
+### `DocumentPicker.pickFileBookmark(options?: PickFileBookmarkOptions): Promise<DocumentPickerBookmarkResult | null>`
+
+Allows users to pick a file from the Files app and save it as a persistent security-scoped bookmark.
+
+`pickFiles` only starts access for the current script run and releases it when the script is destroyed or `stopAcessingSecurityScopedResources()` is called. `pickFileBookmark` stores a bookmark so future script runs can access the selected file through `FileManager.bookmarkedPath(bookmarkName)`.
+
+#### Parameters
+- **`options`** (optional): `PickFileBookmarkOptions`
+  - Configuration options for file selection and the bookmark name.
+
+#### Returns
+- A promise that resolves with `{ path, bookmarkName }`, or `null` if the user canceled the picker or bookmark naming.
+
+#### Example
+```typescript
+const result = await DocumentPicker.pickFileBookmark({
+  preferredName: "My Config",
+  types: ["public.json"],
+})
+
+if (result != null) {
+  console.log(result.path)
+  console.log(FileManager.bookmarkedPath(result.bookmarkName))
+}
+```
+
+### `DocumentPicker.pickDirectoryBookmark(options?: PickDirectoryBookmarkOptions): Promise<DocumentPickerBookmarkResult | null>`
+
+Allows users to pick a directory from the Files app and save it as a persistent security-scoped bookmark.
+
+`pickDirectory` only starts access for the current script run and releases it when the script is destroyed or `stopAcessingSecurityScopedResources()` is called. `pickDirectoryBookmark` stores a bookmark so future script runs can access the selected directory through `FileManager.bookmarkedPath(bookmarkName)`.
+
+#### Parameters
+- **`options`** (optional): `PickDirectoryBookmarkOptions`
+  - Configuration options for directory selection and the bookmark name.
+
+#### Returns
+- A promise that resolves with `{ path, bookmarkName }`, or `null` if the user canceled the picker or bookmark naming.
+
+#### Example
+```typescript
+const result = await DocumentPicker.pickDirectoryBookmark({
+  preferredName: "Workspace",
+})
+
+if (result != null) {
+  const directory = FileManager.bookmarkedPath(result.bookmarkName)
+  console.log(directory)
 }
 ```
 

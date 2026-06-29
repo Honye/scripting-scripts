@@ -5,7 +5,8 @@ In the **Scripting app**, the `Response` API extends the standard Fetch API beha
 
 * Access to structured cookie data
 * Binary data handling via the `Data` type
-* Support for response streaming (`ReadableStream<Data>`)
+* WHATWG-compatible streaming via `body` (`ReadableStream<Uint8Array>`)
+* A zero-copy `dataStream` (`ReadableStream<Data>`) for streaming the body as native `Data`
 * Access to expected content length, MIME type, and text encoding
 
 ---
@@ -14,7 +15,8 @@ In the **Scripting app**, the `Response` API extends the standard Fetch API beha
 
 ```ts
 class Response {
-  readonly body: ReadableStream<Data>
+  readonly body: ReadableStream<Uint8Array>
+  get dataStream(): ReadableStream<Data>
 
   get bodyUsed(): boolean
   get cookies(): Cookie[]
@@ -40,7 +42,8 @@ class Response {
 
 | Property                  | Type                   | Description                                                                 |
 | ------------------------- | ---------------------- | --------------------------------------------------------------------------- |
-| **body**                  | `ReadableStream<Data>` | The response body as a readable stream of `Data` chunks.                    |
+| **body**                  | `ReadableStream<Uint8Array>` | The response body as a readable stream of `Uint8Array` chunks (WHATWG-compatible). |
+| **dataStream**            | `ReadableStream<Data>` | The response body as a stream of native `Data` chunks — the zero-copy fast path. Mutually exclusive with `body` and the read methods; the body can only be consumed once. |
 | **bodyUsed**              | `boolean`              | Indicates whether the response body has been read.                          |
 | **cookies**               | `Cookie[]`             | A list of cookies sent by the server via the `Set-Cookie` header.           |
 | **status**                | `number`               | The HTTP status code of the response (e.g. `200`, `404`, `500`).            |
@@ -122,6 +125,26 @@ Reads the response as an `ArrayBuffer`, useful for low-level binary operations.
 const response = await fetch("https://example.com/file")
 const buffer = await response.arrayBuffer()
 console.log(buffer.byteLength)
+```
+
+---
+
+### `dataStream: ReadableStream<Data>`
+
+Streams the response body as native `Data` chunks. This is the zero-copy fast path: prefer it over `body` when you work with `Data` (e.g. appending chunks to a file), since `body` converts every chunk to `Uint8Array`. The body can only be consumed once, so reading `dataStream` makes `body` and the read methods (`data()`, `json()`, …) unavailable.
+
+#### Example
+
+```tsx
+const response = await fetch("https://example.com/large-file")
+const reader = response.dataStream.getReader()
+const parts: Data[] = []
+while (true) {
+  const { done, value } = await reader.read()
+  if (done) break
+  if (value != null) parts.push(value)
+}
+const data = Data.combine(parts)
 ```
 
 ---
