@@ -6531,9 +6531,20 @@ declare const ForEach: ForEachComponent;
 
 type FlowLayoutProps = {
     /**
-     * The spacing between each item. Defaults to 8.
+     * The base spacing between items, applied to both axes. Defaults to 8.
+     * Override a single axis with `horizontalSpacing` / `verticalSpacing`.
      */
     spacing?: number;
+    /**
+     * The horizontal spacing between items within the same row.
+     * Overrides `spacing` on the horizontal axis when set.
+     */
+    horizontalSpacing?: number;
+    /**
+     * The vertical spacing between wrapped rows.
+     * Overrides `spacing` on the vertical axis when set.
+     */
+    verticalSpacing?: number;
     children?: (VirtualNode | boolean | undefined | null | (VirtualNode | undefined | null | boolean)[])[] | VirtualNode | null | boolean;
 };
 declare const FlowLayout: FunctionComponent<FlowLayoutProps>;

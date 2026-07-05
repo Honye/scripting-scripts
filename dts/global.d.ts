@@ -9875,6 +9875,42 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
   }
 
   /**
+   * A matched text range in the editor, returned by `EditorController.searchText`.
+   */
+  type EditorTextRange = {
+    /**
+     * The start offset (character index) of the match in the document.
+     */
+    start: number
+    /**
+     * The end offset (character index) of the match in the document.
+     */
+    end: number
+    /**
+     * The 1-based line number where the match starts.
+     */
+    line: number
+  }
+
+  /**
+   * Options for `EditorController.searchText`.
+   */
+  type EditorSearchOptions = {
+    /**
+     * Whether the search is case sensitive. Defaults to false.
+     */
+    caseSensitive?: boolean
+    /**
+     * Whether the `query` is treated as a regular expression. Defaults to false.
+     */
+    regexp?: boolean
+    /**
+     * Whether to match whole words only. Defaults to false.
+     */
+    wholeWord?: boolean
+  }
+
+  /**
    * This interface allows you to create an editor controller, access and set editor content, listen for content changes, and display an editor or render it through an `Editor` view.
    */
   class EditorController {
@@ -9911,6 +9947,65 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
      * Dismissing the editor. The editor has not been disposed, so you can call the `present` method again to show the editor.
      */
     dismiss(): Promise<void>
+    /**
+     * Scroll the editor so that the given 1-based line number is centered, and place the cursor there.
+     * @param line The 1-based line number.
+     */
+    scrollToLine(line: number): void
+    /**
+     * Scroll the editor so that the given character offset is centered, and place the cursor there.
+     * @param position The character offset (index) in the document.
+     */
+    scrollToPosition(position: number): void
+    /**
+     * Scroll the editor so that the current selection is visible.
+     */
+    scrollSelectionIntoView(): void
+    /**
+     * Get the currently selected text. Resolves to an empty string when there is no selection.
+     * The returned promise rejects if the editor is not presented (timeout) or has been disposed.
+     */
+    getSelectedText(): Promise<string>
+    /**
+     * Select the text range `[start, end)` and scroll it into view. Combine with `searchText` (or your
+     * own matching over `content`) and `replaceSelection` to build a custom search & replace UI.
+     * @param start The start character offset.
+     * @param end The end character offset.
+     */
+    setSelection(start: number, end: number): void
+    /**
+     * Replace the current selection with the given text. When there is no selection, the text is inserted at the cursor.
+     * @param text The replacement text.
+     */
+    replaceSelection(text: string): void
+    /**
+     * Select all the text in the editor.
+     */
+    selectAll(): void
+    /**
+     * Search the whole document and return all matched ranges. The matching runs in the editor, so you don't
+     * need to compute offsets yourself; use `setSelection` to highlight a match and `replaceSelection` to replace it.
+     * The returned promise rejects if the editor is not presented (timeout) or has been disposed.
+     * @param query The text or regular expression source to search for.
+     * @param options Search options.
+     */
+    searchText(query: string, options?: EditorSearchOptions): Promise<EditorTextRange[]>
+    /**
+     * Undo the last change.
+     */
+    undo(): void
+    /**
+     * Redo the last undone change.
+     */
+    redo(): void
+    /**
+     * Toggle line comments for the selected lines.
+     */
+    toggleLineComment(): void
+    /**
+     * Toggle a block comment around the current selection.
+     */
+    toggleBlockComment(): void
     /**
      * Release resources. When you no longer need this instance, you must call this method to avoid memory leaks.
      */
