@@ -1,0 +1,45 @@
+{
+  "name" : "GitHub Secrets",
+  "iconImage" : null,
+  "color" : "rgba(230, 190, 1,1)",
+  "localizedNames" : {
+    "en" : "GitHub Secrets",
+    "pt" : "GitHub Secrets",
+    "zh" : "GitHub 密钥",
+    "de" : "GitHub Secrets",
+    "it" : "GitHub Secrets",
+    "es" : "GitHub Secrets",
+    "ru" : "GitHub Secrets",
+    "ja" : "GitHub Secrets",
+    "fr" : "GitHub Secrets"
+  },
+  "localizedDescriptions" : {
+    "en" : "Edit repository Actions secrets and sync the same secret to multiple repositories.",
+    "pt" : "Edite os secrets de Actions dos repositórios e sincronize o mesmo secret para vários repositórios.",
+    "zh" : "编辑仓库的 Actions 密钥，并一键将同一密钥同步到多个仓库。",
+    "de" : "Bearbeite die Actions-Secrets von Repositorys und synchronisiere dasselbe Secret in mehrere Repositorys.",
+    "it" : "Modifica i secret di Actions dei repository e sincronizza lo stesso secret su più repository.",
+    "es" : "Edita los secrets de Actions de los repositorios y sincroniza el mismo secret en varios repositorios.",
+    "ru" : "Редактируйте секреты Actions репозиториев и синхронизируйте один секрет в несколько репозиториев.",
+    "ja" : "リポジトリの Actions シークレットを編集し、同じシークレットを複数のリポジトリに同期します。",
+    "fr" : "Modifiez les secrets Actions des dépôts et synchronisez le même secret vers plusieurs dépôts."
+  },
+  "runInApp" : false,
+  "description" : null,
+  "intentInputTypes" : [
+
+  ],
+  "author" : {
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "name" : "Jackie",
+    "email" : "Honye@github.com"
+  },
+  "icon" : "square.2.layers.3d.fill",
+  "entry" : "index.tsx",
+  "remoteResource" : null,
+  "contributors" : [
+
+  ],
+  "permissions" : null,
+  "version" : "1.0.0"
+}
