@@ -57,17 +57,7 @@ export function AddRepoView({ onChanged }: { onChanged?: () => void }) {
           topBarLeading: [
             <Button title={i18n.done} action={() => dismiss()} />
           ],
-          topBarTrailing: [
-            loading ? (
-              <ProgressView />
-            ) : (
-              <Button
-                title={i18n.searchAction}
-                action={runSearch}
-                disabled={!query.trim()}
-              />
-            )
-          ]
+          topBarTrailing: loading ? [<ProgressView />] : []
         }}
       >
         <TextField
@@ -75,6 +65,8 @@ export function AddRepoView({ onChanged }: { onChanged?: () => void }) {
           prompt={i18n.searchPrompt}
           value={query}
           onChanged={setQuery}
+          onSubmit={runSearch}
+          submitLabel="search"
           textInputAutocapitalization="never"
           autocorrectionDisabled={true}
         />
