@@ -1,7 +1,7 @@
 {
   "name" : "GitHub Secrets",
   "iconImage" : null,
-  "color" : "rgba(230, 190, 1,1)",
+  "color" : "rgba(32, 40, 48, 1)",
   "localizedNames" : {
     "en" : "GitHub Secrets",
     "pt" : "GitHub Secrets",
@@ -34,7 +34,7 @@
     "name" : "Jackie",
     "email" : "Honye@github.com"
   },
-  "icon" : "square.2.layers.3d.fill",
+  "icon" : "staroflife.shield.fill",
   "entry" : "index.tsx",
   "remoteResource" : null,
   "contributors" : [
