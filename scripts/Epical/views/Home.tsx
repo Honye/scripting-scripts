@@ -131,11 +131,14 @@ export function HomeView({
   const [selectedDay, setSelectedDay] = useState(today)
 
   const countPerDay = WEEK_DAYS.map(
-    (d) => shows.filter((s) => s.schedules.some((sc) => sc.day === d)).length
+    (d) =>
+      shows.filter(
+        (s) => !s.completed && s.schedules.some((sc) => sc.day === d)
+      ).length
   )
 
-  const todaysShows = shows.filter((s) =>
-    s.schedules.some((sc) => sc.day === selectedDay)
+  const todaysShows = shows.filter(
+    (s) => !s.completed && s.schedules.some((sc) => sc.day === selectedDay)
   )
 
   const dateLabel = new Date().toLocaleDateString(i18n.dateLocale, {

@@ -19,4 +19,6 @@ export type Show = {
   coverUrl?: string
   /** Optional play URL (e.g. streaming link). Tapping the cover opens it in the system browser. */
   playUrl?: string
+  /** True if the series is marked finished; hidden from calendar & widget. */
+  completed?: boolean
 }

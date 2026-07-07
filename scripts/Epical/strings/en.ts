@@ -75,8 +75,11 @@ export const en = {
   detailScheduleEps: (n: number) => `+${n} ep${n === 1 ? '' : 's'}`,
   detailSave: 'Save Progress',
   detailDelete: 'Delete Show',
+  detailMarkCompleted: 'Mark as Completed',
+  detailUnmarkCompleted: 'Mark as Ongoing',
 
   // Components
+  completedBadge: 'Completed',
   episodeRange: (start: number, end: number) =>
     start === end
       ? `Today: ep ${start}`

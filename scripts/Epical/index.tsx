@@ -47,6 +47,11 @@ function App() {
     setShows(shows.filter((s) => s.id !== id))
     setDetailId(null)
   }
+  const handleToggleCompleted = (id: number) => {
+    setShows(
+      shows.map((s) => (s.id === id ? { ...s, completed: !s.completed } : s))
+    )
+  }
 
   return (
     <VStack
@@ -91,6 +96,7 @@ function App() {
                 onClose={() => setDetailId(null)}
                 onSave={handleSaveDetail}
                 onDelete={handleDelete}
+                onToggleCompleted={handleToggleCompleted}
               />
             </VStack>
           ) : (

@@ -17,7 +17,7 @@ import type { Color } from 'scripting'
 import type { Show } from '../types'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
-import { GenrePill, Poster, PrimaryButton, SectionLabel } from '../components'
+import { CompletedBadge, GenrePill, Poster, PrimaryButton, SectionLabel } from '../components'
 
 function RepeatButton({
   action,
@@ -92,12 +92,14 @@ export function DetailView({
   show,
   onClose,
   onSave,
-  onDelete
+  onDelete,
+  onToggleCompleted
 }: {
   show: Show
   onClose: () => void
   onSave: (id: number, watched: number, total: number) => void
   onDelete: (id: number) => void
+  onToggleCompleted: (id: number) => void
 }) {
   const confirmDelete = async () => {
     const ok = await Dialog.confirm({
@@ -153,7 +155,10 @@ export function DetailView({
             >
               {show.title}
             </Text>
-            <GenrePill genre={show.genre} color={show.color} />
+            <HStack spacing={6}>
+              <GenrePill genre={show.genre} color={show.color} />
+              {show.completed ? <CompletedBadge /> : null}
+            </HStack>
             <Text
               font={13}
               foregroundStyle={theme.textTertiary}
@@ -322,6 +327,31 @@ export function DetailView({
             onClose()
           }}
         />
+
+        <Button
+          action={() => onToggleCompleted(show.id)}
+          buttonStyle="plain"
+        >
+          <HStack
+            spacing={6}
+            alignment="center"
+            frame={{ maxWidth: 'infinity', height: 44 }}
+          >
+            <Image
+              systemName={show.completed ? 'arrow.uturn.backward' : 'checkmark.seal'}
+              font={14}
+              fontWeight="semibold"
+              foregroundStyle={theme.brandEnd}
+            />
+            <Text
+              font={14}
+              fontWeight="semibold"
+              foregroundStyle={theme.brandEnd}
+            >
+              {show.completed ? i18n.detailUnmarkCompleted : i18n.detailMarkCompleted}
+            </Text>
+          </HStack>
+        </Button>
 
         <Button action={confirmDelete} buttonStyle="plain">
           <HStack

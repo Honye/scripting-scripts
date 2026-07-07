@@ -12,7 +12,7 @@ import type { Color } from 'scripting'
 import type { Show } from '../types'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
-import { DayChip, GenrePill, Poster } from '../components'
+import { CompletedBadge, DayChip, GenrePill, Poster } from '../components'
 
 function ShowRow({
   show,
@@ -57,7 +57,10 @@ function ShowRow({
         >
           {show.title}
         </Text>
-        <GenrePill genre={show.genre} color={show.color} />
+        <HStack spacing={6}>
+          <GenrePill genre={show.genre} color={show.color} />
+          {show.completed ? <CompletedBadge /> : null}
+        </HStack>
         <ProgressView value={ratio} total={1} tint={show.color as Color} />
         <Text
           font={11}

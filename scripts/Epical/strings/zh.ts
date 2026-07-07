@@ -72,8 +72,11 @@ export const zh: Strings = {
   detailScheduleEps: (n) => `更新 ${n} 集`,
   detailSave: '保存进度',
   detailDelete: '删除追剧',
+  detailMarkCompleted: '标记为完结',
+  detailUnmarkCompleted: '取消完结',
 
   // Components
+  completedBadge: '完结',
   episodeRange: (start, end) =>
     start === end
       ? `今日更新第 ${start} 集`

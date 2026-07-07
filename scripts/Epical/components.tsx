@@ -160,6 +160,33 @@ export function GenrePill({
   )
 }
 
+/** Small green pill marking a series as finished. */
+export function CompletedBadge() {
+  return (
+    <HStack
+      spacing={3}
+      padding={{ horizontal: 6, vertical: 2 }}
+      background={{
+        style: 'rgba(52,199,89,0.18)' as Color,
+        shape: { type: 'rect', cornerRadius: 4 }
+      }}
+    >
+      <Image
+        systemName="checkmark.seal.fill"
+        font={10}
+        foregroundStyle="systemGreen"
+      />
+      <Text
+        font={11}
+        fontWeight="medium"
+        foregroundStyle="systemGreen"
+      >
+        {i18n.completedBadge}
+      </Text>
+    </HStack>
+  )
+}
+
 /** A row in the calendar showing one scheduled airing for one show today. */
 export function EpisodeCard({
   show,

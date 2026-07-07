@@ -22,7 +22,7 @@ function loadTodaysShows(): Show[] {
   const timeFor = (s: Show) =>
     s.schedules.find((sc) => sc.day === today)?.time ?? '99:99'
   return loadShows()
-    .filter((s) => s.schedules.some((sc) => sc.day === today))
+    .filter((s) => !s.completed && s.schedules.some((sc) => sc.day === today))
     .sort((a, b) => timeFor(a).localeCompare(timeFor(b)))
 }
 
