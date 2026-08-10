@@ -22,6 +22,446 @@
     "children": [
       {
         "title": {
+          "en": "3.2.1",
+          "zh": "3.2.1"
+        },
+        "children": [
+          {
+            "pro": true,
+            "title": {
+              "en": "Home Screen UI",
+              "zh": "首页 UI"
+            },
+            "subtitle": {
+              "en": "A script that provides a `home_screen_default_ui.tsx` file can now be rendered as a tab on the app's home screen. Turn on Show Home Tab in Settings.",
+              "zh": "提供 `home_screen_default_ui.tsx` 的脚本现在可以作为 App 首页的一个 Tab 渲染。在「设置」中打开 Show Home Tab 开关。"
+            },
+            "readme": "home_screen_ui/"
+          },
+          {
+            "title": {
+              "en": "Notification Sounds",
+              "zh": "通知铃声"
+            },
+            "subtitle": {
+              "en": "Notification.schedule adds a `sound` option to play a custom sound, and local notifications now play a sound by default. Import and manage custom sounds under Tools > Notifications > Notification Sounds.",
+              "zh": "Notification.schedule 新增 `sound` 选项可播放自定义铃声,本地通知现在默认有声。可在「工具 > 通知 > 通知铃声」中导入和管理自定义铃声。"
+            },
+            "readme": "notification/"
+          },
+          {
+            "title": {
+              "en": "More View Modifiers",
+              "zh": "更多视图修饰器"
+            },
+            "subtitle": {
+              "en": "New view modifiers: alignmentGuide, color & filter effects, truncationMode, dynamicTypeSize, scrollBounceBehavior, scenePadding, and presentationBackground.",
+              "zh": "新增视图修饰器:alignmentGuide、颜色与滤镜效果、truncationMode、dynamicTypeSize、scrollBounceBehavior、scenePadding、presentationBackground。"
+            },
+            "children": [
+              {
+                "title": {
+                  "en": "alignmentGuide",
+                  "zh": "alignmentGuide"
+                },
+                "subtitle": {
+                  "en": "Sets an explicit alignment guide for one of a view's alignments using a constant or a dimension keyword (leading/trailing/width/…), with an optional offset.",
+                  "zh": "用常量或维度关键字(leading/trailing/width 等)为视图的某个对齐设置显式对齐 guide,支持可选偏移。"
+                },
+                "keywords": [
+                  "alignmentGuide",
+                  "alignment guide",
+                  "ViewDimensions",
+                  "对齐"
+                ],
+                "readme": "view_modifiers/alignment_guide/"
+              },
+              {
+                "title": {
+                  "en": "Color & Filter Effects",
+                  "zh": "颜色与滤镜效果"
+                },
+                "subtitle": {
+                  "en": "brightness, contrast, saturation, grayscale, colorMultiply, luminanceToAlpha and blendMode adjust the rendered colors of a view.",
+                  "zh": "brightness、contrast、saturation、grayscale、colorMultiply、luminanceToAlpha、blendMode,用于调整视图渲染的颜色。"
+                },
+                "keywords": [
+                  "brightness",
+                  "contrast",
+                  "saturation",
+                  "grayscale",
+                  "colorMultiply",
+                  "luminanceToAlpha",
+                  "blendMode",
+                  "滤镜"
+                ],
+                "readme": "view_modifiers/color_effects/"
+              },
+              {
+                "title": {
+                  "en": "truncationMode",
+                  "zh": "truncationMode"
+                },
+                "subtitle": {
+                  "en": "Sets how text that is too long to fit is truncated (head / middle / tail). Pair with lineLimit.",
+                  "zh": "设置放不下的文本如何截断(head / middle / tail),需配合 lineLimit。"
+                },
+                "keywords": [
+                  "truncationMode",
+                  "truncation",
+                  "截断",
+                  "省略号"
+                ],
+                "readme": "view_modifiers/truncation_mode/"
+              },
+              {
+                "title": {
+                  "en": "dynamicTypeSize",
+                  "zh": "dynamicTypeSize"
+                },
+                "subtitle": {
+                  "en": "Overrides the Dynamic Type size for content in a view — fix a size, or clamp the user's size within a range.",
+                  "zh": "覆盖视图内容的动态字体大小——固定为某尺寸,或把用户尺寸限制在区间内。"
+                },
+                "keywords": [
+                  "dynamicTypeSize",
+                  "Dynamic Type",
+                  "动态字体",
+                  "accessibility"
+                ],
+                "readme": "view_modifiers/dynamic_type_size/"
+              },
+              {
+                "title": {
+                  "en": "scrollBounceBehavior",
+                  "zh": "scrollBounceBehavior"
+                },
+                "subtitle": {
+                  "en": "Configures the bounce behavior of scrollable views (automatic / always / basedOnSize) along an axis.",
+                  "zh": "配置可滚动视图在某方向上的回弹行为(automatic / always / basedOnSize)。"
+                },
+                "keywords": [
+                  "scrollBounceBehavior",
+                  "bounce",
+                  "回弹",
+                  "ScrollView"
+                ],
+                "readme": "view_modifiers/scroll_bounce_behavior/"
+              },
+              {
+                "title": {
+                  "en": "scenePadding",
+                  "zh": "scenePadding"
+                },
+                "subtitle": {
+                  "en": "Adds padding using the space the system considers appropriate for the current scene, on chosen edges.",
+                  "zh": "按系统认为当前场景合适的间距,为选定的边添加内边距。"
+                },
+                "keywords": [
+                  "scenePadding",
+                  "scene padding",
+                  "场景边距"
+                ],
+                "readme": "view_modifiers/scene_padding/"
+              },
+              {
+                "title": {
+                  "en": "presentationBackground",
+                  "zh": "presentationBackground"
+                },
+                "subtitle": {
+                  "en": "Sets the background of the enclosing sheet or popover to a color or material.",
+                  "zh": "把所在 sheet 或 popover 的背景设为颜色或材质。"
+                },
+                "keywords": [
+                  "presentationBackground",
+                  "sheet background",
+                  "material",
+                  "弹出层背景"
+                ],
+                "readme": "view_modifiers/presentation_background/"
+              },
+              {
+                "title": {
+                  "en": "Accessibility",
+                  "zh": "无障碍"
+                },
+                "subtitle": {
+                  "en": "accessibilityLabel/Hint/Value/Hidden/Identifier/SortPriority/AddTraits/RemoveTraits/Heading/Element describe your views to assistive technologies such as VoiceOver.",
+                  "zh": "accessibilityLabel/Hint/Value/Hidden/Identifier/SortPriority/AddTraits/RemoveTraits/Heading/Element,把视图信息传达给 VoiceOver 等辅助功能。"
+                },
+                "keywords": [
+                  "accessibility",
+                  "accessibilityLabel",
+                  "accessibilityHint",
+                  "accessibilityValue",
+                  "accessibilityHidden",
+                  "accessibilityIdentifier",
+                  "accessibilityAddTraits",
+                  "accessibilityHeading",
+                  "accessibilityElement",
+                  "VoiceOver",
+                  "无障碍"
+                ],
+                "readme": "view_modifiers/accessibility/"
+              },
+              {
+                "title": {
+                  "en": "rotation3DEffect",
+                  "zh": "rotation3DEffect"
+                },
+                "subtitle": {
+                  "en": "Rotates a view's rendered output in three dimensions around a given axis, with anchor and perspective.",
+                  "zh": "围绕指定轴在三维空间旋转视图渲染输出,支持锚点与透视。"
+                },
+                "keywords": [
+                  "rotation3DEffect",
+                  "3D rotation",
+                  "三维旋转",
+                  "perspective"
+                ],
+                "readme": "view_modifiers/rotation_3d_effect/"
+              },
+              {
+                "title": {
+                  "en": "transformEffect",
+                  "zh": "transformEffect"
+                },
+                "subtitle": {
+                  "en": "Applies a raw CGAffineTransform (a/b/c/d/tx/ty) to a view — useful for effects like shear.",
+                  "zh": "对视图应用裸 CGAffineTransform(a/b/c/d/tx/ty),可实现错切等效果。"
+                },
+                "keywords": [
+                  "transformEffect",
+                  "CGAffineTransform",
+                  "shear",
+                  "仿射变换",
+                  "错切"
+                ],
+                "readme": "view_modifiers/transform_effect/"
+              },
+              {
+                "title": {
+                  "en": "coordinateSpace",
+                  "zh": "coordinateSpace"
+                },
+                "subtitle": {
+                  "en": "Names this view's coordinate space so gestures can report locations relative to it.",
+                  "zh": "为该视图的坐标空间命名,手势即可相对它上报位置。"
+                },
+                "keywords": [
+                  "coordinateSpace",
+                  "named coordinate space",
+                  "坐标空间"
+                ],
+                "readme": "view_modifiers/coordinate_space/"
+              },
+              {
+                "title": {
+                  "en": "presentationSizing",
+                  "zh": "presentationSizing"
+                },
+                "subtitle": {
+                  "en": "Requests a sizing behavior (automatic / fitted / page / form) for the enclosing sheet. iOS 18+.",
+                  "zh": "为所在 sheet 请求尺寸行为(automatic / fitted / page / form),iOS 18+。"
+                },
+                "keywords": [
+                  "presentationSizing",
+                  "sheet sizing",
+                  "弹层尺寸"
+                ],
+                "readme": "view_modifiers/presentation_sizing/"
+              },
+              {
+                "title": {
+                  "en": "hoverEffect",
+                  "zh": "hoverEffect"
+                },
+                "subtitle": {
+                  "en": "Applies a pointer hover effect (automatic / highlight / lift) on iPadOS.",
+                  "zh": "在 iPadOS 上应用指针悬停效果(automatic / highlight / lift)。"
+                },
+                "keywords": [
+                  "hoverEffect",
+                  "pointer",
+                  "悬停",
+                  "指针"
+                ],
+                "readme": "view_modifiers/hover_effect/"
+              },
+              {
+                "title": {
+                  "en": "onHover",
+                  "zh": "onHover"
+                },
+                "subtitle": {
+                  "en": "Runs a callback when a pointer enters or exits the view (iPadOS).",
+                  "zh": "指针进入或离开视图时触发回调(iPadOS)。"
+                },
+                "keywords": [
+                  "onHover",
+                  "hover",
+                  "悬停回调"
+                ],
+                "readme": "view_modifiers/on_hover/"
+              },
+              {
+                "title": {
+                  "en": "help",
+                  "zh": "help"
+                },
+                "subtitle": {
+                  "en": "Sets help text — a tooltip with a pointer, an accessibility hint for VoiceOver.",
+                  "zh": "设置帮助文本——指针下为 tooltip,对 VoiceOver 为无障碍提示。"
+                },
+                "keywords": [
+                  "help",
+                  "tooltip",
+                  "提示"
+                ],
+                "readme": "view_modifiers/help/"
+              },
+              {
+                "title": {
+                  "en": "screenshotRef",
+                  "zh": "screenshotRef"
+                },
+                "subtitle": {
+                  "en": "Captures a rendered view as a UIImage on demand via a ScreenshotMaker ref.",
+                  "zh": "通过 ScreenshotMaker ref 按需把已渲染视图捕获为 UIImage。"
+                },
+                "keywords": [
+                  "screenshotRef",
+                  "ScreenshotMaker",
+                  "screenshot",
+                  "snapshot",
+                  "截图",
+                  "快照"
+                ],
+                "readme": "view_modifiers/screenshot/"
+              }
+            ]
+          },
+          {
+            "title": {
+              "en": "UIImage: Color Extraction & Transforms",
+              "zh": "UIImage：颜色提取与图像变换"
+            },
+            "subtitle": {
+              "en": "New UIImage methods: averageColor, dominantColors, pixelColor, getPixelData, croppedTo, rotated, blurred, grayscale.",
+              "zh": "UIImage 新增方法：averageColor、dominantColors、pixelColor、getPixelData、croppedTo、rotated、blurred、grayscale。"
+            },
+            "keywords": [
+              "UIImage",
+              "averageColor",
+              "dominantColors",
+              "pixelColor",
+              "getPixelData",
+              "croppedTo",
+              "rotated",
+              "blurred",
+              "grayscale",
+              "RGBAColor",
+              "颜色提取",
+              "裁剪",
+              "旋转",
+              "模糊"
+            ],
+            "readme": "ui_image/"
+          },
+          {
+            "title": {
+              "en": "MapSnapshotter: Overlays & Annotations",
+              "zh": "MapSnapshotter：叠加层与标注"
+            },
+            "subtitle": {
+              "en": "MapSnapshotter.take now draws polyline/polygon/circle overlays and pin annotations onto the image, with automatic framing — turn a MapDirections route into a picture in one call.",
+              "zh": "MapSnapshotter.take 现在能把 polyline/polygon/circle 叠加层与标注 pin 画到图片上,并自动取景——一次调用即可把 MapDirections 路线转成图片。"
+            },
+            "keywords": [
+              "MapSnapshotter",
+              "MapDirections",
+              "overlay",
+              "annotation",
+              "polyline",
+              "polygon",
+              "circle",
+              "route",
+              "snapshot",
+              "叠加层",
+              "标注",
+              "路线",
+              "快照"
+            ],
+            "readme": "mapkit/snapshotter/",
+            "example": "mapkit/snapshotter/index"
+          },
+          {
+            "title": {
+              "en": "EnvironmentValuesReader: dynamicTypeSize",
+              "zh": "EnvironmentValuesReader：dynamicTypeSize"
+            },
+            "subtitle": {
+              "en": "EnvironmentValuesReader can now read dynamicTypeSize — the user's preferred Dynamic Type size, including accessibility sizes.",
+              "zh": "EnvironmentValuesReader 现在可读取 dynamicTypeSize——用户偏好的动态字号档,含无障碍字号。"
+            },
+            "keywords": [
+              "EnvironmentValuesReader",
+              "dynamicTypeSize",
+              "DynamicTypeSize",
+              "environment",
+              "accessibility",
+              "动态字号",
+              "无障碍",
+              "环境值"
+            ],
+            "readme": "views/environment_values_reader/"
+          },
+          {
+            "pro": true,
+            "title": {
+              "en": "Live Photos from Ordinary Videos",
+              "zh": "把普通视频变成实况照片"
+            },
+            "subtitle": {
+              "en": "LivePhoto.createFromVideo turns any local video into a still + movie pair that Photos.saveLivePhoto accepts, with stillTime for the cover frame and maxDuration for the length (10 seconds by default, up to the whole video).",
+              "zh": "LivePhoto.createFromVideo 把任意本地视频转成 Photos.saveLivePhoto 能接受的静态图 + 视频资源对,用 stillTime 指定封面帧、maxDuration 指定时长(默认 10 秒,最长可到整段视频)。"
+            },
+            "keywords": [
+              "LivePhoto",
+              "createFromVideo",
+              "Live Photo",
+              "saveLivePhoto",
+              "3302",
+              "实况照片",
+              "视频转实况",
+              "动态照片"
+            ],
+            "readme": "live_photo/"
+          },
+          {
+            "title": {
+              "en": "ImageIO: makerApple",
+              "zh": "ImageIO：makerApple"
+            },
+            "subtitle": {
+              "en": "readMetadata and writeImage now expose the Apple Maker Note as makerApple, whose key '17' holds the Live Photo asset identifier.",
+              "zh": "readMetadata 与 writeImage 现在支持 Apple Maker Note(makerApple),其中键 '17' 存放实况照片的 asset identifier。"
+            },
+            "keywords": [
+              "ImageIO",
+              "makerApple",
+              "MakerNote",
+              "asset identifier",
+              "元数据",
+              "实况照片标识"
+            ],
+            "readme": "image_io/"
+          }
+        ]
+      },
+      {
+        "title": {
           "en": "3.2.0",
           "zh": "3.2.0"
         },
@@ -68,6 +508,21 @@
             ],
             "example": "document_interaction/index",
             "readme": "document_interaction/"
+          },
+          {
+            "title": {
+              "en": "Editor",
+              "zh": "编辑器"
+            },
+            "subtitle": {
+              "en": "Add scrollToPosition, scrollSelectionIntoView, and getSelectedText methods.",
+              "zh": "新增 scrollToPosition、scrollSelectionIntoView、getSelectedText 等方法。"
+            },
+            "keywords": [
+              "EditorController"
+            ],
+            "readme": "views/editor/",
+            "example": "views/editor/index"
           }
         ]
       },
@@ -307,7 +762,8 @@
               "Greasemonkey",
               "Tampermonkey",
               "GM",
-              "Scripting.FileManager"
+              "Scripting.FileManager",
+              "Scripting.tabs"
             ]
           },
           {
@@ -771,6 +1227,25 @@
             ],
             "example": "views/charts/chart_scroll_target_behavior/index",
             "readme": "views/charts/chart_scroll_target_behavior/"
+          },
+          {
+            "title": {
+              "en": "Chart: legend control",
+              "zh": "Chart：图例控制"
+            },
+            "subtitle": {
+              "en": "chartLegend accepts a Visibility string (\"automatic\" / \"visible\" / \"hidden\") to keep or remove the auto-generated legend, or an object ({ position, alignment?, spacing?, content? }) to reposition or fully customize it.",
+              "zh": "chartLegend 支持传入 Visibility 字符串（\"automatic\" / \"visible\" / \"hidden\"）保留或移除自动图例，也支持传入对象（{ position, alignment?, spacing?, content? }）重新定位或完全自定义图例。"
+            },
+            "keywords": [
+              "chartLegend",
+              "legend",
+              "Visibility",
+              "AnnotationPosition",
+              "foregroundStyleBy"
+            ],
+            "example": "views/charts/chart_legend/index",
+            "readme": "views/charts/chart_legend/"
           },
           {
             "title": {
@@ -1574,6 +2049,18 @@
     "readme": "control_widget/"
   },
   {
+    "pro": true,
+    "title": {
+      "en": "Home Screen UI",
+      "zh": "首页 UI"
+    },
+    "subtitle": {
+      "en": "Render a script's UI as a tab on the app's home screen with home_screen_default_ui.tsx.",
+      "zh": "用 home_screen_default_ui.tsx 把脚本的 UI 渲染成 App 首页的一个 Tab。"
+    },
+    "readme": "home_screen_ui/"
+  },
+  {
     "title": {
       "en": "AppIntent",
       "zh": "AppIntent"
@@ -1913,6 +2400,7 @@
               "en": "This view is a flow-based layout component that arranges its children horizontally and automatically wraps items to the next line when there is insufficient space.",
               "zh": "这个视图是一个流式布局组件，它按照水平方向排列子视图，并在没有足够空间时自动换行。"
             },
+            "example": "views/flow_layout/index",
             "readme": "views/flow_layout/"
           }
         ]
@@ -3157,7 +3645,8 @@
         "keywords": [
           "EditorController"
         ],
-        "readme": "views/editor/"
+        "readme": "views/editor/",
+        "example": "views/editor/index"
       },
       {
         "title": {
@@ -3293,6 +3782,287 @@
           "zh": "将当前视图放置在一个相对于其最近容器尺寸的“隐形框架”中。该修饰符适用于 ScrollView、Grid、布局栈等容器中，用于实现按比例布局或视图对齐。"
         },
         "readme": "view_modifiers/container_relative_frame/"
+      },
+      {
+        "title": {
+          "en": "alignmentGuide",
+          "zh": "alignmentGuide"
+        },
+        "subtitle": {
+          "en": "Sets an explicit alignment guide for one of a view's alignments using a constant or a dimension keyword (leading/trailing/width/…), with an optional offset.",
+          "zh": "用常量或维度关键字(leading/trailing/width 等)为视图的某个对齐设置显式对齐 guide,支持可选偏移。"
+        },
+        "keywords": [
+          "alignmentGuide",
+          "alignment guide",
+          "ViewDimensions",
+          "对齐"
+        ],
+        "readme": "view_modifiers/alignment_guide/"
+      },
+      {
+        "title": {
+          "en": "Color & Filter Effects",
+          "zh": "颜色与滤镜效果"
+        },
+        "subtitle": {
+          "en": "brightness, contrast, saturation, grayscale, colorMultiply, luminanceToAlpha and blendMode adjust the rendered colors of a view.",
+          "zh": "brightness、contrast、saturation、grayscale、colorMultiply、luminanceToAlpha、blendMode,用于调整视图渲染的颜色。"
+        },
+        "keywords": [
+          "brightness",
+          "contrast",
+          "saturation",
+          "grayscale",
+          "colorMultiply",
+          "luminanceToAlpha",
+          "blendMode",
+          "滤镜"
+        ],
+        "readme": "view_modifiers/color_effects/"
+      },
+      {
+        "title": {
+          "en": "truncationMode",
+          "zh": "truncationMode"
+        },
+        "subtitle": {
+          "en": "Sets how text that is too long to fit is truncated (head / middle / tail). Pair with lineLimit.",
+          "zh": "设置放不下的文本如何截断(head / middle / tail),需配合 lineLimit。"
+        },
+        "keywords": [
+          "truncationMode",
+          "truncation",
+          "截断",
+          "省略号"
+        ],
+        "readme": "view_modifiers/truncation_mode/"
+      },
+      {
+        "title": {
+          "en": "dynamicTypeSize",
+          "zh": "dynamicTypeSize"
+        },
+        "subtitle": {
+          "en": "Overrides the Dynamic Type size for content in a view — fix a size, or clamp the user's size within a range.",
+          "zh": "覆盖视图内容的动态字体大小——固定为某尺寸,或把用户尺寸限制在区间内。"
+        },
+        "keywords": [
+          "dynamicTypeSize",
+          "Dynamic Type",
+          "动态字体",
+          "accessibility"
+        ],
+        "readme": "view_modifiers/dynamic_type_size/"
+      },
+      {
+        "title": {
+          "en": "scrollBounceBehavior",
+          "zh": "scrollBounceBehavior"
+        },
+        "subtitle": {
+          "en": "Configures the bounce behavior of scrollable views (automatic / always / basedOnSize) along an axis.",
+          "zh": "配置可滚动视图在某方向上的回弹行为(automatic / always / basedOnSize)。"
+        },
+        "keywords": [
+          "scrollBounceBehavior",
+          "bounce",
+          "回弹",
+          "ScrollView"
+        ],
+        "readme": "view_modifiers/scroll_bounce_behavior/"
+      },
+      {
+        "title": {
+          "en": "scenePadding",
+          "zh": "scenePadding"
+        },
+        "subtitle": {
+          "en": "Adds padding using the space the system considers appropriate for the current scene, on chosen edges.",
+          "zh": "按系统认为当前场景合适的间距,为选定的边添加内边距。"
+        },
+        "keywords": [
+          "scenePadding",
+          "scene padding",
+          "场景边距"
+        ],
+        "readme": "view_modifiers/scene_padding/"
+      },
+      {
+        "title": {
+          "en": "presentationBackground",
+          "zh": "presentationBackground"
+        },
+        "subtitle": {
+          "en": "Sets the background of the enclosing sheet or popover to a color or material.",
+          "zh": "把所在 sheet 或 popover 的背景设为颜色或材质。"
+        },
+        "keywords": [
+          "presentationBackground",
+          "sheet background",
+          "material",
+          "弹出层背景"
+        ],
+        "readme": "view_modifiers/presentation_background/"
+      },
+      {
+        "title": {
+          "en": "Accessibility",
+          "zh": "无障碍"
+        },
+        "subtitle": {
+          "en": "accessibilityLabel/Hint/Value/Hidden/Identifier/SortPriority/AddTraits/RemoveTraits/Heading/Element describe your views to assistive technologies such as VoiceOver.",
+          "zh": "accessibilityLabel/Hint/Value/Hidden/Identifier/SortPriority/AddTraits/RemoveTraits/Heading/Element,把视图信息传达给 VoiceOver 等辅助功能。"
+        },
+        "keywords": [
+          "accessibility",
+          "accessibilityLabel",
+          "accessibilityHint",
+          "accessibilityValue",
+          "accessibilityHidden",
+          "accessibilityIdentifier",
+          "accessibilityAddTraits",
+          "accessibilityHeading",
+          "accessibilityElement",
+          "VoiceOver",
+          "无障碍"
+        ],
+        "readme": "view_modifiers/accessibility/"
+      },
+      {
+        "title": {
+          "en": "rotation3DEffect",
+          "zh": "rotation3DEffect"
+        },
+        "subtitle": {
+          "en": "Rotates a view's rendered output in three dimensions around a given axis, with anchor and perspective.",
+          "zh": "围绕指定轴在三维空间旋转视图渲染输出,支持锚点与透视。"
+        },
+        "keywords": [
+          "rotation3DEffect",
+          "3D rotation",
+          "三维旋转",
+          "perspective"
+        ],
+        "readme": "view_modifiers/rotation_3d_effect/"
+      },
+      {
+        "title": {
+          "en": "transformEffect",
+          "zh": "transformEffect"
+        },
+        "subtitle": {
+          "en": "Applies a raw CGAffineTransform (a/b/c/d/tx/ty) to a view — useful for effects like shear.",
+          "zh": "对视图应用裸 CGAffineTransform(a/b/c/d/tx/ty),可实现错切等效果。"
+        },
+        "keywords": [
+          "transformEffect",
+          "CGAffineTransform",
+          "shear",
+          "仿射变换",
+          "错切"
+        ],
+        "readme": "view_modifiers/transform_effect/"
+      },
+      {
+        "title": {
+          "en": "coordinateSpace",
+          "zh": "coordinateSpace"
+        },
+        "subtitle": {
+          "en": "Names this view's coordinate space so gestures can report locations relative to it.",
+          "zh": "为该视图的坐标空间命名,手势即可相对它上报位置。"
+        },
+        "keywords": [
+          "coordinateSpace",
+          "named coordinate space",
+          "坐标空间"
+        ],
+        "readme": "view_modifiers/coordinate_space/"
+      },
+      {
+        "title": {
+          "en": "presentationSizing",
+          "zh": "presentationSizing"
+        },
+        "subtitle": {
+          "en": "Requests a sizing behavior (automatic / fitted / page / form) for the enclosing sheet. iOS 18+.",
+          "zh": "为所在 sheet 请求尺寸行为(automatic / fitted / page / form),iOS 18+。"
+        },
+        "keywords": [
+          "presentationSizing",
+          "sheet sizing",
+          "弹层尺寸"
+        ],
+        "readme": "view_modifiers/presentation_sizing/"
+      },
+      {
+        "title": {
+          "en": "hoverEffect",
+          "zh": "hoverEffect"
+        },
+        "subtitle": {
+          "en": "Applies a pointer hover effect (automatic / highlight / lift) on iPadOS.",
+          "zh": "在 iPadOS 上应用指针悬停效果(automatic / highlight / lift)。"
+        },
+        "keywords": [
+          "hoverEffect",
+          "pointer",
+          "悬停",
+          "指针"
+        ],
+        "readme": "view_modifiers/hover_effect/"
+      },
+      {
+        "title": {
+          "en": "onHover",
+          "zh": "onHover"
+        },
+        "subtitle": {
+          "en": "Runs a callback when a pointer enters or exits the view (iPadOS).",
+          "zh": "指针进入或离开视图时触发回调(iPadOS)。"
+        },
+        "keywords": [
+          "onHover",
+          "hover",
+          "悬停回调"
+        ],
+        "readme": "view_modifiers/on_hover/"
+      },
+      {
+        "title": {
+          "en": "help",
+          "zh": "help"
+        },
+        "subtitle": {
+          "en": "Sets help text — a tooltip with a pointer, an accessibility hint for VoiceOver.",
+          "zh": "设置帮助文本——指针下为 tooltip,对 VoiceOver 为无障碍提示。"
+        },
+        "keywords": [
+          "help",
+          "tooltip",
+          "提示"
+        ],
+        "readme": "view_modifiers/help/"
+      },
+      {
+        "title": {
+          "en": "screenshotRef",
+          "zh": "screenshotRef"
+        },
+        "subtitle": {
+          "en": "Captures a rendered view as a UIImage on demand via a ScreenshotMaker ref.",
+          "zh": "通过 ScreenshotMaker ref 按需把已渲染视图捕获为 UIImage。"
+        },
+        "keywords": [
+          "screenshotRef",
+          "ScreenshotMaker",
+          "screenshot",
+          "snapshot",
+          "截图",
+          "快照"
+        ],
+        "readme": "view_modifiers/screenshot/"
       },
       {
         "title": {
@@ -4437,91 +5207,6 @@
     ]
   },
   {
-    "pro": true,
-    "title": {
-      "en": "AssistantTool",
-      "zh": "智能助手工具"
-    },
-    "subtitle": {
-      "en": "Custom tools for the assistant.",
-      "zh": "自定义提供给智能助手使用的工具。"
-    },
-    "children": [
-      {
-        "pro": true,
-        "title": {
-          "zh": "AssistantTool 总览与工作流",
-          "en": "Overview and Workflow"
-        },
-        "subtitle": {
-          "zh": "了解智能助手工具的概述和工作流程。",
-          "en": "Learn about the overview and workflow of AssistantTools."
-        },
-        "readme": "assistant_tool/quick_start/"
-      },
-      {
-        "pro": true,
-        "title": {
-          "zh": "无需用户批准的 Assistant Tool",
-          "en": "Assistant Tool Without User Approval"
-        },
-        "subtitle": {
-          "zh": "掌握如何实现无需用户批准的智能助手工具。",
-          "en": "Learn how to implement an Assistant Tool without user approval."
-        },
-        "readme": "assistant_tool/without_approval/"
-      },
-      {
-        "pro": true,
-        "title": {
-          "zh": "需要用户批准的 Assistant Tool",
-          "en": "Assistant Tool With User Approval"
-        },
-        "subtitle": {
-          "zh": "掌握如何实现需要用户批准的智能助手工具。",
-          "en": "Learn how to implement an Assistant Tool with user approval."
-        },
-        "readme": "assistant_tool/with_approval/"
-      },
-      {
-        "pro": true,
-        "title": {
-          "zh": "可交互 UI 的 Assistant Tool",
-          "en": "Assistant Tool With Interactive UI"
-        },
-        "subtitle": {
-          "zh": "学习如何通过 registerUIView 实现可交互工具 UI，并返回结构化输出。",
-          "en": "Learn how to build interactive Assistant Tools using registerUIView and return structured output."
-        },
-        "readme": "assistant_tool/interactive_ui/"
-      },
-      {
-        "pro": true,
-        "title": {
-          "zh": "ScriptEditorProvider 及编辑器相关类型详解",
-          "en": "ScriptEditorProvider and Editor Types"
-        },
-        "subtitle": {
-          "zh": "了解 ScriptEditorProvider 及编辑器相关类型。",
-          "en": "Learn about ScriptEditorProvider and Editor Types."
-        },
-        "readme": "assistant_tool/script_editor_provider/"
-      },
-      {
-        "pro": true,
-        "title": {
-          "en": "AssistantTool User-Initiated Cancellation",
-          "zh": "处理用户主动取消智能助手工具"
-        },
-        "subtitle": {
-          "en": "To improve the user experience of long-running tools, AssistantTool introduces support for user-initiated cancellation.",
-          "zh": "为了提高用户使用长时间运行的工具的体验，智能助手工具引入了用户主动取消的支持。"
-        },
-        "readme": "assistant_tool/cancellation/"
-      }
-    ]
-  },
-  {
     "title": {
       "en": "Script",
       "zh": "Script"
@@ -4735,7 +5420,8 @@
           "Greasemonkey",
           "Tampermonkey",
           "GM",
-          "Scripting.FileManager"
+          "Scripting.FileManager",
+          "Scripting.tabs"
         ]
       },
       {
@@ -5491,6 +6177,29 @@
         ],
         "readme": "photos/",
         "example": "photos/index"
+      },
+      {
+        "pro": true,
+        "title": {
+          "en": "Live Photo from a video",
+          "zh": "把视频变成实况照片"
+        },
+        "subtitle": {
+          "en": "LivePhoto.createFromVideo turns an ordinary local video into a still + movie pair that Photos.saveLivePhoto accepts, instead of failing with PHPhotosErrorDomain 3302. Trim to any length up to the whole video.",
+          "zh": "LivePhoto.createFromVideo 把普通本地视频转成 Photos.saveLivePhoto 能接受的静态图 + 视频资源对,不再报 PHPhotosErrorDomain 3302。时长可裁到任意长度,最长为整段视频。"
+        },
+        "keywords": [
+          "LivePhoto",
+          "createFromVideo",
+          "Live Photo",
+          "saveLivePhoto",
+          "3302",
+          "video to live photo",
+          "实况照片",
+          "视频转实况",
+          "动态照片"
+        ],
+        "readme": "live_photo/"
       },
       {
         "pro": true,
@@ -7144,6 +7853,126 @@
           "zh": "该接口提供了用于保持 Scripting 应用在后台运行的方法。"
         },
         "readme": "background_keeper/"
+      }
+    ]
+  },
+  {
+    "title": {
+      "en": "HTTP Capture Scripts",
+      "zh": "HTTP 抓包脚本"
+    },
+    "subtitle": {
+      "en": "Rewrite matching requests and responses with JavaScript while capturing traffic.",
+      "zh": "抓包时用 JavaScript 改写匹配到的请求与响应。"
+    },
+    "children": [
+      {
+        "title": {
+          "en": "Overview",
+          "zh": "概览"
+        },
+        "subtitle": {
+          "en": "The capture script model: rule configuration, execution order, $request / $response / $done, $argument, and console.",
+          "zh": "抓包脚本模型:规则配置、执行顺序、$request / $response / $done、$argument 与 console。"
+        },
+        "keywords": [
+          "capture script",
+          "$request",
+          "$response",
+          "$done",
+          "$argument",
+          "抓包脚本",
+          "改写"
+        ],
+        "readme": "capture_scripts/"
+      },
+      {
+        "title": {
+          "en": "$httpClient",
+          "zh": "$httpClient"
+        },
+        "subtitle": {
+          "en": "Send HTTP requests (get/post/put/delete/head/options/patch) from a capture script.",
+          "zh": "在抓包脚本中发起 HTTP 请求(get/post/put/delete/head/options/patch)。"
+        },
+        "keywords": [
+          "$httpClient",
+          "http",
+          "request",
+          "抓包脚本"
+        ],
+        "readme": "capture_scripts_httpclient/"
+      },
+      {
+        "title": {
+          "en": "$persistentStore",
+          "zh": "$persistentStore"
+        },
+        "subtitle": {
+          "en": "A small persistent key-value store shared across capture scripts.",
+          "zh": "抓包脚本间共享的小型持久化键值存储。"
+        },
+        "keywords": [
+          "$persistentStore",
+          "store",
+          "persist",
+          "持久化"
+        ],
+        "readme": "capture_scripts_store/"
+      },
+      {
+        "title": {
+          "en": "$notification",
+          "zh": "$notification"
+        },
+        "subtitle": {
+          "en": "Post a local notification from a capture script.",
+          "zh": "在抓包脚本中发一条本地通知。"
+        },
+        "keywords": [
+          "$notification",
+          "notification",
+          "通知"
+        ],
+        "readme": "capture_scripts_notification/"
+      },
+      {
+        "title": {
+          "en": "$utils",
+          "zh": "$utils"
+        },
+        "subtitle": {
+          "en": "Helper functions: ungzip, and geoip / ipasn / ipaso.",
+          "zh": "工具函数:ungzip,以及 geoip / ipasn / ipaso。"
+        },
+        "keywords": [
+          "$utils",
+          "ungzip",
+          "gzip",
+          "geoip",
+          "工具"
+        ],
+        "readme": "capture_scripts_utils/"
+      },
+      {
+        "title": {
+          "en": "Streaming (SSE)",
+          "zh": "流式 (SSE)"
+        },
+        "subtitle": {
+          "en": "Process server-sent events frame by frame with $frame / $streamState instead of buffering the whole body.",
+          "zh": "用 $frame / $streamState 逐帧处理服务器发送事件, 不缓冲整个响应体。"
+        },
+        "keywords": [
+          "streaming",
+          "$frame",
+          "$streamState",
+          "SSE",
+          "event-stream",
+          "流式",
+          "逐帧"
+        ],
+        "readme": "capture_scripts_streaming/"
       }
     ]
   }

@@ -165,6 +165,17 @@ path.setValue([])
 * 清空整个导航路径
 * 立即回到根页面
 
+若只想返回上一级，去掉最后一个元素即可：
+
+```ts
+path.setValue(path.value.slice(0, -1))
+```
+
+> **返回上一级请改 `path`，不要用 `Navigation.useDismiss()`。**
+> 在由 `path` 推出来的页面里，`useDismiss()` 不会 pop 这一级。它拿到的是「把外层界面
+> 呈现出来的那个东西」，调用它会关掉整个界面，而不是返回一步。绑定了 `path` 的导航栈以
+> `path` 为唯一状态源，入栈与出栈都应当经由它。
+
 ---
 
 ## 五、NavigationDestination 与 path 的关系

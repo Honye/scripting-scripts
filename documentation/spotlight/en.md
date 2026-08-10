@@ -1,7 +1,5 @@
 `Spotlight` lets scripts add their own resources to the system Spotlight index. When the user taps one of those results, Scripting runs the same script's `spotlight.tsx` file.
 
-Spotlight indexing requires Scripting PRO.
-
 ## Index Items
 
 ```ts

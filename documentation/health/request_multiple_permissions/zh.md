@@ -52,6 +52,5 @@ await Health.queryWorkouts({ limit: 1 })
 
 ## 说明
 
-* `Health` 相关 API 需要 Scripting PRO 订阅。
 * 查询前先检查 `Health.isHealthDataAvailable`;在不支持 HealthKit 的设备上它为 `false`。
 * 授权弹框只会列出尚未确定状态的数据类型。如果所有类型都已授权,则不会弹框,查询会立即执行。

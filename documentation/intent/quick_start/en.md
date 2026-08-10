@@ -32,7 +32,8 @@ Inside `intent.tsx`, use the `Intent` API to access input values.
 | `Intent.shortcutParameter` | A single parameter passed from the Shortcuts app, with `.type` and `.value` fields. |
 | `Intent.textsParameter`    | Array of text strings.                                                              |
 | `Intent.urlsParameter`     | Array of URL strings.                                                               |
-| `Intent.imagesParameter`   | Array of image file paths (UIImage objects).                                        |
+| `Intent.imagePathsParameter` | Array of image file paths. Reading a path does not decode the image.              |
+| `Intent.imagesParameter`   | Array of `UIImage`, lazily decoded from `imagePathsParameter` on first access.       |
 | `Intent.fileURLsParameter` | Array of local file URL paths.                                                      |
 
 Example:
@@ -129,7 +130,8 @@ Steps:
 | `shortcutParameter` | `ShortcutParameter` | Input from Shortcuts with `.type` and `.value`. |
 | `textsParameter`    | `string[]`          | Array of input text values.                     |
 | `urlsParameter`     | `string[]`          | Array of input URLs.                            |
-| `imagesParameter`   | `UIImage[]`         | Array of image file paths or objects.           |
+| `imagePathsParameter` | `string[]`        | Array of image file paths (no decoding).        |
+| `imagesParameter`   | `UIImage[]`         | Lazily decoded from `imagePathsParameter`.      |
 | `fileURLsParameter` | `string[]`          | Array of input file paths (local file URLs).    |
 
 ### `Intent` Methods

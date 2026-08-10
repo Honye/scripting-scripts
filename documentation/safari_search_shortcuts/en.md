@@ -1,7 +1,5 @@
 Search Shortcuts let you type a trigger word followed by a query in Safari's address bar and jump straight to a site's search results — for example, typing `gh hello world` can take you to GitHub's search for "hello world".
 
-This feature requires Scripting PRO.
-
 ---
 
 ## How It Works

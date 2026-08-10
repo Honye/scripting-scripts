@@ -7,6 +7,19 @@ PiP is suitable for the following scenarios:
 * Audio or video playback companion UI
 * Lightweight views that should remain visible when the app enters background
 
+### Where PiP is available
+
+PiP runs inside the main app, so it is only available to the entry points that render UI there:
+
+| Entry point | `Script.env` | PiP |
+| --- | --- | --- |
+| `index.tsx` | `"index"` | ✅ |
+| `intent.tsx` | `"intent"` | ✅ |
+| `home_screen_default_ui.tsx` | `"home_screen"` | ✅ |
+| Widgets, Live Activities, App Intents, Spotlight, assistant tools | — | ❌ |
+
+In an unsupported environment the `pip` modifier is ignored — the PiP window simply never appears.
+
 ---
 
 ## 1. PiPProps API Definition

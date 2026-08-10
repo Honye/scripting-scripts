@@ -55,6 +55,7 @@ await Notification.schedule({
 | `iconImageData` | `Data` \| `SystemImageIcon` \| `null` | 可选，自定义通知图标图片的二进制数据或系统图标名称。                                |
 | `badge`                               | `number?`                                                                                                     | 可选，应用图标角标数字。                                |
 | `silent`                              | `boolean?`                                                                                                    | 可选，默认为 `false`。设为 `true` 则不播放声音静默送达。        |
+| `sound`                               | `string?`                                                                                                     | 可选，要播放的自定义铃声名称，需填写含扩展名的完整文件名（如 `"chime.caf"`）。可引用内置铃声或在「工具 > 通知 > 通知铃声」中导入的自定义铃声。支持 `.caf`、`.aiff`、`.wav`，且时长须小于 30 秒。`silent` 为 `true` 时忽略；省略时使用默认铃声。 |
 | `interruptionLevel`                   | `"active"` \| `"passive"` \| `"timeSensitive"`                                                                | 可选，通知的重要级别和投递优先级。                           |
 | `userInfo`                            | `Record<string, any>?`                                                                                        | 可选，附加的自定义数据。                                |
 | `threadIdentifier`                    | `string?`                                                                                                     | 可选，用于通知分组的标识符。                              |

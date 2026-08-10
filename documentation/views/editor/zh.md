@@ -60,6 +60,32 @@
 
 ---
 
+#### 导航
+
+* `scrollToLine(line)`：滚动到指定的 **从 1 开始** 的行并居中，同时把光标移到该行。
+* `scrollToPosition(position)`：滚动到指定字符偏移并居中，同时把光标移到该处。
+* `scrollSelectionIntoView()`：滚动使当前选区可见。
+
+#### 选区与文本
+
+* `getSelectedText(): Promise<string>`：获取当前选中的文本（无选区时为空串）。若编辑器未展示（超时）或已销毁，Promise 会 **reject**。
+* `setSelection(start, end)`：选中 `[start, end)` 范围并滚动到可见。
+* `replaceSelection(text)`：用 `text` 替换当前选区；无选区时在光标处插入。
+* `selectAll()`：全选。
+
+#### 搜索
+
+* `searchText(query, options?): Promise<EditorTextRange[]>`：在全文中查找，返回所有匹配范围（`{ start, end, line }`）。`options` 支持 `caseSensitive`、`regexp`、`wholeWord`。匹配在编辑器内完成，无需自己计算偏移。若编辑器未展示（超时）或已销毁，Promise 会 **reject**。
+
+Scripting 不内置搜索 UI —— 用 `searchText`（或自己在 `content` 上匹配）拿到位置后，配合 `setSelection` 高亮、`replaceSelection` 替换，即可搭出契合脚本需求的搜索/替换体验。
+
+#### 编辑
+
+* `undo()` / `redo()`：撤销 / 重做。
+* `toggleLineComment()` / `toggleBlockComment()`：切换行注释 / 块注释。
+
+---
+
 #### `dispose()`
 
 释放控制器占用的资源。**必须在不再使用控制器时调用此方法**，以防止内存泄漏。一旦调用该方法，控制器将无法再次使用。
@@ -103,6 +129,77 @@ function MyEditor() {
       scriptName="My Script"
       showAccessoryView
     />
+  )
+}
+```
+
+---
+
+### 示例：自定义搜索/替换栏（`index.tsx`）
+
+下面的示例基于交互 API 自建搜索 UI：`searchText` 找出匹配，`setSelection` 高亮当前项，`replaceSelection` 替换。
+
+```tsx
+import { useEffect, useMemo, useState } from "scripting"
+
+function EditorWithSearch() {
+  const controller = useMemo(() => new EditorController({
+    ext: "ts",
+    content: [
+      `const greeting = "hello"`,
+      `console.log(greeting)`,
+      `console.log(greeting.toUpperCase())`,
+    ].join("\n"),
+  }), [])
+
+  const [query, setQuery] = useState("")
+  const [replacement, setReplacement] = useState("")
+  const [matches, setMatches] = useState<EditorTextRange[]>([])
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => () => controller.dispose(), [controller])
+
+  async function runSearch() {
+    const result = await controller.searchText(query, { caseSensitive: false })
+    setMatches(result)
+    setIndex(0)
+    if (result.length > 0) {
+      const m = result[0]
+      controller.setSelection(m.start, m.end)
+    }
+  }
+
+  function goTo(next: number) {
+    if (matches.length === 0) return
+    const i = (next + matches.length) % matches.length
+    setIndex(i)
+    controller.setSelection(matches[i].start, matches[i].end)
+  }
+
+  function replaceCurrent() {
+    if (matches.length === 0) return
+    // 当前匹配已被选中，直接替换选区；偏移已变化，替换后重新搜索。
+    controller.replaceSelection(replacement)
+    runSearch()
+  }
+
+  return (
+    <VStack>
+      <HStack>
+        <TextField title="查找" value={query} onChanged={setQuery} />
+        <Button title="搜索" action={runSearch} />
+      </HStack>
+      <HStack>
+        <TextField title="替换为" value={replacement} onChanged={setReplacement} />
+        <Button title="替换" action={replaceCurrent} />
+      </HStack>
+      <HStack>
+        <Text>{matches.length > 0 ? `${index + 1} / ${matches.length}` : "无匹配"}</Text>
+        <Button title="上一个" action={() => goTo(index - 1)} />
+        <Button title="下一个" action={() => goTo(index + 1)} />
+      </HStack>
+      <Editor controller={controller} showAccessoryView />
+    </VStack>
   )
 }
 ```

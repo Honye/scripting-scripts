@@ -4,7 +4,7 @@ function Example() {
   return <NavigationStack>
     <DirectoryBrowserView
       title="Script Directory"
-      directoryPath={Script.directoryPath}
+      directoryPath={Script.directory}
       onFilesChanged={() => console.log("Files changed")}
     />
   </NavigationStack>

@@ -31,7 +31,8 @@ Scripting 支持通过 `intent.tsx` 文件创建 iOS Intents，实现脚本与�
 | `Intent.shortcutParameter` | Shortcuts 中传入的单个参数，包含 `.type` 和 `.value` |
 | `Intent.textsParameter`    | 文本字符串数组                                  |
 | `Intent.urlsParameter`     | URL 字符串数组                                |
-| `Intent.imagesParameter`   | 图片数组（UIImage 实例）                         |
+| `Intent.imagePathsParameter` | 图片文件路径数组（读取路径不会解码图片）                  |
+| `Intent.imagesParameter`   | `UIImage` 数组，首次访问时从 `imagePathsParameter` 懒解码 |
 | `Intent.fileURLsParameter` | 文件路径数组（本地 URL）                           |
 
 示例：

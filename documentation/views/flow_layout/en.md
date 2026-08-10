@@ -14,12 +14,26 @@ import { FlowLayout } from "scripting"
 
 ### `spacing?: number`
 
-The spacing between each item (both horizontal and vertical).
+The base spacing between items, applied to **both** the horizontal and vertical axes.
 
 * **Type:** `number`
 * **Default:** `8`
 
-Defines the amount of space inserted between child items. If not specified, the default spacing value is used.
+Defines the amount of space inserted between child items. Override a single axis with `horizontalSpacing` / `verticalSpacing`.
+
+### `horizontalSpacing?: number`
+
+The horizontal spacing between items within the same row. Overrides `spacing` on the horizontal axis when set.
+
+* **Type:** `number`
+* **Default:** falls back to `spacing`
+
+### `verticalSpacing?: number`
+
+The vertical spacing between wrapped rows. Overrides `spacing` on the vertical axis when set.
+
+* **Type:** `number`
+* **Default:** falls back to `spacing`
 
 ### `children?: VirtualNode | (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[]`
 

@@ -266,11 +266,45 @@ await Scripting.FileManager.remove(path)
 
 ---
 
+## `Scripting.tabs`
+
+使用 `@grant Scripting.tabs`(或 `@grant Scripting.*`)枚举并切换 Safari 中真实打开的标签页。
+
+它与 `GM.getTabs` 不同:`GM.getTabs` 是每个脚本的存储总线,只返回你自己用 `GM.saveTab` 存过的数据,不列出真实标签页或其 URL。`Scripting.tabs` 返回的是真正打开的标签页。
+
+### 方法
+
+```ts
+const tabs = await Scripting.tabs.query()        // 所有打开的标签页
+const current = await Scripting.tabs.getCurrent() // 当前脚本所在标签页,或 null
+await Scripting.tabs.activate(tabs[0].id)         // 切换到某个已打开的标签
+```
+
+每个标签页是一个 `ScriptingTabInfo`:
+
+```ts
+interface ScriptingTabInfo {
+  id: number | null
+  url: string
+  title: string
+  active: boolean
+  index: number
+  windowId: number
+  pinned: boolean
+}
+```
+
+新开标签用 `GM.openInTab(url)`;关闭标签用 `GM.closeTab(id)`(id 取自 `query()`)。`Scripting.tabs.activate()` 只切换焦点,不会新开标签。单个 Safari 窗口内 `activate()` 会选中该标签;跨多个窗口时只在其所属窗口内选中。
+
+> **隐私:** 授予 `Scripting.tabs` 的脚本能读取**所有**打开标签页的 URL 与标题,而不仅是它运行的页面。只把该权限授予你信任的脚本。Userscript 仅对 PRO 用户运行、需在该页面允许 Scripting 扩展,且必须显式声明此 grant。
+
+---
+
 ## 已安装脚本
 
-Safari 扩展弹窗支持从当前页面或 URL 安装 userscript。已安装脚本可以在弹窗和 Tools > Development > Safari Browser Scripts 中启用、禁用、更新或删除。
+Safari 扩展弹窗支持从当前页面或 URL 安装 userscript。已安装脚本可以在弹窗和 More > Development > Safari Browser Scripts 中启用、禁用、更新或删除。
 
-Tools 页面可以查看：
+More 页面可以查看：
 
 - 已安装的 userscript。
 - GM 存储 JSON 文件。

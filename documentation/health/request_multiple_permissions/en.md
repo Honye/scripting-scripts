@@ -52,6 +52,5 @@ Prefer starting requests together when you know up front which data types your s
 
 ## Notes
 
-* `Health` APIs require a Scripting PRO subscription.
 * Check `Health.isHealthDataAvailable` before querying; it is `false` on devices without HealthKit.
 * The authorization sheet only lists data types that are not yet determined. If everything is already authorized, no sheet appears and the queries run immediately.

@@ -52,11 +52,19 @@ type Preset = keyof typeof PRESETS
 const SNAP_W = 320
 const SNAP_H = 220
 
+// "native" bakes overlays/annotations into the image via take(...);
+// "manual" is the escape-hatch: a plain snapshot + <Image> pins projected
+// with snap.point(...). The demo shows both so the difference is obvious.
+type OverlayMode = "native" | "manual"
+
 function Example() {
   const [preset, setPreset] = useState<Preset>("bund")
   const [style, setStyle] = useState<"standard" | "imagery" | "hybrid">("standard")
   const [appearance, setAppearance] = useState<"light" | "dark">("light")
+  const [mode, setMode] = useState<OverlayMode>("native")
   const [snap, setSnap] = useState<MapSnapshot | null>(null)
+  // 记录出图时用的模式,避免切换 picker 后旧图的 pin 渲染方式对不上。
+  const [snapMode, setSnapMode] = useState<OverlayMode>("native")
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -70,8 +78,38 @@ function Example() {
         size: { width: SNAP_W, height: SNAP_H },
         mapStyle: { style },
         appearance,
+        // Native mode: hand the overlays/annotations straight to the
+        // snapshotter — a polyline through the POIs, a circle around the
+        // region center, and a labeled marker per POI, all baked into the image.
+        ...(mode === "native"
+          ? {
+              overlays: [
+                {
+                  type: "polyline",
+                  coordinates: def.pois.map(p => p.coord),
+                  strokeColor: "systemBlue",
+                  lineWidth: 4,
+                },
+                {
+                  type: "circle",
+                  center: def.region.center,
+                  radius: 600,
+                  strokeColor: "systemTeal",
+                  fillColor: "rgba(48,176,199,0.15)",
+                  lineWidth: 2,
+                },
+              ] as MapSnapshotter.SnapshotOverlay[],
+              annotations: def.pois.map(p => ({
+                coordinate: p.coord,
+                tintColor: p.tint,
+                glyph: "mappin",
+                title: p.name,
+              })) as MapSnapshotter.SnapshotAnnotation[],
+            }
+          : {}),
       })
       setSnap(result)
+      setSnapMode(mode)
     } catch (e) {
       setErr(String(e))
     } finally {
@@ -79,10 +117,10 @@ function Example() {
     }
   }
 
-  // For each POI of the active preset, project the geo coordinate onto the
-  // snapshot's point space. Clip to snapshot bounds so off-screen pins drop
-  // out instead of bleeding past the image edge.
-  const overlays = snap != null
+  // Manual mode only: for each POI of the active preset, project the geo
+  // coordinate onto the snapshot's point space. Clip to snapshot bounds so
+  // off-screen pins drop out instead of bleeding past the image edge.
+  const manualPins = snap != null && snapMode === "manual"
     ? def.pois.map(p => {
         const pt = snap.point(p.coord)
         const inBounds =
@@ -156,6 +194,24 @@ function Example() {
           </Picker>
         </VStack>
 
+        <VStack alignment={"leading"} spacing={8}>
+          <Text font={"headline"}>Overlay mode</Text>
+          <Picker
+            title="Overlay mode"
+            value={mode}
+            onChanged={(v: any) => setMode(v as OverlayMode)}
+            pickerStyle={"segmented"}
+          >
+            <Text tag={"native"}>native</Text>
+            <Text tag={"manual"}>manual</Text>
+          </Picker>
+          <Text font={"caption2"} foregroundStyle={"secondaryLabel"}>
+            {mode === "native"
+              ? "overlays/annotations passed to take(...) — polyline + circle + labeled markers baked into the image."
+              : "plain snapshot; pins layered with <Image> using snap.point(coordinate)."}
+          </Text>
+        </VStack>
+
         <HStack spacing={8}>
           <Button title={loading ? "Rendering..." : "Take snapshot"} action={take} />
           {snap != null
@@ -178,8 +234,9 @@ function Example() {
               frame={{ width: SNAP_W, height: SNAP_H }}
               clipShape={{ type: "rect", cornerRadius: 12 }}
             />
-            {/* 多个 POI 覆盖:每个 pin + 文字标签都按 snap.point(...) 投影到画布上。 */}
-            {overlays.filter(o => o.inBounds).map(o =>
+            {/* 手动模式:每个 pin + 文字标签都按 snap.point(...) 投影到画布上。
+                native 模式下这些已经烘焙进 snap.image,不再叠加。 */}
+            {manualPins.filter(o => o.inBounds).map(o =>
               <VStack key={o.name} spacing={1} position={{ x: o.pt.x, y: o.pt.y - 14 }}>
                 <Image
                   systemName="mappin.circle.fill"
@@ -202,9 +259,14 @@ function Example() {
             Snapshot will appear here after rendering.
           </Text>}
 
-        {snap != null
+        {snap != null && snapMode === "manual"
           ? <Text font={"caption2"} foregroundStyle={"tertiaryLabel"}>
-            {`${overlays.filter(o => o.inBounds).length} / ${overlays.length} POIs in bounds — out-of-bounds coordinates are clipped instead of bleeding past the image edge.`}
+            {`${manualPins.filter(o => o.inBounds).length} / ${manualPins.length} POIs in bounds — out-of-bounds coordinates are clipped instead of bleeding past the image edge.`}
+          </Text>
+          : null}
+        {snap != null && snapMode === "native"
+          ? <Text font={"caption2"} foregroundStyle={"tertiaryLabel"}>
+            {`Everything above (route line, circle, and ${def.pois.length} markers) is drawn into the image by take(...) — nothing is layered on top in SwiftUI.`}
           </Text>
           : null}
       </VStack>

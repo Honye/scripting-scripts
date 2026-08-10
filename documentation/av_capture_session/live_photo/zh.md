@@ -85,3 +85,7 @@ Live Photo 触发两路并行 AVFoundation 回调:一路给静态图、一路给
   ```
 
   这会把两份资源配对成一个 PHAsset,Photos.app 长按会有 "Live" 动画。首次调用时系统自动弹照片库权限授权。**千万不要**把 `result.photoFileURL` 换成 `result.image.toJPEGData()` 写盘的结果 —— 重编码出的 JPEG 没有 Live Photo asset identifier, PhotoKit 会拒绝配对。
+
+## 手上只有视频、没有相机?
+
+如果素材是文件而不是实时拍摄——录屏、下载的片段、相册里的视频——根本不需要 capture session。`LivePhoto.createFromVideo(...)` 能从任意本地视频生成合规资源对,见《把视频变成实况照片》一页。

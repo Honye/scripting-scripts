@@ -1,7 +1,5 @@
 Redirect Rules automatically rewrite a page's address in Safari and send you to a different one — for example, sending every `www.reddit.com` page to `old.reddit.com`, or a mobile site to its desktop version.
 
-This feature requires Scripting PRO.
-
 ---
 
 ## How It Works

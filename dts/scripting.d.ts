@@ -612,6 +612,18 @@ type Axis = 'vertical' | 'horizontal';
  * An efficient set of axes.
  */
 type AxisSet = 'vertical' | 'horizontal' | 'all';
+/**
+ * The available blend modes for compositing a view with the content behind it.
+ */
+type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'colorDodge' | 'colorBurn' | 'softLight' | 'hardLight' | 'difference' | 'exclusion' | 'hue' | 'saturation' | 'color' | 'luminosity' | 'sourceAtop' | 'destinationOver' | 'destinationOut' | 'plusDarker' | 'plusLighter';
+/**
+ * A Dynamic Type size, which specifies how large scalable content should be.
+ */
+type DynamicTypeSize = 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge' | 'accessibility1' | 'accessibility2' | 'accessibility3' | 'accessibility4' | 'accessibility5';
+/**
+ * The ways that a scrollable view can bounce when it reaches the end of its content.
+ */
+type ScrollBounceBehavior = 'automatic' | 'always' | 'basedOnSize';
 type ColorScheme = 'light' | 'dark';
 type ColorSchemeContrast = "standard" | "increased";
 type UserInterfaceSizeClass = "compact" | "regular";
@@ -731,6 +743,13 @@ type ControlSize = 'mini' | 'small' | 'regular' | 'large' | 'extraLarge';
  */
 type WidgetRenderingMode = "accented" | "fullColor" | "vibrant";
 type ColorRenderingMode = 'extendedLinear' | 'nonLinear' | 'linear';
+/**
+ * A pointer hover effect (iPadOS with a pointer/trackpad):
+ *  - `automatic`: The system chooses an appropriate effect.
+ *  - `highlight`: The pointer morphs into the view's shape and highlights it.
+ *  - `lift`: The view scales up and lifts with a shadow as the pointer moves over it.
+ */
+type HoverEffect = "automatic" | "highlight" | "lift";
 
 type AnimatedImageProps = ({
     /**
@@ -1115,8 +1134,9 @@ type GesturesProps = {
          *  - `global`: The global coordinate space at the root of the view hierarchy.
          *  - `scrollView`: The named coordinate space that is added by the system for the innermost containing scroll view.
          *  - `immersiveSpace`: The named coordinate space that represents the currently opened ImmersiveSpace scene. If no immersive space is currently opened, this CoordinateSpace provides the same behavior as the "global" coordinate space.
+         *  - any other string: a custom named coordinate space assigned to an ancestor view via the `coordinateSpace` modifier.
          */
-        coordinateSpace?: "local" | "global" | "scrollView" | "immersiveSpace";
+        coordinateSpace?: "local" | "global" | "scrollView" | "immersiveSpace" | (string & {});
         /**
          * The action to perform.
          */
@@ -1154,7 +1174,7 @@ type GesturesProps = {
      */
     onDragGesture?: {
         minDistance?: number;
-        coordinateSpace?: 'local' | 'global';
+        coordinateSpace?: 'local' | 'global' | (string & {});
         onChanged?: (action: DragGestureDetails) => void;
         onEnded?: (action: DragGestureDetails) => void;
     };
@@ -1162,6 +1182,20 @@ type GesturesProps = {
      * Configures whether this view participates in hit test operations.
      */
     allowsHitTesting?: boolean;
+    /**
+     * Applies a hover effect to this view when a pointer (iPadOS trackpad/mouse) moves over it.
+     */
+    hoverEffect?: HoverEffect;
+    /**
+     * Adds an action to perform when a pointer (iPadOS trackpad/mouse) enters or exits this view's
+     * bounds. The callback receives `true` when the pointer is over the view, and `false` when it leaves.
+     */
+    onHover?: (isHovering: boolean) => void;
+    /**
+     * Sets a help text (tooltip on hover with a pointer; an accessibility hint for assistive technologies)
+     * for this view.
+     */
+    help?: string;
 };
 
 type FrameSizeProps = {
@@ -1249,6 +1283,26 @@ type FrameSizeProps = {
          * A Boolean value that indicates whether to fix the height of the view.
          */
         vertical: boolean;
+    };
+    /**
+     * Sets an explicit alignment guide for one of this view's alignments.
+     *
+     * `alignment` picks which guide to set (a `HorizontalAlignment` or a `VerticalAlignment`).
+     * `value` is either a fixed number (a constant guide), or a keyword resolved against the
+     * view's own dimensions:
+     * - `"width"` / `"height"` — the view's measured size
+     * - `"leading"` / `"trailing"` / `"top"` / `"bottom"` / `"center"` — the view's edge/center guides
+     * - `"firstTextBaseline"` / `"lastTextBaseline"` — the view's text baselines
+     *
+     * `offset` is added on top of the resolved value.
+     *
+     * Note: only these declarative forms are supported — arbitrary compute closures are not
+     * available in scripts.
+     */
+    alignmentGuide?: {
+        alignment: HorizontalAlignment | VerticalAlignment;
+        value: number | 'leading' | 'trailing' | 'top' | 'bottom' | 'center' | 'firstTextBaseline' | 'lastTextBaseline' | 'width' | 'height';
+        offset?: number;
     };
 };
 
@@ -1407,9 +1461,12 @@ type MeshGradient = {
      */
     height: number;
     /**
-     * The array of points, containing width x height elements.
+     * The array of points, containing width x height elements. Each point may be
+     * given as an object `{ x, y }` or as a tuple `[x, y]`. Coordinates are not
+     * required to form a regular grid — control points can be freely positioned
+     * (typically within the [0, 1] range) to create warped, fluid mesh shapes.
      */
-    points: Point[];
+    points: (Point | [number, number])[];
     /**
      * The array of colors, containing width x height elements.
      */
@@ -2039,6 +2096,14 @@ type TextViewProps = {
      * Sets the truncation mode for lines of text that are too long to fit in the available space.
      */
     truncationMode?: TruncationMode;
+    /**
+     * Overrides the Dynamic Type size for content in this view. Pass a single size to fix it, or a
+     * `{ from?, to? }` range to clamp it between two sizes.
+     */
+    dynamicTypeSize?: DynamicTypeSize | {
+        from?: DynamicTypeSize;
+        to?: DynamicTypeSize;
+    };
     /**
      * Sets whether text in this view can compress the space between characters when necessary to fit text in a line.
      */
@@ -2950,6 +3015,20 @@ type ScrollProps = {
      */
     scrollDisabled?: boolean;
     /**
+     * Configures the bounce behavior of scrollable views along the specified axis. Pass a
+     * `ScrollBounceBehavior` to configure the vertical axis, or an object to also choose the axes.
+     */
+    scrollBounceBehavior?: ScrollBounceBehavior | {
+        /**
+         * The bounce behavior to apply.
+         */
+        behavior: ScrollBounceBehavior;
+        /**
+         * The set of axes the behavior applies to. Defaults to the vertical axis.
+         */
+        axes?: AxisSet;
+    };
+    /**
      * Sets whether a scroll view clips its content to its bounds.
      */
     scrollClipDisabled?: boolean;
@@ -3061,6 +3140,12 @@ type SafeAreaProps = {
         top?: number | true;
         bottom?: number | true;
     };
+    /**
+     * Adds padding to the specified edges of this view using the amount of space the system considers
+     * appropriate for the current scene. Pass `true` to apply it to all edges, or an `EdgeSet` to
+     * choose which edges.
+     */
+    scenePadding?: true | EdgeSet;
     /**
      * Shows the specified content beside the modified view.
      */
@@ -3357,6 +3442,14 @@ type PresentationBackgroundInteraction = "automatic" | "disabled" | "enabled" | 
  *  - `scrolls`: A behavior that prioritizes scrolling the content of a presentation when swiping, rather than resizing the presentation.
  */
 type PresentationContentInteraction = "automatic" | "resizes" | "scrolls";
+/**
+ * The sizing behavior of a sheet presentation (iOS 18+):
+ *  - `automatic`: The system chooses a size based on the presentation context.
+ *  - `fitted`: The sheet sizes itself to fit its content in both dimensions.
+ *  - `page`: A sheet the width and height of its container, with standard page insets.
+ *  - `form`: A sheet sized to be appropriate for forms.
+ */
+type PresentationSizing = "automatic" | "fitted" | "page" | "form";
 type ModalPresentation = {
     /**
      * The modal content.
@@ -3439,6 +3532,11 @@ type ModalPresentationViewProps = {
      */
     presentationBackgroundInteraction?: PresentationBackgroundInteraction;
     /**
+     * Sets the presentation background of the enclosing sheet or popover to a shape style, such as a
+     * color or a material.
+     */
+    presentationBackground?: ShapeStyle | DynamicShapeStyle;
+    /**
      * By default, when a person swipes up on a scroll view in a resizable presentation, the presentation grows to the next detent. A scroll view embedded in the presentation only scrolls after the presentation reaches its largest size. Use this modifier to control which action takes precedence.
      */
     presentationContentInteraction?: PresentationContentInteraction;
@@ -3446,6 +3544,11 @@ type ModalPresentationViewProps = {
      * Requests that the presentation have a specific corner radius.
      */
     presentationCornerRadius?: number;
+    /**
+     * Requests a sizing behavior for the enclosing sheet presentation. Requires iOS 18 or later; ignored
+     * on earlier versions.
+     */
+    presentationSizing?: PresentationSizing;
 };
 
 type TransformAndEffectProps = {
@@ -3461,6 +3564,34 @@ type TransformAndEffectProps = {
      * Inverts the colors in this view.
      */
     colorConvert?: boolean;
+    /**
+     * Brightens this view by the specified amount. Typically between -1 and 1; 0 leaves the view unchanged.
+     */
+    brightness?: number;
+    /**
+     * Sets the contrast and separation between colors in this view. 1 leaves the view unchanged; 0 renders it fully gray; negative values invert the colors.
+     */
+    contrast?: number;
+    /**
+     * Adjusts the color saturation of this view. 1 leaves the view unchanged; 0 renders it grayscale; values above 1 increase saturation.
+     */
+    saturation?: number;
+    /**
+     * Applies a grayscale effect to this view. 0 leaves the view unchanged; 1 renders it fully grayscale.
+     */
+    grayscale?: number;
+    /**
+     * Adds a luminance-to-alpha effect: the view becomes a mask whose opacity is derived from the luminance of its content. Set to `true` to enable.
+     */
+    luminanceToAlpha?: boolean;
+    /**
+     * Multiplies the colors in this view by the given color.
+     */
+    colorMultiply?: Color;
+    /**
+     * Sets the blend mode used to composite this view with the content behind it.
+     */
+    blendMode?: BlendMode;
     /**
      * Controls the display order of overlapping views.
      * A relative front-to-back ordering for this view; the default is 0.
@@ -3524,6 +3655,54 @@ type TransformAndEffectProps = {
         y: number;
         anchor?: KeywordPoint | Point;
     };
+    /**
+     * Rotates a view’s rendered output in three dimensions around the given axis of rotation.
+     */
+    rotation3DEffect?: {
+        /**
+         * The angle, in degrees, by which to rotate the view.
+         */
+        degrees: number;
+        /**
+         * The axis of rotation, as a vector with `x`, `y`, and `z` components. For example,
+         * `{ x: 0, y: 1, z: 0 }` rotates around the vertical axis.
+         */
+        axis: {
+            x?: number;
+            y?: number;
+            z?: number;
+        };
+        /**
+         * The location with a default of `center` that defines a point in 3D space about which the rotation is anchored.
+         */
+        anchor?: KeywordPoint | Point;
+        /**
+         * The location with a default of `0` that defines a point in 3D space about which the rotation is anchored.
+         */
+        anchorZ?: number;
+        /**
+         * The relative vanishing point with a default of `1` for the rotation.
+         */
+        perspective?: number;
+    };
+    /**
+     * Applies an affine transformation to this view’s rendered output, expressed as the components of a
+     * `CGAffineTransform` matrix `[a, b, c, d, tx, ty]`. Omitted components default to the identity matrix.
+     * Useful for effects the dedicated modifiers can’t express, such as shear.
+     */
+    transformEffect?: {
+        a?: number;
+        b?: number;
+        c?: number;
+        d?: number;
+        tx?: number;
+        ty?: number;
+    };
+    /**
+     * Assigns a name to the coordinate space of this view, so that other code can operate on dimensions
+     * (for example, gesture locations or `GeometryReader` frames) relative to that named space.
+     */
+    coordinateSpace?: string;
     /**
      * Adds a shadow to this view.
      */
@@ -4550,7 +4729,72 @@ type KeyboardShortcutProps = {
     };
 };
 
-type CommonViewProps = DialogProps & GesturesProps & FrameSizeProps & ForeAndBackgroundProps & PaddingAndBorderProps & ViewVisibilityProps & ImageViewProps & ViewStyleProps & TextFieldViewProps & TextViewProps & ShapeViewProps & ChartViewProps & ScrollProps & ToolbarsProps & SafeAreaProps & WidgetProps & ExtensionProps & ViewAppearProps & GridViewProps & ModalPresentationViewProps & TransformAndEffectProps & NavigationProps & ListViewProps & EditActionsProps & SymbolProps & TransitionProps & SearchableProps & ViewAnimationProps & LiveActivityProps & EnvironmentsProps & GlassProps & ScreenshotProps & PiPProps & DragDropProps & KeyboardShortcutProps & {
+/**
+ * A trait that describes how an accessibility element behaves, used with
+ * `accessibilityAddTraits` / `accessibilityRemoveTraits`.
+ *
+ * - `isToggle` requires iOS 17.0+ and is ignored on earlier versions.
+ */
+type AccessibilityTrait = 'isButton' | 'isHeader' | 'isSelected' | 'isLink' | 'isSearchField' | 'isImage' | 'playsSound' | 'isKeyboardKey' | 'isStaticText' | 'isSummaryElement' | 'updatesFrequently' | 'startsMediaSession' | 'allowsDirectInteraction' | 'causesPageTurn' | 'isModal' | 'isToggle';
+/**
+ * The hierarchical level of a heading exposed to accessibility, used with `accessibilityHeading`.
+ */
+type AccessibilityHeadingLevel = 'unspecified' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+/**
+ * The way that accessibility treats the children of a view that becomes a single accessibility
+ * element, used with `accessibilityElement`.
+ *
+ * - `ignore` — the children are not exposed as accessibility elements.
+ * - `contain` — the view contains the children as separate accessibility elements.
+ * - `combine` — the children are combined into a single accessibility element.
+ */
+type AccessibilityChildBehavior = 'ignore' | 'contain' | 'combine';
+
+type AccessibilityProps = {
+    /**
+     * Adds a label to the view that describes its contents for accessibility technologies such as VoiceOver.
+     */
+    accessibilityLabel?: string;
+    /**
+     * Communicates to the user what happens after performing the view's action.
+     */
+    accessibilityHint?: string;
+    /**
+     * Adds a textual description of the value that the view contains (for example, the current value of a slider).
+     */
+    accessibilityValue?: string;
+    /**
+     * Specifies whether to hide this view from accessibility technologies.
+     */
+    accessibilityHidden?: boolean;
+    /**
+     * Uses the provided string to identify the view for UI testing (the accessibility identifier).
+     */
+    accessibilityIdentifier?: string;
+    /**
+     * Sets the sort priority order for this view's accessibility element, relative to other elements at the same level. Higher numbers are read first.
+     */
+    accessibilitySortPriority?: number;
+    /**
+     * Adds the given accessibility trait(s) to the view.
+     */
+    accessibilityAddTraits?: AccessibilityTrait | AccessibilityTrait[];
+    /**
+     * Removes the given accessibility trait(s) from the view.
+     */
+    accessibilityRemoveTraits?: AccessibilityTrait | AccessibilityTrait[];
+    /**
+     * Sets the accessibility heading level of this view.
+     */
+    accessibilityHeading?: AccessibilityHeadingLevel;
+    /**
+     * Creates a single accessibility element for this view and controls how its children are exposed.
+     * Pass a child behavior (`ignore` / `contain` / `combine`), or `true` for the default (`ignore`).
+     */
+    accessibilityElement?: boolean | AccessibilityChildBehavior;
+};
+
+type CommonViewProps = DialogProps & GesturesProps & FrameSizeProps & ForeAndBackgroundProps & PaddingAndBorderProps & ViewVisibilityProps & ImageViewProps & ViewStyleProps & TextFieldViewProps & TextViewProps & ShapeViewProps & ChartViewProps & ScrollProps & ToolbarsProps & SafeAreaProps & WidgetProps & ExtensionProps & ViewAppearProps & GridViewProps & ModalPresentationViewProps & TransformAndEffectProps & NavigationProps & ListViewProps & EditActionsProps & SymbolProps & TransitionProps & SearchableProps & ViewAnimationProps & LiveActivityProps & EnvironmentsProps & GlassProps & ScreenshotProps & PiPProps & DragDropProps & KeyboardShortcutProps & AccessibilityProps & {
     disabled?: boolean;
     /**
      * Sets whether this view mirrors its contents based on the layout direction.
@@ -4695,6 +4939,9 @@ declare class ViewModifiers {
     textInputAutocapitalization(value: CommonViewProps["textInputAutocapitalization"]): this;
     textContentType(value: CommonViewProps["textContentType"]): this;
     allowsHitTesting(value: CommonViewProps["allowsHitTesting"]): this;
+    hoverEffect(value: CommonViewProps["hoverEffect"]): this;
+    onHover(value: CommonViewProps["onHover"]): this;
+    help(value: CommonViewProps["help"]): this;
     textFieldStyle(value: CommonViewProps["textFieldStyle"]): this;
     keyboardType(value: CommonViewProps["keyboardType"]): this;
     keyboardShortcut(value: CommonViewProps["keyboardShortcut"]): this;
@@ -4811,8 +5058,33 @@ declare class ViewModifiers {
     offset(value: CommonViewProps["offset"]): this;
     rotationEffect(value: CommonViewProps["rotationEffect"]): this;
     scaleEffect(value: CommonViewProps["scaleEffect"]): this;
+    rotation3DEffect(value: CommonViewProps["rotation3DEffect"]): this;
+    transformEffect(value: CommonViewProps["transformEffect"]): this;
+    coordinateSpace(value: CommonViewProps["coordinateSpace"]): this;
     shadow(value: CommonViewProps["shadow"]): this;
     blur(value: CommonViewProps["blur"]): this;
+    brightness(value: CommonViewProps["brightness"]): this;
+    contrast(value: CommonViewProps["contrast"]): this;
+    saturation(value: CommonViewProps["saturation"]): this;
+    grayscale(value: CommonViewProps["grayscale"]): this;
+    luminanceToAlpha(value: CommonViewProps["luminanceToAlpha"]): this;
+    colorMultiply(value: CommonViewProps["colorMultiply"]): this;
+    blendMode(value: CommonViewProps["blendMode"]): this;
+    alignmentGuide(value: CommonViewProps["alignmentGuide"]): this;
+    dynamicTypeSize(value: CommonViewProps["dynamicTypeSize"]): this;
+    scrollBounceBehavior(value: CommonViewProps["scrollBounceBehavior"]): this;
+    scenePadding(value: CommonViewProps["scenePadding"]): this;
+    presentationBackground(value: CommonViewProps["presentationBackground"]): this;
+    accessibilityLabel(value: CommonViewProps["accessibilityLabel"]): this;
+    accessibilityHint(value: CommonViewProps["accessibilityHint"]): this;
+    accessibilityValue(value: CommonViewProps["accessibilityValue"]): this;
+    accessibilityHidden(value: CommonViewProps["accessibilityHidden"]): this;
+    accessibilityIdentifier(value: CommonViewProps["accessibilityIdentifier"]): this;
+    accessibilitySortPriority(value: CommonViewProps["accessibilitySortPriority"]): this;
+    accessibilityAddTraits(value: CommonViewProps["accessibilityAddTraits"]): this;
+    accessibilityRemoveTraits(value: CommonViewProps["accessibilityRemoveTraits"]): this;
+    accessibilityHeading(value: CommonViewProps["accessibilityHeading"]): this;
+    accessibilityElement(value: CommonViewProps["accessibilityElement"]): this;
     sliderThumbVisibility(value: CommonViewProps["sliderThumbVisibility"]): this;
     searchable(value: CommonViewProps["searchable"]): this;
     searchSuggestions(value: CommonViewProps["searchSuggestions"]): this;
@@ -4833,6 +5105,7 @@ declare class ViewModifiers {
     presentationBackgroundInteraction(value: CommonViewProps["presentationBackgroundInteraction"]): this;
     presentationContentInteraction(value: CommonViewProps["presentationContentInteraction"]): this;
     presentationCornerRadius(value: CommonViewProps["presentationCornerRadius"]): this;
+    presentationSizing(value: CommonViewProps["presentationSizing"]): this;
     navigationContainerBackground(value: CommonViewProps["navigationContainerBackground"]): this;
     navigationSplitViewContainerBackground(value: CommonViewProps["navigationSplitViewContainerBackground"]): this;
     listItemTint(value: CommonViewProps["listItemTint"]): this;
@@ -6294,7 +6567,7 @@ type DirectoryBrowserViewProps = {
  * <NavigationStack>
  *   <DirectoryBrowserView
  *     title="Workspace"
- *     directoryPath={Script.directoryPath}
+ *     directoryPath={Script.directory}
  *     onFilesChanged={() => console.log("Files changed")}
  *   />
  * </NavigationStack>
@@ -6363,6 +6636,10 @@ type EditorProps = {
      */
     searchEnabled?: boolean;
     /**
+     * Whether to show an export button alongside the editor's bottom controls. Tapping it shares the current content as a file via the share sheet. Defaults to `false`.
+     */
+    exportEnabled?: boolean;
+    /**
      * The editor controller to access and set content, file extension, read only state, listen for content changes.
      */
     controller: EditorController;
@@ -6404,6 +6681,11 @@ type EnvironmentValues = {
     colorScheme: ColorScheme;
     colorSchemeContrast: ColorSchemeContrast;
     displayScale: number;
+    /**
+     * The current Dynamic Type size of the view hierarchy, reflecting the user's
+     * preferred text size (including the accessibility sizes).
+     */
+    dynamicTypeSize: DynamicTypeSize;
     horizontalSizeClass: UserInterfaceSizeClass | null;
     verticalSizeClass: UserInterfaceSizeClass | null;
     dismiss: () => void;
@@ -9834,7 +10116,22 @@ declare namespace Intent {
      *
      * If you have enabled `Images` as a intent input from the Intent Settings, when the system shares Images, the script will be displayed in the share sheet and can be selected to run.
      *
-     * When large images are passed from a share sheet or a shortcut action, the system may terminate the process due to memory constraints. In this case you should use `Run Script in App` action in Shortcuts app or enable the `Run in App` option in `Intent Inputs` settings.
+     * Prefer this over `imagesParameter` when you only need the file paths (for example
+     * to pass them along, or to decode selectively): reading a path does not decode the
+     * image, so it never risks the memory pressure that decoding a large image does.
+     */
+    const imagePathsParameter: string[] | undefined;
+    /**
+     * The images passed from a share sheet or a shortcut action, lazily decoded from
+     * `imagePathsParameter` on first access (and cached afterwards).
+     *
+     * If you have enabled `Images` as a intent input from the Intent Settings, when the system shares Images, the script will be displayed in the share sheet and can be selected to run.
+     *
+     * When large images are passed from a share sheet or a shortcut action, accessing this
+     * property decodes them and the system may terminate the process due to memory
+     * constraints. In that case, read `imagePathsParameter` instead, or use the
+     * `Run Script in App` action in the Shortcuts app / enable the `Run in App` option in
+     * `Intent Inputs` settings so decoding happens in the main app.
      */
     const imagesParameter: UIImage[] | undefined;
     /**
@@ -10349,6 +10646,7 @@ declare namespace Notification {
      * @param options.body The body of the notification.
      * @param options.badge The badge count for the app icon.
      * @param options.silent If true, the notification will be delivered silently without sound. Defaults to false.
+     * @param options.sound The name of a custom notification sound to play. Provide the full file name including its extension (e.g. `"chime.caf"`). You can reference a built-in sound or a custom sound you imported under Tools > Notifications > Notification Sounds. Supported formats are `.caf`, `.aiff` and `.wav`, and the sound must be shorter than 30 seconds. Ignored when `silent` is true. If omitted, the default notification sound is used.
      * @param options.iconImageData The custom notification icon image data, you can use it to replace the default icon, or use `SystemImageIcon` to use a system image with specific color.
      * @param options.interruptionLevel The importance and delivery timing of the notification.
      * @param options.userInfo Custom information associated with the notification.
@@ -10368,6 +10666,7 @@ declare namespace Notification {
         body?: string;
         badge?: number;
         silent?: boolean;
+        sound?: string;
         iconImageData?: Data | SystemImageIcon | null;
         interruptionLevel?: NotificationInterruptionLevel;
         userInfo?: Record<string, any>;
@@ -10513,11 +10812,6 @@ declare namespace Path {
     };
 }
 
-/** Error thrown when an operation is aborted */
-declare class AbortError$1 extends Error {
-    name: string;
-    constructor(message?: string);
-}
 /** Event representing an abort, analogous to the browser's AbortEvent */
 declare class AbortEvent$1 {
     readonly type = "abort";
@@ -10544,7 +10838,7 @@ declare class AbortSignal$1 {
      * @internal
      */
     _dispatchAbort(reason?: any): void;
-    /** Throws an AbortError if the signal has already been aborted */
+    /** Throws a DOMException (name "AbortError") if the signal has already been aborted */
     throwIfAborted(): void;
     /** Adds a listener for the 'abort' event */
     addEventListener(type: 'abort', listener: AbortEventListener): void;
@@ -10555,7 +10849,8 @@ declare class AbortSignal$1 {
      */
     static abort(reason?: any): AbortSignal$1;
     /**
-     * Returns a signal that will abort after the given delay (in milliseconds)
+     * Returns a signal that will abort after the given delay (in milliseconds).
+     * Per WHATWG, the abort reason is a DOMException with name "TimeoutError".
      */
     static timeout(delay: number): AbortSignal$1;
     /**
@@ -10572,7 +10867,7 @@ declare class AbortController$1 {
     constructor();
     /**
      * Aborts the associated signal, setting the reason if provided
-     * @param reason - Optional reason for abort, defaults to an AbortError
+     * @param reason - Optional reason for abort, defaults to a DOMException (name "AbortError")
      */
     abort(reason?: any): void;
 }
@@ -10967,8 +11262,6 @@ declare const AbortController: typeof AbortController$1;
 type AbortController = AbortController$1;
 declare const AbortSignal: typeof AbortSignal$1;
 type AbortSignal = AbortSignal$1;
-declare const AbortError: typeof AbortError$1;
-type AbortError = AbortError$1;
 declare const AbortEvent: typeof AbortEvent$1;
 type AbortEvent = AbortEvent$1;
 
@@ -11062,8 +11355,9 @@ declare namespace Script {
      *  - `"live_activity"`: The script is running in the live activity extension, "live_activity.tsx" is the entry point.
      *  - `"alarm_live_activity"`: The script is rendering an AlarmKit live activity, "alarm_live_activity.tsx" is the entry point.
      *  - `"translation_ui_provider"`: The script is running in the translation UI provider extension, "translation_ui_provider.tsx" is the entry point.
+     *  - `"home_screen"`: The script is rendering the Home tab, "home_screen_default_ui.tsx" is the entry point.
      */
-    const env: "index" | "widget" | "intent" | "app_intents" | "notification" | "assistant_tool" | "keyboard" | "control_widget" | "live_activity" | "alarm_live_activity" | "translation_ui_provider";
+    const env: "index" | "widget" | "intent" | "app_intents" | "notification" | "assistant_tool" | "keyboard" | "control_widget" | "live_activity" | "alarm_live_activity" | "translation_ui_provider" | "home_screen";
     /**
      * Name of the current script.
      */
@@ -11341,6 +11635,40 @@ declare namespace Script {
      */
     function onResume(callback: (eventDetails: ResumeEventDetails) => void): () => void;
     /**
+     * An event that happened on the Home tab. The three cases are mutually exclusive:
+     * a single switch or tap delivers exactly one of them.
+     *  - `"selected"`: the Home tab became the active tab.
+     *  - `"reselected"`: the Home tab was already active and the user tapped it again.
+     *  - `"deselected"`: another tab became active.
+     */
+    type HomeTabEvent = "selected" | "reselected" | "deselected";
+    /**
+     * Listen to Home tab events.
+     *
+     * Only meaningful for a script rendered on the Home tab, that is, a script whose
+     * `home_screen_default_ui.tsx` is selected in Settings. Registering in any other
+     * environment is harmless, but the callback is never called.
+     *
+     * The callback is not called for the initial appearance: the top-level code of
+     * `home_screen_default_ui.tsx` already runs while the tab is on screen.
+     *
+     * App-wide foreground/background changes are a different axis and are not reported here.
+     *
+     * @param callback Called with the event that happened.
+     * @returns A function that can be used to remove the event listener.
+     * @example
+     * ```tsx
+     * const off = Script.onHomeTabEvent(event => {
+     *   switch (event) {
+     *     case "selected": refresh(); break
+     *     case "reselected": scrollToTop(); break
+     *     case "deselected": pauseTimer(); break
+     *   }
+     * })
+     * ```
+     */
+    function onHomeTabEvent(callback: (event: HomeTabEvent) => void): () => void;
+    /**
      * Determine whether user has full access to the Scripting PRO features.
      *
      * @returns `true` if the user has full access to the Scripting PRO features, otherwise `false`.
@@ -11542,4 +11870,4 @@ declare global {
     }
 }
 
-export { type AVLayerVideoGravity, AVPlayerView, type AVPlayerViewProps, AbortController, AbortError, AbortEvent, type AbortEventListener, AbortSignal, AccessoryWidgetBackground, type AdaptableTabBarPlacement, AlarmLiveActivity, type AlarmLiveActivityAction, type AlarmLiveActivityCountdownState, type AlarmLiveActivityMode, type AlarmLiveActivityPausedState, type AlarmLiveActivityPresentation, type AlarmLiveActivityPresentationButton, type AlarmLiveActivitySchedule, type AlarmLiveActivityState, type AlarmLiveActivityUIBuilder, type Alignment, type Angle, type AngleValue, type AngularGradient, AnimatedFrames, type AnimatedFramesProps, AnimatedGif, type AnimatedGifProps, AnimatedImage, type AnimatedImageProps, Annotation, type AnnotationOverflowResolution, type AnnotationOverflowResolutionStrategy, type AnnotationPosition, type AnnotationProps, AppEventListenerManager, AppEvents, type AppIntent, type AppIntentFactory, AppIntentManager, type AppIntentPerform, AppIntentProtocol, AreaChart, AreaPlot, type AreaPlotProps, AreaStackChart, type Axis, type AxisGridLineConfig, type AxisLabelFormat, type AxisMarkOrientation, type AxisMarkPosition, type AxisMarkPreset, type AxisMarkValues, type AxisMarksConfig, type AxisSet, type AxisTickConfig, type AxisValueLabelCollisionResolution, type AxisValueLabelConfig, type BadgeProminence, Bar1DChart, BarChart, type BarChartProps, BarGanttChart, type BarGanttChartProps, BarStackChart, Blob, Button, type ButtonBorderShape, type ButtonProps, type ButtonRole, type ButtonStyle, type CalendarComponent, CancelError, type CancelEventListener, CancelToken, type CancelTokenHook, Canvas, CanvasGradient, type CanvasImageSource, CanvasPattern, type CanvasProps, CanvasRenderingContext, type CanvasSize, Capsule, CaptureVideoPreviewView, type CaptureVideoPreviewViewProps, Chart, type ChartAxisScaleType, type ChartDateRangeSelection, ChartGesture, type ChartGestureProps, type ChartInterpolationMethod, type ChartMarkProps, type ChartMarkStackingMethod, type ChartNumberRangeSelection, type ChartNumberSelection, ChartOverlay, type ChartOverlayProps, ChartPlotProxy, ChartPlotStyle, type ChartPlotStyleProps, type ChartProxy, type ChartRangeSelection, type ChartScrollPosition, type ChartScrollTargetBehavior, type ChartSelection, type ChartStringRangeSelection, type ChartStringSelection, type ChartSymbolShape, Circle, type ClockHandRotationEffectPeriod, type ClosedRange, type Color, ColorPicker, type ColorPickerProps, type ColorRenderingMode, type ColorScheme, type ColorSchemeContrast, type ColorStringHSL, type ColorStringHSLA, type ColorStringHex, type ColorStringRGB, type ColorStringRGBA, type ColorWithGradientOrOpacity, type CommonViewProps, type ComponentCallback, type ComponentEffect, type ComponentEffectEvent, type ComponentMemo, type ComponentProps, ConcentricRectangle, type ConcentricRectangleProps, type ConcentricRectangleShape, type Consumer, type ConsumerProps, type ContentAvailableViewProps, type ContentAvailableViewWithLabelProps, type ContentAvailableViewWithTitleProps, type ContentMarginPlacement, type ContentMode, type ContentShapeKinds, type ContentTransition, ContentUnavailableView, type Context, ControlGroup, type ControlGroupProps, type ControlGroupStyle, type ControlSize, ControlWidget, ControlWidgetButton, type ControlWidgetButtonProps, type ControlWidgetLabel, ControlWidgetToggle, type ControlWidgetToggleProps, type Cookie, DateIntervalLabel, type DateIntervalLabelProps, DateLabel, type DateLabelProps, DatePicker, type DatePickerComponents, type DatePickerProps, type DatePickerStyle, DateRangeLabel, type DateRangeLabelProps, DefaultToolbarItem, type DefaultToolbarItemProps, Device, DirectoryBrowserView, type DirectoryBrowserViewProps, DisclosureGroup, type DisclosureGroupProps, type DiscreteSymbolEffect, type Dispatch, Divider, DonutChart, DragGesture, type DragGestureDetails, type DragGestureOptions, type DurationInMilliseconds, type DynamicImageSource, type DynamicShapeStyle, type Edge, type EdgeCornerStyle, type EdgeInsets, type EdgeSet, type EdgeSetOption, EditButton, Editor, type EditorProps, type EffectDestructor, type EffectSetup, Ellipse, EmptyView, type EnvironmentValues, EnvironmentValuesReader, type EnvironmentValuesReaderProps, type FileImageProps, FlowLayout, type FlowLayoutProps, type Font, type FontDesign, type FontWeight, type FontWidth, ForEach, type ForEachComponent, type ForEachDeprecatedProps, type ForEachProps, Form, type FormBinaryData, FormData, type FormProps, type FormStyle, type FunctionComponent, Gauge, type GaugeProps, type GaugeStyle, type GeometryProxy, GeometryReader, type GeometryReaderProps, type Gesture, GestureInfo, GlassEffectContainer, type GlassEffectContainerProps, type GlobalCompositeOperation, type Gradient, type GradientStop$1 as GradientStop, Grid, type GridItem, type GridProps, GridRow, type GridRowProps, type GridSize, Group, GroupBox, type GroupBoxProps, type GroupProps, HStack, type HStackProps, Headers, type HeadersInit, HeatMapChart, type HorizontalAlignment, type HorizontalEdge, type HorizontalEdgeSet, type IdProps, Image, type ImageInterpolation, type ImageProps, type ImageRenderOptions, ImageRenderer, type ImageRenderingBehaviorProps, type ImageRenderingMode, type ImageResizable, type ImageResizingMode, type ImageScale, type IndexViewStyle, Intent, IntentAttributedTextValue, IntentFileURLValue, IntentFileValue, IntentImageValue, IntentJsonValue, IntentRequestConfirmationValue, IntentSnippetIntentValue, IntentTextValue, IntentURLValue, IntentValue, IntentViewValue, type InternalWidgetRender, type KeyboardType, type KeywordPoint, type KeywordsColor, Label, type LabelProps, type LabelStyle, LabeledContent, type LabeledContentProps, type LayoutDirection, type LayoutDirectionBehavior, LazyHGrid, type LazyHGridProps, LazyHStack, type LazyHStackProps, LazyVGrid, type LazyVGridProps, LazyVStack, type LazyVStackProps, LineCategoryChart, LineChart, LinePlot, type LinePlotFunctionProps, type LinePlotParametricProps, type LineStylePattern, type LinearGradient, Link, type LinkProps, List, type ListProps, type ListSectionSpacing, type ListStyle, LiveActivity, type LiveActivityActivitiesEnabledListener, type LiveActivityActivityUpdateListener, type LiveActivityDetail, type LiveActivityEndOptions, type LiveActivityOptions, type LiveActivityState, LiveActivityUI, type LiveActivityUIBuilder, LiveActivityUIExpandedBottom, LiveActivityUIExpandedCenter, LiveActivityUIExpandedLeading, LiveActivityUIExpandedTrailing, type LiveActivityUIExpandedViewProps, type LiveActivityUIProps, type LiveActivityUpdateOptions, LivePhotoView, type LivePhotoViewProps, LongPressGesture, type LongPressGestureOptions, LookAroundPreview, type LookAroundPreviewProps, MagnifyGesture, type MagnifyGestureValue, Map, type MapAnnotationLabelVisibility, MapCircle, type MapCircleProps, MapCompass, type MapCoordinate, MapPitchToggle, type MapPointOfInterestCategory, type MapPointsOfInterestSpec, MapPolygon, type MapPolygonProps, MapPolyline, type MapPolylineProps, type MapProps, type MapRegion, MapScaleView, type MapSelectionAccessoryStyle, type MapSelectionValue, type MapStrokeStyle, type MapStyleSpec, MapUserLocationButton, type MarkDimension, Markdown, type MarkdownProps, Marker, type MarkerByCoordinateProps, type MarkerByItemProps, type MarkerProps, type MatchedGeometryProperties, type Material, Menu, type MenuProps, type MenuStyle, type MeshGradient, type ModalPresentation, type ModalPresentationStyle, MultiColumnsPicker, type MultiColumnsPickerProps, MultiPicker, type MutableRefObject, NamespaceReader, type NamespaceReaderProps, Navigation, type NavigationBarTitleDisplayMode, NavigationDestination, type NavigationDestinationProps, NavigationLink, type NavigationLinkProps, NavigationSplitView, type NavigationSplitViewColumn, type NavigationSplitViewProps, type NavigationSplitViewStyle, type NavigationSplitViewVisibility, NavigationStack, type NavigationStackProps, type NetworkImageProps, type NormalProgressViewProps, Notification, type NotificationAction, type NotificationInfo, type NotificationInterruptionLevel, type NotificationRequest, type PIPStatus, type ParagraphStyle, Path, Path2D, type PathAffineTransform, PathShape, type PathShapeProps, type PathShapeValue, Picker, type PickerProps, type PickerStyle, type PickerValue, PieChart, type PinnedScrollViews, type Point, Point1DChart, PointCategoryChart, PointChart, type PopoverPresentation, type PresentationAdaptation, type PresentationBackgroundInteraction, type PresentationContentInteraction, type PresentationDetent, ProgressView, type ProgressViewProps, type ProgressViewStyle, type Prominence, type Provider, type ProviderProps, QRImage, type QRImageProps, type RadialGradient, RangeAreaChart, ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader, type Rect, RectAreaChart, RectChart, type RectCornerRadii, type RectWithCornerRadii, type RectWithCornerRadius, type RectWithCornerSize, Rectangle, type RedirectRequest, type Reducer, type ReducerAction, type ReducerState, type RefObject, type RenderNode, ReorderableForEach, type ReorderableForEachComponent, type ReorderableForEachProps, Request, type RequestInit, Response, type ResponseInit, RotateGesture, type RotateGestureValue, type RoundedCornerStyle, RoundedRectangle, type RoundedRectangleProps, RuleChart, RuleLineForLabelChart, RuleLineForValueChart, SVG, type SVGCodeSourceProps, type SVGFilePathSourceProps, type SVGProps, type SVGURLSourceProps, type SafeAreaRegions, type ScenePhase, ScreenshotMaker, Script, type ScriptDeveloper, type ScriptMetadata, type ScriptingApi, type ScriptingDeviceInfo, type ScrollDismissesKeyboardMode, type ScrollScrollIndicatorVisibility, type ScrollTargetBehavior, ScrollView, type ScrollViewProps, type ScrollViewProxy, ScrollViewReader, type ScrollViewReaderProps, type SearchFieldPlacement, type SearchSuggestionsPlacementSet, Section, type SectionProps, SecureField, type SecureFieldProps, type SensoryFeedback, type SetStateAction, type Shape, type ShapeProps, type ShapeStyle, type ShortcutFileURLParameter, type ShortcutJsonParameter, type ShortcutParameter, type ShortcutTextParameter, type Size, Slider, type SliderProps, type SliderWithLabelProps, type SliderWithRangeValueLabelsProps, type SliderWithTicksProps, Spacer, type StateInitializer, Stepper, type StepperProps, type StrokeStyle, type StyledText, type SubmitTriggers, type SwingAnimation, type SymbolEffect, type SymbolEffectOptions, type SymbolRenderingMode, type SymbolVariants, type SystemImageProps, Tab, type TabCustomizationBehavior, type TabPlacement, type TabProps, type TabRole, TabSection, type TabSectionProps, TabView, type TabViewProps, type TabViewStyle, TapGesture, Text, type TextAlignment, type TextContentType, TextField, type TextFieldProps, type TextFieldStyle, type TextInputAutocapitalization, TextMetrics, type TextProps, TimelineCanvas, type TimelineCanvasDrawSize, type TimelineCanvasProps, type TimelineCanvasSchedule, TimerIntervalLabel, type TimerIntervalLabelProps, type TimerIntervalProgressViewProps, Toggle, type ToggleProps, type ToggleStyle, type ToolBarProps, Toolbar, type ToolbarDefaultItemKind, ToolbarItem, ToolbarItemGroup, type ToolbarItemGroupProps, type ToolbarItemPlacement, type ToolbarItemProps, type ToolbarPlacement, ToolbarSpacer, type ToolbarSpacerProps, type ToolbarSpacerSizing, type ToolbarTitleDisplayMode, TransformStream, TransformStreamDefaultController, type Transformer, type TriggerSymbolEffect, type TruncationMode, type UIImageProps, type UnderlineStyle, type UnderlyingSink, type UnderlyingSource, UnevenRoundedRectangle, type UnevenRoundedRectangleProps, type UserInterfaceSizeClass, VStack, type VStackProps, type VerticalAlignment, type VerticalEdge, type VerticalEdgeSet, VideoPlayer, type VideoPlayerProps, VideoRecorderPreviewView, type VideoRecorderPreviewViewProps, ViewModifiers, type VirtualNode, type Visibility, WebView, type WebViewProps, Widget, type WidgetAccentedRenderingMode, type WidgetDisplaySize, type WidgetFamily, type WidgetRelevance, type WidgetReloadPolicy, type WidgetRenderingMode, WritableStream, WritableStreamDefaultController, WritableStreamDefaultWriter, ZStack, type ZStackProps, createContext, fetch, gradient, modifiers, useCallback, useCancelToken, useColorScheme, useContext, useEffect, useEffectEvent, useKeyboardVisible, useMemo, useObservable, useReducer, useRef, useSelector, useState };
+export { type AVLayerVideoGravity, AVPlayerView, type AVPlayerViewProps, AbortController, AbortEvent, type AbortEventListener, AbortSignal, AccessoryWidgetBackground, type AdaptableTabBarPlacement, AlarmLiveActivity, type AlarmLiveActivityAction, type AlarmLiveActivityCountdownState, type AlarmLiveActivityMode, type AlarmLiveActivityPausedState, type AlarmLiveActivityPresentation, type AlarmLiveActivityPresentationButton, type AlarmLiveActivitySchedule, type AlarmLiveActivityState, type AlarmLiveActivityUIBuilder, type Alignment, type Angle, type AngleValue, type AngularGradient, AnimatedFrames, type AnimatedFramesProps, AnimatedGif, type AnimatedGifProps, AnimatedImage, type AnimatedImageProps, Annotation, type AnnotationOverflowResolution, type AnnotationOverflowResolutionStrategy, type AnnotationPosition, type AnnotationProps, AppEventListenerManager, AppEvents, type AppIntent, type AppIntentFactory, AppIntentManager, type AppIntentPerform, AppIntentProtocol, AreaChart, AreaPlot, type AreaPlotProps, AreaStackChart, type Axis, type AxisGridLineConfig, type AxisLabelFormat, type AxisMarkOrientation, type AxisMarkPosition, type AxisMarkPreset, type AxisMarkValues, type AxisMarksConfig, type AxisSet, type AxisTickConfig, type AxisValueLabelCollisionResolution, type AxisValueLabelConfig, type BadgeProminence, Bar1DChart, BarChart, type BarChartProps, BarGanttChart, type BarGanttChartProps, BarStackChart, type BlendMode, Blob, Button, type ButtonBorderShape, type ButtonProps, type ButtonRole, type ButtonStyle, type CalendarComponent, CancelError, type CancelEventListener, CancelToken, type CancelTokenHook, Canvas, CanvasGradient, type CanvasImageSource, CanvasPattern, type CanvasProps, CanvasRenderingContext, type CanvasSize, Capsule, CaptureVideoPreviewView, type CaptureVideoPreviewViewProps, Chart, type ChartAxisScaleType, type ChartDateRangeSelection, ChartGesture, type ChartGestureProps, type ChartInterpolationMethod, type ChartMarkProps, type ChartMarkStackingMethod, type ChartNumberRangeSelection, type ChartNumberSelection, ChartOverlay, type ChartOverlayProps, ChartPlotProxy, ChartPlotStyle, type ChartPlotStyleProps, type ChartProxy, type ChartRangeSelection, type ChartScrollPosition, type ChartScrollTargetBehavior, type ChartSelection, type ChartStringRangeSelection, type ChartStringSelection, type ChartSymbolShape, Circle, type ClockHandRotationEffectPeriod, type ClosedRange, type Color, ColorPicker, type ColorPickerProps, type ColorRenderingMode, type ColorScheme, type ColorSchemeContrast, type ColorStringHSL, type ColorStringHSLA, type ColorStringHex, type ColorStringRGB, type ColorStringRGBA, type ColorWithGradientOrOpacity, type CommonViewProps, type ComponentCallback, type ComponentEffect, type ComponentEffectEvent, type ComponentMemo, type ComponentProps, ConcentricRectangle, type ConcentricRectangleProps, type ConcentricRectangleShape, type Consumer, type ConsumerProps, type ContentAvailableViewProps, type ContentAvailableViewWithLabelProps, type ContentAvailableViewWithTitleProps, type ContentMarginPlacement, type ContentMode, type ContentShapeKinds, type ContentTransition, ContentUnavailableView, type Context, ControlGroup, type ControlGroupProps, type ControlGroupStyle, type ControlSize, ControlWidget, ControlWidgetButton, type ControlWidgetButtonProps, type ControlWidgetLabel, ControlWidgetToggle, type ControlWidgetToggleProps, type Cookie, DateIntervalLabel, type DateIntervalLabelProps, DateLabel, type DateLabelProps, DatePicker, type DatePickerComponents, type DatePickerProps, type DatePickerStyle, DateRangeLabel, type DateRangeLabelProps, DefaultToolbarItem, type DefaultToolbarItemProps, Device, DirectoryBrowserView, type DirectoryBrowserViewProps, DisclosureGroup, type DisclosureGroupProps, type DiscreteSymbolEffect, type Dispatch, Divider, DonutChart, DragGesture, type DragGestureDetails, type DragGestureOptions, type DurationInMilliseconds, type DynamicImageSource, type DynamicShapeStyle, type DynamicTypeSize, type Edge, type EdgeCornerStyle, type EdgeInsets, type EdgeSet, type EdgeSetOption, EditButton, Editor, type EditorProps, type EffectDestructor, type EffectSetup, Ellipse, EmptyView, type EnvironmentValues, EnvironmentValuesReader, type EnvironmentValuesReaderProps, type FileImageProps, FlowLayout, type FlowLayoutProps, type Font, type FontDesign, type FontWeight, type FontWidth, ForEach, type ForEachComponent, type ForEachDeprecatedProps, type ForEachProps, Form, type FormBinaryData, FormData, type FormProps, type FormStyle, type FunctionComponent, Gauge, type GaugeProps, type GaugeStyle, type GeometryProxy, GeometryReader, type GeometryReaderProps, type Gesture, GestureInfo, GlassEffectContainer, type GlassEffectContainerProps, type GlobalCompositeOperation, type Gradient, type GradientStop$1 as GradientStop, Grid, type GridItem, type GridProps, GridRow, type GridRowProps, type GridSize, Group, GroupBox, type GroupBoxProps, type GroupProps, HStack, type HStackProps, Headers, type HeadersInit, HeatMapChart, type HorizontalAlignment, type HorizontalEdge, type HorizontalEdgeSet, type HoverEffect, type IdProps, Image, type ImageInterpolation, type ImageProps, type ImageRenderOptions, ImageRenderer, type ImageRenderingBehaviorProps, type ImageRenderingMode, type ImageResizable, type ImageResizingMode, type ImageScale, type IndexViewStyle, Intent, IntentAttributedTextValue, IntentFileURLValue, IntentFileValue, IntentImageValue, IntentJsonValue, IntentRequestConfirmationValue, IntentSnippetIntentValue, IntentTextValue, IntentURLValue, IntentValue, IntentViewValue, type InternalWidgetRender, type KeyboardType, type KeywordPoint, type KeywordsColor, Label, type LabelProps, type LabelStyle, LabeledContent, type LabeledContentProps, type LayoutDirection, type LayoutDirectionBehavior, LazyHGrid, type LazyHGridProps, LazyHStack, type LazyHStackProps, LazyVGrid, type LazyVGridProps, LazyVStack, type LazyVStackProps, LineCategoryChart, LineChart, LinePlot, type LinePlotFunctionProps, type LinePlotParametricProps, type LineStylePattern, type LinearGradient, Link, type LinkProps, List, type ListProps, type ListSectionSpacing, type ListStyle, LiveActivity, type LiveActivityActivitiesEnabledListener, type LiveActivityActivityUpdateListener, type LiveActivityDetail, type LiveActivityEndOptions, type LiveActivityOptions, type LiveActivityState, LiveActivityUI, type LiveActivityUIBuilder, LiveActivityUIExpandedBottom, LiveActivityUIExpandedCenter, LiveActivityUIExpandedLeading, LiveActivityUIExpandedTrailing, type LiveActivityUIExpandedViewProps, type LiveActivityUIProps, type LiveActivityUpdateOptions, LivePhotoView, type LivePhotoViewProps, LongPressGesture, type LongPressGestureOptions, LookAroundPreview, type LookAroundPreviewProps, MagnifyGesture, type MagnifyGestureValue, Map, type MapAnnotationLabelVisibility, MapCircle, type MapCircleProps, MapCompass, type MapCoordinate, MapPitchToggle, type MapPointOfInterestCategory, type MapPointsOfInterestSpec, MapPolygon, type MapPolygonProps, MapPolyline, type MapPolylineProps, type MapProps, type MapRegion, MapScaleView, type MapSelectionAccessoryStyle, type MapSelectionValue, type MapStrokeStyle, type MapStyleSpec, MapUserLocationButton, type MarkDimension, Markdown, type MarkdownProps, Marker, type MarkerByCoordinateProps, type MarkerByItemProps, type MarkerProps, type MatchedGeometryProperties, type Material, Menu, type MenuProps, type MenuStyle, type MeshGradient, type ModalPresentation, type ModalPresentationStyle, MultiColumnsPicker, type MultiColumnsPickerProps, MultiPicker, type MutableRefObject, NamespaceReader, type NamespaceReaderProps, Navigation, type NavigationBarTitleDisplayMode, NavigationDestination, type NavigationDestinationProps, NavigationLink, type NavigationLinkProps, NavigationSplitView, type NavigationSplitViewColumn, type NavigationSplitViewProps, type NavigationSplitViewStyle, type NavigationSplitViewVisibility, NavigationStack, type NavigationStackProps, type NetworkImageProps, type NormalProgressViewProps, Notification, type NotificationAction, type NotificationInfo, type NotificationInterruptionLevel, type NotificationRequest, type PIPStatus, type ParagraphStyle, Path, Path2D, type PathAffineTransform, PathShape, type PathShapeProps, type PathShapeValue, Picker, type PickerProps, type PickerStyle, type PickerValue, PieChart, type PinnedScrollViews, type Point, Point1DChart, PointCategoryChart, PointChart, type PopoverPresentation, type PresentationAdaptation, type PresentationBackgroundInteraction, type PresentationContentInteraction, type PresentationDetent, type PresentationSizing, ProgressView, type ProgressViewProps, type ProgressViewStyle, type Prominence, type Provider, type ProviderProps, QRImage, type QRImageProps, type RadialGradient, RangeAreaChart, ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader, type Rect, RectAreaChart, RectChart, type RectCornerRadii, type RectWithCornerRadii, type RectWithCornerRadius, type RectWithCornerSize, Rectangle, type RedirectRequest, type Reducer, type ReducerAction, type ReducerState, type RefObject, type RenderNode, ReorderableForEach, type ReorderableForEachComponent, type ReorderableForEachProps, Request, type RequestInit, Response, type ResponseInit, RotateGesture, type RotateGestureValue, type RoundedCornerStyle, RoundedRectangle, type RoundedRectangleProps, RuleChart, RuleLineForLabelChart, RuleLineForValueChart, SVG, type SVGCodeSourceProps, type SVGFilePathSourceProps, type SVGProps, type SVGURLSourceProps, type SafeAreaRegions, type ScenePhase, ScreenshotMaker, Script, type ScriptDeveloper, type ScriptMetadata, type ScriptingApi, type ScriptingDeviceInfo, type ScrollBounceBehavior, type ScrollDismissesKeyboardMode, type ScrollScrollIndicatorVisibility, type ScrollTargetBehavior, ScrollView, type ScrollViewProps, type ScrollViewProxy, ScrollViewReader, type ScrollViewReaderProps, type SearchFieldPlacement, type SearchSuggestionsPlacementSet, Section, type SectionProps, SecureField, type SecureFieldProps, type SensoryFeedback, type SetStateAction, type Shape, type ShapeProps, type ShapeStyle, type ShortcutFileURLParameter, type ShortcutJsonParameter, type ShortcutParameter, type ShortcutTextParameter, type Size, Slider, type SliderProps, type SliderWithLabelProps, type SliderWithRangeValueLabelsProps, type SliderWithTicksProps, Spacer, type StateInitializer, Stepper, type StepperProps, type StrokeStyle, type StyledText, type SubmitTriggers, type SwingAnimation, type SymbolEffect, type SymbolEffectOptions, type SymbolRenderingMode, type SymbolVariants, type SystemImageProps, Tab, type TabCustomizationBehavior, type TabPlacement, type TabProps, type TabRole, TabSection, type TabSectionProps, TabView, type TabViewProps, type TabViewStyle, TapGesture, Text, type TextAlignment, type TextContentType, TextField, type TextFieldProps, type TextFieldStyle, type TextInputAutocapitalization, TextMetrics, type TextProps, TimelineCanvas, type TimelineCanvasDrawSize, type TimelineCanvasProps, type TimelineCanvasSchedule, TimerIntervalLabel, type TimerIntervalLabelProps, type TimerIntervalProgressViewProps, Toggle, type ToggleProps, type ToggleStyle, type ToolBarProps, Toolbar, type ToolbarDefaultItemKind, ToolbarItem, ToolbarItemGroup, type ToolbarItemGroupProps, type ToolbarItemPlacement, type ToolbarItemProps, type ToolbarPlacement, ToolbarSpacer, type ToolbarSpacerProps, type ToolbarSpacerSizing, type ToolbarTitleDisplayMode, TransformStream, TransformStreamDefaultController, type Transformer, type TriggerSymbolEffect, type TruncationMode, type UIImageProps, type UnderlineStyle, type UnderlyingSink, type UnderlyingSource, UnevenRoundedRectangle, type UnevenRoundedRectangleProps, type UserInterfaceSizeClass, VStack, type VStackProps, type VerticalAlignment, type VerticalEdge, type VerticalEdgeSet, VideoPlayer, type VideoPlayerProps, VideoRecorderPreviewView, type VideoRecorderPreviewViewProps, ViewModifiers, type VirtualNode, type Visibility, WebView, type WebViewProps, Widget, type WidgetAccentedRenderingMode, type WidgetDisplaySize, type WidgetFamily, type WidgetRelevance, type WidgetReloadPolicy, type WidgetRenderingMode, WritableStream, WritableStreamDefaultController, WritableStreamDefaultWriter, ZStack, type ZStackProps, createContext, fetch, gradient, modifiers, useCallback, useCancelToken, useColorScheme, useContext, useEffect, useEffectEvent, useKeyboardVisible, useMemo, useObservable, useReducer, useRef, useSelector, useState };

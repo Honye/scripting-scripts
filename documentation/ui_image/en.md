@@ -575,6 +575,110 @@ const thumb = image?.preparingThumbnail({ width: 120, height: 120 })
 
 ---
 
+## Color Extraction
+
+`UIImage` can read colors directly from its pixels. Every color method returns an `RGBAColor`:
+
+```ts
+type RGBAColor = {
+  red: number    // 0..1
+  green: number  // 0..1
+  blue: number   // 0..1
+  alpha: number  // 0..1
+  hex: string    // "#RRGGBBAA" — usable directly as a Color
+}
+```
+
+### averageColor()
+
+Returns the average color of the whole image, or `null` if it can't be read.
+
+```ts
+const image = UIImage.fromFile("/path/to/photo.jpg")
+const avg = image?.averageColor()
+
+// The hex string is a valid Color, so use it directly:
+<VStack background={avg?.hex}>...</VStack>
+```
+
+### dominantColors(count?)
+
+Returns the most dominant colors, sorted from most to least dominant, each with the fraction of the image it covers. `count` defaults to `5` (clamped to 1–16). The image is downsampled before analysis, so this stays fast even for large images.
+
+```ts
+type DominantColor = {
+  color: RGBAColor
+  fraction: number   // 0..1 — share of the image this color covers
+}
+
+const palette = image?.dominantColors(6) ?? []
+for (const { color, fraction } of palette) {
+  console.log(color.hex, Math.round(fraction * 100) + "%")
+}
+```
+
+### pixelColor(x, y)
+
+Reads the color of a single pixel, or `null` if the coordinate is out of bounds.
+
+> Coordinates are in **pixels** (`pixels = points × scale`). Images loaded from files, data, or URLs usually have a scale of `1`, so pixels and points match. For `@2x` / `@3x` assets or SF Symbols they differ.
+
+```ts
+const color = image?.pixelColor(10, 20)
+```
+
+### getPixelData()
+
+Returns the raw RGBA pixel buffer (8 bits per channel, straight alpha, row-major, top-left origin), together with its pixel dimensions. `data` is `width × height × 4` bytes.
+
+```ts
+const px = image?.getPixelData()
+if (px) {
+  const bytes = px.data.toUint8Array()
+  // pixel (x, y): bytes[(y * px.width + x) * 4 + 0..3] = R, G, B, A
+}
+```
+
+---
+
+## Image Transforms
+
+Each transform returns a new `UIImage`; the original is left unchanged.
+
+### croppedTo(rect)
+
+Crops the image to a rectangle in **points** (the same space as `width` / `height`). The rect is clamped to the image bounds; returns `null` if it doesn't overlap the image.
+
+```ts
+const topLeft = image?.croppedTo({ x: 0, y: 0, width: 100, height: 100 })
+```
+
+### rotated(degrees)
+
+Rotates the image clockwise by `degrees`. The canvas expands to fit the whole rotated image.
+
+```ts
+const turned = image?.rotated(90)
+```
+
+### blurred(radius)
+
+Returns a Gaussian-blurred copy. A larger `radius` produces a stronger blur.
+
+```ts
+const soft = image?.blurred(8)
+```
+
+### grayscale()
+
+Returns a grayscale (desaturated) copy.
+
+```ts
+const mono = image?.grayscale()
+```
+
+---
+
 ## Summary
 
 `UIImage` is the core class for image manipulation in the Scripting environment. It provides:

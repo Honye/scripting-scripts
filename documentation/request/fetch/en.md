@@ -53,7 +53,7 @@ type RequestInit = {
 | **allowInsecureRequest** | `boolean`                                                 | Whether to allow HTTP requests when running in an HTTPS context. Defaults to `false`.                    |                                                                |
 | **handleRedirect**       | `(newRequest: RedirectRequest) => Promise<RedirectRequest \| null>`                                                                                                   | Custom redirect handler. Return `null` to cancel the redirect. |
 | **shouldAllowRedirect**  | `(newRequest: Request) => Promise<boolean>`               | Deprecated. Use `handleRedirect` instead.                                                                |                                                                |
-| **timeout**              | `number`                                                  | Timeout duration in seconds. Throws an `AbortError` when exceeded.                                       |                                                                |
+| **timeout**              | `number`                                                  | Timeout duration in seconds. When exceeded, the request rejects with a `TypeError` (a network failure). For a distinguishable timeout, use `signal: AbortSignal.timeout(ms)`, which rejects with a `DOMException` named `"TimeoutError"`. |                                                                |
 | **signal**               | `AbortSignal`                                             | A signal object from `AbortController` that can abort the request.                                       |                                                                |
 | **cancelToken**          | `CancelToken`                                             | Deprecated. Use `signal` instead.                                                                        |                                                                |
 | **debugLabel**           | `string`                                                  | A label shown in the log panel for debugging and tracing requests.                                       |                                                                |
@@ -76,10 +76,13 @@ The Promise is **rejected** only when:
 
 ## Error Handling
 
-| Error Type         | Trigger Condition                                                |
-| ------------------ | ---------------------------------------------------------------- |
-| **`TypeError`**    | Invalid URL, unsupported protocol, or incompatible request body. |
-| **`AbortError`**   | The request was aborted via `AbortController` or timed out.      |
+| Error Type                             | Trigger Condition                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **`TypeError`**                        | Invalid URL, unsupported protocol, incompatible request body, or a network failure (including the `timeout` option). |
+| **`DOMException`** (name `AbortError`) | The request was aborted via `AbortController` (with no explicit reason). Check with `err.name === "AbortError"`.     |
+| **`DOMException`** (name `TimeoutError`) | The request was aborted by `AbortSignal.timeout()`.                                                                |
+
+> There is no `AbortError` class — aborts reject with a standard `DOMException` whose `name` is `"AbortError"`. Aborting with a custom reason (`controller.abort(reason)`) rejects with that reason verbatim (WHATWG).
 
 ---
 
@@ -133,12 +136,16 @@ console.log(await response.json())
 
 ```tsx
 try {
-  const response = await fetch("https://example.com/slow", { timeout: 10 })
+  // AbortSignal.timeout() rejects with a DOMException named "TimeoutError",
+  // so a timeout can be told apart from other network failures.
+  const response = await fetch("https://example.com/slow", {
+    signal: AbortSignal.timeout(10000),
+  })
   const text = await response.text()
   console.log(text)
 } catch (err) {
-  if (err.name === "AbortError") {
-    console.log("Request aborted due to timeout")
+  if (err instanceof DOMException && err.name === "TimeoutError") {
+    console.log("Request timed out")
   }
 }
 ```
@@ -150,19 +157,20 @@ try {
 ```tsx
 const controller = new AbortController()
 
-setTimeout(() => {
-  controller.abort("User cancelled the request")
-}, 3000)
+// abort() with no reason rejects with a DOMException named "AbortError".
+setTimeout(() => controller.abort(), 3000)
 
 try {
   const response = await fetch("https://example.com/large", { signal: controller.signal })
   const data = await response.text()
   console.log(data)
 } catch (err) {
-  if (err.name === "AbortError") {
+  if (err instanceof DOMException && err.name === "AbortError") {
     console.log("Request was manually aborted")
   }
 }
+// Note: aborting with a custom reason — controller.abort("reason") — rejects with
+// that value verbatim (WHATWG), so err would be the string "reason", not a DOMException.
 ```
 
 ---

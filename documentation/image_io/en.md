@@ -45,10 +45,20 @@ type ImageMetadata = {
   gps?: Record<string, any>   // GPS keys, e.g. Latitude / Longitude / LatitudeRef
   tiff?: Record<string, any>
   iptc?: Record<string, any>
+  makerApple?: Record<string, any>  // Apple Maker Note; numeric string keys
 }
 ```
 
 The well-known dictionaries (`exif` / `gps` / `tiff` / `iptc`) use Apple's CGImageProperties key names verbatim (`gps.Latitude`, `exif.DateTimeOriginal`, ...).
+
+`makerApple` is the Apple Maker Note, whose keys are numeric strings. The one you're most likely to care about is `'17'`, the Live Photo asset identifier that pairs a still image with its `.mov`:
+
+```ts
+const meta = await ImageIO.readMetadata("/path/to/live.heic")
+console.log(meta.makerApple?.["17"])   // e.g. "9F1C...-...."
+```
+
+You can write it too, but you rarely should — use `LivePhoto.createFromVideo` to build a valid Live Photo pair rather than stamping identifiers by hand. Only containers with an EXIF Maker Note (jpeg / heic) can carry it.
 
 ---
 
@@ -88,4 +98,5 @@ await ImageIO.writeImage({
 * **`image` drops original metadata.** A `UIImage` is a decoded bitmap. To preserve a file's existing EXIF/GPS, use the `source` variant, not `image`.
 * **`quality` only applies to jpeg / heic.** It's ignored for png / tiff / gif.
 * **HEIC encoding** requires a device/simulator that supports the HEVC image encoder; on older simulators HEIC may fail — fall back to jpeg if `writeImage` rejects.
-* **Key names are raw CGImageProperties keys.** When writing `exif` / `gps` / `tiff` / `iptc`, use Apple's key names (e.g. `Latitude`, `LatitudeRef`, `DateTimeOriginal`).
+* **Key names are raw CGImageProperties keys.** When writing `exif` / `gps` / `tiff` / `iptc`, use Apple's key names (e.g. `Latitude`, `LatitudeRef`, `DateTimeOriginal`). `makerApple` keys are numeric strings (`'17'`, ...).
+* **`makerApple` needs a Maker Note container.** It only survives in jpeg / heic; writing it to png / tiff / gif silently does nothing.

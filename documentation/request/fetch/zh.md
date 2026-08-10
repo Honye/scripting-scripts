@@ -54,7 +54,7 @@ type RequestInit = {
 | **allowInsecureRequest** | `boolean`                                                 | 允许通过 HTTP 发送请求。默认 `false`。如果主进程运行在 HTTPS 环境下而 URL 为 HTTP，需要显式启用。 |                                |
 | **handleRedirect**       | `(newRequest: RedirectRequest) => Promise<RedirectRequest \| null>`                                                           | 自定义重定向处理逻辑。如果返回 `null`，则阻止重定向。 |
 | **shouldAllowRedirect**  | `(newRequest: Request) => Promise<boolean>`               | 已废弃，用于兼容旧版重定向判断。                                                 |                                |
-| **timeout**              | `number`                                                  | 请求超时时间（秒）。超时将抛出 `AbortError`。                                    |                                |
+| **timeout**              | `number`                                                  | 请求超时时间（秒）。超时时以 `TypeError`（网络失败）拒绝。若需可区分的超时错误，请用 `signal: AbortSignal.timeout(ms)`，它以 name 为 `"TimeoutError"` 的 `DOMException` 拒绝。 |                                |
 | **signal**               | `AbortSignal`                                             | 可通过 `AbortController` 控制的中止信号，用于主动取消请求。                          |                                |
 | **cancelToken**          | `CancelToken`                                             | 已废弃，用于取消请求的旧机制。建议改用 `signal`。                                    |                                |
 | **debugLabel**           | `string`                                                  | 调试标签，会显示在日志面板中，方便识别请求来源。                                         |                                |
@@ -75,10 +75,13 @@ type RequestInit = {
 
 以下情况会触发 `Promise` 拒绝：
 
-| 错误类型           | 抛出条件                             |
-| -------------- | -------------------------------- |
-| `TypeError`    | URL 无效、协议不受支持或请求体类型不兼容。          |
-| `AbortError`   | 请求被 `AbortController` 主动中止或超时触发。 |
+| 错误类型                              | 抛出条件                                                          |
+| --------------------------------- | ------------------------------------------------------------- |
+| `TypeError`                       | URL 无效、协议不受支持、请求体类型不兼容，或网络失败（含 `timeout` 选项超时）。 |
+| `DOMException`（name `AbortError`）  | 请求被 `AbortController`（无显式 reason）中止。用 `err.name === "AbortError"` 判定。 |
+| `DOMException`（name `TimeoutError`）| 请求被 `AbortSignal.timeout()` 中止。                              |
+
+> 没有 `AbortError` 类——中止会以 name 为 `"AbortError"` 的标准 `DOMException` 拒绝。用自定义 reason 中止（`controller.abort(reason)`）时按 WHATWG 规范原样返回该 reason。
 
 ---
 
@@ -132,12 +135,16 @@ console.log(await response.json())
 
 ```tsx
 try {
-  const response = await fetch("https://example.com/slow", { timeout: 10 })
+  // AbortSignal.timeout() 以 name 为 "TimeoutError" 的 DOMException 拒绝，
+  // 因此超时可与其它网络失败区分开。
+  const response = await fetch("https://example.com/slow", {
+    signal: AbortSignal.timeout(10000),
+  })
   const text = await response.text()
   console.log(text)
 } catch (err) {
-  if (err.name === "AbortError") {
-    console.log("请求超时被中止")
+  if (err instanceof DOMException && err.name === "TimeoutError") {
+    console.log("请求超时")
   }
 }
 ```
@@ -149,19 +156,20 @@ try {
 ```tsx
 const controller = new AbortController()
 
-setTimeout(() => {
-  controller.abort("用户取消了请求")
-}, 3000)
+// 不带 reason 的 abort() 会以 name 为 "AbortError" 的 DOMException 拒绝。
+setTimeout(() => controller.abort(), 3000)
 
 try {
   const response = await fetch("https://example.com/large", { signal: controller.signal })
   const data = await response.text()
   console.log(data)
 } catch (err) {
-  if (err.name === "AbortError") {
+  if (err instanceof DOMException && err.name === "AbortError") {
     console.log("请求已被用户中止")
   }
 }
+// 注意：带自定义 reason 中止——controller.abort("原因")——会按 WHATWG 原样返回该值，
+// 此时 err 是字符串 "原因"，而非 DOMException。
 ```
 
 ---

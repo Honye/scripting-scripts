@@ -41,6 +41,7 @@ Indicates the environment in which the current script is running. This allows th
 | `"assistant_tool"` | Running in the Assistant Tool context. Entry point is `assistant_tool.tsx`.       |
 | `"keyboard"`       | Running in the custom keyboard extension. Entry point is `keyboard.tsx`.          |
 | `"live_activity"`  | Running in the Live Activity extension. Entry point is `live_activity.tsx`.       |
+| `"home_screen"`    | Rendered as the app's Home tab. Entry point is `home_screen_default_ui.tsx`. Stays resident; use `Script.onHomeTabEvent` to observe tab events. |
 
 ### Example:
 

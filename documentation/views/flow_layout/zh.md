@@ -14,12 +14,26 @@ import { FlowLayout } from "scripting"
 
 ### `spacing?: number`
 
-元素之间的间距（水平与垂直间距），单位为像素。
+元素之间的基准间距，**同时作用于水平与垂直两个方向**，单位为像素。
 
 * 默认值：`8`
 * 类型：`number`
 
-用于设置每个子元素之间的间距，若不指定则使用默认间距。
+用于设置每个子元素之间的间距。可用 `horizontalSpacing` / `verticalSpacing` 单独覆盖某一方向。
+
+### `horizontalSpacing?: number`
+
+同一行内元素之间的水平间距。设置后覆盖 `spacing` 在水平方向上的取值。
+
+* 类型：`number`
+* 默认值：回退到 `spacing`
+
+### `verticalSpacing?: number`
+
+换行后行与行之间的垂直间距。设置后覆盖 `spacing` 在垂直方向上的取值。
+
+* 类型：`number`
+* 默认值：回退到 `spacing`
 
 ### `children?: VirtualNode | (VirtualNode | undefined | null | (VirtualNode | undefined | null)[])[]`
 

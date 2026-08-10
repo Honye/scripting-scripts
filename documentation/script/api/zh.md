@@ -41,6 +41,7 @@ console.log(Script.directory) // 示例: "/private/var/mobile/Containers/..."
 | `"assistant_tool"` | Assistant Tool 工具模式中运行，入口文件为 `assistant_tool.tsx`。    |
 | `"keyboard"`       | 自定义键盘扩展中运行，入口文件为 `keyboard.tsx`。用于实现个性化键盘逻辑。          |
 | `"live_activity"`  | LiveActivity 扩展中运行，入口文件为 `live_activity.tsx`。用于实现实时活动逻辑。          |
+| `"home_screen"`    | 作为 App 首页的 Home Tab 渲染，入口文件为 `home_screen_default_ui.tsx`。常驻运行，可用 `Script.onHomeTabEvent` 监听 Tab 事件。 |
 
 ### 示例：
 

@@ -161,6 +161,18 @@ System behavior:
 * Clears the entire navigation stack
 * Immediately returns to the root view
 
+To go back exactly one level, drop the last element:
+
+```ts
+path.setValue(path.value.slice(0, -1))
+```
+
+> **Use `path` to go back — not `Navigation.useDismiss()`.**
+> Inside a page pushed by a bound `path`, `useDismiss()` does not pop that level.
+> It resolves to whatever presented the surrounding UI, so calling it closes the
+> whole presented screen instead of returning one step. `path` is the single
+> source of truth for a bound stack, so every push and pop should go through it.
+
 ---
 
 ## 5. Relationship Between path and NavigationDestination

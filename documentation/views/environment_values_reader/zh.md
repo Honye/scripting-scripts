@@ -13,6 +13,7 @@ type EnvironmentValues = {
     colorScheme: ColorScheme;
     colorSchemeContrast: ColorSchemeContrast;
     displayScale: number;
+    dynamicTypeSize: DynamicTypeSize;
     horizontalSizeClass: UserInterfaceSizeClass | null;
     verticalSizeClass: UserInterfaceSizeClass | null;
     dismiss: () => void;
@@ -137,6 +138,13 @@ type EnvironmentValues = {
 
 类型：`'expanded' | 'inline'`
 说明：当前 TabView 的底部辅助栏的显示方式，同 SwiftUI 中的 `tabViewBottomAccessoryPlacement`。
+
+---
+
+### 16. dynamicTypeSize
+
+类型：`DynamicTypeSize`
+说明：当前视图层级的动态字号档，反映用户偏好的文字大小。取值为 `"xSmall"`、`"small"`、`"medium"`、`"large"`、`"xLarge"`、`"xxLarge"`、`"xxxLarge"`,以及无障碍档 `"accessibility1"` … `"accessibility5"`。可据此调整布局(例如用户选择无障碍字号时改为纵向排列)。
 
 ## EnvironmentValuesReader 组件
 

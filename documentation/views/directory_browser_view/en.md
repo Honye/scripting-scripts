@@ -24,7 +24,7 @@ type DirectoryBrowserViewProps = {
 <NavigationStack>
   <DirectoryBrowserView
     title="Workspace"
-    directoryPath={Script.directoryPath}
+    directoryPath={Script.directory}
     onFilesChanged={() => console.log("Files changed")}
   />
 </NavigationStack>

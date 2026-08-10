@@ -28,6 +28,8 @@ return <Image image={snap.image} />
 | `scale` | `number?` | 像素 scale 因子,默认为设备主屏 scale。 |
 | `mapStyle` | `MapStyleSpec?` | 与 `<Map mapStyle>` 完全同形,默认 `{ style: "standard" }`。 |
 | `appearance` | `"light" \| "dark"?` | 渲染色调。 |
+| `overlays` | `SnapshotOverlay[]?` | 画到图上的路线、区域、圆。见[叠加层与标注](#叠加层与标注)。 |
+| `annotations` | `SnapshotAnnotation[]?` | 画在图片最上层的标注 pin。 |
 
 ### `MapSnapshot`
 
@@ -66,6 +68,71 @@ return <ZStack>
 const thumb = snap.image.preparingThumbnail({ width: 160, height: 100 })
 const pngBase64 = await thumb?.toPNGBase64String()
 ```
+
+---
+
+## 叠加层与标注
+
+传 `overlays` 和 `annotations`,就能把地理内容直接烘焙进图片 — 不用手算坐标、也不用叠额外的
+`<Image>`。这是把路线变成图片的最简方式。
+
+当你**同时省略** `region` 和 `camera` 时,快照会**自动取景**框住所有 overlay 和 annotation,
+于是路线转图片变成一行:
+
+```tsx
+const { routes } = await MapDirections.calculate({
+  source: { latitude: 31.2304, longitude: 121.4737 },
+  destination: { latitude: 31.2197, longitude: 121.4453 },
+})
+
+const snap = await MapSnapshotter.take({
+  size: { width: 320, height: 200 },
+  // 不给 region/camera:地图自动框住整条路线。
+  overlays: [
+    { type: "polyline", coordinates: routes[0].coordinates, strokeColor: "systemBlue", lineWidth: 5 },
+  ],
+  annotations: [
+    { coordinate: routes[0].coordinates[0], tintColor: "systemGreen", glyph: "figure.walk" },
+    { coordinate: routes[0].coordinates.at(-1)!, tintColor: "systemRed", title: "Destination" },
+  ],
+})
+
+return <Image image={snap.image} />
+```
+
+### 叠加层(overlays)
+
+每个 overlay 是三种形状之一。颜色接受任意 `Color` 字符串(`"#RRGGBB"`、`"rgb(...)"`、
+`"systemBlue"` 等)。
+
+| 形状 | 字段 | 说明 |
+|---|---|---|
+| `"polyline"` | `coordinates`、`strokeColor?`、`lineWidth?` | 至少 2 个点。默认描边=系统蓝、宽度 `4`。 |
+| `"polygon"` | `coordinates`、`strokeColor?`、`fillColor?`、`lineWidth?` | 至少 3 个顶点,自动闭合。`fillColor` 默认取描边色的半透明版。 |
+| `"circle"` | `center`、`radius`(米)、`strokeColor?`、`fillColor?`、`lineWidth?` | 半径是地理米数,会随地图缩放。 |
+
+```tsx
+const snap = await MapSnapshotter.take({
+  size: { width: 300, height: 300 },
+  overlays: [
+    { type: "circle", center: { latitude: 31.23, longitude: 121.47 }, radius: 500, fillColor: "rgba(255,0,0,0.15)", strokeColor: "systemRed" },
+    { type: "polygon", coordinates: area, strokeColor: "systemIndigo" },
+  ],
+})
+```
+
+### 标注(annotations)
+
+标注是一个尖端指向 `coordinate` 的 pin。可选加 `glyph`(SF Symbol 名,或最多两个字符的文字)
+和 `title` 文字标签。
+
+```tsx
+annotations: [
+  { coordinate: { latitude: 31.23, longitude: 121.47 }, tintColor: "systemBlue", glyph: "star.fill", title: "Start" },
+]
+```
+
+overlay 和 annotation 都在底图之后按数组顺序绘制,annotation 永远在最上层。投影落在画面外的内容会被裁掉。
 
 ---
 

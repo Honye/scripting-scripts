@@ -1,7 +1,5 @@
 搜索快捷指令让你在 Safari 地址栏中输入「触发词 + 查询词」,直接跳转到目标站点的搜索结果——例如输入 `gh hello world`,即可跳转到 GitHub 搜索「hello world」。
 
-此功能需要 Scripting PRO。
-
 ---
 
 ## 工作方式

@@ -13,6 +13,7 @@ type EnvironmentValues = {
     colorScheme: ColorScheme;
     colorSchemeContrast: ColorSchemeContrast;
     displayScale: number;
+    dynamicTypeSize: DynamicTypeSize;
     horizontalSizeClass: UserInterfaceSizeClass | null;
     verticalSizeClass: UserInterfaceSizeClass | null;
     dismiss: () => void;
@@ -136,6 +137,13 @@ The current LiveActivity size, similar to SwiftUI's `activityFamily`, used to de
 
 Type: `'expanded' | 'inline'`
 The current TabView bottom accessory placement, similar to SwiftUI's `tabViewBottomAccessoryPlacement`.
+
+---
+
+### 16. dynamicTypeSize
+
+Type: `DynamicTypeSize`
+The current Dynamic Type size of the view hierarchy, reflecting the user's preferred text size. One of `"xSmall"`, `"small"`, `"medium"`, `"large"`, `"xLarge"`, `"xxLarge"`, `"xxxLarge"`, or the accessibility sizes `"accessibility1"` … `"accessibility5"`. Use it to adapt layouts (e.g. switch to a vertical stack) when the user picks an accessibility text size.
 
 ---
 

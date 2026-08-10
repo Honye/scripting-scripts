@@ -1,7 +1,5 @@
 `Spotlight` 允许脚本把自己的资源加入系统 Spotlight 索引。用户点击其中一条搜索结果后，Scripting 会运行同一脚本项目里的 `spotlight.tsx` 文件。
 
-Spotlight 索引功能需要 Scripting PRO。
-
 ## 添加索引
 
 ```ts

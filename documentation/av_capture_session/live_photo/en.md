@@ -85,3 +85,7 @@ If you pass a codec that the device doesn't list in `availableLivePhotoVideoCode
   ```
 
   This pairs them into one PHAsset; Photos.app shows the long-press "Live" animation on it. The first call triggers the system Photo Library permission prompt. **Do not** substitute `result.image.toJPEGData()` for `result.photoFileURL` — the re-encoded JPEG loses the Live Photo asset identifier and PhotoKit rejects the pairing.
+
+## Already have a video instead of a camera?
+
+If your source is a file rather than a live capture — a screen recording, a downloaded clip, a video from the library — you don't need a capture session at all. `LivePhoto.createFromVideo(...)` builds a valid pair from any local video; see the *Live Photo from a video* page.

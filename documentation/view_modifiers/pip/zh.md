@@ -7,6 +7,19 @@ PiP 适用于以下典型场景：
 * 音频 / 视频播放的辅助 UI
 * 应用进入后台后仍需持续展示的轻量信息视图
 
+### 可用环境
+
+PiP 运行在主 App 内，因此只有在主 App 中渲染界面的入口才能使用：
+
+| 入口文件 | `Script.env` | PiP |
+| --- | --- | --- |
+| `index.tsx` | `"index"` | ✅ |
+| `intent.tsx` | `"intent"` | ✅ |
+| `home_screen_default_ui.tsx` | `"home_screen"` | ✅ |
+| 小组件、实时活动、App Intents、Spotlight、助手工具 | — | ❌ |
+
+在不支持的环境中，`pip` 修饰符会被忽略 —— 表现为 PiP 窗口始终不出现。
+
 ---
 
 ## 一、PiPProps API 定义

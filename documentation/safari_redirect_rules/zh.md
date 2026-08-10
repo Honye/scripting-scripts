@@ -1,7 +1,5 @@
 重定向规则会在 Safari 中自动改写页面地址,把你带到另一个地址——例如把所有 `www.reddit.com` 页面跳转到 `old.reddit.com`,或把移动版站点跳转到桌面版。
 
-此功能需要 Scripting PRO。
-
 ---
 
 ## 工作方式

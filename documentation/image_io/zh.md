@@ -45,10 +45,20 @@ type ImageMetadata = {
   gps?: Record<string, any>   // GPS 键，如 Latitude / Longitude / LatitudeRef
   tiff?: Record<string, any>
   iptc?: Record<string, any>
+  makerApple?: Record<string, any>  // Apple Maker Note，键是数字字符串
 }
 ```
 
 `exif` / `gps` / `tiff` / `iptc` 这几个字典原样沿用 Apple 的 CGImageProperties 键名（`gps.Latitude`、`exif.DateTimeOriginal` ......）。
+
+`makerApple` 是 Apple Maker Note，键为数字字符串。最常用到的是 `'17'`——实况照片的 asset identifier，静态图靠它与配对的 `.mov` 关联：
+
+```ts
+const meta = await ImageIO.readMetadata("/path/to/live.heic")
+console.log(meta.makerApple?.["17"])   // 例如 "9F1C...-...."
+```
+
+它也可以写入，但通常不需要你手动写——要生成合规的实况照片资源对，请用 `LivePhoto.createFromVideo`，不要自己拼 identifier。只有带 EXIF Maker Note 的容器（jpeg / heic）能承载它。
 
 ---
 
@@ -88,4 +98,5 @@ await ImageIO.writeImage({
 * **`image` 会丢原元数据。** `UIImage` 是解码后的 bitmap。要保留文件原有 EXIF/GPS，请用 `source` 变体而不是 `image`。
 * **`quality` 只对 jpeg / heic 生效**，png / tiff / gif 忽略。
 * **HEIC 编码** 需要设备/模拟器支持 HEVC 图片编码器；老模拟器上 HEIC 可能失败——若 `writeImage` reject 可降级到 jpeg。
-* **键名是原始 CGImageProperties 键。** 写 `exif` / `gps` / `tiff` / `iptc` 时用 Apple 的键名（如 `Latitude`、`LatitudeRef`、`DateTimeOriginal`）。
+* **键名是原始 CGImageProperties 键。** 写 `exif` / `gps` / `tiff` / `iptc` 时用 Apple 的键名（如 `Latitude`、`LatitudeRef`、`DateTimeOriginal`）。`makerApple` 的键是数字字符串（`'17'` 等）。
+* **`makerApple` 需要支持 Maker Note 的容器。** 只有 jpeg / heic 能保住它，写进 png / tiff / gif 会被静默丢弃。

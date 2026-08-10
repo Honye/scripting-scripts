@@ -581,6 +581,110 @@ const thumb = image?.preparingThumbnail({ width: 120, height: 120 })
 
 ---
 
+## 颜色提取
+
+`UIImage` 可以直接从像素读取颜色。所有取色方法都返回 `RGBAColor`：
+
+```ts
+type RGBAColor = {
+  red: number    // 0..1
+  green: number  // 0..1
+  blue: number   // 0..1
+  alpha: number  // 0..1
+  hex: string    // "#RRGGBBAA"——可直接当作 Color 使用
+}
+```
+
+### averageColor()
+
+返回整图的平均色；无法读取时返回 `null`。
+
+```ts
+const image = UIImage.fromFile("/path/to/photo.jpg")
+const avg = image?.averageColor()
+
+// hex 字符串本身就是合法的 Color，可直接使用：
+<VStack background={avg?.hex}>...</VStack>
+```
+
+### dominantColors(count?)
+
+返回图像的主色，按占比从高到低排序，每项带该颜色覆盖的比例。`count` 默认 `5`（限制在 1–16）。分析前会先降采样，因此即使大图也很快。
+
+```ts
+type DominantColor = {
+  color: RGBAColor
+  fraction: number   // 0..1——该颜色在图像中的占比
+}
+
+const palette = image?.dominantColors(6) ?? []
+for (const { color, fraction } of palette) {
+  console.log(color.hex, Math.round(fraction * 100) + "%")
+}
+```
+
+### pixelColor(x, y)
+
+读取单个像素的颜色；坐标越界时返回 `null`。
+
+> 坐标以**像素**为单位（`像素 = 点 × scale`）。从文件、二进制或 URL 载入的图像 scale 通常为 `1`，此时像素与点一致；`@2x` / `@3x` 资源或 SF Symbol 则不同。
+
+```ts
+const color = image?.pixelColor(10, 20)
+```
+
+### getPixelData()
+
+返回原始 RGBA 像素缓冲（每通道 8 位、straight alpha、行主序、原点左上）及其像素尺寸。`data` 长度为 `width × height × 4` 字节。
+
+```ts
+const px = image?.getPixelData()
+if (px) {
+  const bytes = px.data.toUint8Array()
+  // 像素 (x, y)：bytes[(y * px.width + x) * 4 + 0..3] = R, G, B, A
+}
+```
+
+---
+
+## 图像变换
+
+每个变换都返回新的 `UIImage`，原图不变。
+
+### croppedTo(rect)
+
+按**点**坐标（与 `width` / `height` 同空间）裁剪图像。rect 会被 clamp 到图像范围；与图像无交集时返回 `null`。
+
+```ts
+const topLeft = image?.croppedTo({ x: 0, y: 0, width: 100, height: 100 })
+```
+
+### rotated(degrees)
+
+按 `degrees` 顺时针旋转图像，画布扩展以容纳整张旋转后的图。
+
+```ts
+const turned = image?.rotated(90)
+```
+
+### blurred(radius)
+
+返回高斯模糊后的副本，`radius` 越大模糊越强。
+
+```ts
+const soft = image?.blurred(8)
+```
+
+### grayscale()
+
+返回去色（灰度）副本。
+
+```ts
+const mono = image?.grayscale()
+```
+
+---
+
 ## 总结
 
 `UIImage` 是 Scripting 脚本环境中图像操作的核心类，具备以下特性：

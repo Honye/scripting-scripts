@@ -266,11 +266,45 @@ All file operations are limited to directories exposed by `Scripting.FileManager
 
 ---
 
+## `Scripting.tabs`
+
+Use `@grant Scripting.tabs` (or `@grant Scripting.*`) to enumerate and switch the real open Safari tabs.
+
+This is different from `GM.getTabs`, which is a per-script storage bus that only returns data your own script saved with `GM.saveTab` — it does not list real tabs or their URLs. `Scripting.tabs` returns the actual open tabs.
+
+### Methods
+
+```ts
+const tabs = await Scripting.tabs.query()        // all open tabs
+const current = await Scripting.tabs.getCurrent() // the tab this script runs in, or null
+await Scripting.tabs.activate(tabs[0].id)         // switch focus to an already-open tab
+```
+
+Each tab is a `ScriptingTabInfo`:
+
+```ts
+interface ScriptingTabInfo {
+  id: number | null
+  url: string
+  title: string
+  active: boolean
+  index: number
+  windowId: number
+  pinned: boolean
+}
+```
+
+To open a new tab use `GM.openInTab(url)`; to close a tab use `GM.closeTab(id)` with an id from `query()`. `Scripting.tabs.activate()` only switches focus and never opens a new tab. On a single Safari window, `activate()` selects the tab; across separate windows it selects the tab within its own window.
+
+> **Privacy:** A script granted `Scripting.tabs` can read the URL and title of **every** open tab, not just the page it runs in. Only grant it to scripts you trust. Userscripts run only for PRO users, require the Scripting extension to be allowed on the page, and must declare this grant explicitly.
+
+---
+
 ## Installed Scripts
 
-Safari's extension popup can install userscripts from the current page or from a URL. Installed scripts can be enabled, disabled, updated, or deleted in the popup and in Tools > Development > Safari Browser Scripts.
+Safari's extension popup can install userscripts from the current page or from a URL. Installed scripts can be enabled, disabled, updated, or deleted in the popup and in More > Development > Safari Browser Scripts.
 
-Use the Tools page to inspect:
+Use the More page to inspect:
 
 - Installed userscripts.
 - GM storage JSON files.
