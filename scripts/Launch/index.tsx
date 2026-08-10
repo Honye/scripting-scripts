@@ -25,6 +25,7 @@ import {
   Widget,
   ZStack,
   useEffect,
+  useMemo,
   useObservable,
   useState
 } from 'scripting'
@@ -44,16 +45,23 @@ import {
   migrateAppItem
 } from './constants'
 import { ITunesApp, SearchSheet } from './SearchSheet'
+import {
+  pruneButtonCode,
+  readButtonCode,
+  runButtonById,
+  runButtonCode,
+  saveButtonCode
+} from './buttonCode'
 
 function FolderNameEditor({
   folder,
   onSave
 }: {
   folder?: Folder
-  onSave: (name: string, icon: string) => void
+  onSave: (name: string, icon?: string) => void
 }) {
   const [name, setName] = useState(folder?.name ?? '')
-  const [icon, setIcon] = useState(folder?.icon ?? 'folder.fill')
+  const [icon, setIcon] = useState(folder?.icon ?? '')
   const dismiss = Navigation.useDismiss()
 
   return (
@@ -61,10 +69,18 @@ function FolderNameEditor({
       <Section>
         <TextField title="Folder Name" value={name} onChanged={setName} />
       </Section>
-      <Section header={<Text>Appearance</Text>}>
+      <Section
+        header={<Text>Appearance</Text>}
+        footer={<Text>Leave the icon empty to use a plain folder.</Text>}
+      >
         <HStack>
           <Text>Icon (SF Symbol)</Text>
-          <TextField title="Icon" value={icon} onChanged={setIcon} />
+          <TextField
+            title="Icon"
+            prompt="Optional"
+            value={icon}
+            onChanged={setIcon}
+          />
           <FolderIconView icon={icon} />
         </HStack>
       </Section>
@@ -73,7 +89,7 @@ function FolderNameEditor({
           title="Save"
           action={() => {
             if (name.trim()) {
-              onSave(name.trim(), icon.trim() || 'folder.fill')
+              onSave(name.trim(), icon.trim() || undefined)
               dismiss()
             }
           }}
@@ -337,6 +353,7 @@ function FolderDetail({
   allApps,
   folders,
   onUpdateApp,
+  onSyncFolderApps,
   onDeleteFolder,
   onRenameFolder,
   onUpdateFolderStyle
@@ -345,13 +362,36 @@ function FolderDetail({
   allApps: AppItem[]
   folders: Folder[]
   onUpdateApp: (item: AppItem) => void
+  onSyncFolderApps: (folderId: string, items: AppItem[]) => void
   onDeleteFolder: (id: string) => void
-  onRenameFolder: (id: string, name: string, icon: string) => void
+  onRenameFolder: (id: string, name: string, icon?: string) => void
   onUpdateFolderStyle: (id: string, style: FolderStyle | undefined) => void
 }) {
-  const folderApps = allApps.filter(a => a.folderIds?.includes(folder.id))
+  // The rows are a filtered view of the global list, but `ForEach` needs its
+  // own observable to drive drag-to-reorder, so keep a local copy and mirror
+  // every edit back into the global list.
+  const folderApps = useObservable<AppItem[]>(() =>
+    allApps.filter(a => a.folderIds?.includes(folder.id))
+  )
   const otherApps = allApps.filter(a => !a.folderIds?.includes(folder.id))
   const dismiss = Navigation.useDismiss()
+
+  // Drag-to-reorder and swipe-to-delete are applied by `ForEach` to the local
+  // array, so push the result back into the global list.
+  useEffect(() => {
+    onSyncFolderApps(folder.id, folderApps.value)
+  }, [folderApps.value])
+
+  useEffect(() => {
+    const next = allApps.filter(a => a.folderIds?.includes(folder.id))
+    const current = folderApps.value
+    // Reordering here already pushed the same array upwards, so this only
+    // fires for changes made elsewhere (app edited, added to the folder, ...).
+    if (next.length === current.length && next.every((a, i) => a === current[i])) {
+      return
+    }
+    folderApps.setValue(next)
+  }, [allApps])
 
   return (
     <List
@@ -396,47 +436,18 @@ function FolderDetail({
     >
       <Section>
         <ForEach
-          count={folderApps.length}
-          itemBuilder={index => {
-            const item = folderApps[index]
-            return (
-              <NavigationLink
-                key={item.id}
-                destination={
-                  <AppEditor item={item} folders={folders} onSave={onUpdateApp} />
-                }
-              >
-                <HStack>
-                  <AppIconView
-                    icon={item.icon}
-                    iconType={item.iconType}
-                    color={item.color}
-                  />
-                  <VStack alignment="leading">
-                    <Text font={16}>{item.name}</Text>
-                    <Text font={12} opacity={0.6} lineLimit={1}>
-                      {item.mode === 'bundleId'
-                        ? (item.bundleId ?? '')
-                        : item.url}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </NavigationLink>
-            )
-          }}
-          onDelete={(indices) => {
-            indices.forEach(index => {
-              const item = folderApps[index]
-              if (item) {
-                onUpdateApp({
-                  ...item,
-                  folderIds: (item.folderIds ?? []).filter(
-                    id => id !== folder.id
-                  )
-                })
+          data={folderApps}
+          editActions="all"
+          builder={item => (
+            <NavigationLink
+              key={item.id}
+              destination={
+                <AppEditor item={item} folders={folders} onSave={onUpdateApp} />
               }
-            })
-          }}
+            >
+              <AppRow item={item} />
+            </NavigationLink>
+          )}
         />
         <NavigationLink
           destination={
@@ -507,10 +518,14 @@ function AppEditor({
   initialFolderIds?: string[]
   onSave: (item: AppItem) => void
 }) {
+  const [id] = useState(() => item?.id ?? Math.random().toString(36).slice(2))
   const [name, setName] = useState(item?.name ?? '')
-  const [mode, setMode] = useState<'url' | 'bundleId'>(item?.mode ?? 'url')
+  const [mode, setMode] = useState<'url' | 'bundleId' | 'script'>(
+    item?.mode ?? 'url'
+  )
   const [url, setUrl] = useState(item?.url ?? '')
   const [bundleId, setBundleId] = useState(item?.bundleId ?? '')
+  const [runInWidget, setRunInWidget] = useState(item?.runInWidget !== false)
   const [icon, setIcon] = useState(item?.icon ?? 'app')
   const [iconType, setIconType] = useState<
     'symbol' | 'image' | 'transparent_image'
@@ -530,9 +545,24 @@ function AppEditor({
   const [searchOpen, setSearchOpen] = useState(false)
   const dismiss = Navigation.useDismiss()
 
-  function toggleFolder(id: string) {
+  const codeController = useMemo(
+    () =>
+      new EditorController({
+        ext: 'js',
+        content: readButtonCode(id)
+      }),
+    []
+  )
+
+  useEffect(() => {
+    return () => codeController.dispose()
+  }, [codeController])
+
+  function toggleFolder(folderId: string) {
     setFolderIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      prev.includes(folderId)
+        ? prev.filter(x => x !== folderId)
+        : [...prev, folderId]
     )
   }
 
@@ -593,10 +623,17 @@ function AppEditor({
         <Picker
           title="Launch Mode"
           value={mode}
-          onChanged={(v: string) => setMode(v as 'url' | 'bundleId')}
+          onChanged={(v: string) => {
+            const next = v as 'url' | 'bundleId' | 'script'
+            setMode(next)
+            if (next === 'script' && icon === 'app' && iconType === 'symbol') {
+              setIcon('bolt.fill')
+            }
+          }}
         >
           <Text tag="url">URL Scheme</Text>
           <Text tag="bundleId">Bundle ID</Text>
+          <Text tag="script">Custom Script</Text>
         </Picker>
         {mode === 'bundleId' ? (
           <TextField
@@ -604,10 +641,54 @@ function AppEditor({
             value={bundleId}
             onChanged={setBundleId}
           />
-        ) : (
+        ) : mode === 'script' ? null : (
           <TextField title="URL Scheme" value={url} onChanged={setUrl} />
         )}
       </Section>
+
+      {mode === 'script' && (
+        <Section
+          header={<Text>Custom Code</Text>}
+          footer={
+            <Text>
+              Plain JavaScript, top-level await supported. With "Run in Widget"
+              on, the code runs inside the widget extension where there is no UI
+              host — prefer Notification or side effects over Dialog there.
+              Deleting this app also deletes its code.
+            </Text>
+          }
+        >
+          <Button
+            title="Edit Code"
+            systemImage="chevron.left.forwardslash.chevron.right"
+            action={() => {
+              codeController.present({
+                navigationTitle: name || 'Button Code',
+                fullscreen: true
+              })
+            }}
+          />
+          <Button
+            title="Run"
+            systemImage="play.fill"
+            action={async () => {
+              const code = codeController.content
+              saveButtonCode(id, code)
+              try {
+                await runButtonCode(code, { item, env: Script.env })
+              } catch (e) {
+                console.error(e)
+                await Dialog.alert({ title: 'Run failed', message: String(e) })
+              }
+            }}
+          />
+          <Toggle
+            title="Run in Widget"
+            value={runInWidget}
+            onChanged={setRunInWidget}
+          />
+        </Section>
+      )}
 
       <Section header={<Text>Appearance</Text>}>
         <Picker
@@ -685,12 +766,16 @@ function AppEditor({
         <Button
           title="Save"
           action={() => {
+            if (mode === 'script') {
+              saveButtonCode(id, codeController.content)
+            }
             onSave({
-              id: item?.id ?? Math.random().toString(36).slice(2),
+              id,
               name,
               mode,
               url,
               bundleId,
+              runInWidget,
               icon,
               iconType,
               color: color as unknown as string,
@@ -735,6 +820,49 @@ function AppIconView({
     )
   }
   return <Image systemName={icon} foregroundStyle={color as Color} />
+}
+
+function getAppSubtitle(item: AppItem) {
+  if (item.mode === 'bundleId') return item.bundleId ?? ''
+  if (item.mode === 'script') return 'Custom Code'
+  return item.url
+}
+
+function AppRow({ item, folders }: { item: AppItem; folders?: Folder[] }) {
+  const subtitle = getAppSubtitle(item)
+  const folderNames = (item.folderIds ?? [])
+    .map(fid => folders?.find(f => f.id === fid)?.name)
+    .filter(Boolean)
+    .join(', ')
+
+  return (
+    <HStack alignment="center">
+      <AppIconView
+        icon={item.icon}
+        iconType={item.iconType}
+        color={item.color}
+      />
+      <VStack alignment="leading" spacing={2}>
+        <Text font={16}>{item.name}</Text>
+        {/* Skip the second line entirely when empty, otherwise it still takes
+            up a line and pushes the name above the icon's center. */}
+        {subtitle || folderNames ? (
+          <HStack spacing={4}>
+            {subtitle ? (
+              <Text font={12} opacity={0.6} lineLimit={1}>
+                {subtitle}
+              </Text>
+            ) : null}
+            {folderNames ? (
+              <Text font={11} foregroundStyle={'systemBlue' as Color}>
+                {folderNames}
+              </Text>
+            ) : null}
+          </HStack>
+        ) : null}
+      </VStack>
+    </HStack>
+  )
 }
 
 function App() {
@@ -790,6 +918,9 @@ function App() {
         FileManager.createDirectory(BASE_PATH)
       }
       FileManager.writeAsStringSync(FILE_PATH, JSON.stringify(apps.value))
+      // Swipe-to-delete goes straight through ForEach's edit actions, so there
+      // is no delete callback to hook — reconcile the code files here instead.
+      pruneButtonCode(apps.value.map(a => a.id))
       Widget.reloadAll()
     } catch (e) {
       console.error(e)
@@ -875,7 +1006,41 @@ function App() {
     cacheAppIcon(item)
   }
 
-  function addFolder(name: string, icon: string) {
+  // A folder shows a filtered slice of the global list, so reordering inside it
+  // rewrites that list in place: the slots the folder occupies keep their
+  // positions, only their contents get shuffled. Apps the folder no longer
+  // lists were removed from it (swipe-to-delete) and just lose the folder id.
+  function syncFolderApps(folderId: string, items: AppItem[]) {
+    const current = apps.value
+    const positions: number[] = []
+    current.forEach((a, i) => {
+      if (a.folderIds?.includes(folderId)) positions.push(i)
+    })
+
+    const remaining = new Map(positions.map(p => [current[p].id, current[p]]))
+    const kept: AppItem[] = []
+    items.forEach(item => {
+      const app = remaining.get(item.id)
+      if (app) {
+        kept.push(app)
+        remaining.delete(item.id)
+      }
+    })
+    const dropped = Array.from(remaining.values()).map(a => ({
+      ...a,
+      folderIds: (a.folderIds ?? []).filter(id => id !== folderId)
+    }))
+
+    const ordered = [...kept, ...dropped]
+    const next = [...current]
+    positions.forEach((p, i) => {
+      next[p] = ordered[i]
+    })
+    if (positions.every((p, i) => next[p] === current[p])) return
+    apps.setValue(next)
+  }
+
+  function addFolder(name: string, icon?: string) {
     setFolders([
       ...folders,
       { id: Math.random().toString(36).slice(2), name, icon }
@@ -892,7 +1057,7 @@ function App() {
     )
   }
 
-  function renameFolder(id: string, name: string, icon: string) {
+  function renameFolder(id: string, name: string, icon?: string) {
     setFolders(folders.map(f => (f.id === id ? { ...f, name, icon } : f)))
   }
 
@@ -936,31 +1101,7 @@ function App() {
                       <AppEditor item={item} folders={folders} onSave={updateApp} />
                     }
                   >
-                    <HStack>
-                      <AppIconView
-                        icon={item.icon}
-                        iconType={item.iconType}
-                        color={item.color}
-                      />
-                      <VStack alignment="leading">
-                        <Text font={16}>{item.name}</Text>
-                        <HStack spacing={4}>
-                          <Text font={12} opacity={0.6} lineLimit={1}>
-                            {item.mode === 'bundleId'
-                              ? (item.bundleId ?? '')
-                              : item.url}
-                          </Text>
-                          {item.folderIds && item.folderIds.length > 0 ? (
-                            <Text font={11} foregroundStyle={'systemBlue' as Color}>
-                              {item.folderIds
-                                .map(fid => folders.find(f => f.id === fid)?.name)
-                                .filter(Boolean)
-                                .join(', ')}
-                            </Text>
-                          ) : null}
-                        </HStack>
-                      </VStack>
-                    </HStack>
+                    <AppRow item={item} folders={folders} />
                   </NavigationLink>
                 )}
               />
@@ -982,6 +1123,7 @@ function App() {
                       allApps={apps.value}
                       folders={folders}
                       onUpdateApp={updateApp}
+                      onSyncFolderApps={syncFolderApps}
                       onDeleteFolder={deleteFolder}
                       onRenameFolder={renameFolder}
                       onUpdateFolderStyle={updateFolderStyle}
@@ -1088,6 +1230,16 @@ function App() {
   )
 }
 
-Navigation.present({
-  element: <App />
-}).finally(() => Script.exit())
+// Launched from a widget tile whose "Run in Widget" is off: run that button's
+// code headlessly and quit, without showing the launcher UI.
+const buttonId = Script.queryParameters['buttonId']
+
+if (buttonId) {
+  runButtonById(String(buttonId), { env: Script.env })
+    .catch(e => console.error(e))
+    .finally(() => Script.exit())
+} else {
+  Navigation.present({
+    element: <App />
+  }).finally(() => Script.exit())
+}

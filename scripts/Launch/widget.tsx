@@ -5,6 +5,7 @@ import {
   Image,
   Link,
   RoundedRectangle,
+  Script,
   Spacer,
   VStack,
   ZStack,
@@ -24,7 +25,7 @@ import {
   getIconCachePath,
   migrateAppItem
 } from './constants'
-import { OpenAppIntent } from './app_intents'
+import { OpenAppIntent, RunButtonIntent } from './app_intents'
 
 function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
   const size = config?.iconSize || DEFAULT_CONFIG.iconSize
@@ -129,6 +130,25 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
         )}
       </ZStack>
   )
+
+  if (item.mode === 'script') {
+    // `runInWidget` defaults to true: run the code in place, without leaving
+    // the Home Screen.
+    return item.runInWidget !== false ? (
+      <Button intent={RunButtonIntent(item.id)} buttonStyle="plain">
+        {iconContent}
+      </Button>
+    ) : (
+      <Link
+        url={Script.createRunSingleURLScheme(Script.name, {
+          buttonId: item.id
+        })}
+        buttonStyle="plain"
+      >
+        {iconContent}
+      </Link>
+    )
+  }
 
   if (useBundleId) {
     return (

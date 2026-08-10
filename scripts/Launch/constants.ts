@@ -8,6 +8,12 @@ export const FILE_PATH = Path.join(BASE_PATH, 'launcher_apps.json')
 export const CONFIG_PATH = Path.join(BASE_PATH, 'launcher_config.json')
 export const CACHE_PATH = Path.join(BASE_PATH, 'cache')
 export const FOLDERS_PATH = Path.join(BASE_PATH, 'launcher_folders.json')
+/** Directory holding the user-authored JS of "button" items, keyed by item id. */
+export const BUTTONS_PATH = Path.join(BASE_PATH, 'buttons')
+
+export function getButtonCodePath(id: string) {
+  return Path.join(BUTTONS_PATH, `${id}.js`)
+}
 
 export function getIconCachePath(url: string) {
   if (!url) return ''
@@ -32,9 +38,14 @@ export interface AppItem {
   name: string
   icon: string
   iconType?: 'symbol' | 'image' | 'transparent_image'
-  mode?: 'url' | 'bundleId'
+  mode?: 'url' | 'bundleId' | 'script'
   url: string
   bundleId?: string
+  /**
+   * For `mode === 'script'`: run the JS inside the widget extension when
+   * tapped, instead of opening the Scripting app. Defaults to `true`.
+   */
+  runInWidget?: boolean
   color: string
   /** Folders this app belongs to (an app can be in multiple folders). */
   folderIds?: string[]
