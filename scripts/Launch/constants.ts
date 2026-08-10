@@ -15,6 +15,18 @@ export function getIconCachePath(url: string) {
   return Path.join(CACHE_PATH, `${hash}.png`)
 }
 
+// Migrates legacy single-folder data (folderId) to the multi-folder format (folderIds).
+export function migrateAppItem(
+  item: AppItem & { folderId?: string }
+): AppItem {
+  const { folderId, ...rest } = item
+  const folderIds = [...(rest.folderIds ?? [])]
+  if (folderId && !folderIds.includes(folderId)) {
+    folderIds.push(folderId)
+  }
+  return { ...rest, folderIds }
+}
+
 export interface AppItem {
   id: string
   name: string
@@ -24,12 +36,23 @@ export interface AppItem {
   url: string
   bundleId?: string
   color: string
-  folderId?: string
+  /** Folders this app belongs to (an app can be in multiple folders). */
+  folderIds?: string[]
+}
+
+export interface FolderStyle {
+  iconSize?: number
+  shape?: 'rounded' | 'circle'
+  cornerRadius?: number
+  spacing?: number
+  widgetAccentedRenderingMode?: Config['widgetAccentedRenderingMode']
 }
 
 export interface Folder {
   id: string
   name: string
+  icon?: string
+  style?: FolderStyle
 }
 
 export interface Config {
@@ -41,6 +64,7 @@ export interface Config {
     | 'desaturated'
     | 'accentedDesaturated'
     | 'fullColor'
+  cornerRadius?: number
 }
 
 export const DEFAULT_CONFIG: Config = {

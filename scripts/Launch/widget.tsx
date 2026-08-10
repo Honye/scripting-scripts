@@ -20,13 +20,18 @@ import {
   FILE_PATH,
   FOLDERS_PATH,
   Folder,
-  getIconCachePath
+  FolderStyle,
+  getIconCachePath,
+  migrateAppItem
 } from './constants'
 import { OpenAppIntent } from './app_intents'
 
 function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
   const size = config?.iconSize || DEFAULT_CONFIG.iconSize
-  const radius = config?.shape === 'circle' ? size / 2 : size * 0.225
+  const radius =
+    config?.shape === 'circle'
+      ? size / 2
+      : (config?.cornerRadius ?? size * 0.225)
   const useBundleId = item.mode === 'bundleId' && !!item.bundleId
   const iconContent = (
     <ZStack>
@@ -169,6 +174,7 @@ export function LauncherWidget({
     apps = DEFAULT_APPS
   }
 
+  let folderStyle: FolderStyle | undefined
   const folderParam = Widget.parameter?.trim()
   if (folderParam) {
     try {
@@ -176,7 +182,12 @@ export function LauncherWidget({
         ? JSON.parse(FileManager.readAsStringSync(FOLDERS_PATH))
         : []
       const folder = foldersData.find(f => f.name === folderParam)
-      apps = folder ? apps.filter(a => a.folderId === folder.id) : []
+      folderStyle = folder?.style
+      apps = folder
+        ? apps.filter(a =>
+            migrateAppItem(a).folderIds?.includes(folder.id)
+          )
+        : []
     } catch (e) {
       console.error(e)
     }
@@ -189,6 +200,24 @@ export function LauncherWidget({
         ...config,
         ...configJson
       }
+    }
+  }
+
+  if (folderStyle) {
+    const base: Config = config ?? {
+      shape: DEFAULT_CONFIG.shape,
+      iconSize: DEFAULT_CONFIG.iconSize,
+      spacing: DEFAULT_CONFIG.spacing,
+      widgetAccentedRenderingMode: DEFAULT_CONFIG.widgetAccentedRenderingMode
+    }
+    config = {
+      ...base,
+      iconSize: folderStyle.iconSize ?? base.iconSize,
+      shape: folderStyle.shape ?? base.shape,
+      cornerRadius: folderStyle.cornerRadius ?? base.cornerRadius,
+      spacing: folderStyle.spacing ?? base.spacing,
+      widgetAccentedRenderingMode:
+        folderStyle.widgetAccentedRenderingMode ?? base.widgetAccentedRenderingMode
     }
   }
 

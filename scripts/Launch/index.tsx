@@ -20,6 +20,7 @@ import {
   TabView,
   Text,
   TextField,
+  Toggle,
   VStack,
   Widget,
   ZStack,
@@ -38,7 +39,9 @@ import {
   FILE_PATH,
   FOLDERS_PATH,
   Folder,
-  getIconCachePath
+  FolderStyle,
+  getIconCachePath,
+  migrateAppItem
 } from './constants'
 import { ITunesApp, SearchSheet } from './SearchSheet'
 
@@ -47,9 +50,10 @@ function FolderNameEditor({
   onSave
 }: {
   folder?: Folder
-  onSave: (name: string) => void
+  onSave: (name: string, icon: string) => void
 }) {
   const [name, setName] = useState(folder?.name ?? '')
+  const [icon, setIcon] = useState(folder?.icon ?? 'folder.fill')
   const dismiss = Navigation.useDismiss()
 
   return (
@@ -57,12 +61,19 @@ function FolderNameEditor({
       <Section>
         <TextField title="Folder Name" value={name} onChanged={setName} />
       </Section>
+      <Section header={<Text>Appearance</Text>}>
+        <HStack>
+          <Text>Icon (SF Symbol)</Text>
+          <TextField title="Icon" value={icon} onChanged={setIcon} />
+          <FolderIconView icon={icon} />
+        </HStack>
+      </Section>
       <Section>
         <Button
           title="Save"
           action={() => {
             if (name.trim()) {
-              onSave(name.trim())
+              onSave(name.trim(), icon.trim() || 'folder.fill')
               dismiss()
             }
           }}
@@ -72,39 +83,252 @@ function FolderNameEditor({
   )
 }
 
+function FolderIconView({ icon }: { icon?: string }) {
+  const punchSymbol = icon && UIImage.fromSFSymbol(icon) ? icon : ''
+  return (
+    <ZStack compositingGroup>
+      <Image
+        systemName="folder.fill"
+        font={30}
+        foregroundStyle={'systemBlue' as Color}
+      />
+      {punchSymbol ? (
+        <Image
+          systemName={punchSymbol}
+          font={13}
+          offset={{ x: 0, y: 4 }}
+          blendMode="destinationOut"
+        />
+      ) : null}
+    </ZStack>
+  )
+}
+
 function AddExistingAppView({
   apps,
   onAdd
 }: {
   apps: AppItem[]
-  onAdd: (item: AppItem) => void
+  onAdd: (items: AppItem[]) => void
 }) {
   const dismiss = Navigation.useDismiss()
+  const [selected, setSelected] = useState<Record<string, boolean>>({})
+
+  function toggle(id: string) {
+    setSelected(prev => {
+      const next = { ...prev }
+      if (next[id]) {
+        delete next[id]
+      } else {
+        next[id] = true
+      }
+      return next
+    })
+  }
+
+  const selectedItems = apps.filter(a => selected[a.id])
 
   return (
-    <List navigationTitle="Add Apps">
-      <Section>
-        {apps.map(item => (
+    <List
+      navigationTitle="Add Apps"
+      toolbar={{
+        topBarTrailing: [
           <Button
-            key={item.id}
+            key="add"
+            title={
+              selectedItems.length > 0
+                ? `Add (${selectedItems.length})`
+                : 'Add'
+            }
             action={() => {
-              onAdd(item)
+              if (selectedItems.length === 0) return
+              onAdd(selectedItems)
               dismiss()
             }}
-            buttonStyle="plain"
-          >
-            <HStack>
-              <AppIconView
-                icon={item.icon}
-                iconType={item.iconType}
-                color={item.color}
-              />
-              <Text font={16}>{item.name}</Text>
-            </HStack>
-          </Button>
-        ))}
+          />
+        ]
+      }}
+    >
+      <Section
+        footer={<Text>Select one or more apps to add to this folder.</Text>}
+      >
+        {apps.map(item => {
+          const isSelected = !!selected[item.id]
+          return (
+            <Button
+              key={item.id}
+              action={() => toggle(item.id)}
+              buttonStyle="plain"
+            >
+              <HStack>
+                <AppIconView
+                  icon={item.icon}
+                  iconType={item.iconType}
+                  color={item.color}
+                />
+                <Text font={16}>{item.name}</Text>
+                <Spacer />
+                <Image
+                  systemName={
+                    isSelected ? 'checkmark.circle.fill' : 'circle'
+                  }
+                  foregroundStyle={
+                    (isSelected ? 'systemBlue' : 'systemGray') as Color
+                  }
+                />
+              </HStack>
+            </Button>
+          )
+        })}
       </Section>
     </List>
+  )
+}
+
+function FolderSettingsView({
+  folder,
+  onUpdateFolderStyle
+}: {
+  folder: Folder
+  onUpdateFolderStyle: (id: string, style: FolderStyle | undefined) => void
+}) {
+  const [customize, setCustomize] = useState(
+    !!folder.style && Object.keys(folder.style).length > 0
+  )
+  const [fStyle, setFStyle] = useState<FolderStyle>(folder.style ?? {})
+
+  function updateStyle(patch: Partial<FolderStyle>) {
+    const next = { ...fStyle, ...patch }
+    setFStyle(next)
+    onUpdateFolderStyle(folder.id, Object.keys(next).length > 0 ? next : undefined)
+  }
+
+  function setCustomized(v: boolean) {
+    setCustomize(v)
+    if (v) {
+      setFStyle(folder.style ?? {})
+    } else {
+      onUpdateFolderStyle(folder.id, undefined)
+    }
+  }
+
+  return (
+    <Form navigationTitle="Folder Settings">
+      <Section>
+        <Toggle
+          title="Customize This Folder"
+          value={customize}
+          onChanged={setCustomized}
+        />
+      </Section>
+      {customize && (
+        <Section header={<Text>Appearance</Text>}>
+          <Stepper
+            onIncrement={() => {
+              const v = (fStyle.iconSize ?? DEFAULT_CONFIG.iconSize) + 1
+              if (v <= 100) updateStyle({ iconSize: v })
+            }}
+            onDecrement={() => {
+              const v = (fStyle.iconSize ?? DEFAULT_CONFIG.iconSize) - 1
+              if (v >= 20) updateStyle({ iconSize: v })
+            }}
+          >
+            <HStack>
+              <Text>Icon Size</Text>
+              <Spacer />
+              <Text opacity={0.5}>
+                {(fStyle.iconSize ?? DEFAULT_CONFIG.iconSize).toString()}
+              </Text>
+            </HStack>
+          </Stepper>
+          <Picker
+            title="Icon Shape"
+            value={fStyle.shape ?? DEFAULT_CONFIG.shape}
+            onChanged={(v: string) =>
+              updateStyle({ shape: v as 'rounded' | 'circle' })
+            }
+          >
+            <Text tag="rounded">Rounded Rectangle</Text>
+            <Text tag="circle">Circle</Text>
+          </Picker>
+          {(fStyle.shape ?? DEFAULT_CONFIG.shape) === 'rounded' && (
+            <Stepper
+              onIncrement={() => {
+                const base =
+                  fStyle.cornerRadius ?? DEFAULT_CONFIG.iconSize * 0.225
+                const v = base + 1
+                if (v <= 50) updateStyle({ cornerRadius: v })
+              }}
+              onDecrement={() => {
+                const base =
+                  fStyle.cornerRadius ?? DEFAULT_CONFIG.iconSize * 0.225
+                const v = base - 1
+                if (v >= 0) updateStyle({ cornerRadius: v })
+              }}
+            >
+              <HStack>
+                <Text>Corner Radius</Text>
+                <Spacer />
+                <Text opacity={0.5}>
+                  {Math.round(
+                    fStyle.cornerRadius ?? DEFAULT_CONFIG.iconSize * 0.225
+                  ).toString()}
+                </Text>
+              </HStack>
+            </Stepper>
+          )}
+          <Stepper
+            onIncrement={() => {
+              const v = (fStyle.spacing ?? DEFAULT_CONFIG.spacing) + 1
+              if (v <= 50) updateStyle({ spacing: v })
+            }}
+            onDecrement={() => {
+              const v = (fStyle.spacing ?? DEFAULT_CONFIG.spacing) - 1
+              if (v >= 0) updateStyle({ spacing: v })
+            }}
+          >
+            <HStack>
+              <Text>Spacing</Text>
+              <Spacer />
+              <Text opacity={0.5}>
+                {(fStyle.spacing ?? DEFAULT_CONFIG.spacing).toString()}
+              </Text>
+            </HStack>
+          </Stepper>
+          <Picker
+            title="Icon Rendering Mode"
+            value={
+              fStyle.widgetAccentedRenderingMode ??
+              DEFAULT_CONFIG.widgetAccentedRenderingMode
+            }
+            onChanged={(v: string) =>
+              updateStyle({
+                widgetAccentedRenderingMode:
+                  v as Config['widgetAccentedRenderingMode']
+              })
+            }
+          >
+            <Text tag="fullColor">Full Color</Text>
+            <Text tag="accented">Accented</Text>
+            <Text tag="desaturated">Desaturated</Text>
+            <Text tag="accentedDesaturated">Accented & Desaturated</Text>
+          </Picker>
+        </Section>
+      )}
+      {customize && (
+        <Section>
+          <Button
+            title="Reset to Global Settings"
+            role="destructive"
+            action={() => {
+              setCustomize(false)
+              setFStyle({})
+              onUpdateFolderStyle(folder.id, undefined)
+            }}
+          />
+        </Section>
+      )}
+    </Form>
   )
 }
 
@@ -114,17 +338,19 @@ function FolderDetail({
   folders,
   onUpdateApp,
   onDeleteFolder,
-  onRenameFolder
+  onRenameFolder,
+  onUpdateFolderStyle
 }: {
   folder: Folder
   allApps: AppItem[]
   folders: Folder[]
   onUpdateApp: (item: AppItem) => void
   onDeleteFolder: (id: string) => void
-  onRenameFolder: (id: string, name: string) => void
+  onRenameFolder: (id: string, name: string, icon: string) => void
+  onUpdateFolderStyle: (id: string, style: FolderStyle | undefined) => void
 }) {
-  const folderApps = allApps.filter(a => a.folderId === folder.id)
-  const otherApps = allApps.filter(a => a.folderId !== folder.id)
+  const folderApps = allApps.filter(a => a.folderIds?.includes(folder.id))
+  const otherApps = allApps.filter(a => !a.folderIds?.includes(folder.id))
   const dismiss = Navigation.useDismiss()
 
   return (
@@ -132,21 +358,34 @@ function FolderDetail({
       navigationTitle={folder.name}
       toolbar={{
         topBarTrailing: [
+          <EditButton key="edit" />,
           <NavigationLink
             key="rename"
             destination={
               <FolderNameEditor
                 folder={folder}
-                onSave={(name) => onRenameFolder(folder.id, name)}
+                onSave={(name, icon) => onRenameFolder(folder.id, name, icon)}
               />
             }
           >
             <Image systemName="pencil" />
           </NavigationLink>,
+          <NavigationLink
+            key="settings"
+            destination={
+              <FolderSettingsView
+                folder={folder}
+                onUpdateFolderStyle={onUpdateFolderStyle}
+              />
+            }
+          >
+            <Image systemName="gearshape" />
+          </NavigationLink>,
           <Button
             key="delete"
             title="Delete"
             systemImage="trash"
+            role="destructive"
             action={() => {
               onDeleteFolder(folder.id)
               dismiss()
@@ -156,34 +395,62 @@ function FolderDetail({
       }}
     >
       <Section>
-        {folderApps.map(item => (
-          <NavigationLink
-            key={item.id}
-            destination={
-              <AppEditor item={item} folders={folders} onSave={onUpdateApp} />
-            }
-          >
-            <HStack>
-              <AppIconView
-                icon={item.icon}
-                iconType={item.iconType}
-                color={item.color}
-              />
-              <VStack alignment="leading">
-                <Text font={16}>{item.name}</Text>
-                <Text font={12} opacity={0.6} lineLimit={1}>
-                  {item.mode === 'bundleId' ? (item.bundleId ?? '') : item.url}
-                </Text>
-              </VStack>
-            </HStack>
-          </NavigationLink>
-        ))}
+        <ForEach
+          count={folderApps.length}
+          itemBuilder={index => {
+            const item = folderApps[index]
+            return (
+              <NavigationLink
+                key={item.id}
+                destination={
+                  <AppEditor item={item} folders={folders} onSave={onUpdateApp} />
+                }
+              >
+                <HStack>
+                  <AppIconView
+                    icon={item.icon}
+                    iconType={item.iconType}
+                    color={item.color}
+                  />
+                  <VStack alignment="leading">
+                    <Text font={16}>{item.name}</Text>
+                    <Text font={12} opacity={0.6} lineLimit={1}>
+                      {item.mode === 'bundleId'
+                        ? (item.bundleId ?? '')
+                        : item.url}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </NavigationLink>
+            )
+          }}
+          onDelete={(indices) => {
+            indices.forEach(index => {
+              const item = folderApps[index]
+              if (item) {
+                onUpdateApp({
+                  ...item,
+                  folderIds: (item.folderIds ?? []).filter(
+                    id => id !== folder.id
+                  )
+                })
+              }
+            })
+          }}
+        />
         <NavigationLink
           destination={
             <AppEditor
               folders={folders}
-              initialFolderId={folder.id}
-              onSave={(item) => onUpdateApp({ ...item, folderId: folder.id })}
+              initialFolderIds={[folder.id]}
+              onSave={(item) =>
+                onUpdateApp({
+                  ...item,
+                  folderIds: item.folderIds?.includes(folder.id)
+                    ? item.folderIds
+                    : [...(item.folderIds ?? []), folder.id]
+                })
+              }
             />
           }
         >
@@ -202,8 +469,15 @@ function FolderDetail({
             destination={
               <AddExistingAppView
                 apps={otherApps}
-                onAdd={(item) =>
-                  onUpdateApp({ ...item, folderId: folder.id })
+                onAdd={(items) =>
+                  items.forEach(item =>
+                    onUpdateApp({
+                      ...item,
+                      folderIds: item.folderIds?.includes(folder.id)
+                        ? item.folderIds
+                        : [...(item.folderIds ?? []), folder.id]
+                    })
+                  )
                 }
               />
             }
@@ -225,12 +499,12 @@ function FolderDetail({
 function AppEditor({
   item,
   folders = [],
-  initialFolderId,
+  initialFolderIds,
   onSave
 }: {
   item?: AppItem
   folders?: Folder[]
-  initialFolderId?: string
+  initialFolderIds?: string[]
   onSave: (item: AppItem) => void
 }) {
   const [name, setName] = useState(item?.name ?? '')
@@ -242,11 +516,25 @@ function AppEditor({
     'symbol' | 'image' | 'transparent_image'
   >(item?.iconType ?? 'symbol')
   const [color, setColor] = useState<Color>((item?.color ?? '#007AFF') as Color)
-  const [folderId, setFolderId] = useState<string | undefined>(
-    item?.folderId ?? initialFolderId
-  )
+  const [folderIds, setFolderIds] = useState<string[]>(() => {
+    const legacy = (item as AppItem & { folderId?: string } | undefined)
+      ?.folderId
+    return Array.from(
+      new Set([
+        ...(item?.folderIds ?? []),
+        ...(legacy ? [legacy] : []),
+        ...(initialFolderIds ?? [])
+      ])
+    )
+  })
   const [searchOpen, setSearchOpen] = useState(false)
   const dismiss = Navigation.useDismiss()
+
+  function toggleFolder(id: string) {
+    setFolderIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
 
   const handleSelectApp = (app: ITunesApp) => {
     setName(app.trackName)
@@ -381,17 +669,15 @@ function AppEditor({
       </Section>
 
       {folders.length > 0 && (
-        <Section header={<Text>Folder</Text>}>
-          <Picker
-            title="Folder"
-            value={folderId ?? ''}
-            onChanged={(v: string) => setFolderId(v || undefined)}
-          >
-            <Text tag="">No Folder</Text>
-            {folders.map(f => (
-              <Text key={f.id} tag={f.id}>{f.name}</Text>
-            ))}
-          </Picker>
+        <Section header={<Text>Folders</Text>}>
+          {folders.map(f => (
+            <Toggle
+              key={f.id}
+              title={f.name}
+              value={folderIds.includes(f.id)}
+              onChanged={() => toggleFolder(f.id)}
+            />
+          ))}
         </Section>
       )}
 
@@ -408,7 +694,7 @@ function AppEditor({
               icon,
               iconType,
               color: color as unknown as string,
-              folderId
+              folderIds
             })
             dismiss()
           }}
@@ -467,7 +753,7 @@ function App() {
     try {
       if (FileManager.existsSync(FILE_PATH)) {
         const str = FileManager.readAsStringSync(FILE_PATH)
-        apps.setValue(JSON.parse(str))
+        apps.setValue((JSON.parse(str) as AppItem[]).map(migrateAppItem))
       } else {
         apps.setValue(DEFAULT_APPS)
         if (!FileManager.existsSync(BASE_PATH)) {
@@ -589,22 +875,29 @@ function App() {
     cacheAppIcon(item)
   }
 
-  function addFolder(name: string) {
+  function addFolder(name: string, icon: string) {
     setFolders([
       ...folders,
-      { id: Math.random().toString(36).slice(2), name }
+      { id: Math.random().toString(36).slice(2), name, icon }
     ])
   }
 
   function deleteFolder(id: string) {
     setFolders(folders.filter(f => f.id !== id))
     apps.setValue(
-      apps.value.map(a => (a.folderId === id ? { ...a, folderId: undefined } : a))
+      apps.value.map(a => ({
+        ...a,
+        folderIds: (a.folderIds ?? []).filter(fid => fid !== id)
+      }))
     )
   }
 
-  function renameFolder(id: string, name: string) {
-    setFolders(folders.map(f => (f.id === id ? { ...f, name } : f)))
+  function renameFolder(id: string, name: string, icon: string) {
+    setFolders(folders.map(f => (f.id === id ? { ...f, name, icon } : f)))
+  }
+
+  function updateFolderStyle(id: string, style: FolderStyle | undefined) {
+    setFolders(folders.map(f => (f.id === id ? { ...f, style } : f)))
   }
 
   return (
@@ -657,9 +950,12 @@ function App() {
                               ? (item.bundleId ?? '')
                               : item.url}
                           </Text>
-                          {item.folderId ? (
+                          {item.folderIds && item.folderIds.length > 0 ? (
                             <Text font={11} foregroundStyle={'systemBlue' as Color}>
-                              {folders.find(f => f.id === item.folderId)?.name ?? ''}
+                              {item.folderIds
+                                .map(fid => folders.find(f => f.id === fid)?.name)
+                                .filter(Boolean)
+                                .join(', ')}
                             </Text>
                           ) : null}
                         </HStack>
@@ -688,19 +984,17 @@ function App() {
                       onUpdateApp={updateApp}
                       onDeleteFolder={deleteFolder}
                       onRenameFolder={renameFolder}
+                      onUpdateFolderStyle={updateFolderStyle}
                     />
                   }
                 >
                   <HStack>
-                    <Image
-                      systemName="folder.fill"
-                      foregroundStyle={'systemBlue' as Color}
-                    />
+                    <FolderIconView icon={folder.icon} />
                     <Text>{folder.name}</Text>
                     <Spacer />
                     <Text opacity={0.5}>
                       {apps.value
-                        .filter(a => a.folderId === folder.id)
+                        .filter(a => a.folderIds?.includes(folder.id))
                         .length.toString()}
                     </Text>
                   </HStack>
