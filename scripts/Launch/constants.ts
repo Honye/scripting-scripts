@@ -88,58 +88,12 @@ export const DEFAULT_CONFIG: Config = {
 export const DEFAULT_APPS: AppItem[] = [
   {
     id: '1',
-    name: '微信',
-    icon: 'message.fill',
-    url: 'weixin://',
-    color: '#07C160'
-  },
-  {
-    id: '2',
-    name: '支付宝',
-    icon: 'yen.sign.circle.fill',
-    url: 'alipay://',
+    name: 'Scripting',
+    icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/44/19/69/441969d8-13c7-7234-01f4-2056b8e28a28/AppIcon-0-0-1x_U007epad-0-1-P3-85-220.png/100x100bb.jpg',
+    iconType: 'image',
+    mode: 'bundleId',
+    url: '',
+    bundleId: 'com.scripting.ios',
     color: '#1677FF'
-  },
-  {
-    id: '3',
-    name: '设置',
-    icon: 'gear',
-    url: 'App-Prefs:root',
-    color: '#8E8E93'
-  },
-  {
-    id: '4',
-    name: '扫一扫',
-    icon: 'qrcode.viewfinder',
-    url: 'weixin://scanqrcode',
-    color: '#07C160'
-  },
-  {
-    id: '5',
-    name: '付款码',
-    icon: 'barcode.viewfinder',
-    url: 'alipayqr://platformapi/startapp?saId=10000007',
-    color: '#1677FF'
-  },
-  {
-    id: '6',
-    name: '乘车码',
-    icon: 'bus.fill',
-    url: 'alipayqr://platformapi/startapp?saId=200011235',
-    color: '#1677FF'
-  },
-  {
-    id: '7',
-    name: '日历',
-    icon: 'calendar',
-    url: 'calshow://',
-    color: '#FF3B30'
-  },
-  {
-    id: '8',
-    name: '照片',
-    icon: 'photo.fill',
-    url: 'photos-redirect://',
-    color: '#FF2D55'
   }
 ]
