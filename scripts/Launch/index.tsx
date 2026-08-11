@@ -2,6 +2,7 @@ import {
   Button,
   Color,
   ColorPicker,
+  ContentUnavailableView,
   Device,
   EditButton,
   ForEach,
@@ -151,6 +152,7 @@ function AddExistingAppView({
 }) {
   const dismiss = Navigation.useDismiss()
   const [selected, setSelected] = useState<Record<string, boolean>>({})
+  const [query, setQuery] = useState('')
 
   function toggle(id: string) {
     setSelected(prev => {
@@ -164,11 +166,27 @@ function AddExistingAppView({
     })
   }
 
+  // Counted over the whole list, not the filtered view, so picks made under one
+  // query survive changing or clearing it.
   const selectedItems = apps.filter(a => selected[a.id])
+  const visible = filterApps(apps, query)
 
   return (
     <List
       navigationTitle="Add Apps"
+      searchable={{
+        value: query,
+        onChanged: setQuery,
+        prompt: 'Search Apps'
+      }}
+      overlay={
+        visible.length === 0 ? (
+          <ContentUnavailableView
+            title="No Results"
+            systemImage="magnifyingglass"
+          />
+        ) : undefined
+      }
       toolbar={{
         topBarTrailing: [
           <Button
@@ -190,7 +208,7 @@ function AddExistingAppView({
       <Section
         footer={<Text>Select one or more apps to add to this folder.</Text>}
       >
-        {apps.map(item => {
+        {visible.map(item => {
           const isSelected = !!selected[item.id]
           return (
             <Button
@@ -851,6 +869,21 @@ function getAppSubtitle(item: AppItem) {
   return item.url
 }
 
+// Search matches the app name and the subtitle line shown in the row
+// (bundleId / url / Custom Code) — the text the user actually sees.
+function matchesQuery(item: AppItem, query: string) {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  return (
+    item.name.toLowerCase().includes(q) ||
+    getAppSubtitle(item).toLowerCase().includes(q)
+  )
+}
+
+function filterApps(items: AppItem[], query: string) {
+  return query.trim() ? items.filter(item => matchesQuery(item, query)) : items
+}
+
 function AppRow({ item, folders }: { item: AppItem; folders?: Folder[] }) {
   const subtitle = getAppSubtitle(item)
   const folderNames = (item.folderIds ?? [])
@@ -898,6 +931,8 @@ function App() {
     Config['widgetAccentedRenderingMode']
   >(DEFAULT_CONFIG.widgetAccentedRenderingMode)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [query, setQuery] = useState('')
+  const visibleApps = useObservable<AppItem[]>([])
   const dismiss = Navigation.useDismiss()
 
   useEffect(() => {
@@ -1102,9 +1137,65 @@ function App() {
     )
   }
 
+  // The rows always come from `visibleApps`, never from `apps` directly: the
+  // list keeps its edit actions while filtering only if `ForEach` owns the
+  // array it renders, and swapping which observable is bound (as the query
+  // comes and goes) leaves the list rendering a stale array.
+  const sameItems = (a: AppItem[], b: AppItem[]) =>
+    a.length === b.length && a.every((item, i) => item === b[i])
+
+  useEffect(() => {
+    const next = filterApps(apps.value, query)
+    if (sameItems(next, visibleApps.value)) return
+    visibleApps.setValue(next)
+  }, [apps.value, query])
+
+  // Drag-to-reorder and swipe-to-delete are applied by `ForEach` to its own
+  // array, so push the result back into the global list.
+  useEffect(() => {
+    if (!isLoaded) return
+    const rows = visibleApps.value
+    if (sameItems(rows, filterApps(apps.value, query))) return
+    if (!query.trim()) {
+      // Unfiltered: the rows *are* the global list, reordering included.
+      apps.setValue(rows)
+      return
+    }
+    // Filtered: reordering is off, so a row that vanished was deleted. Apps
+    // the query didn't match keep their places untouched.
+    const kept = new Set(rows.map(a => a.id))
+    apps.setValue(
+      apps.value.filter(a => kept.has(a.id) || !matchesQuery(a, query))
+    )
+  }, [visibleApps.value])
+
+  const appRow = (item: AppItem) => (
+    <NavigationLink
+      key={item.id}
+      destination={
+        <AppEditor item={item} folders={folders.value} onSave={updateApp} />
+      }
+    >
+      <AppRow item={item} folders={folders.value} />
+    </NavigationLink>
+  )
+
   const appsList = (
     <List
       navigationTitle="Apps"
+      searchable={{
+        value: query,
+        onChanged: setQuery,
+        prompt: 'Search Apps'
+      }}
+      overlay={
+        query.trim() && filterApps(apps.value, query).length === 0 ? (
+          <ContentUnavailableView
+            title="No Results"
+            systemImage="magnifyingglass"
+          />
+        ) : undefined
+      }
       toolbar={{
         topBarLeading: [
           <Button title="Close" systemImage="xmark" action={dismiss} />
@@ -1126,18 +1217,9 @@ function App() {
     >
       <Section>
         <ForEach
-          data={apps}
-          editActions="all"
-          builder={(item) => (
-            <NavigationLink
-              key={item.id}
-              destination={
-                <AppEditor item={item} folders={folders.value} onSave={updateApp} />
-              }
-            >
-              <AppRow item={item} folders={folders.value} />
-            </NavigationLink>
-          )}
+          data={visibleApps}
+          editActions={query.trim() ? 'delete' : 'all'}
+          builder={appRow}
         />
       </Section>
     </List>
