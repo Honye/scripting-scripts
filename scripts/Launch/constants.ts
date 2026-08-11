@@ -63,6 +63,8 @@ export interface Folder {
   id: string
   name: string
   icon?: string
+  /** Custom folder color (hex string). Falls back to system blue when unset. */
+  color?: string
   style?: FolderStyle
 }
 
