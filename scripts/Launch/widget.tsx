@@ -4,10 +4,12 @@ import {
   HStack,
   Image,
   Link,
+  Rectangle,
   RoundedRectangle,
   Script,
   Spacer,
   VStack,
+  VirtualNode,
   ZStack,
   Widget,
   EnvironmentValuesReader
@@ -34,6 +36,9 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
       ? size / 2
       : (config?.cornerRadius ?? size * 0.225)
   const useBundleId = item.mode === 'bundleId' && !!item.bundleId
+  const accentedRenderingMode =
+    config?.widgetAccentedRenderingMode ||
+    DEFAULT_CONFIG.widgetAccentedRenderingMode
   const iconContent = (
     <ZStack>
         {item.iconType === 'image' ? (
@@ -52,10 +57,7 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
                     filePath={cachePath}
                     resizable
                     scaleToFill
-                    widgetAccentedRenderingMode={
-                      config?.widgetAccentedRenderingMode ||
-                      DEFAULT_CONFIG.widgetAccentedRenderingMode
-                    }
+                    widgetAccentedRenderingMode={accentedRenderingMode}
                   />
                 )
               }
@@ -64,10 +66,7 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
                   imageUrl={item.icon}
                   resizable
                   scaleToFill
-                  widgetAccentedRenderingMode={
-                    config?.widgetAccentedRenderingMode ||
-                    DEFAULT_CONFIG.widgetAccentedRenderingMode
-                  }
+                  widgetAccentedRenderingMode={accentedRenderingMode}
                 />
               )
             })()}
@@ -94,10 +93,7 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
                       resizable
                       scaleToFit
                       frame={{ width: size * 0.6, height: size * 0.6 }}
-                      widgetAccentedRenderingMode={
-                        config?.widgetAccentedRenderingMode ||
-                        DEFAULT_CONFIG.widgetAccentedRenderingMode
-                      }
+                      widgetAccentedRenderingMode={accentedRenderingMode}
                     />
                   )
                 }
@@ -107,10 +103,7 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
                     resizable
                     scaleToFit
                     frame={{ width: size * 0.6, height: size * 0.6 }}
-                    widgetAccentedRenderingMode={
-                      config?.widgetAccentedRenderingMode ||
-                      DEFAULT_CONFIG.widgetAccentedRenderingMode
-                    }
+                    widgetAccentedRenderingMode={accentedRenderingMode}
                   />
                 )
               })()
@@ -120,10 +113,7 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
                 foregroundStyle="white"
                 font={size * 0.5}
                 widgetAccentable
-                widgetAccentedRenderingMode={
-                  config?.widgetAccentedRenderingMode ||
-                  DEFAULT_CONFIG.widgetAccentedRenderingMode
-                }
+                widgetAccentedRenderingMode={accentedRenderingMode}
               />
             )}
           </Fragment>
@@ -131,38 +121,59 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
       </ZStack>
   )
 
+  // SwiftUI bug: an `Image` using the `desaturated` / `accentedDesaturated`
+  // accented rendering modes swallows taps when it is the label of a `Link` or
+  // an intent `Button`, so the tap falls through to the widget itself and just
+  // opens Scripting. Work around it by keeping the icon out of the tappable
+  // view and overlaying a clear hit target that carries the link/intent.
+  const needsOverlayHitTarget =
+    accentedRenderingMode === 'desaturated' ||
+    accentedRenderingMode === 'accentedDesaturated'
+
+  const tappable = (wrap: (content: VirtualNode) => VirtualNode) =>
+    needsOverlayHitTarget ? (
+      <ZStack frame={{ width: size, height: size }}>
+        {iconContent}
+        {wrap(<Rectangle fill="clear" frame={{ width: size, height: size }} />)}
+      </ZStack>
+    ) : (
+      wrap(iconContent)
+    )
+
   if (item.mode === 'script') {
     // `runInWidget` defaults to true: run the code in place, without leaving
     // the Home Screen.
-    return item.runInWidget !== false ? (
-      <Button intent={RunButtonIntent(item.id)} buttonStyle="plain">
-        {iconContent}
-      </Button>
-    ) : (
-      <Link
-        url={Script.createRunSingleURLScheme(Script.name, {
-          buttonId: item.id
-        })}
-        buttonStyle="plain"
-      >
-        {iconContent}
-      </Link>
-    )
+    return item.runInWidget !== false
+      ? tappable(content => (
+          <Button intent={RunButtonIntent(item.id)} buttonStyle="plain">
+            {content}
+          </Button>
+        ))
+      : tappable(content => (
+          <Link
+            url={Script.createRunSingleURLScheme(Script.name, {
+              buttonId: item.id
+            })}
+            buttonStyle="plain"
+          >
+            {content}
+          </Link>
+        ))
   }
 
   if (useBundleId) {
-    return (
+    return tappable(content => (
       <Button intent={OpenAppIntent(item.bundleId!)} buttonStyle="plain">
-        {iconContent}
+        {content}
       </Button>
-    )
+    ))
   }
 
-  return (
+  return tappable(content => (
     <Link url={item.url} buttonStyle="plain">
-      {iconContent}
+      {content}
     </Link>
-  )
+  ))
 }
 
 export function LauncherWidget({
