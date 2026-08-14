@@ -37,6 +37,8 @@ import { copySymbolAsPng, exportSymbolPngFile, PNG_PRESETS } from '../utils/png'
 
 const CELL = 56
 const ICON = 24
+/** 主应用不分页，一次铺完整个分类 */
+const APP_PAGE_SIZE = 0
 
 /** 旧版本把来源直接存成了中文「内置」，这里一并兼容 */
 function isBuiltinSource(source: string): boolean {
@@ -190,6 +192,8 @@ export function LibraryView() {
 
   const renderMenu = useCallback(
     (name: string) => (
+      // 键盘那边这份菜单是扁平的（节点数按格子数成倍放大），
+      // App 不受这个约束，尺寸子菜单保留
       <Group>
         <Text>{name}</Text>
         <Button
@@ -201,23 +205,23 @@ export function LibraryView() {
           }}
         />
         <Menu title={t.copyPng} systemImage="photo">
-          {PNG_PRESETS.map(p => (
+          {PNG_PRESETS.map(preset => (
             <Button
-              key={p.label}
-              title={p.label}
+              key={`copy-${preset.label}`}
+              title={preset.label}
               action={async () => {
-                await copySymbolAsPng(name, { size: p.size })
+                await copySymbolAsPng(name, { size: preset.size })
                 markUsed(name)
               }}
             />
           ))}
         </Menu>
-        <Menu title={t.exportPng} systemImage="square.and.arrow.down">
-          {PNG_PRESETS.map(p => (
+        <Menu title={t.exportPngShort} systemImage="square.and.arrow.down">
+          {PNG_PRESETS.map(preset => (
             <Button
-              key={p.label}
-              title={p.label}
-              action={() => exportSymbolPngFile(name, { size: p.size })}
+              key={`export-${preset.label}`}
+              title={preset.label}
+              action={() => exportSymbolPngFile(name, { size: preset.size })}
             />
           ))}
         </Menu>
@@ -325,7 +329,7 @@ export function LibraryView() {
             iconSize={ICON}
             spacing={10}
             padding={16}
-            pageSize={200}
+            pageSize={APP_PAGE_SIZE}
             emptyTitle={query.trim() ? t.noMatchingSymbols : t.emptyCategoryApp}
             emptyIcon="magnifyingglass"
             onTap={openDetail}

@@ -3,7 +3,6 @@ import {
   Group,
   HStack,
   Image,
-  Menu,
   ProgressView,
   Spacer,
   Text,
@@ -17,11 +16,16 @@ import { t } from '../constants/i18n'
 import { FG_PRIMARY, FG_SECONDARY, KEY_BACKGROUND } from '../constants/theme'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
 import { getKeyboardLayout } from '../utils/layout'
-import { copySymbolAsPng, PNG_PRESETS } from '../utils/png'
+import { copySymbolAsPng } from '../utils/png'
 import { CategorySidebar, describeCategory } from './CategorySidebar'
 import { SymbolGrid } from './SymbolGrid'
 
 const layout = getKeyboardLayout()
+
+/** 键盘里一页渲染多少个格子。调大会明显拖慢切分类时的第一帧 */
+const KEYBOARD_PAGE_SIZE = 60
+/** 长按「复制 PNG」用的尺寸（pt），实际是 2 倍像素 */
+const KEYBOARD_PNG_SIZE = 128
 
 export function SFKeyboardView() {
   const {
@@ -31,24 +35,19 @@ export function SFKeyboardView() {
     category,
     setCategory,
     query,
-    setQuery,
+    setSearchFromInput,
+    clearSearch,
+    pendingDelete,
     visibleSymbols,
     categoryKeys,
     markUsed,
   } = useSymbolLibrary()
 
   const [toast, setToast] = useState<string | null>(null)
-  /** 搜索词是从输入框取的，插入时需要先把它删掉 */
-  const [pendingDelete, setPendingDelete] = useState(0)
 
   const flash = useCallback((message: string) => {
     setToast(message)
     setTimeout(() => setToast(null), 1400)
-  }, [])
-
-  const resetSearch = useCallback(() => {
-    setQuery('')
-    setPendingDelete(0)
   }, [])
 
   /** 取光标前的最后一个词作为搜索关键字 */
@@ -59,10 +58,9 @@ export function SFKeyboardView() {
       flash(t.noWordBeforeCursor)
       return
     }
-    setQuery(token)
-    setPendingDelete(token.length)
+    setSearchFromInput(token)
     HapticFeedback.selection()
-  }, [flash])
+  }, [flash, setSearchFromInput])
 
   const insertSymbol = useCallback(
     async (name: string) => {
@@ -72,9 +70,9 @@ export function SFKeyboardView() {
       }
       CustomKeyboard.insertText(name)
       markUsed(name)
-      resetSearch()
+      clearSearch()
     },
-    [pendingDelete, markUsed, resetSearch]
+    [pendingDelete, markUsed, clearSearch]
   )
 
   const copyName = useCallback(
@@ -87,30 +85,25 @@ export function SFKeyboardView() {
   )
 
   const copyPng = useCallback(
-    async (name: string, size: number) => {
+    async (name: string) => {
       flash(t.renderingPng)
-      const ok = await copySymbolAsPng(name, { size })
+      const ok = await copySymbolAsPng(name, { size: KEYBOARD_PNG_SIZE })
       markUsed(name)
       flash(ok ? t.pngCopiedHint : t.pngFailed)
     },
     [markUsed, flash]
   )
 
+  // 长按菜单是给每一个格子都构造一份的，节点数按页大小成倍放大，
+  // 所以这里保持扁平：不套二级 Menu，PNG 尺寸固定，
+  // 需要选尺寸去 App 的图标详情页。
   const renderMenu = useCallback(
     (name: string) => (
       <Group>
         <Text>{name}</Text>
         <Button title={t.insertName} systemImage="text.cursor" action={() => insertSymbol(name)} />
         <Button title={t.copyName} systemImage="doc.on.doc" action={() => copyName(name)} />
-        <Menu title={t.copyPng} systemImage="photo">
-          {PNG_PRESETS.map(preset => (
-            <Button
-              key={preset.label}
-              title={preset.label}
-              action={() => copyPng(name, preset.size)}
-            />
-          ))}
-        </Menu>
+        <Button title={t.copyPng} systemImage="photo" action={() => copyPng(name)} />
       </Group>
     ),
     [insertSymbol, copyName, copyPng]
@@ -139,7 +132,7 @@ export function SFKeyboardView() {
         ) : null}
         <Spacer />
         {query.trim() ? (
-          <Button action={resetSearch} buttonStyle="plain">
+          <Button action={clearSearch} buttonStyle="plain">
             <Image
               systemName="xmark.circle.fill"
               font={14}
@@ -174,7 +167,7 @@ export function SFKeyboardView() {
             width={layout.sidebarWidth}
             spacing={layout.spacing}
             onSelect={key => {
-              resetSearch()
+              // setCategory 一次性把分类和搜索状态都改掉，只触发一次重渲染
               setCategory(key)
               HapticFeedback.selection()
             }}
@@ -190,7 +183,7 @@ export function SFKeyboardView() {
               iconSize={layout.iconSize}
               spacing={layout.spacing}
               columns={layout.columns}
-              pageSize={120}
+              pageSize={KEYBOARD_PAGE_SIZE}
               emptyTitle={
                 query.trim()
                   ? t.noMatchingSymbols

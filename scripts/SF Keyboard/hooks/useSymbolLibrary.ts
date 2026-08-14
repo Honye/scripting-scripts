@@ -13,16 +13,33 @@ import {
 /** 稳定的空数组，避免每次都造新对象 */
 const EMPTY: string[] = []
 
+/**
+ * 分类、搜索词、待删除长度放在同一个 state 里。
+ * 切分类时这三样要一起变，拆成三个 useState 的话一次交互会触发多次
+ * 重渲染，每次都要重建网格 —— 这是「点了分类之后卡一下」的来源之一。
+ */
+type Selection = {
+  category: string
+  query: string
+  /** 搜索词是从输入框取的，插入图标名之前要先删掉这么多个字符 */
+  pendingDelete: number
+}
+
 export type SymbolLibraryState = {
   library: SymbolLibrary | null
   loading: boolean
   recents: string[]
   /** 当前分类 key */
   category: string
+  /** 切换分类：会一并清掉搜索状态，只触发一次更新 */
   setCategory: (key: string) => void
   /** 搜索词，为空表示不在搜索状态 */
   query: string
-  setQuery: (q: string) => void
+  setQuery: (query: string) => void
+  /** 从输入框取词搜索 */
+  setSearchFromInput: (token: string) => void
+  clearSearch: () => void
+  pendingDelete: number
   /** 当前应该展示的图标列表 */
   visibleSymbols: string[]
   /** 分类顺序（含「最近」） */
@@ -37,9 +54,14 @@ export function useSymbolLibrary(initialCategory?: string): SymbolLibraryState {
   const [library, setLibrary] = useState<SymbolLibrary | null>(null)
   const [loading, setLoading] = useState(true)
   const [recents, setRecents] = useState<string[]>(() => getRecents())
-  const [category, setCategory] = useState(initialCategory ?? RECENTS_KEY)
-  const [query, setQuery] = useState('')
+  const [selection, setSelection] = useState<Selection>(() => ({
+    category: initialCategory ?? RECENTS_KEY,
+    query: '',
+    pendingDelete: 0,
+  }))
   const [reloadToken, setReloadToken] = useState(0)
+
+  const { category, query, pendingDelete } = selection
 
   useEffect(() => {
     let cancelled = false
@@ -58,6 +80,34 @@ export function useSymbolLibrary(initialCategory?: string): SymbolLibraryState {
       cancelled = true
     }
   }, [reloadToken])
+
+  const setCategory = useCallback((key: string) => {
+    setSelection(prev =>
+      prev.category === key && prev.query === '' && prev.pendingDelete === 0
+        ? prev
+        : { category: key, query: '', pendingDelete: 0 }
+    )
+  }, [])
+
+  const setQuery = useCallback((next: string) => {
+    setSelection(prev =>
+      prev.query === next && prev.pendingDelete === 0
+        ? prev
+        : { ...prev, query: next, pendingDelete: 0 }
+    )
+  }, [])
+
+  const setSearchFromInput = useCallback((token: string) => {
+    setSelection(prev => ({ ...prev, query: token, pendingDelete: token.length }))
+  }, [])
+
+  const clearSearch = useCallback(() => {
+    setSelection(prev =>
+      prev.query === '' && prev.pendingDelete === 0
+        ? prev
+        : { ...prev, query: '', pendingDelete: 0 }
+    )
+  }, [])
 
   const categoryKeys = useMemo(() => {
     if (!library) return [RECENTS_KEY]
@@ -110,6 +160,9 @@ export function useSymbolLibrary(initialCategory?: string): SymbolLibraryState {
     setCategory,
     query,
     setQuery,
+    setSearchFromInput,
+    clearSearch,
+    pendingDelete,
     visibleSymbols,
     categoryKeys,
     markUsed,

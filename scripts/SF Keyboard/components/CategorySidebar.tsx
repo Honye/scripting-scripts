@@ -39,7 +39,13 @@ export function CategorySidebar({
   onSelect,
 }: CategorySidebarProps) {
   return (
-    <ScrollView axes="vertical" scrollIndicator="hidden" frame={{ width }}>
+    // 只有 29 个固定高度的项，用普通 VStack 就够，不需要 LazyVStack；
+    // 明确给出 maxHeight 让 ScrollView 有确定的视口高度
+    <ScrollView
+      axes="vertical"
+      scrollIndicator="hidden"
+      frame={{ width, maxHeight: 'infinity' }}
+    >
       <VStack spacing={spacing} padding={{ vertical: spacing }}>
         {keys.map(key => {
           const { label, icon } = describeCategory(key, library, true)
