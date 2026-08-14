@@ -3,7 +3,6 @@ import {
   Group,
   HStack,
   Image,
-  LazyVGrid,
   Menu,
   Navigation,
   ProgressView,
@@ -19,7 +18,7 @@ import {
 import { RECENTS_KEY } from '../constants/categories'
 import { BUILTIN_SOURCE, pick, t } from '../constants/i18n'
 import { describeCategory } from '../components/CategorySidebar'
-import { SymbolCell } from '../components/SymbolCell'
+import { SymbolGrid } from '../components/SymbolGrid'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
 import type { ImportMode } from '../utils/library'
 import {
@@ -170,6 +169,17 @@ export function LibraryView() {
 
   // ------------------------------------------------------------ 单个图标
 
+  const openDetail = useCallback(
+    (name: string) => {
+      markUsed(name)
+      Navigation.present({
+        element: <SymbolDetailView name={name} />,
+        modalPresentationStyle: 'pageSheet',
+      })
+    },
+    [markUsed]
+  )
+
   const renderMenu = useCallback(
     (name: string) => (
       <Group>
@@ -300,45 +310,19 @@ export function LibraryView() {
             </ScrollView>
           )}
 
-          {/* 图标网格 */}
-          {visibleSymbols.length === 0 ? (
-            <VStack spacing={8} frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}>
-              <Image systemName="magnifyingglass" font={28} foregroundStyle="secondaryLabel" />
-              <Text font="footnote" foregroundStyle="secondaryLabel">
-                {query.trim() ? t.noMatchingSymbols : t.emptyCategoryApp}
-              </Text>
-            </VStack>
-          ) : (
-            <ScrollView axes="vertical">
-              <LazyVGrid
-                spacing={10}
-                columns={[{ size: { type: 'adaptive', min: CELL, max: CELL + 16 }, spacing: 10 }]}
-                padding={{ horizontal: 16, vertical: 10 }}
-              >
-                {visibleSymbols.slice(0, 1500).map(name => (
-                  <SymbolCell
-                    key={name}
-                    name={name}
-                    size={CELL}
-                    iconSize={ICON}
-                    onTap={() => {
-                      markUsed(name)
-                      Navigation.present({
-                        element: <SymbolDetailView name={name} />,
-                        modalPresentationStyle: 'pageSheet',
-                      })
-                    }}
-                    menuItems={renderMenu(name)}
-                  />
-                ))}
-              </LazyVGrid>
-              {visibleSymbols.length > 1500 ? (
-                <Text font="caption" foregroundStyle="secondaryLabel" padding={16}>
-                  {t.showingFirstApp(1500, visibleSymbols.length)}
-                </Text>
-              ) : null}
-            </ScrollView>
-          )}
+          {/* 图标网格：分页渲染，见 SymbolGrid 的说明 */}
+          <SymbolGrid
+            symbols={visibleSymbols}
+            cellSize={CELL}
+            iconSize={ICON}
+            spacing={10}
+            padding={16}
+            pageSize={200}
+            emptyTitle={query.trim() ? t.noMatchingSymbols : t.emptyCategoryApp}
+            emptyIcon="magnifyingglass"
+            onTap={openDetail}
+            renderMenu={renderMenu}
+          />
         </VStack>
       )}
     </VStack>

@@ -57,11 +57,8 @@ export const t = {
 
   searching: (query: string) => pick(`搜索「${query}」`, `Search “${query}”`),
   copied: (name: string) => pick(`已复制「${name}」`, `Copied “${name}”`),
-  showingFirst: (shown: number, total: number) =>
-    pick(
-      `仅显示前 ${shown} 个，共 ${total} 个，用搜索缩小范围`,
-      `Showing the first ${shown} of ${total} — search to narrow it down`
-    ),
+  showMore: (remaining: number) =>
+    pick(`显示更多（还有 ${remaining} 个）`, `Show more (${remaining} left)`),
 
   // -------------------------------------------------- App
   searchPrompt: pick('搜索图标名，如 wifi、arrow.up', 'Search symbol names, e.g. wifi, arrow.up'),
@@ -117,6 +114,4 @@ export const t = {
   overview: (total: number, source: string) =>
     pick(`${total} 个图标 · 来源：${source}`, `${total} symbols · source: ${source}`),
   emptyCategoryApp: pick('这个分类还没有图标', 'No symbols in this category yet'),
-  showingFirstApp: (shown: number, total: number) =>
-    pick(`仅显示前 ${shown} 个，共 ${total} 个`, `Showing the first ${shown} of ${total}`),
 }

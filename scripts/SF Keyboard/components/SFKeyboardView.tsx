@@ -17,6 +17,7 @@ import { t } from '../constants/i18n'
 import {
   FG_PRIMARY,
   FG_SECONDARY,
+  KB_BACKGROUND,
   KEY_BACKGROUND,
 } from '../constants/theme'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
@@ -128,6 +129,7 @@ export function SFKeyboardView() {
     <VStack
       spacing={0}
       frame={{ height: layout.totalHeight }}
+      background={KB_BACKGROUND}
     >
       {/* 顶部信息条 */}
       <HStack spacing={8} padding={{ horizontal: 10 }} frame={{ height: layout.headerHeight }}>
@@ -197,6 +199,7 @@ export function SFKeyboardView() {
               iconSize={layout.iconSize}
               spacing={layout.spacing}
               columns={layout.columns}
+              pageSize={120}
               emptyTitle={
                 query.trim()
                   ? t.noMatchingSymbols

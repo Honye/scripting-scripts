@@ -10,6 +10,9 @@ import {
   symbolsOfCategory,
 } from '../utils/library'
 
+/** 稳定的空数组，避免每次都造新对象 */
+const EMPTY: string[] = []
+
 export type SymbolLibraryState = {
   library: SymbolLibrary | null
   loading: boolean
@@ -69,11 +72,22 @@ export function useSymbolLibrary(initialCategory?: string): SymbolLibraryState {
     }
   }, [library])
 
-  const visibleSymbols = useMemo(() => {
-    if (!library) return []
-    if (query.trim()) return searchSymbols(library, query)
-    return symbolsOfCategory(library, category, recents)
-  }, [library, category, query, recents])
+  // 拆成三段是为了让数组的「身份」尽量稳定：
+  // 每次点图标都会更新 recents，如果 visibleSymbols 跟着变，
+  // 网格就会被判定成新数据而重建（还会把分页重置回第一页）。
+  const searchResults = useMemo(
+    () => (library && query.trim() ? searchSymbols(library, query) : EMPTY),
+    [library, query]
+  )
+  const categorySymbols = useMemo(
+    () => (library ? symbolsOfCategory(library, category, EMPTY) : EMPTY),
+    [library, category]
+  )
+  const visibleSymbols = query.trim()
+    ? searchResults
+    : category === RECENTS_KEY
+      ? recents
+      : categorySymbols
 
   const markUsed = useCallback((name: string) => {
     setRecents(addRecent(name))

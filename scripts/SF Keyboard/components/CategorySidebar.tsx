@@ -48,7 +48,10 @@ export function CategorySidebar({
           const foreground = active ? FG_ACCENT : FG_PRIMARY
           return (
             <Button key={key} action={() => onSelect(key)} buttonStyle="plain">
-              <ZStack frame={{ width: width - spacing * 2, height: 46 }}>
+              <ZStack
+                frame={{ width: width - spacing * 2, height: 46 }}
+                contentShape={{ type: 'rect', cornerRadius: 9, style: 'continuous' }}
+              >
                 {active ? (
                   <RoundedRectangle cornerRadius={9} fill={SIDEBAR_ACTIVE_BACKGROUND} />
                 ) : null}
