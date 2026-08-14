@@ -1,7 +1,6 @@
 /**
  * SF Keyboard - 共享类型定义
  */
-import type { Color } from 'scripting'
 
 /** 单个分类的元信息 */
 export type CategoryMeta = {
@@ -46,16 +45,4 @@ export type ParseResult = {
   total: number
   /** 使用的解析器名称 */
   format: string
-}
-
-/** 复制 PNG 时的配置 */
-export type PngExportOptions = {
-  /** 边长（pt） */
-  size: number
-  /** 渲染倍率 */
-  scale: number
-  /** 前景色 */
-  color: Color
-  /** 背景色，null 表示透明 */
-  background: Color | null
 }

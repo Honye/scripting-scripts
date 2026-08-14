@@ -5,6 +5,7 @@ import {
   Image,
   Menu,
   Navigation,
+  NavigationStack,
   ProgressView,
   ScrollView,
   Spacer,
@@ -19,6 +20,7 @@ import { RECENTS_KEY } from '../constants/categories'
 import { BUILTIN_SOURCE, pick, t } from '../constants/i18n'
 import { describeCategory } from '../components/CategorySidebar'
 import { SymbolGrid } from '../components/SymbolGrid'
+import { SymbolDetailView } from './SymbolDetailView'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
 import type { ImportMode } from '../utils/library'
 import {
@@ -173,11 +175,17 @@ export function LibraryView() {
     (name: string) => {
       markUsed(name)
       Navigation.present({
-        element: <SymbolDetailView name={name} />,
+        // 必须包一层 NavigationStack：不然 navigationTitle / toolbar 都不会渲染，
+        // 「完成」和复制按钮会整个消失
+        element: (
+          <NavigationStack>
+            <SymbolDetailView name={name} library={library} />
+          </NavigationStack>
+        ),
         modalPresentationStyle: 'pageSheet',
       })
     },
-    [markUsed]
+    [markUsed, library]
   )
 
   const renderMenu = useCallback(
@@ -325,71 +333,6 @@ export function LibraryView() {
           />
         </VStack>
       )}
-    </VStack>
-  )
-}
-
-// ---------------------------------------------------------------- 详情
-
-function SymbolDetailView({ name }: { name: string }) {
-  const dismiss = Navigation.useDismiss()
-  const [status, setStatus] = useState<string | null>(null)
-
-  const flash = (message: string) => {
-    setStatus(message)
-    setTimeout(() => setStatus(null), 1500)
-  }
-
-  return (
-    <VStack
-      spacing={18}
-      padding={24}
-      navigationTitle={name}
-      navigationBarTitleDisplayMode="inline"
-      toolbar={{
-        topBarTrailing: [<Button title={t.done} action={dismiss} />],
-      }}
-    >
-      <Image systemName={name} font={72} foregroundStyle="label" />
-      <Text font="headline" multilineTextAlignment="center">
-        {name}
-      </Text>
-      <HStack spacing={12}>
-        <Button
-          title={t.copyName}
-          systemImage="doc.on.doc"
-          buttonStyle="bordered"
-          action={async () => {
-            await Pasteboard.setString(name)
-            flash(t.nameCopied)
-          }}
-        />
-        <Menu title={t.copyPng} systemImage="photo" buttonStyle="bordered">
-          {PNG_PRESETS.map(p => (
-            <Button
-              key={p.label}
-              title={p.label}
-              action={async () => {
-                const ok = await copySymbolAsPng(name, { size: p.size })
-                flash(ok ? t.pngCopied : t.renderFailed)
-              }}
-            />
-          ))}
-        </Menu>
-      </HStack>
-      <Menu title={t.exportPng} systemImage="square.and.arrow.down" buttonStyle="bordered">
-        {PNG_PRESETS.map(p => (
-          <Button
-            key={p.label}
-            title={p.label}
-            action={() => exportSymbolPngFile(name, { size: p.size })}
-          />
-        ))}
-      </Menu>
-      <Text font="footnote" foregroundStyle="secondaryLabel">
-        {status ?? ' '}
-      </Text>
-      <Spacer />
     </VStack>
   )
 }

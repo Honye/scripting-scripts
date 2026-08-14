@@ -14,12 +14,7 @@ import {
 } from 'scripting'
 import { RECENTS_KEY } from '../constants/categories'
 import { t } from '../constants/i18n'
-import {
-  FG_PRIMARY,
-  FG_SECONDARY,
-  KB_BACKGROUND,
-  KEY_BACKGROUND,
-} from '../constants/theme'
+import { FG_PRIMARY, FG_SECONDARY, KEY_BACKGROUND } from '../constants/theme'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
 import { getKeyboardLayout } from '../utils/layout'
 import { copySymbolAsPng, PNG_PRESETS } from '../utils/png'
@@ -126,11 +121,7 @@ export function SFKeyboardView() {
     : describeCategory(category, library).label
 
   return (
-    <VStack
-      spacing={0}
-      frame={{ height: layout.totalHeight }}
-      background={KB_BACKGROUND}
-    >
+    <VStack spacing={0} frame={{ height: layout.totalHeight }}>
       {/* 顶部信息条 */}
       <HStack spacing={8} padding={{ horizontal: 10 }} frame={{ height: layout.headerHeight }}>
         <Text

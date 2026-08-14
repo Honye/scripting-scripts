@@ -32,6 +32,7 @@ export const t = {
   copyName: pick('复制名称', 'Copy Name'),
   copyPng: pick('复制 PNG', 'Copy PNG'),
   exportPng: pick('导出 PNG 文件', 'Export PNG File'),
+  exportPngShort: pick('导出 PNG', 'Export PNG'),
   insertName: pick('输入名称', 'Insert Name'),
   builtinSource: pick('内置', 'Built-in'),
 
@@ -114,4 +115,39 @@ export const t = {
   overview: (total: number, source: string) =>
     pick(`${total} 个图标 · 来源：${source}`, `${total} symbols · source: ${source}`),
   emptyCategoryApp: pick('这个分类还没有图标', 'No symbols in this category yet'),
+
+  // -------------------------------------------------- 图标详情
+  tabInfo: pick('信息', 'Info'),
+  tabStyle: pick('主题', 'Style'),
+  tabAnimation: pick('动画', 'Animation'),
+
+  renderingMode: pick('渲染模式', 'Rendering'),
+  gradient: pick('渐变', 'Gradient'),
+  variable: pick('可变', 'Variable'),
+  variableValue: pick('可变值', 'Variable Value'),
+  colorLabel: pick('颜色', 'Color'),
+  opacity: pick('不透明度', 'Opacity'),
+  background: pick('背景', 'Background'),
+
+  animationKind: pick('动画', 'Animation'),
+  animationVariant: pick('变体', 'Variant'),
+  repeatPlay: pick('重复播放', 'Repeat'),
+  repeatOnce: pick('一次', 'Once'),
+  repeatContinuous: pick('循环', 'Continuous'),
+  speed: pick('速度', 'Speed'),
+  play: pick('播放', 'Play'),
+  reset: pick('还原', 'Reset'),
+
+  nameLabel: pick('名称', 'Name'),
+  categoriesLabel: pick('所属分类', 'Categories'),
+  variantsLabel: pick('同族变体', 'Variants'),
+  variantHint: pick('点按可切换预览', 'Tap to preview'),
+  styleSharedHint: pick(
+    '这套主题会一起用在键盘长按复制的 PNG 上。',
+    'The keyboard’s long-press PNG copy uses this style too.'
+  ),
+  animationVariantHint: pick(
+    '方向和作用范围在 SwiftUI 里是同一个维度，没有「向上 + 按图层」这种组合，所以合成了一个选项。',
+    'SwiftUI exposes direction and scope as one axis — there is no “up + by layer” combination, so they share one picker.'
+  ),
 }
