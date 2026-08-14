@@ -7,6 +7,8 @@
  * 通常是二进制格式，因此两种都要支持。
  */
 
+import { pick } from '../constants/i18n'
+
 export type PlistValue =
   | string
   | number
@@ -36,7 +38,7 @@ export function isBinaryPlist(bytes: Uint8Array): boolean {
 // ---------------------------------------------------------------- 二进制
 
 function parseBinaryPlist(bytes: Uint8Array): PlistValue {
-  if (bytes.length < 40) throw new Error('二进制 plist 太短')
+  if (bytes.length < 40) throw new Error(pick('二进制 plist 太短', 'Binary plist is too short'))
 
   const view = new DataView(
     bytes.buffer,
@@ -61,7 +63,7 @@ function parseBinaryPlist(bytes: Uint8Array): PlistValue {
     const cached = cache[index]
     if (cached !== undefined) return cached
     const start = offsets[index]
-    if (start == null) throw new Error(`对象 ${index} 越界`)
+    if (start == null) throw new Error(pick(`对象 ${index} 越界`, `Object ${index} is out of bounds`))
 
     const marker = bytes[start]
     const type = marker >> 4
@@ -147,7 +149,12 @@ function parseBinaryPlist(bytes: Uint8Array): PlistValue {
         break
       }
       default:
-        throw new Error(`不支持的 plist 对象类型 0x${type.toString(16)}`)
+        throw new Error(
+          pick(
+            `不支持的 plist 对象类型 0x${type.toString(16)}`,
+            `Unsupported plist object type 0x${type.toString(16)}`
+          )
+        )
     }
 
     cache[index] = value
@@ -281,7 +288,7 @@ export function parseXmlPlist(text: string): PlistValue {
   }
 
   const first = nextToken()
-  if (!first) throw new Error('plist 内容为空')
+  if (!first) throw new Error(pick('plist 内容为空', 'plist content is empty'))
   return parseValue(first)
 }
 

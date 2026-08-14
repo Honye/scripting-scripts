@@ -1,4 +1,5 @@
 import { CATEGORIES, UNCATEGORIZED_KEY, findCategoryKeyByLabel } from '../constants/categories'
+import { pick } from '../constants/i18n'
 import type { ParseResult } from '../types'
 import { parsePlist, type PlistValue } from './plist'
 
@@ -263,7 +264,7 @@ export async function parseSourceFile(path: string): Promise<ParseResult> {
   if (lower.endsWith('.plist')) {
     const data = await FileManager.readAsData(path)
     const bytes = data.toUint8Array()
-    if (!bytes) throw new Error('文件为空')
+    if (!bytes) throw new Error(pick('文件为空', 'The file is empty'))
     return parsePlistSource(bytes)
   }
 
@@ -283,7 +284,7 @@ export async function parseSourceFile(path: string): Promise<ParseResult> {
   if (head.startsWith('<?xml') || head.startsWith('<plist')) {
     const data = await FileManager.readAsData(path)
     const bytes = data.toUint8Array()
-    if (!bytes) throw new Error('文件为空')
+    if (!bytes) throw new Error(pick('文件为空', 'The file is empty'))
     return parsePlistSource(bytes)
   }
   if (head.includes(',')) return parseCsvSource(text)

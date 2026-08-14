@@ -1,4 +1,5 @@
 import { Image, LazyVGrid, ScrollView, Text, VStack, VirtualNode } from 'scripting'
+import { t } from '../constants/i18n'
 import { FG_SECONDARY } from '../constants/theme'
 import { SymbolCell } from './SymbolCell'
 
@@ -71,7 +72,7 @@ export function SymbolGrid({
           padding={8}
           foregroundStyle={FG_SECONDARY}
         >
-          仅显示前 {visible.length} 个，共 {symbols.length} 个，用搜索缩小范围
+          {t.showingFirst(visible.length, symbols.length)}
         </Text>
       ) : null}
     </ScrollView>

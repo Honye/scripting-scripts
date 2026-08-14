@@ -27,10 +27,10 @@
     "es" : "",
     "ru" : "",
     "ja" : "",
-    "zh" : "",
+    "zh" : "SF Symbols 图标键盘：按分类浏览，点按输入图标名，长按复制 PNG。支持导入 SF Symbols.app 的数据更新图标列表。",
     "pt" : "",
     "de" : "",
-    "en" : ""
+    "en" : "An SF Symbols keyboard: browse by category, tap to insert a symbol name, long press to copy a PNG. Import SF Symbols.app metadata to update the list."
   },
   "color" : "rgba(128, 138, 148,1)",
   "version" : "1.0.0",
@@ -41,5 +41,5 @@
     "name" : "Jackie"
   },
   "entry" : "index.tsx",
-  "description" : null
+  "description" : "An SF Symbols keyboard: browse by category, tap to insert a symbol name, long press to copy a PNG."
 }

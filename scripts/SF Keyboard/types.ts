@@ -11,6 +11,8 @@ export type CategoryMeta = {
   label: string
   /** 英文名称（导入 SF Symbols 官方数据时用于匹配） */
   labelEn: string
+  /** 英文短名，给键盘侧栏这种窄位置用 */
+  labelEnShort: string
   /** 侧栏展示用的 SF Symbol 图标 */
   icon: string
 }

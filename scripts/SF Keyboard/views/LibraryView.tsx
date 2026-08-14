@@ -17,6 +17,7 @@ import {
   useState,
 } from 'scripting'
 import { RECENTS_KEY } from '../constants/categories'
+import { BUILTIN_SOURCE, pick, t } from '../constants/i18n'
 import { describeCategory } from '../components/CategorySidebar'
 import { SymbolCell } from '../components/SymbolCell'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
@@ -35,6 +36,11 @@ import { copySymbolAsPng, exportSymbolPngFile, PNG_PRESETS } from '../utils/png'
 
 const CELL = 56
 const ICON = 24
+
+/** 旧版本把来源直接存成了中文「内置」，这里一并兼容 */
+function isBuiltinSource(source: string): boolean {
+  return source === BUILTIN_SOURCE || source === '内置'
+}
 
 export function LibraryView() {
   const {
@@ -74,7 +80,7 @@ export function LibraryView() {
       }
       if (!paths.length) return
 
-      setBusy('正在解析源文件…')
+      setBusy(t.parsingSource)
       try {
         const results = []
         for (const path of paths) {
@@ -83,38 +89,30 @@ export function LibraryView() {
         const merged = mergeResults(results)
         if (merged.total === 0) {
           await Dialog.alert({
-            title: '没有解析到图标',
-            message:
-              '请确认文件内容是符号名清单。支持：\n' +
-              '· SF Symbols.app 的 symbol_categories.plist / name_availability.plist\n' +
-              '· JSON（数组或 分类 -> 名称数组）\n' +
-              '· CSV（name,category）\n' +
-              '· 纯文本（每行一个名称）',
+            title: t.nothingParsedTitle,
+            message: t.nothingParsedMessage,
           })
           return
         }
 
         const sourceName = paths
           .map(p => p.split('/').pop() || p)
-          .join('、')
+          .join(pick('、', ', '))
         const next = applyImport(library, merged, mode, sourceName)
 
-        setBusy('正在校验图标是否可用…')
+        setBusy(t.checkingAvailability)
         const { library: validated, removed } = validateLibrary(next)
         await saveLibrary(validated)
         markValidated()
         setLibrary(validated)
 
         await Dialog.alert({
-          title: '导入完成',
-          message:
-            `解析到 ${merged.total} 条记录，` +
-            `当前系统可用 ${countSymbols(validated)} 个图标` +
-            (removed > 0 ? `，已过滤 ${removed} 个不可用的名称。` : '。'),
+          title: t.importDoneTitle,
+          message: t.importDoneMessage(merged.total, countSymbols(validated), removed),
         })
       } catch (e) {
         console.error(e)
-        await Dialog.alert({ title: '导入失败', message: String(e) })
+        await Dialog.alert({ title: t.importFailedTitle, message: String(e) })
       } finally {
         setBusy(null)
       }
@@ -124,12 +122,12 @@ export function LibraryView() {
 
   const restoreBuiltin = useCallback(async () => {
     const ok = await Dialog.confirm({
-      title: '恢复内置图标列表',
-      message: '导入的数据会被清除，恢复为脚本自带的分类和图标。',
-      confirmLabel: '恢复',
+      title: t.restoreConfirmTitle,
+      message: t.restoreConfirmMessage,
+      confirmLabel: t.restoreConfirmLabel,
     })
     if (!ok) return
-    setBusy('正在恢复…')
+    setBusy(t.restoring)
     try {
       await deleteLibraryFile()
       const fresh = buildBuiltinLibrary()
@@ -146,15 +144,15 @@ export function LibraryView() {
 
   const revalidate = useCallback(async () => {
     if (!library) return
-    setBusy('正在校验…')
+    setBusy(t.validating)
     try {
       const { library: validated, removed } = validateLibrary(library)
       await saveLibrary(validated)
       markValidated()
       setLibrary(validated)
       await Dialog.alert({
-        title: '校验完成',
-        message: `可用图标 ${countSymbols(validated)} 个${removed > 0 ? `，移除 ${removed} 个` : ''}。`,
+        title: t.validateDoneTitle,
+        message: t.validateDoneMessage(countSymbols(validated), removed),
       })
     } finally {
       setBusy(null)
@@ -177,14 +175,14 @@ export function LibraryView() {
       <Group>
         <Text>{name}</Text>
         <Button
-          title="复制名称"
+          title={t.copyName}
           systemImage="doc.on.doc"
           action={async () => {
             await Pasteboard.setString(name)
             markUsed(name)
           }}
         />
-        <Menu title="复制 PNG" systemImage="photo">
+        <Menu title={t.copyPng} systemImage="photo">
           {PNG_PRESETS.map(p => (
             <Button
               key={p.label}
@@ -196,7 +194,7 @@ export function LibraryView() {
             />
           ))}
         </Menu>
-        <Menu title="导出 PNG 文件" systemImage="square.and.arrow.down">
+        <Menu title={t.exportPng} systemImage="square.and.arrow.down">
           {PNG_PRESETS.map(p => (
             <Button
               key={p.label}
@@ -215,31 +213,31 @@ export function LibraryView() {
   return (
     <VStack
       spacing={0}
-      navigationTitle="SF Keyboard"
+      navigationTitle={t.appTitle}
       navigationBarTitleDisplayMode="inline"
       searchable={{
         value: query,
         onChanged: setQuery,
-        prompt: '搜索图标名，如 wifi、arrow.up',
+        prompt: t.searchPrompt,
       }}
       toolbar={{
         topBarTrailing: [
-          <Menu title="更多" systemImage="ellipsis.circle">
+          <Menu title={t.more} systemImage="ellipsis.circle">
             <Button
-              title="导入并合并"
+              title={t.importMerge}
               systemImage="square.and.arrow.down.on.square"
               action={() => runImport('merge')}
             />
             <Button
-              title="导入并覆盖"
+              title={t.importReplace}
               systemImage="arrow.triangle.2.circlepath"
               action={() => runImport('replace')}
             />
-            <Button title="重新校验可用性" systemImage="checkmark.seal" action={revalidate} />
-            <Button title="导出当前列表" systemImage="square.and.arrow.up" action={exportLibrary} />
-            <Button title="清空最近使用" systemImage="clock.badge.xmark" action={clearRecentSymbols} />
+            <Button title={t.revalidate} systemImage="checkmark.seal" action={revalidate} />
+            <Button title={t.exportLibrary} systemImage="square.and.arrow.up" action={exportLibrary} />
+            <Button title={t.clearRecents} systemImage="clock.badge.xmark" action={clearRecentSymbols} />
             <Button
-              title="恢复内置列表"
+              title={t.restoreBuiltin}
               systemImage="arrow.counterclockwise"
               role="destructive"
               action={restoreBuiltin}
@@ -253,7 +251,7 @@ export function LibraryView() {
           <VStack spacing={8}>
             <ProgressView progressViewStyle="circular" />
             <Text font="footnote" foregroundStyle="secondaryLabel">
-              {busy ?? '正在加载图标库…'}
+              {busy ?? t.loadingLibrary}
             </Text>
           </VStack>
         </ZStack>
@@ -262,7 +260,10 @@ export function LibraryView() {
           {/* 概览 */}
           <HStack spacing={10} padding={{ horizontal: 16, top: 6, bottom: 4 }}>
             <Text font="footnote" foregroundStyle="secondaryLabel">
-              {total} 个图标 · 来源：{library?.source ?? '内置'}
+              {t.overview(
+                total,
+                !library || isBuiltinSource(library.source) ? t.builtinSource : library.source
+              )}
             </Text>
             <Spacer />
             <Text font="footnote" foregroundStyle="secondaryLabel">
@@ -304,7 +305,7 @@ export function LibraryView() {
             <VStack spacing={8} frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}>
               <Image systemName="magnifyingglass" font={28} foregroundStyle="secondaryLabel" />
               <Text font="footnote" foregroundStyle="secondaryLabel">
-                {query.trim() ? '没有匹配的图标' : '这个分类还没有图标'}
+                {query.trim() ? t.noMatchingSymbols : t.emptyCategoryApp}
               </Text>
             </VStack>
           ) : (
@@ -333,7 +334,7 @@ export function LibraryView() {
               </LazyVGrid>
               {visibleSymbols.length > 1500 ? (
                 <Text font="caption" foregroundStyle="secondaryLabel" padding={16}>
-                  仅显示前 1500 个，共 {visibleSymbols.length} 个
+                  {t.showingFirstApp(1500, visibleSymbols.length)}
                 </Text>
               ) : null}
             </ScrollView>
@@ -362,7 +363,7 @@ function SymbolDetailView({ name }: { name: string }) {
       navigationTitle={name}
       navigationBarTitleDisplayMode="inline"
       toolbar={{
-        topBarTrailing: [<Button title="完成" action={dismiss} />],
+        topBarTrailing: [<Button title={t.done} action={dismiss} />],
       }}
     >
       <Image systemName={name} font={72} foregroundStyle="label" />
@@ -371,28 +372,28 @@ function SymbolDetailView({ name }: { name: string }) {
       </Text>
       <HStack spacing={12}>
         <Button
-          title="复制名称"
+          title={t.copyName}
           systemImage="doc.on.doc"
           buttonStyle="bordered"
           action={async () => {
             await Pasteboard.setString(name)
-            flash('名称已复制')
+            flash(t.nameCopied)
           }}
         />
-        <Menu title="复制 PNG" systemImage="photo" buttonStyle="bordered">
+        <Menu title={t.copyPng} systemImage="photo" buttonStyle="bordered">
           {PNG_PRESETS.map(p => (
             <Button
               key={p.label}
               title={p.label}
               action={async () => {
                 const ok = await copySymbolAsPng(name, { size: p.size })
-                flash(ok ? 'PNG 已复制' : '生成失败')
+                flash(ok ? t.pngCopied : t.renderFailed)
               }}
             />
           ))}
         </Menu>
       </HStack>
-      <Menu title="导出 PNG 文件" systemImage="square.and.arrow.down" buttonStyle="bordered">
+      <Menu title={t.exportPng} systemImage="square.and.arrow.down" buttonStyle="bordered">
         {PNG_PRESETS.map(p => (
           <Button
             key={p.label}

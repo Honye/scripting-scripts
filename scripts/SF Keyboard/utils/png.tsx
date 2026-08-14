@@ -1,10 +1,11 @@
 import { ImageRenderer, Image, ZStack } from 'scripting'
+import { t } from '../constants/i18n'
 import type { PngExportOptions } from '../types'
 
 export const PNG_PRESETS: { label: string; size: number }[] = [
-  { label: '小 · 128px', size: 64 },
-  { label: '中 · 256px', size: 128 },
-  { label: '大 · 512px', size: 256 },
+  { label: t.pngSmall, size: 64 },
+  { label: t.pngMedium, size: 128 },
+  { label: t.pngLarge, size: 256 },
 ]
 
 export const DEFAULT_PNG_OPTIONS: PngExportOptions = {

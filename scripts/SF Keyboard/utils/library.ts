@@ -1,4 +1,5 @@
 import { RECENTS_KEY, UNCATEGORIZED_KEY } from '../constants/categories'
+import { BUILTIN_SOURCE } from '../constants/i18n'
 import { BUILTIN_ORDER, BUILTIN_SYMBOLS } from '../constants/symbols'
 import type { ParseResult, SymbolLibrary } from '../types'
 
@@ -22,7 +23,7 @@ export function buildBuiltinLibrary(): SymbolLibrary {
   }
   return {
     version: LIBRARY_VERSION,
-    source: '内置',
+    source: BUILTIN_SOURCE,
     updatedAt: Date.now(),
     order: BUILTIN_ORDER.filter(k => symbols[k] != null),
     symbols,

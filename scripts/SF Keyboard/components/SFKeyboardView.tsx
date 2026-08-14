@@ -13,10 +13,10 @@ import {
   useState,
 } from 'scripting'
 import { RECENTS_KEY } from '../constants/categories'
+import { t } from '../constants/i18n'
 import {
   FG_PRIMARY,
   FG_SECONDARY,
-  KB_BACKGROUND,
   KEY_BACKGROUND,
 } from '../constants/theme'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
@@ -60,7 +60,7 @@ export function SFKeyboardView() {
     const before = (await CustomKeyboard.textBeforeCursor) || ''
     const token = before.split(/[\s\n,，。;；:：("'`]/).pop() || ''
     if (!token) {
-      flash('光标前没有可用的关键词')
+      flash(t.noWordBeforeCursor)
       return
     }
     setQuery(token)
@@ -85,17 +85,17 @@ export function SFKeyboardView() {
     async (name: string) => {
       await Pasteboard.setString(name)
       markUsed(name)
-      flash(`已复制「${name}」`)
+      flash(t.copied(name))
     },
     [markUsed, flash]
   )
 
   const copyPng = useCallback(
     async (name: string, size: number) => {
-      flash('正在生成 PNG…')
+      flash(t.renderingPng)
       const ok = await copySymbolAsPng(name, { size })
       markUsed(name)
-      flash(ok ? 'PNG 已复制，长按输入框粘贴' : 'PNG 生成失败')
+      flash(ok ? t.pngCopiedHint : t.pngFailed)
     },
     [markUsed, flash]
   )
@@ -104,9 +104,9 @@ export function SFKeyboardView() {
     (name: string) => (
       <Group>
         <Text>{name}</Text>
-        <Button title="输入名称" systemImage="text.cursor" action={() => insertSymbol(name)} />
-        <Button title="复制名称" systemImage="doc.on.doc" action={() => copyName(name)} />
-        <Menu title="复制 PNG" systemImage="photo">
+        <Button title={t.insertName} systemImage="text.cursor" action={() => insertSymbol(name)} />
+        <Button title={t.copyName} systemImage="doc.on.doc" action={() => copyName(name)} />
+        <Menu title={t.copyPng} systemImage="photo">
           {PNG_PRESETS.map(preset => (
             <Button
               key={preset.label}
@@ -121,14 +121,13 @@ export function SFKeyboardView() {
   )
 
   const currentTitle = query.trim()
-    ? `搜索「${query}」`
+    ? t.searching(query)
     : describeCategory(category, library).label
 
   return (
     <VStack
       spacing={0}
       frame={{ height: layout.totalHeight }}
-      // background={KB_BACKGROUND}
     >
       {/* 顶部信息条 */}
       <HStack spacing={8} padding={{ horizontal: 10 }} frame={{ height: layout.headerHeight }}>
@@ -158,7 +157,7 @@ export function SFKeyboardView() {
         <Button action={searchFromInput} buttonStyle="plain">
           <HStack spacing={3}>
             <Image systemName="magnifyingglass" font={12} />
-            <Text font={11}>取词搜索</Text>
+            <Text font={11}>{t.searchWord}</Text>
           </HStack>
         </Button>
       </HStack>
@@ -169,7 +168,7 @@ export function SFKeyboardView() {
           <VStack spacing={6}>
             <ProgressView progressViewStyle="circular" />
             <Text font={11} foregroundStyle={FG_SECONDARY}>
-              正在准备图标库…
+              {t.preparingLibrary}
             </Text>
           </VStack>
         </ZStack>
@@ -200,10 +199,10 @@ export function SFKeyboardView() {
               columns={layout.columns}
               emptyTitle={
                 query.trim()
-                  ? '没有匹配的图标'
+                  ? t.noMatchingSymbols
                   : category === RECENTS_KEY && recents.length === 0
-                    ? '还没有用过的图标'
-                    : '这个分类是空的'
+                    ? t.noRecents
+                    : t.emptyCategory
               }
               emptyIcon={query.trim() ? 'magnifyingglass' : 'clock'}
               onTap={insertSymbol}
@@ -234,7 +233,7 @@ export function SFKeyboardView() {
           <ZStack frame={{ height: layout.toolbarHeight - 10, maxWidth: 'infinity' }}>
             <RoundedKey />
             <Text font={12} foregroundStyle={FG_PRIMARY}>
-              空格
+              {t.space}
             </Text>
           </ZStack>
         </Button>
