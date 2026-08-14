@@ -1,0 +1,45 @@
+{
+  "permissions" : null,
+  "intentInputTypes" : [
+
+  ],
+  "iconImage" : null,
+  "localizedNames" : {
+    "fr" : "",
+    "it" : "",
+    "es" : "",
+    "ru" : "",
+    "ja" : "",
+    "zh" : "",
+    "pt" : "",
+    "de" : "",
+    "en" : ""
+  },
+  "name" : "SF Keyboard",
+  "icon" : "square.2.layers.3d.fill",
+  "contributors" : [
+
+  ],
+  "remoteResource" : null,
+  "localizedDescriptions" : {
+    "fr" : "",
+    "it" : "",
+    "es" : "",
+    "ru" : "",
+    "ja" : "",
+    "zh" : "",
+    "pt" : "",
+    "de" : "",
+    "en" : ""
+  },
+  "color" : "rgba(128, 138, 148,1)",
+  "version" : "1.0.0",
+  "runInApp" : false,
+  "author" : {
+    "email" : "Honye@github.com",
+    "homepage" : "https:\/\/t.me\/iiMarkr",
+    "name" : "Jackie"
+  },
+  "entry" : "index.tsx",
+  "description" : null
+}
