@@ -14,6 +14,7 @@ import {
   useState,
 } from 'scripting'
 import { t } from '../constants/i18n'
+import type { SymbolStyle } from '../constants/symbolStyle'
 import { FG_ACCENT, FG_SECONDARY } from '../constants/theme'
 import { SymbolCell } from './SymbolCell'
 
@@ -34,6 +35,8 @@ export type SymbolGridProps = {
   emptyIcon?: string
   onTap: (name: string) => void
   renderMenu?: (name: string) => VirtualNode
+  /** 图标详情页里配置的渲染主题 */
+  style?: SymbolStyle
 }
 
 /**
@@ -58,6 +61,7 @@ export function SymbolGrid({
   emptyIcon = 'square.dashed',
   onTap,
   renderMenu,
+  style,
 }: SymbolGridProps) {
   // 页码和它对应的数据源存在一起，页码是派生出来的：
   // symbols 一换，这一帧算出来的 page 就是 1。
@@ -111,9 +115,10 @@ export function SymbolGrid({
           iconSize={iconSize}
           onTap={() => onTap(name)}
           menuItems={renderMenu ? renderMenu(name) : undefined}
+          style={style}
         />
       )),
-    [visible, cellSize, iconSize, onTap, renderMenu]
+    [visible, cellSize, iconSize, onTap, renderMenu, style]
   )
 
   if (symbols.length === 0) {

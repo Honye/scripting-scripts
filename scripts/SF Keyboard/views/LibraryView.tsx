@@ -34,6 +34,7 @@ import {
 } from '../utils/library'
 import { mergeResults, parseSourceFile } from '../utils/parser'
 import { copySymbolAsPng, exportSymbolPngFile, PNG_PRESETS } from '../utils/png'
+import { loadStyle } from '../utils/styleStore'
 
 const CELL = 56
 const ICON = 24
@@ -63,6 +64,8 @@ export function LibraryView() {
   } = useSymbolLibrary()
 
   const [busy, setBusy] = useState<string | null>(null)
+  // 详情页里改的渲染主题，网格跟着一起变
+  const [style, setStyle] = useState(() => loadStyle())
 
   const total = useMemo(() => (library ? countSymbols(library) : 0), [library])
 
@@ -174,9 +177,9 @@ export function LibraryView() {
   // ------------------------------------------------------------ 单个图标
 
   const openDetail = useCallback(
-    (name: string) => {
+    async (name: string) => {
       markUsed(name)
-      Navigation.present({
+      await Navigation.present({
         // 必须包一层 NavigationStack：不然 navigationTitle / toolbar 都不会渲染，
         // 「完成」和复制按钮会整个消失
         element: (
@@ -186,6 +189,8 @@ export function LibraryView() {
         ),
         modalPresentationStyle: 'pageSheet',
       })
+      // 详情页里可能改了主题，关掉之后把网格的渲染同步过来
+      setStyle(loadStyle())
     },
     [markUsed, library]
   )
@@ -334,6 +339,7 @@ export function LibraryView() {
             emptyIcon="magnifyingglass"
             onTap={openDetail}
             renderMenu={renderMenu}
+            style={style}
           />
         </VStack>
       )}

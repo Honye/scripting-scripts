@@ -1,4 +1,5 @@
 import { Button, Image, VirtualNode } from 'scripting'
+import { backgroundColor, foregroundStyleOf, type SymbolStyle } from '../constants/symbolStyle'
 import { FG_PRIMARY, KEY_BACKGROUND, KEY_BACKGROUND_ACTIVE } from '../constants/theme'
 
 export type SymbolCellProps = {
@@ -11,6 +12,8 @@ export type SymbolCellProps = {
   /** 长按菜单内容 */
   menuItems?: VirtualNode
   highlighted?: boolean
+  /** 图标详情页里配置的渲染主题，不传就用默认前景色 */
+  style?: SymbolStyle
 }
 
 const SHAPE = { type: 'rect', cornerRadius: 8, style: 'continuous' } as const
@@ -32,7 +35,15 @@ export function SymbolCell({
   onTap,
   menuItems,
   highlighted,
+  style,
 }: SymbolCellProps) {
+  // 主题里选了白/黑底就用它，格子就是导出效果的真实预览；
+  // 选「透明」（默认）则退回按键底色，否则白色图标会糊在白色格子上
+  const themeBackground = style ? backgroundColor(style.background) : null
+  const background = highlighted
+    ? KEY_BACKGROUND_ACTIVE
+    : (themeBackground ?? KEY_BACKGROUND)
+
   return (
     <Button
       action={onTap}
@@ -43,9 +54,11 @@ export function SymbolCell({
         systemName={name}
         font={iconSize}
         minScaleFactor={0.6}
-        foregroundStyle={FG_PRIMARY}
+        variableValue={style?.variable ? style.variableValue : undefined}
+        symbolRenderingMode={style?.renderingMode}
+        foregroundStyle={style ? foregroundStyleOf(style) : FG_PRIMARY}
         frame={{ width: size, height: size }}
-        background={highlighted ? KEY_BACKGROUND_ACTIVE : KEY_BACKGROUND}
+        background={background}
         clipShape={SHAPE}
         contentShape={SHAPE}
       />

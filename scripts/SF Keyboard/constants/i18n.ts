@@ -126,6 +126,13 @@ export const t = {
   variable: pick('可变', 'Variable'),
   variableValue: pick('可变值', 'Variable Value'),
   colorLabel: pick('颜色', 'Color'),
+  colorPrimary: pick('第一层', 'Primary'),
+  colorSecondary: pick('第二层', 'Secondary'),
+  colorTertiary: pick('第三层', 'Tertiary'),
+  paletteHint: pick(
+    '调色板模式下符号的三层分别用这三种颜色渲染；层数不够的符号，多余的颜色不生效。',
+    'In palette mode the symbol’s three layers take these colours; extra colours are ignored on symbols with fewer layers.'
+  ),
   opacity: pick('不透明度', 'Opacity'),
   background: pick('背景', 'Background'),
 

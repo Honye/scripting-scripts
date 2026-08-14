@@ -13,8 +13,12 @@ export type SymbolStyle = {
   variable: boolean
   /** 可变值 0~1 */
   variableValue: number
-  /** 前景色，'label' 表示跟随系统 */
+  /** 前景色（调色板模式下是第一层），'label' 表示跟随系统 */
   color: Color
+  /** 调色板模式的第二层颜色 */
+  secondaryColor: Color
+  /** 调色板模式的第三层颜色 */
+  tertiaryColor: Color
   /** 不透明度 0~1 */
   opacity: number
   background: SymbolBackground
@@ -26,6 +30,8 @@ export const DEFAULT_STYLE: SymbolStyle = {
   variable: false,
   variableValue: 1,
   color: 'label',
+  secondaryColor: '#8E8E93',
+  tertiaryColor: '#C7C7CC',
   opacity: 1,
   background: 'none',
 }
@@ -69,24 +75,34 @@ export function backgroundColor(background: SymbolBackground): Color | null {
   return null
 }
 
+/** 给单个颜色套上渐变 / 不透明度 */
+function shapeStyleFor(color: Color, style: SymbolStyle): any {
+  if (style.gradient && style.opacity < 1) {
+    return { color, gradient: true as const, opacity: style.opacity }
+  }
+  if (style.gradient) return { color, gradient: true as const }
+  if (style.opacity < 1) return { color, opacity: style.opacity }
+  return color
+}
+
 /**
  * 把主题换算成 `foregroundStyle` 的取值。
- * palette 模式需要多个层的颜色，这里用同一个色相的三档透明度顶上。
+ *
+ * palette 模式下 SF Symbols 最多分三层，分别取 color / secondaryColor /
+ * tertiaryColor；符号本身层数不够时多余的颜色不生效。
+ * multicolor 交给符号自带的配色，不设 foregroundStyle。
  */
 export function foregroundStyleOf(style: SymbolStyle): any {
   if (style.renderingMode === 'multicolor') return undefined
 
-  const base =
-    style.gradient || style.opacity < 1
-      ? style.gradient
-        ? { color: style.color, gradient: true as const, opacity: style.opacity }
-        : { color: style.color, opacity: style.opacity }
-      : style.color
+  const primary = shapeStyleFor(style.color, style)
+  if (style.renderingMode !== 'palette') return primary
 
-  if (style.renderingMode !== 'palette') return base
-
-  const fade = (o: number) => ({ color: style.color, opacity: style.opacity * o })
-  return { primary: base, secondary: fade(0.65), tertiary: fade(0.35) }
+  return {
+    primary,
+    secondary: shapeStyleFor(style.secondaryColor, style),
+    tertiary: shapeStyleFor(style.tertiaryColor, style),
+  }
 }
 
 // ---------------------------------------------------------------- 动画

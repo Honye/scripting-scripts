@@ -1,3 +1,4 @@
+import type { Color } from 'scripting'
 import {
   Button,
   HStack,
@@ -283,6 +284,8 @@ function StylePanel({
   style: SymbolStyle
   onChange: (patch: Partial<SymbolStyle>) => void
 }) {
+  const isPalette = style.renderingMode === 'palette'
+
   return (
     <List>
       <Section footer={<Text>{t.styleSharedHint}</Text>}>
@@ -325,19 +328,26 @@ function StylePanel({
         ) : null}
       </Section>
 
-      <Section>
-        <Picker
-          title={t.colorLabel}
-          value={String(style.color)}
-          onChanged={(value: string) => onChange({ color: value as any })}
-          pickerStyle="menu"
-        >
-          {COLOR_PRESETS.map(preset => (
-            <Text key={String(preset.value)} tag={String(preset.value)}>
-              {preset.label}
-            </Text>
-          ))}
-        </Picker>
+      <Section footer={isPalette ? <Text>{t.paletteHint}</Text> : undefined}>
+        <ColorRow
+          title={isPalette ? t.colorPrimary : t.colorLabel}
+          value={style.color}
+          onChanged={color => onChange({ color })}
+        />
+        {isPalette ? (
+          <ColorRow
+            title={t.colorSecondary}
+            value={style.secondaryColor}
+            onChanged={color => onChange({ secondaryColor: color })}
+          />
+        ) : null}
+        {isPalette ? (
+          <ColorRow
+            title={t.colorTertiary}
+            value={style.tertiaryColor}
+            onChanged={color => onChange({ tertiaryColor: color })}
+          />
+        ) : null}
         <HStack spacing={12}>
           <Text font="callout">{t.opacity}</Text>
           <Slider
@@ -374,6 +384,37 @@ function StylePanel({
         />
       </Section>
     </List>
+  )
+}
+
+/** 一行取色下拉，左边带一个当前颜色的圆点 */
+function ColorRow({
+  title,
+  value,
+  onChanged,
+}: {
+  title: string
+  value: Color
+  onChanged: (color: Color) => void
+}) {
+  return (
+    <Picker
+      label={
+        <HStack spacing={8}>
+          <Image systemName="circle.fill" font={13} foregroundStyle={value} />
+          <Text>{title}</Text>
+        </HStack>
+      }
+      value={String(value)}
+      onChanged={(next: string) => onChanged(next as Color)}
+      pickerStyle="menu"
+    >
+      {COLOR_PRESETS.map(preset => (
+        <Text key={String(preset.value)} tag={String(preset.value)}>
+          {preset.label}
+        </Text>
+      ))}
+    </Picker>
   )
 }
 

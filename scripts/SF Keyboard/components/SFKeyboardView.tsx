@@ -17,6 +17,7 @@ import { FG_PRIMARY, FG_SECONDARY, KEY_BACKGROUND } from '../constants/theme'
 import { useSymbolLibrary } from '../hooks/useSymbolLibrary'
 import { getKeyboardLayout } from '../utils/layout'
 import { copySymbolAsPng } from '../utils/png'
+import { loadStyle } from '../utils/styleStore'
 import { CategorySidebar, describeCategory } from './CategorySidebar'
 import { SymbolGrid } from './SymbolGrid'
 
@@ -44,6 +45,9 @@ export function SFKeyboardView() {
   } = useSymbolLibrary()
 
   const [toast, setToast] = useState<string | null>(null)
+  // 图标详情页里配的渲染主题存在共享域，键盘启动时读一次。
+  // 键盘会话很短，不做实时同步；改完主题下次唤起键盘就会生效。
+  const [style] = useState(() => loadStyle())
 
   const flash = useCallback((message: string) => {
     setToast(message)
@@ -194,6 +198,7 @@ export function SFKeyboardView() {
               emptyIcon={query.trim() ? 'magnifyingglass' : 'clock'}
               onTap={insertSymbol}
               renderMenu={renderMenu}
+              style={style}
             />
           </VStack>
         </HStack>

@@ -1,4 +1,4 @@
-import { ImageRenderer, Image, ZStack } from 'scripting'
+import { ImageRenderer, Image, Rectangle, ZStack } from 'scripting'
 import { t } from '../constants/i18n'
 import { backgroundColor, foregroundStyleOf, type SymbolStyle } from '../constants/symbolStyle'
 import { loadStyle } from './styleStore'
@@ -24,8 +24,12 @@ export async function renderSymbolPng(name: string, options: PngOptions = {}): P
   const style = options.style ?? loadStyle()
   const background = backgroundColor(style.background)
 
+  // 底色用铺满的 Rectangle，不要用 ZStack 的 background 修饰符：
+  // background 是按内容尺寸算的，会在 frame 里留出一条只有图标那么宽的色带，
+  // 而「透明」时那层多余的底又会把 alpha 吃掉。选透明就一层都不画。
   const element = (
-    <ZStack frame={{ width: size, height: size }} background={background ?? undefined}>
+    <ZStack frame={{ width: size, height: size }}>
+      {background ? <Rectangle fill={background} /> : null}
       <Image
         systemName={name}
         variableValue={style.variable ? style.variableValue : undefined}
@@ -40,6 +44,7 @@ export async function renderSymbolPng(name: string, options: PngOptions = {}): P
 
   return ImageRenderer.toPNGData(element, {
     scale,
+    // opaque=true 的渲染上下文没有 alpha 通道，只有确定要铺底色时才开
     opaque: background != null,
   })
 }

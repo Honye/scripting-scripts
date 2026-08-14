@@ -33,7 +33,7 @@
     "en" : "An SF Symbols keyboard: browse by category, tap to insert a symbol name, long press to copy a PNG. Import SF Symbols.app metadata to update the list."
   },
   "color" : "rgba(128, 138, 148,1)",
-  "version" : "1.0.0",
+  "version" : "1.0.1",
   "runInApp" : false,
   "author" : {
     "email" : "Honye@github.com",
