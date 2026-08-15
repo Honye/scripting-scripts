@@ -28,6 +28,23 @@ If a script throws, times out, or never calls `$done(...)`, the message passes t
 
 ---
 
+## Scripts that come from a module
+
+A module declares its scripts with `script-path`. When the module is imported or updated, each of those is downloaded and a **copy is kept on this device**. That copy is what runs — changing the file on the server has no effect until the module is updated again.
+
+**If a script cannot be downloaded, the rule is still created, but it has no script body.** It matches and runs nothing — which looks exactly like a rule that works but had nothing to change. What "nothing" means depends on the rule: a request rule sends the request unchanged, a response rule delivers the response unchanged, a timed rule has nothing to run when its schedule comes around, and a rule-matching script is treated as not matching. Three places tell you which it is:
+
+* the module list says how many of its rules have no script body;
+* the module's details page says, per rule, where its script came from, how large it is, and when it was last updated — or that it could not be downloaded, and from where;
+* the script log records every download and every failure with the reason (category `fetch`).
+
+Two more things worth knowing:
+
+* Rules that came from a module are read-only. Duplicate the module to a local copy if you want to edit them.
+* Two rules that declare the **same** `script-path` share one `$persistentStore` default slot — that is what makes the common "one timed script refreshes a token, one request rule uses it" pattern work. See [`$persistentStore`](capture_scripts_store/en.md).
+
+---
+
 ## `$request`
 
 Available in both request and response scripts.

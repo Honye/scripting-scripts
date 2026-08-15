@@ -34,6 +34,8 @@ A string representing the current content of the editor. You can assign a new va
 
 An optional callback function that will be triggered when the content is changed by the user. This callback is **not called immediately**, but approximately 100 milliseconds after editing occurs. This allows for debounced content tracking or autosave behavior.
 
+It reports edits made **in the editor**. Content you write yourself — assigning `content` or calling `appendContent` — does not trigger it.
+
 ---
 
 ### Methods
@@ -67,7 +69,15 @@ Dismisses the currently presented editor view. This does **not** dispose of the 
 * `getSelectedText(): Promise<string>`: Get the currently selected text (empty string when there is no selection). The promise **rejects** if the editor is not presented (timeout) or has been disposed.
 * `setSelection(start, end)`: Select the range `[start, end)` and scroll it into view.
 * `replaceSelection(text)`: Replace the current selection with `text`. When there is no selection, the text is inserted at the cursor.
+* `appendContent(text)`: Append `text` at the end of the document, leaving the selection and the scroll position untouched.
 * `selectAll()`: Select all text.
+
+**`appendContent` vs `content += text`**: reading `content` gives you a mirror that the editor refreshes roughly once a second, so `content += text` right after the user typed something can silently discard those keystrokes. `appendContent` never reads the existing content back, which makes it the right choice for log-style output or any append that races with typing.
+
+```tsx
+// Streaming log output into the editor:
+controller.appendContent(`[${new Date().toISOString()}] job finished\n`)
+```
 
 #### Search
 

@@ -1,5 +1,5 @@
-The `Archive` class provides a comprehensive interface for working with archive files (such as ZIP).
-It supports reading, creating, updating, and extracting entries from archives, with both **asynchronous** and **synchronous** methods.
+The `Archive` class provides interfaces for working with ZIP and 7z files.
+ZIP archives use mutable `Archive` instances. The 7z methods support AES-256 encryption, progress, and cancellation.
 
 ---
 
@@ -14,21 +14,22 @@ It supports reading, creating, updating, and extracting entries from archives, w
 * Listing archive contents
 * Supporting multiple compression methods (e.g. `deflate`, `none`)
 * Working in either synchronous or asynchronous modes
+* Creating, listing, and extracting AES-256 encrypted 7z archives
 
 ---
 
 ## Static Methods
 
-### `static openForMode(path: string, accessMode: "update" | "read", options?: { pathEncoding?: Encoding }): Archive`
+### `static openForMode(path: string, accessMode: "create" | "update" | "read", options?: { pathEncoding?: Encoding }): Archive`
 
-Opens an archive file.
+Opens a ZIP archive file. The returned instance methods apply to ZIP archives only.
 
 **Parameters:**
 
 | Name                   | Type                  | Description                                                                                      |
 | ---------------------- | --------------------- | ------------------------------------------------------------------------------------------------ |
 | `path`                 | `string`              | The file path of the archive.                                                                    |
-| `accessMode`           | `"update"` | `"read"` | The access mode: - `"read"`: open for reading only. - `"update"`: open for modification. |
+| `accessMode`           | `"create" \| "update" \| "read"` | The access mode: `"create"` creates a new ZIP archive, `"read"` opens it read-only, and `"update"` opens it for modification. |
 | `options.pathEncoding` | `Encoding`            | Optional. The path encoding used inside the archive (default is `"utf-8"`).                      |
 
 **Returns:**
@@ -39,6 +40,109 @@ An `Archive` object.
 ```ts
 const archive = Archive.openForMode("/tmp/example.zip", "update")
 ```
+
+---
+
+### `static create7z(options: SevenZipCreateOptions): SevenZipTask`
+
+Creates a new AES-256 encrypted 7z archive. The destination must not already exist. Content is always encrypted; file names are encrypted by default.
+
+| Option | Type | Description |
+| ------ | ---- | ----------- |
+| `sources` | `Array<string \| { path: string; archivePath?: string }>` | Source files or non-empty directories. `archivePath` optionally changes the path stored in the archive. |
+| `destinationPath` | `string` | Path of the new `.7z` file. |
+| `password` | `string` | Required non-empty encryption password. |
+| `encryptHeader` | `boolean` | Whether to encrypt file names and archive metadata. Defaults to `true`. |
+| `compressionLevel` | `3` | Optional. This version supports compression level 3. |
+| `solid` | `false` | Optional. This version creates non-solid archives. |
+
+```ts
+const task = Archive.create7z({
+  sources: [
+    "/tmp/report.pdf",
+    { path: "/tmp/photos", archivePath: "attachments/photos" }
+  ],
+  destinationPath: "/tmp/backup.7z",
+  password: "a-strong-password"
+})
+
+task.onProgress = progress => {
+  console.log(`${Math.round(progress.fractionCompleted * 100)}% ${progress.path}`)
+}
+
+const result = await task.result
+console.log(result.destinationPath, result.outputBytes)
+```
+
+Empty source directories and symbolic links are not supported.
+
+---
+
+### `static list7z(options: SevenZipListOptions): Promise<ArchiveEntry[]>`
+
+Lists the entries in a 7z archive. A password is required when the archive header is encrypted.
+
+```ts
+const entries = await Archive.list7z({
+  sourcePath: "/tmp/backup.7z",
+  password: "a-strong-password"
+})
+
+for (const entry of entries) {
+  console.log(entry.path, entry.uncompressedSize, entry.isEncrypted)
+}
+```
+
+---
+
+### `static extract7z(options: SevenZipExtractOptions): SevenZipTask`
+
+Extracts a 7z archive into a new directory. Unsafe entry paths and archives that exceed the configured limits are rejected. Existing destinations are not overwritten.
+
+| Option | Type | Description |
+| ------ | ---- | ----------- |
+| `sourcePath` | `string` | Path of the source `.7z` file. |
+| `destinationPath` | `string` | Path of a new destination directory. |
+| `password` | `string` | Password for an encrypted archive. |
+| `overwrite` | `"error"` | Optional. This version rejects existing destinations. |
+| `maxEntries` | `number` | Optional maximum number of entries. |
+| `maxEntryUncompressedBytes` | `number` | Optional maximum uncompressed size of one entry. |
+| `maxUncompressedBytes` | `number` | Optional maximum total uncompressed size. |
+| `maxExpansionRatio` | `number` | Optional maximum uncompressed-to-archive size ratio. |
+
+```ts
+const task = Archive.extract7z({
+  sourcePath: "/tmp/backup.7z",
+  destinationPath: "/tmp/restored",
+  password: "a-strong-password"
+})
+
+try {
+  const result = await task.result
+  console.log(`Extracted ${result.entryCount} entries`)
+} catch (error) {
+  if (error.name === "ArchiveError") {
+    console.log(error.code, error.message)
+  }
+}
+```
+
+---
+
+## SevenZipTask Interface
+
+`create7z()` and `extract7z()` return a task that reports progress and can be cancelled.
+
+| Member | Type | Description |
+| ------ | ---- | ----------- |
+| `status` | `"pending" \| "running" \| "completed" \| "failed" \| "cancelled"` | Current task state. |
+| `progress` | `SevenZipProgress` | Latest operation, path, and `fractionCompleted` value. |
+| `onProgress` | `((progress: SevenZipProgress) => void) \| null` | Called when progress changes. |
+| `result` | `Promise<SevenZipResult>` | Resolves when the operation succeeds, or rejects with `ArchiveError`. |
+| `cancel()` | `void` | Requests cancellation. Safe to call more than once. |
+| `dispose()` | `void` | Removes callbacks and cancels unfinished work. |
+
+`ArchiveError.code` is one of `invalidArguments`, `permissionDenied`, `sourceNotFound`, `destinationExists`, `invalidPasswordOrCorruptArchive`, `unsafeEntryPath`, `unsupportedEntryType`, `archiveLimitExceeded`, `cancelled`, `outOfSpace`, `ioError`, or `internalError`.
 
 ---
 
@@ -304,6 +408,7 @@ Synchronous version of `extractTo()`.
 | `isCompressed`     | `boolean`                              | Whether the entry is compressed.          |
 | `compressedSize`   | `number`                               | Compressed size in bytes.                 |
 | `uncompressedSize` | `number`                               | Uncompressed size in bytes.               |
+| `isEncrypted`      | `boolean \| undefined`                  | Whether the payload is encrypted. Present for entries returned by `list7z()`. |
 | `fileAttributes`   | `{ posixPermissions?: number; modificationDate?: Date }`                             | File attributes. |
 
 **Example:**

@@ -10178,6 +10178,9 @@ If the event’s calendar does not support availability settings, this property�
      * The content changed callback handler.
      * 
      * It is important to note that when editing in the editor, the onContentChanged callback is not called immediately, but about 100 milliseconds later.
+     *
+     * This callback reports edits made in the editor. Content you write yourself — assigning `content`
+     * or calling `appendContent` — does not trigger it.
      */
     onContentChanged?: (content: string) => void
     /**
@@ -10229,6 +10232,15 @@ If the event’s calendar does not support availability settings, this property�
      * @param text The replacement text.
      */
     replaceSelection(text: string): void
+    /**
+     * Append text at the end of the document, leaving the selection and the scroll position untouched.
+     *
+     * Prefer this over `content += text`. Reading `content` returns a mirror that the editor refreshes
+     * roughly once a second, so appending through `content` right after the user typed something can
+     * silently discard those keystrokes; this method never reads the existing content back.
+     * @param text The text to append. Appending an empty string does nothing.
+     */
+    appendContent(text: string): void
     /**
      * Select all the text in the editor.
      */
@@ -16655,6 +16667,8 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      * The uncompressed size of the entry.
      */
     readonly uncompressedSize: number
+    /** Whether the entry payload is encrypted. Present for entries returned by Archive.list7z. */
+    readonly isEncrypted?: boolean
     /**
      * The attributes of the entry.
      */
@@ -16662,6 +16676,75 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
       posixPermissions?: number
       modificationDate?: Date
     }
+  }
+
+  type ArchiveErrorCode =
+    | "invalidArguments"
+    | "permissionDenied"
+    | "sourceNotFound"
+    | "destinationExists"
+    | "invalidPasswordOrCorruptArchive"
+    | "unsafeEntryPath"
+    | "unsupportedEntryType"
+    | "archiveLimitExceeded"
+    | "cancelled"
+    | "outOfSpace"
+    | "ioError"
+    | "internalError"
+
+  interface ArchiveError extends Error {
+    readonly name: "ArchiveError"
+    readonly code: ArchiveErrorCode
+  }
+
+  interface SevenZipProgress {
+    readonly operation: "compress" | "extract"
+    readonly path: string
+    readonly fractionCompleted: number
+  }
+
+  interface SevenZipResult {
+    readonly destinationPath: string
+    readonly entryCount: number
+    /** Present for create7z results. */
+    readonly inputBytes?: number
+    readonly outputBytes: number
+  }
+
+  interface SevenZipTask {
+    readonly status: "pending" | "running" | "completed" | "failed" | "cancelled"
+    readonly progress: SevenZipProgress
+    onProgress: ((progress: SevenZipProgress) => void) | null
+    readonly result: Promise<SevenZipResult>
+    cancel(): void
+    dispose(): void
+  }
+
+  interface SevenZipCreateOptions {
+    sources: Array<string | { path: string; archivePath?: string }>
+    destinationPath: string
+    password: string
+    encryptHeader?: boolean
+    /** This version supports compression level 3. */
+    compressionLevel?: 3
+    /** This version creates non-solid archives. */
+    solid?: false
+  }
+
+  interface SevenZipExtractOptions {
+    sourcePath: string
+    destinationPath: string
+    password?: string
+    overwrite?: "error"
+    maxEntries?: number
+    maxEntryUncompressedBytes?: number
+    maxUncompressedBytes?: number
+    maxExpansionRatio?: number
+  }
+
+  interface SevenZipListOptions {
+    sourcePath: string
+    password?: string
   }
 
   class Archive {
@@ -16677,11 +16760,20 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      */
     static openForMode(
       path: string,
-      accessMode: "update" | "read",
+      accessMode: "create" | "update" | "read",
       options?: {
         pathEncoding?: Encoding
       }
     ): Archive
+
+    /** Creates an AES-256 encrypted 7z archive. */
+    static create7z(options: SevenZipCreateOptions): SevenZipTask
+
+    /** Extracts a 7z archive into a new destination directory. */
+    static extract7z(options: SevenZipExtractOptions): SevenZipTask
+
+    /** Lists the entries in a 7z archive. */
+    static list7z(options: SevenZipListOptions): Promise<ArchiveEntry[]>
 
     /**
      * The path of the archive.

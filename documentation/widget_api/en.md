@@ -42,6 +42,47 @@ This is useful for customizing widget content dynamically based on user-defined 
 
 ---
 
+#### `Widget.isTransparentBackground: boolean`
+
+Whether the user turned on the simulated transparent background in this widget's configuration — the mode that fakes transparency by drawing a cropped snapshot of your Home Screen behind the content.
+
+This is **always `false`** for Transparent Background and Blur Background widgets: their background is drawn by the system, not simulated with an image. Use `isTransparentMode` / `isBlurMode` for those.
+
+> **Type:** `boolean`
+
+---
+
+#### `Widget.isTransparentMode: boolean`
+
+Whether the current widget is a Transparent Background widget, whose background is drawn by the system so the widget blends with the Home Screen.
+
+The content must stay fully transparent in this mode — do not fill an opaque background, or it will cover the system-drawn layer.
+
+> **Type:** `boolean`
+
+---
+
+#### `Widget.isBlurMode: boolean`
+
+Whether the current widget is a Blur Background widget, whose blurred backdrop is drawn by the system.
+
+The content must stay fully transparent in this mode as well.
+
+> **Type:** `boolean`
+
+How the three relate:
+
+| Case | `isTransparentBackground` | `isTransparentMode` | `isBlurMode` |
+| --- | --- | --- | --- |
+| Regular widget | `false` | `false` | `false` |
+| Regular widget with simulated transparency on | `true` | `false` | `false` |
+| Transparent Background widget | `false` | `true` | `false` |
+| Blur Background widget | `false` | `false` | `true` |
+
+> The `widgetBackground` modifier skips rendering automatically in all of these cases, so you do not need to check for them yourself: Transparent Background widgets, Blur Background widgets, widgets with the simulated transparent background turned on, accessory families (Lock Screen / Smart Stack), and the accented rendering mode. In every one of them the backdrop already comes from the system or from your wallpaper, and painting over it would only smother it.
+
+---
+
 ### Methods
 
 #### `Widget.present(element, options?): void`

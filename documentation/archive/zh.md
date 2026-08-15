@@ -1,5 +1,5 @@
-`Archive` 类用于读取、创建与修改压缩归档文件（如 ZIP 格式）。
-它支持以同步或异步的方式向归档中添加文件、目录或从归档中提取文件内容。
+`Archive` 类用于处理 ZIP 和 7z 归档文件。
+ZIP 使用可修改的 `Archive` 实例；7z 方法支持 AES-256 加密、进度和取消。
 
 ---
 
@@ -14,21 +14,22 @@
 * 删除归档中的条目；
 * 支持自定义压缩算法（如 `deflate`）；
 * 可通过 `entries()` 获取归档中的所有条目信息。
+* 创建、列出和解压 AES-256 加密的 7z 归档。
 
 ---
 
 ## 静态方法
 
-### `static openForMode(path: string, accessMode: "update" | "read", options?: { pathEncoding?: Encoding }): Archive`
+### `static openForMode(path: string, accessMode: "create" | "update" | "read", options?: { pathEncoding?: Encoding }): Archive`
 
-打开一个归档文件。
+打开 ZIP 归档文件。返回实例上的方法仅适用于 ZIP。
 
 **参数：**
 
 | 参数名                    | 类型                   | 说明                                                       |
 | ---------------------- | -------------------- | -------------------------------------------------------- |
 | `path`                 | `string`             | 要打开的归档文件路径。                                              |
-| `accessMode`           | `"update" \| "read"` | 访问模式： - `"read"`：以只读方式打开； - `"update"`：以可修改方式打开。 |
+| `accessMode`           | `"create" \| "update" \| "read"` | 访问模式：`"create"` 新建 ZIP，`"read"` 只读打开，`"update"` 打开并修改。 |
 | `options.pathEncoding` | `Encoding`           | 可选，指定归档中文件路径的编码方式，默认为 `"utf-8"`。                         |
 
 **返回值：**
@@ -39,6 +40,109 @@
 ```ts
 const archive = Archive.openForMode("/tmp/example.zip", "update")
 ```
+
+---
+
+### `static create7z(options: SevenZipCreateOptions): SevenZipTask`
+
+创建 AES-256 加密的 7z 归档。目标文件必须不存在；文件内容始终加密，文件名和归档元数据默认也会加密。
+
+| 选项 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `sources` | `Array<string \| { path: string; archivePath?: string }>` | 源文件或非空目录；`archivePath` 可指定归档内路径。 |
+| `destinationPath` | `string` | 新 `.7z` 文件的路径。 |
+| `password` | `string` | 必填的非空加密密码。 |
+| `encryptHeader` | `boolean` | 是否加密文件名和归档元数据，默认 `true`。 |
+| `compressionLevel` | `3` | 可选；当前版本支持压缩级别 3。 |
+| `solid` | `false` | 可选；当前版本创建非 solid 归档。 |
+
+```ts
+const task = Archive.create7z({
+  sources: [
+    "/tmp/report.pdf",
+    { path: "/tmp/photos", archivePath: "attachments/photos" }
+  ],
+  destinationPath: "/tmp/backup.7z",
+  password: "a-strong-password"
+})
+
+task.onProgress = progress => {
+  console.log(`${Math.round(progress.fractionCompleted * 100)}% ${progress.path}`)
+}
+
+const result = await task.result
+console.log(result.destinationPath, result.outputBytes)
+```
+
+暂不支持空源目录和符号链接。
+
+---
+
+### `static list7z(options: SevenZipListOptions): Promise<ArchiveEntry[]>`
+
+列出 7z 归档中的条目。归档 header 已加密时必须提供密码。
+
+```ts
+const entries = await Archive.list7z({
+  sourcePath: "/tmp/backup.7z",
+  password: "a-strong-password"
+})
+
+for (const entry of entries) {
+  console.log(entry.path, entry.uncompressedSize, entry.isEncrypted)
+}
+```
+
+---
+
+### `static extract7z(options: SevenZipExtractOptions): SevenZipTask`
+
+将 7z 归档解压到新目录。不安全的条目路径和超过限制的归档会被拒绝，且不会覆盖已有目标。
+
+| 选项 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `sourcePath` | `string` | 源 `.7z` 文件路径。 |
+| `destinationPath` | `string` | 新目标目录路径。 |
+| `password` | `string` | 加密归档的密码。 |
+| `overwrite` | `"error"` | 可选；当前版本会在目标已存在时失败。 |
+| `maxEntries` | `number` | 可选的最大条目数。 |
+| `maxEntryUncompressedBytes` | `number` | 可选的单个条目最大解压大小。 |
+| `maxUncompressedBytes` | `number` | 可选的总解压大小上限。 |
+| `maxExpansionRatio` | `number` | 可选的解压后大小与归档大小比率上限。 |
+
+```ts
+const task = Archive.extract7z({
+  sourcePath: "/tmp/backup.7z",
+  destinationPath: "/tmp/restored",
+  password: "a-strong-password"
+})
+
+try {
+  const result = await task.result
+  console.log(`已解压 ${result.entryCount} 个条目`)
+} catch (error) {
+  if (error.name === "ArchiveError") {
+    console.log(error.code, error.message)
+  }
+}
+```
+
+---
+
+## SevenZipTask 类型
+
+`create7z()` 和 `extract7z()` 返回可报告进度和取消的任务对象。
+
+| 成员 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `status` | `"pending" \| "running" \| "completed" \| "failed" \| "cancelled"` | 当前任务状态。 |
+| `progress` | `SevenZipProgress` | 最近一次操作、路径和 `fractionCompleted` 进度。 |
+| `onProgress` | `((progress: SevenZipProgress) => void) \| null` | 进度变化时调用。 |
+| `result` | `Promise<SevenZipResult>` | 操作成功时 resolve；失败时以 `ArchiveError` reject。 |
+| `cancel()` | `void` | 请求取消，可重复调用。 |
+| `dispose()` | `void` | 移除回调并取消未完成的工作。 |
+
+`ArchiveError.code` 可能为 `invalidArguments`、`permissionDenied`、`sourceNotFound`、`destinationExists`、`invalidPasswordOrCorruptArchive`、`unsafeEntryPath`、`unsupportedEntryType`、`archiveLimitExceeded`、`cancelled`、`outOfSpace`、`ioError` 或 `internalError`。
 
 ---
 
@@ -301,6 +405,7 @@ await archive.extractTo("docs/", "/tmp/extracted/")
 | `isCompressed`     | `boolean`                              | 是否为压缩状态。            |
 | `compressedSize`   | `number`                               | 压缩后的大小（字节）。         |
 | `uncompressedSize` | `number`                               | 原始未压缩大小（字节）。        |
+| `isEncrypted`      | `boolean \| undefined`                  | 条目内容是否加密；由 `list7z()` 返回的条目提供。 |
 | `fileAttributes`   | `{ posixPermissions?: number; modificationDate?: Date }`                             | 文件属性信息（时间戳、类型、大小等）。 |
 
 **示例：**

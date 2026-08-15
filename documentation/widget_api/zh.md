@@ -42,6 +42,47 @@
 
 ---
 
+#### `Widget.isTransparentBackground: boolean`
+
+表示用户是否在该小组件的配置里打开了「用图片模拟透明背景」——这个模式会把你在 App 里裁好的主屏幕截图画在内容底下，伪造出透明效果。
+
+对「透明背景小组件」和「模糊背景小组件」而言，该属性**始终为 `false`**：它们的背景由系统绘制，并非用图片模拟。这两种请改用 `isTransparentMode` / `isBlurMode`。
+
+> **类型：** `boolean`
+
+---
+
+#### `Widget.isTransparentMode: boolean`
+
+表示当前小组件是否为「透明背景小组件」。这类小组件的背景由系统绘制，从而与主屏幕融为一体。
+
+该模式下内容必须保持完全透明——不要填充不透明背景，否则会把系统绘制的那一层盖掉。
+
+> **类型：** `boolean`
+
+---
+
+#### `Widget.isBlurMode: boolean`
+
+表示当前小组件是否为「模糊背景小组件」。这类小组件的模糊底衬由系统绘制。
+
+该模式下内容同样必须保持完全透明。
+
+> **类型：** `boolean`
+
+三者的关系：
+
+| 场景 | `isTransparentBackground` | `isTransparentMode` | `isBlurMode` |
+| --- | --- | --- | --- |
+| 普通小组件 | `false` | `false` | `false` |
+| 普通小组件 + 打开了图片模拟透明 | `true` | `false` | `false` |
+| 透明背景小组件 | `false` | `true` | `false` |
+| 模糊背景小组件 | `false` | `false` | `true` |
+
+> `widgetBackground` 修饰符在以下情况会自动跳过渲染，你无需手动判断：透明背景小组件、模糊背景小组件、打开了图片模拟透明背景的小组件、accessory 家族（锁屏 / 智能叠放）、以及 accented 渲染模式。这些场景的底衬都由系统或壁纸图提供，再画一层只会把它糊掉。
+
+---
+
 ### 静态方法
 
 #### `Widget.present(element, options?): void`

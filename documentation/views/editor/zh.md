@@ -34,6 +34,8 @@
 
 可选回调函数，在用户修改内容后大约 **100 毫秒** 被调用。该函数不会在每次输入时立即触发，适合用于防抖、自动保存等逻辑。
 
+该回调反映的是 **编辑器内的修改**；你自己写入的内容（赋值 `content` 或调用 `appendContent`）不会触发它。
+
 ---
 
 ### 方法说明
@@ -71,7 +73,15 @@
 * `getSelectedText(): Promise<string>`：获取当前选中的文本（无选区时为空串）。若编辑器未展示（超时）或已销毁，Promise 会 **reject**。
 * `setSelection(start, end)`：选中 `[start, end)` 范围并滚动到可见。
 * `replaceSelection(text)`：用 `text` 替换当前选区；无选区时在光标处插入。
+* `appendContent(text)`：在文末追加 `text`，不改变选区、也不改变滚动位置。
 * `selectAll()`：全选。
+
+**`appendContent` 与 `content += text` 的区别**：读取 `content` 拿到的是一份镜像，编辑器大约每秒回填一次；因此在用户刚敲完字时用 `content += text` 追加，可能会悄悄覆盖掉这些刚输入的内容。`appendContent` 完全不读取旧内容，适合日志式输出，或任何可能与用户输入并发的追加场景。
+
+```tsx
+// 把日志流式追加到编辑器：
+controller.appendContent(`[${new Date().toISOString()}] job finished\n`)
+```
 
 #### 搜索
 

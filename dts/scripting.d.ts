@@ -11759,9 +11759,26 @@ declare namespace Widget {
      */
     const parameter: string;
     /**
-     * Whether transparent background mode is enabled for the current widget instance.
+     * Whether the user turned on the simulated transparent background in this widget's
+     * configuration — the mode that fakes transparency by drawing a cropped snapshot of
+     * your Home Screen behind the content.
+     *
+     * This is always `false` for Transparent Background and Blur Background widgets:
+     * their background is drawn by the system, not simulated with an image. Use
+     * `isTransparentMode` / `isBlurMode` for those.
      */
     const isTransparentBackground: boolean;
+    /**
+     * Whether the current widget is a Transparent Background widget, whose background is
+     * drawn by the system so the widget blends with the Home Screen. The content must stay
+     * fully transparent in this mode — do not fill an opaque background.
+     */
+    const isTransparentMode: boolean;
+    /**
+     * Whether the current widget is a Blur Background widget, whose blurred backdrop is
+     * drawn by the system. The content must stay fully transparent in this mode.
+     */
+    const isBlurMode: boolean;
     /**
      * Present the widget UI.
      * @param node UI for rendering widget content.

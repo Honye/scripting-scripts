@@ -50,6 +50,18 @@
             "readme": "notification/"
           },
           {
+            "pro": true,
+            "title": {
+              "en": "Encrypted 7z Archives",
+              "zh": "加密 7z 归档"
+            },
+            "subtitle": {
+              "en": "Archive adds create7z, list7z, and extract7z for creating, inspecting, and extracting AES-256 encrypted 7z archives with progress and cancellation.",
+              "zh": "Archive 新增 create7z、list7z 和 extract7z，可创建、查看和解压 AES-256 加密的 7z 归档，并支持进度和取消。"
+            },
+            "readme": "archive/"
+          },
+          {
             "title": {
               "en": "More View Modifiers",
               "zh": "更多视图修饰器"
@@ -5481,8 +5493,8 @@
           "zh": "Archive（归档）"
         },
         "subtitle": {
-          "en": "This class provides a comprehensive interface for working with archive files (such as ZIP).",
-          "zh": "该类用于读取、创建与修改压缩归档文件（如 ZIP 格式）"
+          "en": "Create, inspect, update, and extract ZIP and AES-256 encrypted 7z archives.",
+          "zh": "创建、查看、修改和解压 ZIP 与 AES-256 加密的 7z 归档。"
         },
         "readme": "archive/"
       },
