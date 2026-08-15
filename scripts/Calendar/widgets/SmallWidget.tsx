@@ -7,12 +7,17 @@ import {
   GridRow,
   ZStack,
   Circle,
+  Widget,
   type WidgetRenderingMode,
   type Color
 } from 'scripting'
 import { isSameDay } from '../dateUtils'
 import { lunar } from '../lunar'
 import { colors } from '../degisn'
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
+}
 
 export default function SmallWidget({
   widgetRenderingMode,
@@ -57,29 +62,63 @@ export default function SmallWidget({
       ? ['一', '二', '三', '四', '五', '六', '日']
       : ['日', '一', '二', '三', '四', '五', '六']
 
+  // Every metric is derived from the real widget size: a small widget is 141pt
+  // wide on a 4" screen and 170pt on a 6.9" one, so fixed paddings and cell
+  // sizes overflow the smaller ones.
+  const displaySize = Widget.displaySize
+  const width = displaySize.width || 155
+  const height = displaySize.height || width
+  const padding = clamp(Math.round(width * 0.075), 8, 16)
+  const rowSpacing = 2
+
+  const cellWidth = (width - padding * 2) / 7
+  const headerFont = clamp(Math.round(width * 0.075), 9, 13)
+  const weekDayFont = clamp(Math.round(cellWidth * 0.55), 7, 11)
+
+  // Vertical space left for the day rows once the header and weekday row are
+  // laid out; rows never grow wider than they are tall to keep days circular.
+  const gridHeight =
+    height -
+    padding * 2 -
+    Math.round(headerFont * 1.4) -
+    Math.round(weekDayFont * 1.4) -
+    rowSpacing * (weeks.length + 1)
+  const rowHeight = clamp(gridHeight / weeks.length, 12, cellWidth + 2)
+  const daySize = Math.min(cellWidth, rowHeight)
+  const dayFont = clamp(Math.round(daySize * 0.6), 8, 13)
+  const dotSize = clamp(Math.round(daySize * 0.16), 2, 4)
+
   return (
-    <VStack
-      padding={20}
-      frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
-    >
+    <VStack padding={padding} frame={displaySize} spacing={0}>
       {/* Header */}
       <HStack alignment="center">
-        <Text font={12} fontWeight="medium" foregroundStyle={colors.systemRed}>
+        <Text
+          font={headerFont}
+          fontWeight="medium"
+          foregroundStyle={colors.systemRed}
+          lineLimit={1}
+        >
           {month + 1}月
         </Text>
-        <Spacer />
-        <Text font={12} fontWeight="medium" foregroundStyle={colors.systemRed}>
+        <Spacer minLength={2} />
+        <Text
+          font={headerFont}
+          fontWeight="medium"
+          foregroundStyle={colors.systemRed}
+          lineLimit={1}
+          minScaleFactor={0.8}
+        >
           {lunarText}
         </Text>
       </HStack>
       <Spacer />
       {/* Calendar Grid */}
-      <Grid verticalSpacing={2} horizontalSpacing={0}>
+      <Grid verticalSpacing={rowSpacing} horizontalSpacing={0}>
         <GridRow>
           {weekDayNames.map((name, i) => (
             <Text
               key={i}
-              font={10}
+              font={weekDayFont}
               fontWeight="medium"
               foregroundStyle={
                 (firstDayOfWeek === 1
@@ -89,6 +128,7 @@ export default function SmallWidget({
                   : 'label'
               }
               frame={{ maxWidth: 'infinity' }}
+              lineLimit={1}
               multilineTextAlignment="center"
             >
               {name}
@@ -103,52 +143,59 @@ export default function SmallWidget({
                 return (
                   <ZStack
                     key={j}
-                    frame={{ maxWidth: 'infinity', height: 18 }}
+                    frame={{ maxWidth: 'infinity', height: rowHeight }}
                   />
                 )
               }
               const isToday = isSameDay(date, today)
               const dotColor = dots[date.getDate()]
               return (
-                <VStack
-                  frame={{ width: 20, height: 20 }}
-                  spacing={0}
-                  alignment="center"
-                  background={
-                    isToday
-                      ? {
-                          style:
-                            widgetRenderingMode === 'accented'
-                              ? 'rgba(255,0,0,0.3)'
-                              : colors.systemRed,
-                          shape: 'circle'
-                        }
-                      : undefined
-                  }
+                <ZStack
+                  key={j}
+                  frame={{ maxWidth: 'infinity', height: rowHeight }}
                 >
-                  <Text
-                    font={11}
-                    fontWeight="medium"
-                    foregroundStyle={
+                  <VStack
+                    frame={{ width: daySize, height: daySize }}
+                    spacing={0}
+                    alignment="center"
+                    background={
                       isToday
-                        ? 'white'
-                        : date.getDay() === 0 || date.getDay() === 6
-                          ? 'secondaryLabel'
-                          : 'label'
+                        ? {
+                            style:
+                              widgetRenderingMode === 'accented'
+                                ? 'rgba(255,0,0,0.3)'
+                                : colors.systemRed,
+                            shape: 'circle'
+                          }
+                        : undefined
                     }
-                    widgetAccentable
-                    multilineTextAlignment="center"
                   >
-                    {date.getDate().toString()}
-                  </Text>
-                  {dotColor && (
-                    <Circle
-                      fill={dotColor}
-                      frame={{ width: 3, height: 3 }}
+                    <Text
+                      font={dayFont}
+                      fontWeight="medium"
+                      foregroundStyle={
+                        isToday
+                          ? 'white'
+                          : date.getDay() === 0 || date.getDay() === 6
+                            ? 'secondaryLabel'
+                            : 'label'
+                      }
                       widgetAccentable
-                    />
-                  )}
-                </VStack>
+                      lineLimit={1}
+                      minScaleFactor={0.7}
+                      multilineTextAlignment="center"
+                    >
+                      {date.getDate().toString()}
+                    </Text>
+                    {dotColor && (
+                      <Circle
+                        fill={dotColor}
+                        frame={{ width: dotSize, height: dotSize }}
+                        widgetAccentable
+                      />
+                    )}
+                  </VStack>
+                </ZStack>
               )
             })}
           </GridRow>
