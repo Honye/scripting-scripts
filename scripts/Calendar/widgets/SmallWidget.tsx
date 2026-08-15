@@ -14,10 +14,7 @@ import {
 import { isSameDay, buildMonthWeeks } from '../dateUtils'
 import { lunar } from '../lunar'
 import { colors } from '../degisn'
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max)
-}
+import { clamp, columnGlyphInset } from './layout'
 
 export default function SmallWidget({
   widgetRenderingMode,
@@ -66,11 +63,13 @@ export default function SmallWidget({
   const daySize = Math.min(cellWidth, rowHeight)
   const dayFont = clamp(Math.round(daySize * 0.6), 8, 13)
   const dotSize = clamp(Math.round(daySize * 0.16), 2, 4)
+  // Line the header up with the first and last weekday letters.
+  const headerInset = columnGlyphInset(cellWidth, weekDayFont, weekDayNames[0])
 
   return (
     <VStack padding={padding} frame={displaySize} spacing={0}>
       {/* Header */}
-      <HStack alignment="center">
+      <HStack alignment="center" padding={{ horizontal: headerInset }}>
         <Text
           font={headerFont}
           fontWeight="medium"

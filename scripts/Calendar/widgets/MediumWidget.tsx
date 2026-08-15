@@ -19,16 +19,13 @@ import {
 } from '../dateUtils'
 import { lunar } from '../lunar'
 import { adaptEventColor, colors } from '../degisn'
+import { clamp, columnGlyphInset } from './layout'
 
 export interface EventItem {
   title: string
   color: Color
   date: Date
   isAllDay: boolean
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max)
 }
 
 const dateFormat = new Intl.DateTimeFormat([], {
@@ -108,6 +105,14 @@ export default function MediumWidget({
   const dayFont = clamp(Math.round(daySize * 0.58), 8, 13)
   const weekDayFont = clamp(Math.round(columnWidth * 0.55), 7, 11)
 
+  // Line the month name up with the first weekday letter; the lunar date keeps
+  // the widget's own trailing edge.
+  const headerInset = columnGlyphInset(
+    columnWidth,
+    weekDayFont,
+    weekDayNames[0]
+  )
+
   const eventTitleFont = clamp(Math.round(width * 0.04), 11, 14)
   const eventDateFont = Math.round((eventTitleFont * 12) / 13)
   const eventRowHeight = Math.round(eventTitleFont * 2.2)
@@ -120,7 +125,7 @@ export default function MediumWidget({
       widgetURL="calshow://"
     >
       {/* Header: month name and lunar date */}
-      <HStack alignment="center">
+      <HStack alignment="center" padding={{ leading: headerInset }}>
         <Text
           font={headerFont}
           fontWeight="semibold"
