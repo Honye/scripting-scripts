@@ -102,8 +102,10 @@ export default function MediumWidget({
   // Cap the columns so the calendar never crowds out the event list.
   const columnWidth = Math.min((contentWidth * 0.46) / 7, rowHeight + 3)
   const gridWidth = columnWidth * 7
-  const daySize = Math.min(columnWidth, rowHeight) - 1
-  const dayFont = clamp(Math.round(daySize * 0.72), 8, 13)
+  const daySize = Math.min(columnWidth, rowHeight)
+  // Two digits have to sit inside the circle with room to spare, so the font
+  // stays well under the circle's diameter.
+  const dayFont = clamp(Math.round(daySize * 0.58), 8, 13)
   const weekDayFont = clamp(Math.round(columnWidth * 0.55), 7, 11)
 
   const eventTitleFont = clamp(Math.round(width * 0.04), 11, 14)
