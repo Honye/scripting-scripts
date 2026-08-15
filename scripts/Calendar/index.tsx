@@ -181,6 +181,7 @@ function WeekCalculator() {
 }
 function App() {
   const [firstDayOfWeek, setFirstDayOfWeek] = useState(Storage.get<string>('firstDayOfWeek') || '0')
+  const [mediumLayout, setMediumLayout] = useState(Storage.get<string>('mediumLayout') || 'week')
 
   return (
     <NavigationStack>
@@ -202,8 +203,21 @@ function App() {
             <Text tag='0'>Sunday</Text>
             <Text tag='1'>Monday</Text>
           </Picker>
+          <Picker
+            value={mediumLayout}
+            onChanged={(val: string) => {
+              setMediumLayout(val)
+              Storage.set('mediumLayout', val)
+              Widget.reloadAll()
+            }}
+            pickerStyle="menu"
+            label={<Text>Medium Widget</Text>}
+          >
+            <Text tag='week'>Week</Text>
+            <Text tag='month'>Month & Events</Text>
+          </Picker>
         </Section>
-        <Section>
+        <Section footer={<Text>Set a widget's Parameter to "month" or "week" to override the layout of that widget.</Text>}>
           <Button title='Preview Widget' action={() => Widget.preview()}></Button>
         </Section>
       </List>

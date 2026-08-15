@@ -43,3 +43,38 @@ export function isSameDay(d1: Date, d2: Date): boolean {
            d1.getMonth() === d2.getMonth() &&
            d1.getDate() === d2.getDate();
 }
+
+/** Month grid rows, padded with `null` before the 1st so every row holds 7 cells. */
+export function buildMonthWeeks(year: number, month: number, firstDayOfWeek: number = 0): (Date | null)[][] {
+    const firstDay = new Date(year, month, 1)
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const startDayOfWeek = (firstDay.getDay() - firstDayOfWeek + 7) % 7
+
+    const gridDays: (Date | null)[] = []
+    for (let i = 0; i < startDayOfWeek; i++) {
+        gridDays.push(null)
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+        gridDays.push(new Date(year, month, i))
+    }
+
+    const weeks: (Date | null)[][] = []
+    for (let i = 0; i < gridDays.length; i += 7) {
+        weeks.push(gridDays.slice(i, i + 7))
+    }
+    return weeks
+}
+
+/** Single-letter weekday names in the system language, e.g. `S M T W T F S` / `日一二三四五六`. */
+export function getWeekDayNarrowNames(firstDayOfWeek: number = 0): string[] {
+    const sunday = new Date('1970/01/04')
+    const format = new Intl.DateTimeFormat([], { weekday: 'narrow' }).format
+    return Array.from({ length: 7 }).map((_, i) =>
+        format(new Date(sunday.getTime() + ((i + firstDayOfWeek) % 7) * 86400000))
+    )
+}
+
+/** Month name in the system language, uppercased: `AUGUST` / `八月`. */
+export function formatMonthTitle(date: Date): string {
+    return new Intl.DateTimeFormat([], { month: 'long' }).format(date).toUpperCase()
+}

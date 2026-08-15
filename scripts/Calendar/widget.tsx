@@ -21,7 +21,8 @@ import {
   getWeekDayName,
   startOfWeek as getStartOfWeek,
   addDays,
-  isSameDay
+  isSameDay,
+  buildMonthWeeks
 } from './dateUtils'
 import {
   ChangeWeekIntent,
@@ -31,6 +32,7 @@ import {
 import { lunar } from './lunar'
 import { fetchHolidays, getHolidayType } from './holidayUtils'
 import SmallWidget from './widgets/SmallWidget'
+import MediumWidget, { type EventItem } from './widgets/MediumWidget'
 import { color, colors } from './degisn'
 
 async function WeeklyWidget() {
@@ -289,6 +291,46 @@ async function MonthlyWidget() {
   )
 }
 
+const EVENT_DAYS = 7
+const EVENT_MAX = 3
+
+async function MediumMonthlyWidget() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const end = addDays(today, EVENT_DAYS)
+
+  const calendars = await Calendar.forEvents()
+  const holidayCal = calendars.find(
+    (c) => c.title === '中国大陆节假日' || c.title === 'Chinese Holidays'
+  )
+  const events = await CalendarEvent.getAll(today, end, calendars)
+
+  const items: EventItem[] = events
+    // The holiday calendar's 休/班 entries describe the work schedule rather
+    // than an event worth listing; events from other calendars are kept as is.
+    .filter(
+      (e) =>
+        e.calendar?.identifier !== holidayCal?.identifier ||
+        (!e.title.includes('休') && !e.title.includes('班'))
+    )
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+    .slice(0, EVENT_MAX)
+    .map((e) => ({
+      title: e.title,
+      color: e.calendar?.color ?? colors.systemRed.light,
+      date: e.startDate,
+      isAllDay: e.isAllDay
+    }))
+
+  return (
+    <EnvironmentValuesReader keys={['widgetRenderingMode']}>
+      {({ widgetRenderingMode }) => (
+        <MediumWidget {...{ widgetRenderingMode, events: items }} />
+      )}
+    </EnvironmentValuesReader>
+  )
+}
+
 async function LargeMonthlyWidget() {
   const val = Storage.get<string>('monthOffset') || '0'
   let offset = 0
@@ -321,11 +363,7 @@ async function LargeMonthlyWidget() {
 
   await fetchHolidays(year)
 
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const daysInMonth = lastDay.getDate()
   const firstDayOfWeek = parseInt(Storage.get<string>('firstDayOfWeek') || '0')
-  const startDayOfWeek = (firstDay.getDay() - firstDayOfWeek + 7) % 7
 
   const calendars = await Calendar.forEvents()
   const holidayCal = calendars.find(
@@ -346,23 +384,7 @@ async function LargeMonthlyWidget() {
     }
   }
 
-  // Generate grid cells
-  const gridDays: (Date | null)[] = []
-
-  // Start padding
-  for (let i = 0; i < startDayOfWeek; i++) {
-    gridDays.push(null)
-  }
-  // Dates
-  for (let i = 1; i <= daysInMonth; i++) {
-    gridDays.push(new Date(year, month, i))
-  }
-
-  // Chunk into weeks
-  const weeks: (Date | null)[][] = []
-  for (let i = 0; i < gridDays.length; i += 7) {
-    weeks.push(gridDays.slice(i, i + 7))
-  }
+  const weeks = buildMonthWeeks(year, month, firstDayOfWeek)
 
   const weekDayNames =
     firstDayOfWeek === 1
@@ -573,6 +595,16 @@ async function WidgetView() {
   }
   if (Widget.family === 'systemLarge') {
     return await LargeMonthlyWidget()
+  }
+  if (Widget.family === 'systemMedium') {
+    // A per-widget Parameter wins over the app-wide setting, so several medium
+    // widgets can show different layouts.
+    const parameter = (Widget.parameter || '').trim().toLowerCase()
+    const layout =
+      parameter === 'week' || parameter === 'month'
+        ? parameter
+        : Storage.get<string>('mediumLayout') || 'week'
+    return layout === 'week' ? await WeeklyWidget() : await MediumMonthlyWidget()
   }
   return await WeeklyWidget()
 }

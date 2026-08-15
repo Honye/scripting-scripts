@@ -11,7 +11,7 @@ import {
   type WidgetRenderingMode,
   type Color
 } from 'scripting'
-import { isSameDay } from '../dateUtils'
+import { isSameDay, buildMonthWeeks } from '../dateUtils'
 import { lunar } from '../lunar'
 import { colors } from '../degisn'
 
@@ -33,29 +33,8 @@ export default function SmallWidget({
   const lunarDate = lunar(today)
   const lunarText = `${lunarDate.monthName}月${lunarDate.dayName}`
 
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const daysInMonth = lastDay.getDate()
   const firstDayOfWeek = parseInt(Storage.get<string>('firstDayOfWeek') || '0')
-  const startDayOfWeek = (firstDay.getDay() - firstDayOfWeek + 7) % 7
-
-  // Generate grid cells
-  const gridDays: (Date | null)[] = []
-
-  // Start padding
-  for (let i = 0; i < startDayOfWeek; i++) {
-    gridDays.push(null)
-  }
-  // Dates
-  for (let i = 1; i <= daysInMonth; i++) {
-    gridDays.push(new Date(year, month, i))
-  }
-
-  // Chunk into weeks
-  const weeks: (Date | null)[][] = []
-  for (let i = 0; i < gridDays.length; i += 7) {
-    weeks.push(gridDays.slice(i, i + 7))
-  }
+  const weeks = buildMonthWeeks(year, month, firstDayOfWeek)
 
   const weekDayNames =
     firstDayOfWeek === 1
