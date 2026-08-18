@@ -45,7 +45,8 @@ import {
   Folder,
   FolderStyle,
   getIconCachePath,
-  migrateAppItem
+  migrateAppItem,
+  resolveIconSource
 } from './constants'
 import { ITunesApp, SearchSheet } from './SearchSheet'
 import {
@@ -219,6 +220,7 @@ function AddExistingAppView({
               <HStack>
                 <AppIconView
                   icon={item.icon}
+                  iconDark={item.iconDark}
                   iconType={item.iconType}
                   color={item.color}
                 />
@@ -544,6 +546,25 @@ function FolderDetail({
   )
 }
 
+/** Picks one photo, writes it into the icon cache and returns its icon id. */
+async function pickIconFromPhotos(): Promise<string | undefined> {
+  try {
+    const images = await Photos.pickPhotos(1)
+    const image = images?.[0]
+    if (!image) return
+    const data = image.toPNGData()
+    if (!data) return
+    const id = `img_${Date.now()}`
+    if (!FileManager.existsSync(CACHE_PATH)) {
+      FileManager.createDirectorySync(CACHE_PATH, true)
+    }
+    FileManager.writeAsDataSync(getIconCachePath(id), data)
+    return id
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 function AppEditor({
   item,
   folders = [],
@@ -564,6 +585,7 @@ function AppEditor({
   const [bundleId, setBundleId] = useState(item?.bundleId ?? '')
   const [runInWidget, setRunInWidget] = useState(item?.runInWidget !== false)
   const [icon, setIcon] = useState(item?.icon ?? 'app')
+  const [iconDark, setIconDark] = useState(item?.iconDark ?? '')
   const [iconType, setIconType] = useState<
     'symbol' | 'image' | 'transparent_image'
   >(item?.iconType ?? 'symbol')
@@ -613,6 +635,9 @@ function AppEditor({
     if (artwork) {
       setIcon(artwork)
       setIconType('image')
+      // The search only yields a light artwork; don't carry over the dark icon
+      // of whatever app was being edited before.
+      setIconDark('')
     }
     setSearchOpen(false)
   }
@@ -657,6 +682,10 @@ function AppEditor({
                 bundleId,
                 runInWidget,
                 icon,
+                iconDark:
+                  iconType === 'symbol'
+                    ? undefined
+                    : iconDark.trim() || undefined,
                 iconType,
                 color: color as unknown as string,
                 folderIds
@@ -754,7 +783,14 @@ function AppEditor({
         </Section>
       )}
 
-      <Section header={<Text>Appearance</Text>}>
+      <Section
+        header={<Text>Appearance</Text>}
+        footer={
+          <Text>
+            Leave the dark icon empty to reuse the light icon in dark mode.
+          </Text>
+        }
+      >
         <Picker
           title="Icon Type"
           value={iconType}
@@ -774,38 +810,46 @@ function AppEditor({
             <Image systemName={icon} font={20} foregroundStyle={color} />
           </HStack>
         ) : (
-          <HStack>
-            <Text>Image URL</Text>
-            <TextField title="URL" value={icon} onChanged={setIcon} />
-            <Button
-              title="Photos"
-              action={async () => {
-                try {
-                  const images = await Photos.pickPhotos(1)
-                  const image = images?.[0]
-                  if (image) {
-                    const data = image.toPNGData()
-                    if (data) {
-                      const id = `img_${Date.now()}`
-                      if (!FileManager.existsSync(CACHE_PATH)) {
-                        FileManager.createDirectorySync(CACHE_PATH, true)
-                      }
-                      const cachePath = getIconCachePath(id)
-                      FileManager.writeAsDataSync(cachePath, data)
-                      setIcon(id)
-                    }
-                  }
-                } catch (e) {
-                  console.error(e)
-                }
-              }}
-            />
-            <AppIconView
-              icon={icon}
-              iconType={iconType}
-              color={color as unknown as string}
-            />
-          </HStack>
+          <Fragment>
+            <HStack>
+              <Text>Image URL (Light)</Text>
+              <TextField title="URL" value={icon} onChanged={setIcon} />
+              <Button
+                title="Photos"
+                action={async () => {
+                  const id = await pickIconFromPhotos()
+                  if (id) setIcon(id)
+                }}
+              />
+              <AppIconView
+                icon={icon}
+                iconType={iconType}
+                color={color as unknown as string}
+              />
+            </HStack>
+            <HStack>
+              <Text>Image URL (Dark)</Text>
+              <TextField
+                title="Optional"
+                value={iconDark}
+                onChanged={setIconDark}
+              />
+              <Button
+                title="Photos"
+                action={async () => {
+                  const id = await pickIconFromPhotos()
+                  if (id) setIconDark(id)
+                }}
+              />
+              {/* Previewing the light icon when this is empty mirrors what the
+                  widget actually draws in dark mode. */}
+              <AppIconView
+                icon={iconDark || icon}
+                iconType={iconType}
+                color={color as unknown as string}
+              />
+            </HStack>
+          </Fragment>
         )}
 
         <ColorPicker value={color} onChanged={setColor}>
@@ -832,31 +876,27 @@ function AppEditor({
 
 function AppIconView({
   icon,
+  iconDark,
   iconType,
   color
 }: {
   icon: string
+  iconDark?: string
   iconType: AppItem['iconType']
   color: string
 }) {
   if (iconType === 'image' || iconType === 'transparent_image') {
-    const cachePath = getIconCachePath(icon)
-    if (FileManager.existsSync(cachePath)) {
-      return (
-        <ZStack
-          frame={{ width: 24, height: 24 }}
-          clipShape={{ type: 'rect', cornerRadius: 6 }}
-        >
-          <Image filePath={cachePath} resizable scaleToFill />
-        </ZStack>
-      )
-    }
+    const src = resolveIconSource(icon, iconDark)
     return (
       <ZStack
         frame={{ width: 24, height: 24 }}
         clipShape={{ type: 'rect', cornerRadius: 6 }}
       >
-        <Image imageUrl={icon} resizable scaleToFill />
+        {src.kind === 'file' ? (
+          <Image filePath={src.source} resizable scaleToFill />
+        ) : (
+          <Image imageUrl={src.source} resizable scaleToFill />
+        )}
       </ZStack>
     )
   }
@@ -895,6 +935,7 @@ function AppRow({ item, folders }: { item: AppItem; folders?: Folder[] }) {
     <HStack alignment="center">
       <AppIconView
         icon={item.icon}
+        iconDark={item.iconDark}
         iconType={item.iconType}
         color={item.color}
       />
@@ -1036,34 +1077,39 @@ function App() {
     setAccentedMode(m)
   }
 
-  async function cacheAppIcon(item: AppItem) {
-    if (
-      (item.iconType !== 'image' && item.iconType !== 'transparent_image') ||
-      !item.icon
-    )
-      return
+  /** Downloads one icon URL into the cache. Returns true if it wrote a file. */
+  async function cacheIconUrl(url: string) {
+    if (!url || !url.startsWith('http')) return false
 
-    const cachePath = getIconCachePath(item.icon)
-    if (FileManager.existsSync(cachePath)) return
+    const cachePath = getIconCachePath(url)
+    if (FileManager.existsSync(cachePath)) return false
 
     if (!FileManager.existsSync(CACHE_PATH)) {
       FileManager.createDirectorySync(CACHE_PATH, true)
     }
 
     try {
-      if (item.icon.startsWith('http')) {
-        const image = await UIImage.fromURL(item.icon)
-        if (image) {
-          const data = image.toPNGData()
-          if (data) {
-            FileManager.writeAsDataSync(cachePath, data)
-            Widget.reloadAll()
-          }
-        }
+      const image = await UIImage.fromURL(url)
+      const data = image?.toPNGData()
+      if (data) {
+        FileManager.writeAsDataSync(cachePath, data)
+        return true
       }
     } catch (e) {
-      console.error(`Failed to cache icon: ${item.icon}`, e)
+      console.error(`Failed to cache icon: ${url}`, e)
     }
+    return false
+  }
+
+  async function cacheAppIcon(item: AppItem) {
+    if (item.iconType !== 'image' && item.iconType !== 'transparent_image')
+      return
+
+    const downloaded = await Promise.all([
+      cacheIconUrl(item.icon),
+      cacheIconUrl(item.iconDark ?? '')
+    ])
+    if (downloaded.some(Boolean)) Widget.reloadAll()
   }
 
   function updateApp(item: AppItem) {

@@ -1,4 +1,5 @@
 import { Path, Script } from 'scripting'
+import type { DynamicImageSource } from 'scripting'
 
 export const BASE_PATH = Path.join(
   FileManager.appGroupDocumentsDirectory,
@@ -21,6 +22,49 @@ export function getIconCachePath(url: string) {
   return Path.join(CACHE_PATH, `${hash}.png`)
 }
 
+/**
+ * An `Image` source: either a local cache file or a remote URL, single or
+ * light/dark. `Image` refuses to mix `filePath` and `imageUrl` in one
+ * `DynamicImageSource`, so callers branch on `kind`.
+ */
+export interface ResolvedIcon {
+  kind: 'file' | 'url'
+  source: string | DynamicImageSource<string>
+}
+
+function cachedFile(icon: string) {
+  const path = getIconCachePath(icon)
+  return path && FileManager.existsSync(path) ? path : ''
+}
+
+/**
+ * Resolves an item's icon, preferring the downloaded cache file over the
+ * network URL. A dark icon only kicks in once both variants are available in
+ * the same form; until then it falls back to the light icon alone, and the
+ * next cache pass upgrades it to a pair.
+ */
+export function resolveIconSource(
+  icon: string,
+  iconDark?: string
+): ResolvedIcon {
+  const light = cachedFile(icon)
+  const single: ResolvedIcon = light
+    ? { kind: 'file', source: light }
+    : { kind: 'url', source: icon }
+
+  const dark = iconDark?.trim()
+  if (!dark || dark === icon) return single
+
+  const darkFile = cachedFile(dark)
+  if (light && darkFile) {
+    return { kind: 'file', source: { light, dark: darkFile } }
+  }
+  if (icon.startsWith('http') && dark.startsWith('http')) {
+    return { kind: 'url', source: { light: icon, dark } }
+  }
+  return single
+}
+
 // Migrates legacy single-folder data (folderId) to the multi-folder format (folderIds).
 export function migrateAppItem(
   item: AppItem & { folderId?: string }
@@ -37,6 +81,11 @@ export interface AppItem {
   id: string
   name: string
   icon: string
+  /**
+   * Icon used in dark mode. Empty falls back to `icon`. Only meaningful for
+   * the image-based `iconType`s.
+   */
+  iconDark?: string
   iconType?: 'symbol' | 'image' | 'transparent_image'
   mode?: 'url' | 'bundleId' | 'script'
   url: string

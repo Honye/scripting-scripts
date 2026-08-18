@@ -24,8 +24,8 @@ import {
   FOLDERS_PATH,
   Folder,
   FolderStyle,
-  getIconCachePath,
-  migrateAppItem
+  migrateAppItem,
+  resolveIconSource
 } from './constants'
 import { OpenAppIntent, RunButtonIntent } from './app_intents'
 
@@ -50,20 +50,17 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
             }}
           >
             {(() => {
-              const cachePath = getIconCachePath(item.icon)
-              if (FileManager.existsSync(cachePath)) {
-                return (
-                  <Image
-                    filePath={cachePath}
-                    resizable
-                    scaleToFill
-                    widgetAccentedRenderingMode={accentedRenderingMode}
-                  />
-                )
-              }
-              return (
+              const src = resolveIconSource(item.icon, item.iconDark)
+              return src.kind === 'file' ? (
                 <Image
-                  imageUrl={item.icon}
+                  filePath={src.source}
+                  resizable
+                  scaleToFill
+                  widgetAccentedRenderingMode={accentedRenderingMode}
+                />
+              ) : (
+                <Image
+                  imageUrl={src.source}
                   resizable
                   scaleToFill
                   widgetAccentedRenderingMode={accentedRenderingMode}
@@ -85,21 +82,18 @@ function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
             </EnvironmentValuesReader>
             {item.iconType === 'transparent_image' ? (
               (() => {
-                const cachePath = getIconCachePath(item.icon)
-                if (FileManager.existsSync(cachePath)) {
-                  return (
-                    <Image
-                      filePath={cachePath}
-                      resizable
-                      scaleToFit
-                      frame={{ width: size * 0.6, height: size * 0.6 }}
-                      widgetAccentedRenderingMode={accentedRenderingMode}
-                    />
-                  )
-                }
-                return (
+                const src = resolveIconSource(item.icon, item.iconDark)
+                return src.kind === 'file' ? (
                   <Image
-                    imageUrl={item.icon}
+                    filePath={src.source}
+                    resizable
+                    scaleToFit
+                    frame={{ width: size * 0.6, height: size * 0.6 }}
+                    widgetAccentedRenderingMode={accentedRenderingMode}
+                  />
+                ) : (
+                  <Image
+                    imageUrl={src.source}
                     resizable
                     scaleToFit
                     frame={{ width: size * 0.6, height: size * 0.6 }}
