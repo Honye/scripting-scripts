@@ -1,18 +1,14 @@
 import {
   Button,
-  Color,
   HStack,
-  Image,
   Link,
   Rectangle,
-  RoundedRectangle,
   Script,
   Spacer,
   VStack,
   VirtualNode,
   ZStack,
-  Widget,
-  EnvironmentValuesReader
+  Widget
 } from 'scripting'
 import {
   AppItem,
@@ -24,96 +20,18 @@ import {
   FOLDERS_PATH,
   Folder,
   FolderStyle,
-  migrateAppItem,
-  resolveIconSource
+  migrateAppItem
 } from './constants'
+import { AppIconArtwork } from './components/AppIconArtwork'
 import { OpenAppIntent, RunButtonIntent } from './app_intents'
 
 function AppIcon({ item, config }: { item: AppItem; config?: Config }) {
   const size = config?.iconSize || DEFAULT_CONFIG.iconSize
-  const radius =
-    config?.shape === 'circle'
-      ? size / 2
-      : (config?.cornerRadius ?? size * 0.225)
   const useBundleId = item.mode === 'bundleId' && !!item.bundleId
   const accentedRenderingMode =
     config?.widgetAccentedRenderingMode ||
     DEFAULT_CONFIG.widgetAccentedRenderingMode
-  const iconContent = (
-    <ZStack>
-        {item.iconType === 'image' ? (
-          <ZStack
-            frame={{ width: size, height: size }}
-            clipShape={{
-              type: 'rect',
-              cornerRadius: radius
-            }}
-          >
-            {(() => {
-              const src = resolveIconSource(item.icon, item.iconDark)
-              return src.kind === 'file' ? (
-                <Image
-                  filePath={src.source}
-                  resizable
-                  scaleToFill
-                  widgetAccentedRenderingMode={accentedRenderingMode}
-                />
-              ) : (
-                <Image
-                  imageUrl={src.source}
-                  resizable
-                  scaleToFill
-                  widgetAccentedRenderingMode={accentedRenderingMode}
-                />
-              )
-            })()}
-          </ZStack>
-        ) : (
-          <Fragment>
-            <EnvironmentValuesReader keys={['widgetRenderingMode']}>
-              {({ widgetRenderingMode }) => (
-                <RoundedRectangle
-                  frame={{ width: size, height: size }}
-                  fill={item.color as Color}
-                  cornerRadius={radius}
-                  opacity={widgetRenderingMode === 'accented' ? 0.2 : 1}
-                />
-              )}
-            </EnvironmentValuesReader>
-            {item.iconType === 'transparent_image' ? (
-              (() => {
-                const src = resolveIconSource(item.icon, item.iconDark)
-                return src.kind === 'file' ? (
-                  <Image
-                    filePath={src.source}
-                    resizable
-                    scaleToFit
-                    frame={{ width: size * 0.6, height: size * 0.6 }}
-                    widgetAccentedRenderingMode={accentedRenderingMode}
-                  />
-                ) : (
-                  <Image
-                    imageUrl={src.source}
-                    resizable
-                    scaleToFit
-                    frame={{ width: size * 0.6, height: size * 0.6 }}
-                    widgetAccentedRenderingMode={accentedRenderingMode}
-                  />
-                )
-              })()
-            ) : (
-              <Image
-                systemName={item.icon}
-                foregroundStyle="white"
-                font={size * 0.5}
-                widgetAccentable
-                widgetAccentedRenderingMode={accentedRenderingMode}
-              />
-            )}
-          </Fragment>
-        )}
-      </ZStack>
-  )
+  const iconContent = <AppIconArtwork item={item} config={config} />
 
   // SwiftUI bug: an `Image` using the `desaturated` / `accentedDesaturated`
   // accented rendering modes swallows taps when it is the label of a `Link` or
