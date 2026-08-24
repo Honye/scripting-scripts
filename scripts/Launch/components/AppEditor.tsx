@@ -67,16 +67,18 @@ function EditorSectionHeader({
   systemImage
 }: {
   title: string
-  systemImage: string
+  systemImage?: string
 }) {
   return (
     <HStack spacing={6}>
-      <Image
-        systemName={systemImage}
-        font={12}
-        fontWeight="semibold"
-        foregroundStyle={'systemBlue' as Color}
-      />
+      {systemImage ? (
+        <Image
+          systemName={systemImage}
+          font={12}
+          fontWeight="semibold"
+          foregroundStyle={'systemBlue' as Color}
+        />
+      ) : null}
       <Text font={13} fontWeight="semibold" foregroundStyle={EDITOR_SECONDARY}>
         {title}
       </Text>
@@ -369,12 +371,7 @@ export function AppEditor({
       </Section>
 
       <Section
-        header={
-          <EditorSectionHeader
-            title="Basic Info"
-            systemImage="info.circle.fill"
-          />
-        }
+        header={<EditorSectionHeader title="Basic Info" />}
         footer={
           !hasLaunchTarget ? (
             <Text>Choose a launch mode and enter its required destination.</Text>
@@ -487,12 +484,7 @@ export function AppEditor({
       )}
 
       <Section
-        header={
-          <EditorSectionHeader
-            title="Appearance"
-            systemImage="paintpalette.fill"
-          />
-        }
+        header={<EditorSectionHeader title="Appearance" />}
         footer={
           <Text>
             The dark icon is optional. If empty, the light icon is used in both
@@ -594,9 +586,7 @@ export function AppEditor({
 
       {folders.length > 0 && (
         <Section
-          header={
-            <EditorSectionHeader title="Folders" systemImage="folder.fill" />
-          }
+          header={<EditorSectionHeader title="Folders" />}
           footer={
             <Text>
               {folderIds.length === 0

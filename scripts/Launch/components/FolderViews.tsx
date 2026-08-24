@@ -6,9 +6,9 @@ import {
   EditButton,
   ForEach,
   Form,
-  GeometryReader,
   HStack,
   Image,
+  LazyVGrid,
   List,
   Navigation,
   NavigationLink,
@@ -42,7 +42,8 @@ import {
   filterApps
 } from './SharedViews'
 
-const FOLDER_PREVIEW_RADIUS = 22
+export const FOLDER_PREVIEW_RADIUS = 22
+const FOLDER_LABEL_HORIZONTAL_INSET = 10
 
 export function FolderNameEditor({
   folder,
@@ -535,44 +536,37 @@ export function FolderGridCell({
   const config = resolveFolderConfig(folder, globalConfig)
 
   return (
-    <GeometryReader
-      aspectRatio={{ value: 0.84, contentMode: 'fit' }}
-      frame={{ maxWidth: 'infinity' }}
+    <VStack
+      alignment="center"
+      spacing={8}
+      frame={{ maxWidth: 'infinity', alignment: 'top' }}
+      contentShape={{ type: 'rect', cornerRadius: FOLDER_PREVIEW_RADIUS }}
     >
-      {proxy => (
-        <VStack
-          alignment="center"
-          spacing={8}
-          frame={{
-            width: proxy.size.width,
-            height: proxy.size.height,
-            alignment: 'top'
-          }}
+      <FolderPreview
+        folder={folder}
+        apps={apps}
+        config={config}
+        supportsLiquidGlass={supportsLiquidGlass}
+      />
+      <HStack
+        spacing={6}
+        padding={{ horizontal: FOLDER_LABEL_HORIZONTAL_INSET }}
+        frame={{ maxWidth: 'infinity' }}
+      >
+        <Text
+          font={14}
+          fontWeight="semibold"
+          foregroundStyle={'label' as Color}
+          lineLimit={1}
         >
-          <FolderPreview
-            folder={folder}
-            apps={apps}
-            config={config}
-            previewSize={proxy.size.width}
-            supportsLiquidGlass={supportsLiquidGlass}
-          />
-          <HStack spacing={6} frame={{ maxWidth: 'infinity' }}>
-            <Text
-              font={14}
-              fontWeight="semibold"
-              foregroundStyle={'label' as Color}
-              lineLimit={1}
-            >
-              {folder.name}
-            </Text>
-            <Spacer />
-            <Text font={12} foregroundStyle={'secondaryLabel' as Color}>
-              {apps.length.toString()}
-            </Text>
-          </HStack>
-        </VStack>
-      )}
-    </GeometryReader>
+          {folder.name}
+        </Text>
+        <Spacer />
+        <Text font={12} foregroundStyle={'secondaryLabel' as Color}>
+          {apps.length.toString()}
+        </Text>
+      </HStack>
+    </VStack>
   )
 }
 
@@ -580,40 +574,30 @@ function FolderPreview({
   folder,
   apps,
   config,
-  previewSize,
   supportsLiquidGlass
 }: {
   folder: Folder
   apps: AppItem[]
   config: Config
-  previewSize: number
   supportsLiquidGlass: boolean
 }) {
   const iconSize = config.iconSize || DEFAULT_CONFIG.iconSize
   const preferredSpacing = config.spacing
-  const columns = Math.max(
-    1,
-    Math.floor(
-      (previewSize - preferredSpacing) / (iconSize + preferredSpacing)
-    )
-  )
-  const actualSpacing = (previewSize - columns * iconSize) / (columns + 1)
-  const rowCount = Math.max(
-    1,
-    Math.floor(
-      (previewSize - 32 + preferredSpacing) /
-        (iconSize + preferredSpacing)
-    )
-  )
-  const displayApps = apps.slice(0, columns * rowCount)
-  const rows: AppItem[][] = []
-  for (let index = 0; index < displayApps.length; index += columns) {
-    rows.push(displayApps.slice(index, index + columns))
-  }
+  const displayApps = apps.slice(0, 4)
+  const iconColumns = [
+    {
+      size: {
+        type: 'adaptive' as const,
+        min: iconSize,
+        max: iconSize
+      },
+      spacing: preferredSpacing
+    }
+  ]
 
   return (
     <ZStack
-      frame={{ width: previewSize, height: previewSize }}
+      frame={{ maxWidth: 'infinity' }}
       background={
         supportsLiquidGlass
           ? undefined
@@ -625,7 +609,7 @@ function FolderPreview({
       glassEffect={
         supportsLiquidGlass
           ? {
-              glass: UIGlass.regular().interactive(),
+              glass: UIGlass.regular(),
               shape: { type: 'rect', cornerRadius: FOLDER_PREVIEW_RADIUS }
             }
           : undefined
@@ -643,6 +627,12 @@ function FolderPreview({
         )
       }
     >
+      <RoundedRectangle
+        cornerRadius={FOLDER_PREVIEW_RADIUS}
+        fill={'clear' as Color}
+        aspectRatio={{ value: 1, contentMode: 'fit' }}
+        frame={{ maxWidth: 'infinity' }}
+      />
       {displayApps.length === 0 ? (
         <VStack opacity={0.45} spacing={6}>
           <FolderIconView icon={folder.icon} color={folder.color} />
@@ -650,26 +640,24 @@ function FolderPreview({
             Empty
           </Text>
         </VStack>
+      ) : displayApps.length === 1 ? (
+        <AppIconArtwork item={displayApps[0]} config={config} />
       ) : (
         <VStack
-          padding={{
-            leading: actualSpacing,
-            trailing: actualSpacing,
-            top: 16,
-            bottom: 16
-          }}
-          spacing={preferredSpacing}
-          alignment="leading"
-          frame={{ width: previewSize, height: previewSize }}
+          padding={16}
+          frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
         >
           <Spacer />
-          {rows.map((row, rowIndex) => (
-            <HStack key={rowIndex} spacing={actualSpacing}>
-              {row.map(item => (
-                <AppIconArtwork key={item.id} item={item} config={config} />
-              ))}
-            </HStack>
-          ))}
+          <LazyVGrid
+            columns={iconColumns}
+            alignment="center"
+            spacing={preferredSpacing}
+            frame={{ maxWidth: 'infinity' }}
+          >
+            {displayApps.map(item => (
+              <AppIconArtwork key={item.id} item={item} config={config} />
+            ))}
+          </LazyVGrid>
           <Spacer />
         </VStack>
       )}

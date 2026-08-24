@@ -28,7 +28,8 @@ import { AppEditor } from './AppEditor'
 import {
   FolderDetail,
   FolderGridCell,
-  FolderNameEditor
+  FolderNameEditor,
+  FOLDER_PREVIEW_RADIUS
 } from './FolderViews'
 import { AppRow, TexturedTabPage, filterApps } from './SharedViews'
 
@@ -166,6 +167,10 @@ export function FoldersPage({
             }
             buttonStyle="plain"
             frame={{ maxWidth: 'infinity', alignment: 'top' }}
+            contentShape={{
+              type: 'rect',
+              cornerRadius: FOLDER_PREVIEW_RADIUS
+            }}
             accessibilityLabel={`${folder.name}, ${folderApps.length} apps`}
             contextMenu={{
               menuItems: (

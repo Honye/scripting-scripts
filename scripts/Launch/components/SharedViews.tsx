@@ -94,38 +94,47 @@ export function AppIconView({
   icon,
   iconDark,
   iconType,
-  color
+  color,
+  size = 24
 }: {
   icon: string
   iconDark?: string
   iconType: AppItem['iconType']
   color: string
+  size?: number
 }) {
+  const cornerRadius = size * 0.225
+
   if (iconType === 'image') {
     return (
       <ZStack
-        frame={{ width: 24, height: 24 }}
-        clipShape={{ type: 'rect', cornerRadius: 6 }}
+        frame={{ width: size, height: size }}
+        clipShape={{ type: 'rect', cornerRadius }}
       >
         <ResolvedIconImage icon={icon} iconDark={iconDark} />
       </ZStack>
     )
   }
-  if (iconType === 'transparent_image') {
-    return (
-      <ZStack frame={{ width: 24, height: 24 }}>
-        <RoundedRectangle
-          frame={{ width: 24, height: 24 }}
-          fill={color as Color}
-          cornerRadius={6}
-        />
-        <ZStack frame={{ width: 15, height: 15 }}>
+  return (
+    <ZStack frame={{ width: size, height: size }}>
+      <RoundedRectangle
+        frame={{ width: size, height: size }}
+        fill={color as Color}
+        cornerRadius={cornerRadius}
+      />
+      {iconType === 'transparent_image' ? (
+        <ZStack frame={{ width: size * 0.6, height: size * 0.6 }}>
           <ResolvedIconImage icon={icon} iconDark={iconDark} fit />
         </ZStack>
-      </ZStack>
-    )
-  }
-  return <Image systemName={icon} foregroundStyle={color as Color} />
+      ) : (
+        <Image
+          systemName={icon}
+          font={size * 0.5}
+          foregroundStyle="white"
+        />
+      )}
+    </ZStack>
+  )
 }
 
 export function getAppSubtitle(item: AppItem) {
@@ -167,6 +176,7 @@ export function AppRow({
         iconDark={item.iconDark}
         iconType={item.iconType}
         color={item.color}
+        size={34}
       />
       <VStack alignment="leading" spacing={2}>
         <Text font={16}>{item.name}</Text>
