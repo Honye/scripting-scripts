@@ -62,23 +62,9 @@ async function pickIconFromPhotos(): Promise<string | undefined> {
   }
 }
 
-function EditorSectionHeader({
-  title,
-  systemImage
-}: {
-  title: string
-  systemImage?: string
-}) {
+function EditorSectionHeader({ title }: { title: string }) {
   return (
     <HStack spacing={6}>
-      {systemImage ? (
-        <Image
-          systemName={systemImage}
-          font={12}
-          fontWeight="semibold"
-          foregroundStyle={'systemBlue' as Color}
-        />
-      ) : null}
       <Text font={13} fontWeight="semibold" foregroundStyle={EDITOR_SECONDARY}>
         {title}
       </Text>
@@ -445,10 +431,7 @@ export function AppEditor({
       {mode === 'script' && (
         <Section
           header={
-            <EditorSectionHeader
-              title="Custom Code"
-              systemImage="chevron.left.forwardslash.chevron.right"
-            />
+            <EditorSectionHeader title="Custom Code" />
           }
           footer={
             <Text>

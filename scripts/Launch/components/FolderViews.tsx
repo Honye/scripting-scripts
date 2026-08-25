@@ -644,7 +644,7 @@ function FolderPreview({
         <AppIconArtwork item={displayApps[0]} config={config} />
       ) : (
         <VStack
-          padding={16}
+          padding={preferredSpacing}
           frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
         >
           <Spacer />
