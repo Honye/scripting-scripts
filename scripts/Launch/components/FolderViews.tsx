@@ -6,6 +6,7 @@ import {
   EditButton,
   ForEach,
   Form,
+  GeometryReader,
   HStack,
   Image,
   LazyVGrid,
@@ -581,20 +582,6 @@ function FolderPreview({
   config: Config
   supportsLiquidGlass: boolean
 }) {
-  const iconSize = config.iconSize || DEFAULT_CONFIG.iconSize
-  const preferredSpacing = config.spacing
-  const displayApps = apps.slice(0, 4)
-  const iconColumns = [
-    {
-      size: {
-        type: 'adaptive' as const,
-        min: iconSize,
-        max: iconSize
-      },
-      spacing: preferredSpacing
-    }
-  ]
-
   return (
     <ZStack
       frame={{ maxWidth: 'infinity' }}
@@ -632,35 +619,80 @@ function FolderPreview({
         fill={'clear' as Color}
         aspectRatio={{ value: 1, contentMode: 'fit' }}
         frame={{ maxWidth: 'infinity' }}
+        overlay={
+          apps.length === 0 ? (
+            <VStack opacity={0.45} spacing={6}>
+              <FolderIconView icon={folder.icon} color={folder.color} />
+              <Text font={11} foregroundStyle={'secondaryLabel' as Color}>
+                Empty
+              </Text>
+            </VStack>
+          ) : apps.length === 1 ? (
+            <AppIconArtwork item={apps[0]} config={config} />
+          ) : (
+            <GeometryReader>
+              {proxy => (
+                <FolderPreviewGrid
+                  apps={apps}
+                  config={config}
+                  previewSize={Math.min(proxy.size.width, proxy.size.height)}
+                />
+              )}
+            </GeometryReader>
+          )
+        }
       />
-      {displayApps.length === 0 ? (
-        <VStack opacity={0.45} spacing={6}>
-          <FolderIconView icon={folder.icon} color={folder.color} />
-          <Text font={11} foregroundStyle={'secondaryLabel' as Color}>
-            Empty
-          </Text>
-        </VStack>
-      ) : displayApps.length === 1 ? (
-        <AppIconArtwork item={displayApps[0]} config={config} />
-      ) : (
-        <VStack
-          padding={preferredSpacing}
-          frame={{ maxWidth: 'infinity', maxHeight: 'infinity' }}
-        >
-          <Spacer />
-          <LazyVGrid
-            columns={iconColumns}
-            alignment="center"
-            spacing={preferredSpacing}
-            frame={{ maxWidth: 'infinity' }}
-          >
-            {displayApps.map(item => (
-              <AppIconArtwork key={item.id} item={item} config={config} />
-            ))}
-          </LazyVGrid>
-          <Spacer />
-        </VStack>
-      )}
     </ZStack>
+  )
+}
+
+function FolderPreviewGrid({
+  apps,
+  config,
+  previewSize
+}: {
+  apps: AppItem[]
+  config: Config
+  previewSize: number
+}) {
+  const iconSize = config.iconSize || DEFAULT_CONFIG.iconSize
+  const preferredSpacing = config.spacing
+  const availableSize = Math.max(0, previewSize - preferredSpacing * 2)
+  const itemStride = iconSize + preferredSpacing
+  const columns = Math.max(
+    1,
+    Math.floor((availableSize + preferredSpacing) / itemStride)
+  )
+  const rowCount = columns
+  const displayApps = apps.slice(0, columns * rowCount)
+  const iconColumns = [
+    {
+      size: {
+        type: 'adaptive' as const,
+        min: iconSize,
+        max: iconSize
+      },
+      spacing: preferredSpacing
+    }
+  ]
+
+  return (
+    <VStack
+      padding={preferredSpacing}
+      frame={{ width: previewSize, height: previewSize }}
+    >
+      <Spacer />
+      <LazyVGrid
+        columns={iconColumns}
+        alignment="center"
+        spacing={preferredSpacing}
+        frame={{ maxWidth: 'infinity' }}
+      >
+        {displayApps.map(item => (
+          <AppIconArtwork key={item.id} item={item} config={config} />
+        ))}
+      </LazyVGrid>
+      <Spacer />
+    </VStack>
   )
 }
