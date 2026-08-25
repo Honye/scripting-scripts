@@ -26,6 +26,7 @@ import {
   AppItem,
   CACHE_PATH,
   Folder,
+  findRepositoryDarkIcon,
   getIconCachePath
 } from '../constants'
 import {
@@ -234,6 +235,9 @@ export function AppEditor({
       setIcon(artwork)
       setIconType('image')
       setIconDark('')
+      findRepositoryDarkIcon(app.bundleId).then(repositoryIcon => {
+        if (repositoryIcon) setIconDark(repositoryIcon)
+      })
     }
     setSearchOpen(false)
   }
