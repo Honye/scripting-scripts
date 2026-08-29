@@ -5,6 +5,7 @@ import {
   Tab,
   TabView,
   VStack,
+  Widget,
   useEffect,
   useState
 } from 'scripting'
@@ -46,6 +47,12 @@ function App() {
   const handleDelete = (id: number) => {
     setShows(shows.filter((s) => s.id !== id))
     setDetailId(null)
+  }
+  /** Generic patch used by the detail sheet for play sources & the custom link. */
+  const handleUpdate = (id: number, patch: Partial<Show>) => {
+    setShows(shows.map((s) => (s.id === id ? { ...s, ...patch } : s)))
+    // The widget's tap target depends on the default source, so refresh it now.
+    Widget.reloadAll()
   }
   const handleToggleCompleted = (id: number) => {
     setShows(
@@ -97,6 +104,7 @@ function App() {
                 onSave={handleSaveDetail}
                 onDelete={handleDelete}
                 onToggleCompleted={handleToggleCompleted}
+                onUpdate={handleUpdate}
               />
             </VStack>
           ) : (

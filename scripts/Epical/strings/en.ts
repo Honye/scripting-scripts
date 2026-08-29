@@ -59,6 +59,8 @@ export const en = {
   addShowNoDays: 'No days selected',
   addShowPlayUrl: 'Play URL (optional)',
   addShowPlayUrlPrompt: 'Paste link, leave empty to skip',
+  addShowCustomUrl: 'Or paste a link manually',
+  searchPlayable: 'Streaming',
 
   // Detail
   detailDeleteTitle: 'Delete Show',
@@ -71,12 +73,26 @@ export const en = {
   detailTotalEps: 'Total Episodes',
   detailTotalValue: (n: number) => `${n} eps`,
   detailEpsUnit: 'eps',
-  detailScheduleLine: (day: string, time: string) => `Every ${day} at ${time}`,
-  detailScheduleEps: (n: number) => `+${n} ep${n === 1 ? '' : 's'}`,
   detailSave: 'Save Progress',
   detailDelete: 'Delete Show',
   detailMarkCompleted: 'Mark as Completed',
   detailUnmarkCompleted: 'Mark as Ongoing',
+
+  // Play sources
+  sourcesTitle: 'Watch On',
+  sourcesLoading: 'Looking for sources…',
+  sourcesNone: 'No streaming sources found',
+  sourcesFailed: 'Could not load sources',
+  sourcesFind: 'Find Sources',
+  sourcesRefresh: 'Refresh Sources',
+  sourcesHint: 'Tap a row to play, tap the circle to make it the default.',
+  sourceCustom: 'Custom Link',
+  sourceDefaultBadge: 'Default',
+  sourceEditUrl: 'Edit Custom Link',
+  sourceEditUrlPrompt: 'Paste link, leave empty to remove',
+  playFailedTitle: 'Cannot Open',
+  playFailedMessage: (name: string) =>
+    `No installed app can open ${name}, and no web fallback is available.`,
 
   // Components
   completedBadge: 'Completed',

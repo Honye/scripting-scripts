@@ -12,22 +12,33 @@ import {
   Text,
   TextField,
   VStack,
+  useRef,
   useState,
   useEffect
 } from 'scripting'
 import type { Color } from 'scripting'
-import type { Show } from '../types'
+import type { PlaySource, Show } from '../types'
 import { nextColor } from '../data'
-import { searchShows, type SearchItem } from '../api'
+import { fetchPlaySources, searchShows, type SearchItem } from '../api'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
-import { GenrePill, Poster, PrimaryButton, ShowPreviewCard } from '../components'
+import {
+  GenrePill,
+  Poster,
+  PrimaryButton,
+  ShowPreviewCard,
+  SourceRow
+} from '../components'
 
 type Candidate = {
   title: string
   genre: string
   color: string
   coverUrl?: string
+  /** Absent for hand-typed shows that were not matched against Douban. */
+  doubanId?: string
+  doubanType?: 'tv' | 'movie'
+  hasLinewatch?: boolean
 }
 type UpdateMode = 'weekly' | 'daily'
 
@@ -116,6 +127,18 @@ function ResultRow({
                   foregroundStyle={theme.brandEnd}
                 >
                   {item.rating.toFixed(1)}
+                </Text>
+              </HStack>
+            ) : null}
+            {item.hasLinewatch ? (
+              <HStack spacing={2}>
+                <Image
+                  systemName="play.circle.fill"
+                  font={9}
+                  foregroundStyle={theme.textTertiary}
+                />
+                <Text font={11} foregroundStyle={theme.textTertiary}>
+                  {i18n.searchPlayable}
                 </Text>
               </HStack>
             ) : null}
@@ -274,7 +297,11 @@ function SearchStep({
                   title: item.title,
                   genre: item.genre,
                   color,
-                  coverUrl: item.coverUrl || undefined
+                  coverUrl: item.coverUrl || undefined,
+                  doubanId: item.id,
+                  doubanType:
+                    item.targetType === 'movie' ? 'movie' : 'tv',
+                  hasLinewatch: item.hasLinewatch
                 })
               }
             />
@@ -449,6 +476,10 @@ function ScheduleStep({
   setDailyEps,
   playUrl,
   setPlayUrl,
+  sources,
+  sourcesLoading,
+  defaultSourceId,
+  setDefaultSourceId,
   onConfirm
 }: {
   selected: Candidate
@@ -466,6 +497,10 @@ function ScheduleStep({
   setDailyEps: (n: number) => void
   playUrl: string
   setPlayUrl: (s: string) => void
+  sources: PlaySource[]
+  sourcesLoading: boolean
+  defaultSourceId: string | null
+  setDefaultSourceId: (id: string) => void
   onConfirm: () => void
 }) {
   const weeklyHint =
@@ -579,11 +614,42 @@ function ScheduleStep({
         spacing={8}
         frame={{ maxWidth: 'infinity', alignment: 'leading' }}
       >
+        {sourcesLoading || sources.length > 0 ? (
+          <VStack
+            alignment="leading"
+            spacing={8}
+            frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+          >
+            <HStack>
+              <Text font={12} foregroundStyle={theme.text35}>
+                {i18n.sourcesTitle}
+              </Text>
+              <Spacer />
+              {sourcesLoading ? (
+                <HStack spacing={6}>
+                  <ProgressView progressViewStyle="circular" />
+                  <Text font={12} foregroundStyle={theme.textQuaternary}>
+                    {i18n.sourcesLoading}
+                  </Text>
+                </HStack>
+              ) : null}
+            </HStack>
+            {sources.map((src) => (
+              <SourceRow
+                key={src.id}
+                source={src}
+                selected={src.id === defaultSourceId}
+                onSelect={() => setDefaultSourceId(src.id)}
+              />
+            ))}
+          </VStack>
+        ) : null}
+
         <Text
           font={12}
           foregroundStyle={theme.text35}
         >
-          {i18n.addShowPlayUrl}
+          {sources.length > 0 ? i18n.addShowCustomUrl : i18n.addShowPlayUrl}
         </Text>
         <TextField
           title=""
@@ -620,6 +686,8 @@ export function AddShowView({
   const [query, setQuery] = useState('')
   const [customGenre, setCustomGenre] = useState('')
   const [selected, setSelected] = useState<Candidate | null>(null)
+  /** Guards the async source fetch against a newer selection landing first. */
+  const selectedRef = useRef<Candidate | null>(null)
   const [mode, setMode] = useState<UpdateMode>('weekly')
   const [weeklyDays, setWeeklyDays] = useState<number[]>([1])
   const [weeklyTime, setWeeklyTime] = useState(() => defaultTimeAt('20:00'))
@@ -627,6 +695,9 @@ export function AddShowView({
   const [dailyTime, setDailyTime] = useState(() => defaultTimeAt('20:00'))
   const [dailyEps, setDailyEps] = useState(1)
   const [playUrl, setPlayUrl] = useState('')
+  const [sources, setSources] = useState<PlaySource[]>([])
+  const [sourcesLoading, setSourcesLoading] = useState(false)
+  const [defaultSourceId, setDefaultSourceId] = useState<string | null>(null)
 
   const [results, setResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -675,7 +746,28 @@ export function AddShowView({
 
   const handleSelect = (c: Candidate) => {
     setSelected(c)
+    selectedRef.current = c
     setStep('schedule')
+    setSources([])
+    setDefaultSourceId(null)
+    if (!c.doubanId || !c.doubanType) {
+      setSourcesLoading(false)
+      return
+    }
+    setSourcesLoading(true)
+    fetchPlaySources(c.doubanId, c.doubanType)
+      .then((found) => {
+        // A later selection may have superseded this one.
+        if (c !== selectedRef.current) return
+        setSources(found)
+        setDefaultSourceId(found[0]?.id ?? null)
+        setSourcesLoading(false)
+      })
+      .catch(() => {
+        if (c !== selectedRef.current) return
+        setSources([])
+        setSourcesLoading(false)
+      })
   }
 
   const handleConfirm = () => {
@@ -702,7 +794,12 @@ export function AddShowView({
       playUrl: trimmedPlayUrl.length > 0 ? trimmedPlayUrl : undefined,
       schedules,
       totalEps: 0,
-      watchedEps: 0
+      watchedEps: 0,
+      doubanId: selected.doubanId,
+      doubanType: selected.doubanType,
+      sources: sources.length > 0 ? sources : undefined,
+      defaultSourceId: defaultSourceId ?? undefined,
+      sourcesUpdatedAt: selected.doubanId ? Date.now() : undefined
     })
     onClose()
   }
@@ -771,6 +868,10 @@ export function AddShowView({
               setDailyEps={setDailyEps}
               playUrl={playUrl}
               setPlayUrl={setPlayUrl}
+              sources={sources}
+              sourcesLoading={sourcesLoading}
+              defaultSourceId={defaultSourceId}
+              setDefaultSourceId={setDefaultSourceId}
               onConfirm={handleConfirm}
             />
           </ScrollView>

@@ -57,6 +57,8 @@ export const zh: Strings = {
   addShowNoDays: '尚未选择',
   addShowPlayUrl: '播放地址（可选）',
   addShowPlayUrlPrompt: '粘贴播放链接，留空则不设置',
+  addShowCustomUrl: '或手动输入链接',
+  searchPlayable: '可播放',
 
   // Detail
   detailDeleteTitle: '删除追剧',
@@ -68,12 +70,26 @@ export const zh: Strings = {
   detailTotalEps: '总集数',
   detailTotalValue: (n) => `${n} 集`,
   detailEpsUnit: '集',
-  detailScheduleLine: (day, time) => `每${day} ${time}`,
-  detailScheduleEps: (n) => `更新 ${n} 集`,
   detailSave: '保存进度',
   detailDelete: '删除追剧',
   detailMarkCompleted: '标记为完结',
   detailUnmarkCompleted: '取消完结',
+
+  // Play sources
+  sourcesTitle: '播放源',
+  sourcesLoading: '正在查找播放源…',
+  sourcesNone: '暂无可播放资源',
+  sourcesFailed: '播放源加载失败',
+  sourcesFind: '查找播放源',
+  sourcesRefresh: '刷新播放源',
+  sourcesHint: '点击整行播放，点击左侧圆点设为默认。',
+  sourceCustom: '自定义链接',
+  sourceDefaultBadge: '默认',
+  sourceEditUrl: '编辑自定义链接',
+  sourceEditUrlPrompt: '粘贴播放链接，留空则移除',
+  playFailedTitle: '无法打开',
+  playFailedMessage: (name) =>
+    `未安装${name}，也没有可用的网页地址。`,
 
   // Components
   completedBadge: '完结',

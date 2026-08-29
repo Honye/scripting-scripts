@@ -1,7 +1,17 @@
 import { fetch } from 'scripting'
+import type { PlaySource } from './types'
+import { cleanEpisodesInfo } from './play'
 
-const API_BASE = 'https://frodo.douban.com/api/v2/search/weixin'
+const API_HOST = 'https://frodo.douban.com/api/v2'
+const API_BASE = `${API_HOST}/search/weixin`
 const API_KEY = '054022eaeae0b00e0fc068c0c0a2102a'
+
+/** Douban's frodo API only answers to its WeChat mini-program client. */
+const DOUBAN_HEADERS = {
+  Referer: 'https://servicewechat.com/wx2f9b06c1de1ccfca/81/page-frame.html',
+  'User-Agent':
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.2(0x18000236) NetType/WIFI Language/en'
+}
 
 export type SearchItem = {
   id: string
@@ -18,6 +28,8 @@ export type SearchItem = {
   cardSubtitle: string
   /** Best-effort genre extracted from cardSubtitle, falls back to typeName. */
   genre: string
+  /** True when Douban knows of at least one streaming vendor for this subject. */
+  hasLinewatch: boolean
 }
 
 type RawTarget = {
@@ -27,6 +39,7 @@ type RawTarget = {
   year?: string
   card_subtitle?: string
   rating?: { value: number }
+  has_linewatch?: boolean
 }
 
 type RawResponse = {
@@ -35,6 +48,21 @@ type RawResponse = {
     target_type: string
     target?: RawTarget
   }>
+}
+
+type RawVendor = {
+  id?: string
+  title?: string
+  uri?: string
+  url?: string
+  icon?: string
+  episodes_info?: string
+  payment_desc?: string
+  accessible?: boolean
+}
+
+type RawSubject = {
+  vendors?: RawVendor[]
 }
 
 /** Pull a likely-genre token out of the slash-separated card_subtitle. */
@@ -63,14 +91,7 @@ export async function searchShows(
   const url =
     `${API_BASE}?q=${encodeURIComponent(trimmed)}` +
     `&apiKey=${API_KEY}&start=${start}&count=${count}`
-  const res = await fetch(url, {
-    signal,
-    headers: {
-      Referer: 'https://servicewechat.com/wx2f9b06c1de1ccfca/81/page-frame.html',
-      'User-Agent':
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.2(0x18000236) NetType/WIFI Language/en'
-    }
-  })
+  const res = await fetch(url, { signal, headers: DOUBAN_HEADERS })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const data = (await res.json()) as RawResponse
   return (data.items || [])
@@ -87,7 +108,38 @@ export async function searchShows(
         year: t.year || '',
         rating: t.rating?.value || 0,
         cardSubtitle: subtitle,
-        genre: extractGenre(subtitle, it.type_name || '剧集')
+        genre: extractGenre(subtitle, it.type_name || '剧集'),
+        hasLinewatch: t.has_linewatch === true
       }
     })
+}
+
+/**
+ * Fetch the streaming vendors Douban lists for a subject.
+ * Note: a vendor's `url` is not always a web address — for 腾讯视频 / 优酷 it is a
+ * `douban://` mini-program link, so anything non-http is dropped.
+ */
+export async function fetchPlaySources(
+  doubanId: string,
+  type: 'tv' | 'movie'
+): Promise<PlaySource[]> {
+  const url = `${API_HOST}/${type}/${encodeURIComponent(doubanId)}?apiKey=${API_KEY}`
+  const res = await fetch(url, { headers: DOUBAN_HEADERS })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = (await res.json()) as RawSubject
+  return (data.vendors || [])
+    .filter((v) => v.id && v.title && v.accessible !== false)
+    .map((v) => {
+      const web = v.url && /^https?:\/\//.test(v.url) ? v.url : undefined
+      return {
+        id: v.id!,
+        title: v.title!,
+        uri: v.uri || undefined,
+        url: web,
+        icon: v.icon || undefined,
+        episodesInfo: cleanEpisodesInfo(v.episodes_info),
+        paymentDesc: v.payment_desc || undefined
+      }
+    })
+    .filter((s) => s.uri != null || s.url != null)
 }

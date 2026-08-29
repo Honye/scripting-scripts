@@ -10,16 +10,28 @@ import {
   ZStack
 } from 'scripting'
 import type { Color } from 'scripting'
-import type { Schedule, Show } from './types'
+import type { PlaySource, Schedule, Show } from './types'
 import { theme, tintedBg } from './theme'
 import { i18n } from './i18n'
+import { CUSTOM_SOURCE_ID, hasPlayable, openPreferred, sourceSubtitle } from './play'
+
+/** The slice of a Show the poster needs — AddShow renders one before a Show exists. */
+type PosterSubject = {
+  title: string
+  color: string
+  coverUrl?: string
+  playUrl?: string
+  sources?: PlaySource[]
+  defaultSourceId?: string
+  doubanId?: string
+}
 
 /** Compact poster: a remote cover image when available, otherwise a tall rounded rect with diagonal gradient and the title's first 2 chars. */
 export function Poster({
   show,
   size = 50
 }: {
-  show: Show | { title: string; color: string; coverUrl?: string; playUrl?: string }
+  show: Show | PosterSubject
   size?: number
 }) {
   const initials = show.title.slice(0, 2)
@@ -107,17 +119,17 @@ export function Poster({
     </ZStack>
   )
 
-  if (!show.playUrl) {
+  const subject = show as Show
+  if (!hasPlayable(subject)) {
     return base
   }
 
-  const playUrl = show.playUrl
   return (
     <ZStack
       frame={{ width: w, height: h }}
       clipShape={{ type: 'rect', cornerRadius: 8 }}
       onTapGesture={() => {
-        Safari.openURL(playUrl)
+        openPreferred(subject).catch((e) => console.error(e))
       }}
     >
       {base}
@@ -133,6 +145,118 @@ export function Poster({
         shadow={{ color: 'rgba(0,0,0,0.35)' as Color, radius: 4 }}
       />
     </ZStack>
+  )
+}
+
+/**
+ * One selectable play source. The leading radio sets it as the default; tapping
+ * the rest of the row performs `onPlay` (omitted in the add flow, where selecting
+ * is the only meaningful action).
+ */
+export function SourceRow({
+  source,
+  selected,
+  onSelect,
+  onPlay
+}: {
+  source: PlaySource
+  selected: boolean
+  onSelect: () => void
+  onPlay?: () => void
+}) {
+  // Sanitised here too, so sources saved before this fix render correctly
+  // without waiting for the detail sheet's staleness refresh.
+  const subtitle = sourceSubtitle(source)
+
+  const icon =
+    source.id === CUSTOM_SOURCE_ID || !source.icon ? (
+      <Image
+        systemName={source.id === CUSTOM_SOURCE_ID ? 'link' : 'play.rectangle.fill'}
+        font={14}
+        foregroundStyle={theme.textTertiary}
+        frame={{ width: 20, height: 20 }}
+      />
+    ) : (
+      <Image
+        imageUrl={source.icon}
+        resizable
+        scaleToFit
+        frame={{ width: 20, height: 20 }}
+        clipShape={{ type: 'rect', cornerRadius: 4 }}
+      />
+    )
+
+  return (
+    <HStack
+      spacing={10}
+      padding={{ horizontal: 12, vertical: 10 }}
+      frame={{ maxWidth: 'infinity' }}
+      background={{
+        style: theme.card,
+        shape: { type: 'rect', cornerRadius: 10 }
+      }}
+    >
+      <ZStack
+        frame={{ width: 28, height: 28 }}
+        contentShape="rect"
+        onTapGesture={onSelect}
+      >
+        <Image
+          systemName={selected ? 'largecircle.fill.circle' : 'circle'}
+          font={18}
+          foregroundStyle={selected ? theme.brandEnd : theme.text35}
+        />
+      </ZStack>
+      <HStack
+        spacing={10}
+        frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+        contentShape="rect"
+        onTapGesture={onPlay ?? onSelect}
+      >
+        {icon}
+        <VStack alignment="leading" spacing={2}>
+          <Text
+            font={14}
+            fontWeight="medium"
+            foregroundStyle={theme.text}
+            lineLimit={1}
+          >
+            {source.title}
+          </Text>
+          {subtitle.length > 0 ? (
+            <Text
+              font={12}
+              foregroundStyle={theme.textQuaternary}
+              lineLimit={1}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </VStack>
+        <Spacer />
+        {selected ? (
+          <Text
+            font={10}
+            fontWeight="semibold"
+            foregroundStyle={theme.brandEnd}
+            padding={{ horizontal: 6, vertical: 2 }}
+            background={{
+              style: theme.brandSoftBg,
+              shape: { type: 'rect', cornerRadius: 4 }
+            }}
+          >
+            {i18n.sourceDefaultBadge}
+          </Text>
+        ) : null}
+        {onPlay ? (
+          <Image
+            systemName="play.fill"
+            font={12}
+            foregroundStyle={theme.textTertiary}
+          />
+        ) : null}
+      </HStack>
+    </HStack>
   )
 }
 

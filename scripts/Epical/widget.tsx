@@ -15,6 +15,7 @@ import { getTodayIndex } from './data'
 import { loadShows } from './store'
 import { theme } from './theme'
 import { i18n } from './i18n'
+import { widgetPlayUrl } from './play'
 import { rpt } from './utils'
 
 function loadTodaysShows(): Show[] {
@@ -222,8 +223,9 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
                   <PosterImage show={s} w={pSize} h={pHeight} />
                 </ZStack>
               )
-              return isFront && s.playUrl ? (
-                <Link key={s.id} url={s.playUrl}>
+              const playUrl = isFront ? widgetPlayUrl(s) : undefined
+              return playUrl ? (
+                <Link key={s.id} url={playUrl}>
                   {poster}
                 </Link>
               ) : (
@@ -311,13 +313,14 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
         frame={{ maxWidth: 'infinity', alignment: 'center' }}
       >
         {shows.map((s) => {
+          const playUrl = widgetPlayUrl(s)
           const card = (
             <ZStack
               frame={{ width: w, height: h }}
               clipShape={{ type: 'rect', cornerRadius: cardRadius }}
             >
               <PosterImage show={s} w={w} h={h} />
-              {s.playUrl ? (
+              {playUrl ? (
                 <ZStack frame={{ width: w, height: h }}>
                   <RoundedRectangle
                     cornerRadius={cardRadius}
@@ -331,7 +334,7 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
           )
           return (
             <VStack key={s.id} spacing={rpt(4)} frame={{ width: w }}>
-              {s.playUrl ? <Link url={s.playUrl}>{card}</Link> : card}
+              {playUrl ? <Link url={playUrl}>{card}</Link> : card}
               <Text
                 font={rpt(10)}
                 fontWeight="medium"

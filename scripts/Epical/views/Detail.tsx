@@ -1,6 +1,5 @@
 import {
   Button,
-  Circle,
   HStack,
   Image,
   ProgressView,
@@ -10,14 +9,27 @@ import {
   TextField,
   VStack,
   ZStack,
+  useEffect,
   useRef,
   useState
 } from 'scripting'
 import type { Color } from 'scripting'
-import type { Show } from '../types'
+import type { PlaySource, Show } from '../types'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
-import { CompletedBadge, GenrePill, Poster, PrimaryButton, SectionLabel } from '../components'
+import { fetchPlaySources } from '../api'
+import { CUSTOM_SOURCE_ID, listSources, openSource } from '../play'
+import {
+  CompletedBadge,
+  GenrePill,
+  Poster,
+  PrimaryButton,
+  SectionLabel,
+  SourceRow
+} from '../components'
+
+/** Sources older than this are silently refreshed when the sheet opens. */
+const SOURCES_TTL = 7 * 24 * 60 * 60 * 1000
 
 function RepeatButton({
   action,
@@ -88,18 +100,188 @@ function StepperButton({
   )
 }
 
+/** Discovered streaming vendors plus the manual link, with a radio to pick the default. */
+function SourcesSection({
+  show,
+  onUpdate
+}: {
+  show: Show
+  onUpdate: (id: number, patch: Partial<Show>) => void
+}) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [editingUrl, setEditingUrl] = useState(false)
+  const [urlInput, setUrlInput] = useState(show.playUrl ?? '')
+
+  const sources = listSources(show)
+  const selectedId =
+    sources.find((s) => s.id === show.defaultSourceId)?.id ?? sources[0]?.id
+
+  const refresh = () => {
+    const doubanId = show.doubanId
+    const doubanType = show.doubanType
+    if (!doubanId || !doubanType || loading) return
+    setLoading(true)
+    setError(null)
+    fetchPlaySources(doubanId, doubanType)
+      .then((found: PlaySource[]) => {
+        setLoading(false)
+        const stillValid =
+          show.defaultSourceId === CUSTOM_SOURCE_ID ||
+          found.some((s) => s.id === show.defaultSourceId)
+        onUpdate(show.id, {
+          sources: found,
+          sourcesUpdatedAt: Date.now(),
+          defaultSourceId: stillValid ? show.defaultSourceId : found[0]?.id
+        })
+      })
+      .catch(() => {
+        setLoading(false)
+        setError(i18n.sourcesFailed)
+      })
+  }
+
+  // Refresh silently on open when the cached sources are missing or stale.
+  useEffect(() => {
+    if (!show.doubanId || !show.doubanType) return
+    const age = show.sourcesUpdatedAt ? Date.now() - show.sourcesUpdatedAt : Infinity
+    if (age > SOURCES_TTL) refresh()
+  }, [])
+
+  const commitUrl = () => {
+    const trimmed = urlInput.trim()
+    const patch: Partial<Show> = {
+      playUrl: trimmed.length > 0 ? trimmed : undefined
+    }
+    // Dropping the custom link cannot leave it selected as the default.
+    if (trimmed.length === 0 && show.defaultSourceId === CUSTOM_SOURCE_ID) {
+      patch.defaultSourceId = show.sources?.[0]?.id
+    }
+    onUpdate(show.id, patch)
+    setEditingUrl(false)
+  }
+
+  const canFetch = show.doubanId != null && show.doubanType != null
+
+  return (
+    <VStack spacing={10} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
+      <HStack>
+        <SectionLabel>{i18n.sourcesTitle}</SectionLabel>
+        <Spacer />
+        {loading ? (
+          <HStack spacing={6}>
+            <ProgressView progressViewStyle="circular" />
+            <Text font={12} foregroundStyle={theme.textQuaternary}>
+              {i18n.sourcesLoading}
+            </Text>
+          </HStack>
+        ) : null}
+      </HStack>
+
+      {sources.map((src) => (
+        <SourceRow
+          key={src.id}
+          source={src}
+          selected={src.id === selectedId}
+          onSelect={() => onUpdate(show.id, { defaultSourceId: src.id })}
+          onPlay={() => {
+            openSource(show, src).catch((e) => console.error(e))
+          }}
+        />
+      ))}
+
+      {sources.length === 0 && !loading ? (
+        <Text font={13} foregroundStyle={theme.textQuaternary}>
+          {error ?? i18n.sourcesNone}
+        </Text>
+      ) : null}
+
+      {sources.length > 1 ? (
+        <Text font={11} foregroundStyle={theme.textDisabled}>
+          {i18n.sourcesHint}
+        </Text>
+      ) : null}
+
+      {error != null && sources.length > 0 ? (
+        <Text font={12} foregroundStyle="systemRed">
+          {error}
+        </Text>
+      ) : null}
+
+      {editingUrl ? (
+        <TextField
+          title=""
+          prompt={i18n.sourceEditUrlPrompt}
+          value={urlInput}
+          onChanged={setUrlInput}
+          textFieldStyle="roundedBorder"
+          keyboardType="URL"
+          textInputAutocapitalization="never"
+          autocorrectionDisabled
+          autofocus
+          foregroundStyle={theme.text}
+          font={14}
+          onBlur={commitUrl}
+          onSubmit={commitUrl}
+        />
+      ) : null}
+
+      <HStack spacing={16} frame={{ maxWidth: 'infinity' }}>
+        <Spacer />
+        {canFetch ? (
+          <Button action={refresh} buttonStyle="plain">
+            <HStack spacing={5}>
+              <Image
+                systemName="arrow.clockwise"
+                font={12}
+                fontWeight="semibold"
+                foregroundStyle={theme.brandEnd}
+              />
+              <Text font={13} fontWeight="semibold" foregroundStyle={theme.brandEnd}>
+                {sources.length > 0 ? i18n.sourcesRefresh : i18n.sourcesFind}
+              </Text>
+            </HStack>
+          </Button>
+        ) : null}
+        <Button
+          action={() => {
+            setUrlInput(show.playUrl ?? '')
+            setEditingUrl(true)
+          }}
+          buttonStyle="plain"
+        >
+          <HStack spacing={5}>
+            <Image
+              systemName="link"
+              font={12}
+              fontWeight="semibold"
+              foregroundStyle={theme.brandEnd}
+            />
+            <Text font={13} fontWeight="semibold" foregroundStyle={theme.brandEnd}>
+              {i18n.sourceEditUrl}
+            </Text>
+          </HStack>
+        </Button>
+        <Spacer />
+      </HStack>
+    </VStack>
+  )
+}
+
 export function DetailView({
   show,
   onClose,
   onSave,
   onDelete,
-  onToggleCompleted
+  onToggleCompleted,
+  onUpdate
 }: {
   show: Show
   onClose: () => void
   onSave: (id: number, watched: number, total: number) => void
   onDelete: (id: number) => void
   onToggleCompleted: (id: number) => void
+  onUpdate: (id: number, patch: Partial<Show>) => void
 }) {
   const confirmDelete = async () => {
     const ok = await Dialog.confirm({
@@ -287,38 +469,7 @@ export function DetailView({
           </HStack>
         </VStack>
 
-        <VStack spacing={6} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
-          {show.schedules.map((sc, i) => (
-            <HStack
-              key={i}
-              spacing={10}
-              padding={{ horizontal: 12, vertical: 10 }}
-              background={{
-                style: theme.card,
-                shape: { type: 'rect', cornerRadius: 10 }
-              }}
-            >
-              <Circle
-                fill={show.color as Color}
-                frame={{ width: 6, height: 6 }}
-              />
-              <Text
-                font={14}
-                fontWeight="medium"
-                foregroundStyle={theme.text70}
-              >
-                {i18n.detailScheduleLine(i18n.daysFull[sc.day], sc.time)}
-              </Text>
-              <Spacer />
-              <Text
-                font={13}
-                foregroundStyle={theme.textQuaternary}
-              >
-                {i18n.detailScheduleEps(sc.episodes)}
-              </Text>
-            </HStack>
-          ))}
-        </VStack>
+        <SourcesSection show={show} onUpdate={onUpdate} />
 
         <PrimaryButton
           title={i18n.detailSave}
