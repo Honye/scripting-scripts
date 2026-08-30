@@ -306,16 +306,35 @@ export function DetailView({
   const [editingTotal, setEditingTotal] = useState(false)
   const [totalInput, setTotalInput] = useState('')
 
-  const commitWatched = () => {
-    const n = parseInt(watchedInput, 10)
-    if (!isNaN(n)) setWatched(Math.max(0, Math.min(safeTotal, n)))
-    setEditingWatched(false)
+  /**
+   * The values the user is actually looking at, folding in any text field that
+   * is still focused — tapping a button does not blur it, so the raw state can
+   * lag behind what was typed.
+   */
+  const pending = () => {
+    let nextTotal = total
+    let nextWatched = watched
+    if (editingTotal) {
+      const n = parseInt(totalInput, 10)
+      if (!isNaN(n)) nextTotal = Math.max(nextWatched, Math.max(0, n))
+    }
+    if (editingWatched) {
+      const n = parseInt(watchedInput, 10)
+      if (!isNaN(n)) nextWatched = Math.max(0, Math.min(Math.max(nextTotal, nextWatched), n))
+    }
+    return { watched: nextWatched, total: Math.max(nextTotal, nextWatched) }
   }
 
-  const commitTotal = () => {
-    const n = parseInt(totalInput, 10)
-    if (!isNaN(n)) setTotal(Math.max(watched, Math.max(0, n)))
+  /** Settle the inputs into state, optionally applying a change on top. */
+  const commit = (
+    change?: (v: { watched: number; total: number }) => { watched: number; total: number }
+  ) => {
+    const next = change ? change(pending()) : pending()
+    setEditingWatched(false)
     setEditingTotal(false)
+    setWatched(next.watched)
+    setTotal(next.total)
+    return next
   }
 
   return (
@@ -368,7 +387,7 @@ export function DetailView({
             <Spacer />
             <StepperButton
               systemName="minus"
-              action={() => setWatched(Math.max(0, watched - 1))}
+              action={() => commit((v) => ({ ...v, watched: Math.max(0, v.watched - 1) }))}
               tint={tintColor}
             />
             <VStack spacing={2} frame={{ minWidth: 60 }}>
@@ -385,8 +404,8 @@ export function DetailView({
                   fontWeight="bold"
                   foregroundStyle={theme.text}
                   frame={{ minWidth: 60 }}
-                  onBlur={commitWatched}
-                  onSubmit={commitWatched}
+                  onBlur={() => commit()}
+                  onSubmit={() => commit()}
                 />
               ) : (
                 <Text
@@ -410,7 +429,9 @@ export function DetailView({
             </VStack>
             <StepperButton
               systemName="plus"
-              action={() => setWatched(Math.min(safeTotal, watched + 1))}
+              action={() =>
+                commit((v) => ({ ...v, watched: Math.min(v.total, v.watched + 1) }))
+              }
               tint={tintColor}
             />
             <Spacer />
@@ -434,8 +455,8 @@ export function DetailView({
                   fontWeight="semibold"
                   foregroundStyle={theme.text}
                   fixedSize={{ horizontal: true, vertical: false }}
-                  onBlur={commitTotal}
-                  onSubmit={commitTotal}
+                  onBlur={() => commit()}
+                  onSubmit={() => commit()}
                 />
                 <Text font={14} fontWeight="semibold" foregroundStyle={theme.text}>{i18n.detailEpsUnit}</Text>
               </HStack>
@@ -452,14 +473,18 @@ export function DetailView({
                 {i18n.detailTotalValue(total)}
               </Text>
             )}
-            <RepeatButton action={() => setTotal(Math.max(watched, total - 1))}>
+            <RepeatButton
+              action={() =>
+                commit((v) => ({ ...v, total: Math.max(v.watched, v.total - 1) }))
+              }
+            >
               <Image
                 systemName="minus.circle.fill"
                 font={22}
                 foregroundStyle={theme.text50}
               />
             </RepeatButton>
-            <RepeatButton action={() => setTotal(total + 1)}>
+            <RepeatButton action={() => commit((v) => ({ ...v, total: v.total + 1 }))}>
               <Image
                 systemName="plus.circle.fill"
                 font={22}
@@ -474,7 +499,8 @@ export function DetailView({
         <PrimaryButton
           title={i18n.detailSave}
           action={() => {
-            onSave(show.id, watched, safeTotal)
+            const next = commit()
+            onSave(show.id, next.watched, next.total)
             onClose()
           }}
         />
