@@ -11,7 +11,7 @@ import {
 } from 'scripting'
 import type { Color } from 'scripting'
 import type { Show } from './types'
-import { getTodayIndex } from './data'
+import { getTodayIndex, showsForDay } from './data'
 import { loadShows } from './store'
 import { theme } from './theme'
 import { i18n } from './i18n'
@@ -19,12 +19,7 @@ import { widgetPlayUrl } from './play'
 import { rpt } from './utils'
 
 function loadTodaysShows(): Show[] {
-  const today = getTodayIndex()
-  const timeFor = (s: Show) =>
-    s.schedules.find((sc) => sc.day === today)?.time ?? '99:99'
-  return loadShows()
-    .filter((s) => !s.completed && s.schedules.some((sc) => sc.day === today))
-    .sort((a, b) => timeFor(a).localeCompare(timeFor(b)))
+  return showsForDay(loadShows(), getTodayIndex())
 }
 
 function PosterImage({ show, w, h }: { show: Show; w: number; h: number }) {

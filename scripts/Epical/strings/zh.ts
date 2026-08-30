@@ -22,6 +22,7 @@ export const zh: Strings = {
   homeTitle: '追剧日历',
   homeNoUpdates: (day) => `${day}没有更新\n去添加你喜欢的剧吧`,
   homeDayUpdatesHeader: (day, count) => `${day} · ${count} 部更新`,
+  homeMarkWatched: '已看',
 
   // AllShows
   allShowsTitle: '我的追剧',

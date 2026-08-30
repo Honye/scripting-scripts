@@ -22,6 +22,7 @@ export const en = {
     `No updates on ${day}\nAdd a show to get started`,
   homeDayUpdatesHeader: (day: string, count: number) =>
     `${day} · ${count} update${count === 1 ? '' : 's'}`,
+  homeMarkWatched: 'Watched',
 
   // AllShows
   allShowsTitle: 'My Shows',

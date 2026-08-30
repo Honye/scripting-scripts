@@ -1,21 +1,36 @@
 import {
   Button,
+  ForEach,
   HStack,
   Image,
-  NavigationStack,
-  ScrollView,
+  List,
+  Rectangle,
   Text,
   VStack,
+  useEffect,
+  useObservable,
   useState
 } from 'scripting'
 import type { Color, DynamicShapeStyle } from 'scripting'
-import type { Show } from '../types'
-import { getTodayIndex } from '../data'
+import type { Schedule, Show } from '../types'
+import { airsOnDay, getTodayIndex, showsForDay } from '../data'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
 import { EpisodeCard } from '../components'
 
 const WEEK_DAYS = [0, 1, 2, 3, 4, 5, 6]
+
+/**
+ * Strips the List's default row chrome so the cards keep their standalone look.
+ * The 5pt top/bottom insets add up to the 10pt gap the cards used to get from `spacing`.
+ */
+function rowStyle() {
+  return {
+    listRowInsets: { top: 5, leading: 20, bottom: 5, trailing: 20 },
+    listRowBackground: <Rectangle fill="clear" />,
+    listRowSeparator: 'hidden'
+  } as const
+}
 
 function DaySelector({
   selectedDay,
@@ -118,28 +133,59 @@ function EmptyState({ day }: { day: number }) {
   )
 }
 
+/** One draggable row: a show plus every airing it has on the selected day. */
+type DayItem = {
+  id: string
+  show: Show
+  schedules: Schedule[]
+}
+
 export function HomeView({
   shows,
   onAddPress,
-  onShowDetail
+  onShowDetail,
+  onReorder,
+  onMarkWatched,
+  onDelete
 }: {
   shows: Show[]
   onAddPress: () => void
   onShowDetail: (show: Show) => void
+  onReorder: (day: number, orderedIds: number[]) => void
+  onMarkWatched: (id: number, day: number) => void
+  onDelete: (id: number) => void
 }) {
   const today = getTodayIndex()
   const [selectedDay, setSelectedDay] = useState(today)
 
   const countPerDay = WEEK_DAYS.map(
-    (d) =>
-      shows.filter(
-        (s) => !s.completed && s.schedules.some((sc) => sc.day === d)
-      ).length
+    (d) => shows.filter((s) => airsOnDay(s, d)).length
   )
 
-  const todaysShows = shows.filter(
-    (s) => !s.completed && s.schedules.some((sc) => sc.day === selectedDay)
-  )
+  const items: DayItem[] = showsForDay(shows, selectedDay).map((show) => ({
+    id: String(show.id),
+    show,
+    schedules: show.schedules.filter((sc) => sc.day === selectedDay)
+  }))
+
+  // `ForEach` reorders by rewriting this observable in place, so it has to be
+  // re-seeded whenever the day or the shows themselves change.
+  const rows = useObservable<DayItem[]>(() => items)
+  const orderKey = (list: DayItem[]) => list.map((it) => it.id).join(',')
+
+  useEffect(() => {
+    rows.setValue(items)
+  }, [shows, selectedDay])
+
+  useEffect(() => {
+    // Only a real drag should be persisted. Without this guard, merely opening a
+    // day would freeze its air-time ordering into dayOrder.
+    if (orderKey(rows.value) === orderKey(items)) return
+    onReorder(
+      selectedDay,
+      rows.value.map((it) => it.show.id)
+    )
+  }, [rows.value])
 
   const dateLabel = new Date().toLocaleDateString(i18n.dateLocale, {
     month: 'long',
@@ -149,15 +195,6 @@ export function HomeView({
   return (
     <VStack
       background={theme.bg}
-      navigationTitle={i18n.homeTitle}
-      navigationSubtitle={`${dateLabel} · ${i18n.daysFull[today]}`}
-      toolbar={{
-        topBarTrailing: (
-          <Button action={onAddPress}>
-            <Image systemName="plus" />
-          </Button>
-        )
-      }}
       safeAreaInset={{
         top: {
           spacing: 0,
@@ -177,15 +214,26 @@ export function HomeView({
         }
       }}
     >
-      <ScrollView>
-        <VStack
-          spacing={10}
-          padding={{ horizontal: 20, top: 8, bottom: 20 }}
-        >
-          {todaysShows.length === 0 ? (
+      <List
+        listStyle="plain"
+        scrollContentBackground="hidden"
+        navigationTitle={i18n.homeTitle}
+        navigationSubtitle={`${dateLabel} · ${i18n.daysFull[today]}`}
+        toolbar={{
+          topBarTrailing: (
+            <Button action={onAddPress}>
+              <Image systemName="plus" />
+            </Button>
+          )
+        }}
+      >
+        {items.length === 0 ? (
+          <VStack {...rowStyle()}>
             <EmptyState day={selectedDay} />
-          ) : (
-            <>
+          </VStack>
+        ) : (
+          <>
+            <VStack {...rowStyle()} padding={{ top: 8, bottom: 2 }}>
               <Text
                 font={12}
                 fontWeight="medium"
@@ -194,25 +242,56 @@ export function HomeView({
               >
                 {i18n.homeDayUpdatesHeader(
                   i18n.daysFull[selectedDay],
-                  todaysShows.length
+                  items.length
                 )}
               </Text>
-              {todaysShows.flatMap((show) =>
-                show.schedules
-                  .filter((sc) => sc.day === selectedDay)
-                  .map((sc, i) => (
+            </VStack>
+            <ForEach
+              data={rows}
+              editActions="move"
+              builder={(item) => (
+                <VStack
+                  key={item.id}
+                  spacing={10}
+                  {...rowStyle()}
+                  leadingSwipeActions={{
+                    allowsFullSwipe: true,
+                    actions: [
+                      <Button
+                        title={i18n.homeMarkWatched}
+                        systemImage="checkmark.circle.fill"
+                        tint="systemGreen"
+                        action={() => onMarkWatched(item.show.id, selectedDay)}
+                      />
+                    ]
+                  }}
+                  trailingSwipeActions={{
+                    // A full swipe deletes outright — no button tap, no confirmation.
+                    allowsFullSwipe: true,
+                    actions: [
+                      <Button
+                        title={i18n.delete}
+                        systemImage="trash"
+                        role="destructive"
+                        action={() => onDelete(item.show.id)}
+                      />
+                    ]
+                  }}
+                >
+                  {item.schedules.map((sc, i) => (
                     <EpisodeCard
-                      key={`${show.id}-${i}`}
-                      show={show}
+                      key={`${item.id}-${i}`}
+                      show={item.show}
                       schedule={sc}
-                      onTap={() => onShowDetail(show)}
+                      onTap={() => onShowDetail(item.show)}
                     />
-                  ))
+                  ))}
+                </VStack>
               )}
-            </>
-          )}
-        </VStack>
-      </ScrollView>
+            />
+          </>
+        )}
+      </List>
     </VStack>
   )
 }

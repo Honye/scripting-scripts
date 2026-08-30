@@ -72,3 +72,29 @@ state that a widget reads, call `Widget.reloadAll()` (or `Widget.preview()`) to 
 - `.vscode/settings.json` enforces semicolon removal and `braces` JSX attribute completion.
 - Reference docs for every API live in `documentation/<feature>/` as `en.md`/`zh.md`.
   Consult these (not external memory) when using an unfamiliar Scripting API.
+
+## API gotchas
+
+- **`ForEach` must use `data` + `builder`, never `count` + `itemBuilder`.** The
+  `count`/`itemBuilder`/`onMove`/`onDelete` form still type-checks (it is a member of the
+  `ForEachProps` union) and is still shown in `documentation/views/list/editable_list/`,
+  but the runtime logs *"ForEach.count is deprecated, use ForEach.data instead"*.
+  **The bundled docs are not a reliable deprecation signal — check the `@deprecated` tags
+  in `dts/scripting.d.ts` instead.** The modern form is:
+
+  ```tsx
+  <ForEach data={observable} editActions="move" builder={item => <Row key={item.id} />} />
+  ```
+
+  `data` is an `Observable<T[]>` where `T extends { id: string }`, and reordering works by
+  the component **rewriting that observable in place** — there is no `onMove` callback. To
+  bridge it to `useState`-owned state, re-seed the observable in a `useEffect` and push
+  changes back from a second `useEffect` keyed on `observable.value`, guarding against the
+  no-op case so a plain re-render does not look like an edit. See
+  `scripts/Epical/views/Home.tsx` and `scripts/Launch/components/FolderViews.tsx:382-397`.
+
+- **Swipe actions only work on rows inside a `<List>`.** `leadingSwipeActions` (swipe right)
+  and `trailingSwipeActions` (swipe left) sit on `CommonViewProps`, so they type-check on any
+  view, but they silently do nothing outside a `List`. `ReorderableForEach` is the opposite —
+  its docs say not to put it in a `List`. The two features are mutually exclusive; inside a
+  `List`, reorder via `ForEach editActions` + `<EditButton />` instead.

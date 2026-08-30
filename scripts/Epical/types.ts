@@ -49,4 +49,6 @@ export type Show = {
   defaultSourceId?: string
   /** Epoch ms of the last successful source fetch. */
   sourcesUpdatedAt?: number
+  /** Per-weekday manual position from drag-to-reorder. Days absent fall back to air-time order. */
+  dayOrder?: Record<number, number>
 }
