@@ -1,0 +1,31 @@
+{
+  "name" : "Storefront",
+  "icon" : "creditcard.circle.fill",
+  "iconImage" : null,
+  "color" : "rgba(0, 198, 165,1)",
+  "version" : "1.0.0",
+  "entry" : "index.tsx",
+  "runInApp" : false,
+  "description" : null,
+  "author" : {
+    "name" : "Jackie",
+    "email" : "Honye@github.com",
+    "homepage" : "https://t.me/iiMarkr"
+  },
+  "contributors" : [
+
+  ],
+  "remoteResource" : null,
+  "permissions" : null,
+  "localizedNames" : {
+    "en" : "Storefront",
+    "zh" : "Storefront"
+  },
+  "localizedDescriptions" : {
+    "en" : "Manage multi-region Apple accounts, balances, subscriptions and TestFlight slots.",
+    "zh" : "管理多区 Apple 账号、余额、订阅与 TestFlight 名额。"
+  },
+  "intentInputTypes" : [
+    "URLs"
+  ]
+}
