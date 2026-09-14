@@ -107,15 +107,21 @@ export const en = {
   searching: 'Searching…',
   searchResults: 'Results',
   searchResultsNote:
-    'Names and prices are this storefront’s. Tap a result to compare it across your accounts’ storefronts.',
+    'Names and prices are this storefront’s. Tap a result to compare it across every storefront.',
   searchEmpty: 'Nothing found in this storefront',
   appLookupInvalid: 'No app id found in that text',
   lookupAction: 'Look up',
   compareRegions: 'Storefronts',
-  compareNoConversion:
-    'Each storefront is shown in its own currency. Storefront deliberately never converts between them.',
-  addRegion: 'Add a storefront',
-  removeRegion: 'Remove',
+  fxBase: 'Convert to',
+  fxRatesFrom: (date: string) =>
+    `≈ prices use Frankfurter rates from ${date} and are approximate — you are charged in each storefront’s own currency.`,
+  fxUnavailable: 'Exchange rates unavailable',
+  iapAutoLoad: 'Auto-load all in-app prices',
+  iapAutoLoadNote:
+    'Each storefront’s in-app prices need its full product page (~700KB). Best turned on over Wi-Fi — your pinned storefronts load either way.',
+  loadedCount: (done: number, total: number) => `Loaded ${done} / ${total} storefronts`,
+  notAvailableIn: (count: number) =>
+    `Not available in ${count} storefront${count === 1 ? '' : 's'}`,
   storePrice: 'Price',
   freePrice: 'Free',
   inAppPurchases: 'In-app purchases',

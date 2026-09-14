@@ -67,14 +67,17 @@ export function AppLookup({
   }
 
   const openDetail = async (id: string, preferredRegion?: string) => {
-    const regions = Array.from(
+    // Every storefront is compared; these are just the ones kept on top.
+    const pinned = Array.from(
       new Set([
         ...(preferredRegion != null ? [preferredRegion] : []),
         ...accountRegions
       ])
     )
     await Navigation.present({
-      element: <AppDetail appId={id} initialRegions={regions} />
+      element: (
+        <AppDetail appId={id} pinnedRegions={pinned} accountRegions={accountRegions} />
+      )
     })
   }
 

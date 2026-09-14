@@ -8,8 +8,9 @@ import { AbortController, fetch } from 'scripting'
  * type system rather than by remembering to write try/catch at each call site.
  *
  * The host allowlist is the structural home of NFR-02: nothing but Apple's own
- * endpoints can be reached from here. Third-party gift-card links are opened
- * with `Safari.openURL` and never travel through this module.
+ * endpoints — plus one read-only exchange-rate API that is sent nothing but a
+ * currency code — can be reached from here. Third-party gift-card links are
+ * opened with `Safari.openURL` and never travel through this module.
  */
 export type Failure = {
   ok: false
@@ -27,7 +28,8 @@ export type Result<T> = { ok: true; value: T } | Failure
 const ALLOWED_HOSTS = [
   'itunes.apple.com',
   'apps.apple.com',
-  'testflight.apple.com'
+  'testflight.apple.com',
+  'api.frankfurter.dev'
 ]
 
 const DEFAULT_TIMEOUT_MS = 10000

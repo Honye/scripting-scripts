@@ -73,13 +73,18 @@ export function currencySymbol(currency: string): string {
 }
 
 /**
- * Amounts are always shown in their own currency — v1 deliberately does not
- * convert between currencies (spec FR-SUB-04), so there is no exchange-rate
- * dependency and no staleness to reason about.
+ * Balances and bills are always shown in their own currency and never summed
+ * across currencies (spec FR-SUB-04). The only conversion anywhere is the
+ * display-only `≈` hint in the app comparison — see `formatApprox`.
  */
 export function formatMoney(amount: number, currency: string): string {
   const digits = ZERO_DECIMAL.includes(currency) ? 0 : 2
   return currencySymbol(currency) + amount.toFixed(digits)
+}
+
+/** A converted figure. The `≈` is not decoration: the rate is a day old at best. */
+export function formatApprox(amount: number, currency: string): string {
+  return '≈ ' + formatMoney(amount, currency)
 }
 
 /** Balance is hand-maintained, so we flag it as suspect after this long. */

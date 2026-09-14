@@ -69,3 +69,29 @@ export function loadSettings(): Settings {
 export function saveSettings(settings: Settings) {
   Storage.set(KEY_SETTINGS, settings)
 }
+
+const KEY_FX_BASE = 'fxBase'
+
+/** Base currency for the app comparison's `≈` prices; null until the user picks one. */
+export function loadFxBase(): string | null {
+  return Storage.get<string>(KEY_FX_BASE) ?? null
+}
+
+export function saveFxBase(currency: string) {
+  Storage.set(KEY_FX_BASE, currency)
+}
+
+const KEY_IAP_AUTO = 'iapAutoLoad'
+
+/**
+ * Whether the app comparison fetches in-app prices for every storefront on its
+ * own. Off by default — it can cost 100MB+ per app; pinned storefronts load
+ * regardless of this.
+ */
+export function loadIapAuto(): boolean {
+  return Storage.get<boolean>(KEY_IAP_AUTO) ?? false
+}
+
+export function saveIapAuto(value: boolean) {
+  Storage.set(KEY_IAP_AUTO, value)
+}
