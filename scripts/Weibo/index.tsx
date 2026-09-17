@@ -59,9 +59,15 @@ function View() {
 }
 
 const run = async () => {
+  const keyword = Script.queryParameters?.keyword
+  const element = keyword
+    ? <NavigationStack>
+        <Search url={`https://m.weibo.cn/search?containerid=${encodeURIComponent('100103type=1&t=10&q=' + keyword)}`} />
+      </NavigationStack>
+    : <View />
   await Navigation.present({
-    element: <View />,
-    modalPresentationStyle: "fullScreen"
+    element,
+    modalPresentationStyle: 'fullScreen'
   })
   Script.exit()
 }

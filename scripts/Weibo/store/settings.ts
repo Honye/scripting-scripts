@@ -4,7 +4,9 @@ export const enum Client {
   /** 网页版 */
   H5 = 'h5',
   /** 国际版 */
-  International = 'international'
+  International = 'international',
+  /** 脚本 */
+  Script = 'script'
 }
 
 interface Settings {

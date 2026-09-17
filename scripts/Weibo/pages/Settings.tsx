@@ -83,6 +83,7 @@ export default function Settings() {
         >
           <Text tag='h5'>H5</Text>
           <Text tag='international'>微博国际版</Text>
+          <Text tag='script'>脚本</Text>
         </Picker>
         <ColorPicker
           title='背景颜色'

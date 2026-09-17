@@ -3,6 +3,7 @@ import {
   HStack,
   Image,
   Link,
+  Script,
   Spacer,
   Text,
   VStack,
@@ -40,6 +41,9 @@ function WidgetView({ list }: { list: any[] }) {
       const [key, value] = item.split('=')
       query[key] = value
     })
+    if (settings.client === Client.Script) {
+      return Script.createRunSingleURLScheme(Script.name, { keyword: query.keyword })
+    }
     if (settings.client === Client.International) {
       return `weibointernational://search?keyword=${encodeURIComponent(query.keyword)}`
     }
@@ -47,6 +51,9 @@ function WidgetView({ list }: { list: any[] }) {
   }, [])
 
   const hotSearchLink = useMemo(() => {
+    if (settings.client === Client.Script) {
+      return Script.createRunSingleURLScheme(Script.name)
+    }
     if (settings.client === Client.International) {
       return 'weibointernational://hotsearch'
     }
