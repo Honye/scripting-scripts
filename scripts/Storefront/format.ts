@@ -54,6 +54,7 @@ const ZERO_DECIMAL = [
   'CLP',
   'DJF',
   'GNF',
+  'IDR',
   'JPY',
   'KMF',
   'KRW',

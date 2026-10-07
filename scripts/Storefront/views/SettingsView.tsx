@@ -8,12 +8,15 @@ import {
   Spacer,
   Stepper,
   Text,
+  TextField,
   VStack,
   useEffect,
   useState
 } from 'scripting'
 import { i18n } from '../i18n'
 import { MAX_SCHEDULED, countPending } from '../notifications'
+import { checkHealth } from '../api/remote'
+import { loadApiBase, saveApiBase } from '../store'
 import { applyBackup, buildBackup, parseBackup } from '../backup'
 import { Diagnostics } from './Diagnostics'
 import type { Settings } from '../types'
@@ -42,6 +45,9 @@ export function SettingsView({
   const [pending, setPending] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [dataStatus, setDataStatus] = useState('')
+  const [apiBase, setApiBase] = useState(() => loadApiBase() ?? '')
+  const [apiStatus, setApiStatus] = useState('')
+  const [apiBusy, setApiBusy] = useState(false)
 
   /**
    * FR-DATA-01/02. The file is built by `backup.ts`, which has no import path to
@@ -116,6 +122,35 @@ export function SettingsView({
   const setLead = (days: number) =>
     onChange({ ...settings, reminderLeadDays: Math.min(14, Math.max(0, days)) })
 
+  /**
+   * Saved on commit rather than per keystroke: a half-typed host is a host, and
+   * `api/http.ts` would let it through the allowlist while it is stored.
+   */
+  const commitApiBase = () => {
+    const trimmed = apiBase.trim()
+    saveApiBase(trimmed)
+    const stored = loadApiBase()
+    setApiBase(stored ?? '')
+    setApiStatus(
+      stored != null ? '' : trimmed === '' ? i18n.apiCleared : i18n.apiInvalid
+    )
+  }
+
+  const testApi = async () => {
+    commitApiBase()
+    const stored = loadApiBase()
+    if (stored == null) return
+    setApiBusy(true)
+    setApiStatus(i18n.apiTesting)
+    const health = await checkHealth(stored)
+    setApiBusy(false)
+    setApiStatus(
+      health.ok
+        ? i18n.apiOk(health.value.budget.lookups, health.value.budget.iap)
+        : i18n.apiFailedWith(i18n.fetchError(health.reason))
+    )
+  }
+
   const refresh = async () => {
     setBusy(true)
     setPending(await onReschedule())
@@ -174,6 +209,31 @@ export function SettingsView({
       >
         <Button title={i18n.exportData} action={exportBackup} />
         <Button title={i18n.importData} action={importBackup} />
+      </Section>
+
+      <Section
+        header={<Text>{i18n.apiSection}</Text>}
+        footer={
+          <VStack alignment="leading" spacing={4}>
+            <Text>{i18n.apiNote}</Text>
+            {apiStatus === '' ? null : (
+              <Text foregroundStyle="secondaryLabel">{apiStatus}</Text>
+            )}
+          </VStack>
+        }
+      >
+        <TextField
+          title={i18n.apiSection}
+          labelsHidden
+          prompt={i18n.apiUrlPrompt}
+          value={apiBase}
+          onChanged={setApiBase}
+          onSubmit={commitApiBase}
+          textInputAutocapitalization="never"
+          autocorrectionDisabled={true}
+          keyboardType="URL"
+        />
+        <Button title={i18n.apiTest} action={testApi} disabled={apiBusy} />
       </Section>
 
       <Section>

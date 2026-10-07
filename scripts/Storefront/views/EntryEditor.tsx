@@ -20,6 +20,7 @@ import { formatMoney, parseAmount } from '../format'
 import { currencyFor, regionFor } from '../regions'
 import { lookupApp } from '../api/itunes'
 import { fetchIAP } from '../api/appstore'
+import { iapRemote } from '../api/remote'
 import { AmountField } from '../components/AmountField'
 import { AppLookup } from './AppLookup'
 import type { AppInfo } from '../api/itunes'
@@ -186,7 +187,10 @@ export function EntryEditor({
     }
     setBusy(true)
     setStatus('')
-    const found = await fetchIAP(appId, region)
+    // The acceleration endpoint when configured — this one page is ~700KB on
+    // the device and a few hundred bytes through the Worker — and the page
+    // itself otherwise, or when the endpoint did not answer.
+    const found = (await iapRemote(appId, region)) ?? (await fetchIAP(appId, region))
     setBusy(false)
     if (!found.ok) {
       // FR-ENT-05: say so once, then get out of the way.

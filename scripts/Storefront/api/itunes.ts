@@ -1,64 +1,15 @@
 import { fetchJson } from './http'
+import { toAppInfo } from './itunes_parse'
 import type { Result } from './http'
+import type { AppInfo, ListResponse } from './itunes_parse'
 
 /**
- * The official, unauthenticated iTunes Lookup API.
- *
- * It carries **no in-app-purchase fields at all** — that is why `appstore.ts`
- * exists. What it does give reliably is the app name, icon and store price, and
- * both the name and the price are localized by `country`, so the region a lookup
- * was made in has to travel with the result.
+ * The network half of the iTunes Lookup/Search API. The `AppInfo` shape and the
+ * raw-result mapper live in `itunes_parse.ts` and are re-exported here, so call
+ * sites keep importing `'../api/itunes'` unchanged — see the note in
+ * `appstore.ts` for why the split exists.
  */
-export type AppInfo = {
-  appId: string
-  name: string
-  iconUrl: string
-  bundleId?: string
-  sellerName?: string
-  version?: string
-  /** Store price in `currency`; 0 for a free app. */
-  price: number
-  currency: string
-  /** Apple's own formatted string, e.g. "$4.99" / "免费". Display only. */
-  formattedPrice?: string
-  /** The storefront this was read from. */
-  region: string
-}
-
-type LookupResult = {
-  trackId?: number
-  trackName?: string
-  artworkUrl512?: string
-  artworkUrl100?: string
-  artworkUrl60?: string
-  bundleId?: string
-  artistName?: string
-  version?: string
-  price?: number
-  currency?: string
-  formattedPrice?: string
-}
-
-type ListResponse = {
-  resultCount: number
-  results: LookupResult[]
-}
-
-function toAppInfo(result: LookupResult, region: string, fallbackId: string): AppInfo {
-  return {
-    appId: result.trackId != null ? String(result.trackId) : fallbackId,
-    name: result.trackName ?? fallbackId,
-    iconUrl:
-      result.artworkUrl512 ?? result.artworkUrl100 ?? result.artworkUrl60 ?? '',
-    bundleId: result.bundleId,
-    sellerName: result.artistName,
-    version: result.version,
-    price: result.price ?? 0,
-    currency: result.currency ?? '',
-    formattedPrice: result.formattedPrice,
-    region
-  }
-}
+export * from './itunes_parse'
 
 export async function lookupApp(
   appId: string,

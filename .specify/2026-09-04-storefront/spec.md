@@ -282,6 +282,7 @@ type TFStatus = 'open' | 'full' | 'closed' | 'invalid' | 'unknown'
 |---|---|---|
 | NFR-01 | 安全 | 密码仅存于 `Keychain`；内存中不长期驻留；不写入日志；不出现在导出文件中 |
 | NFR-02 | 安全 | 除 Apple 官方域名（`itunes.apple.com`、`apps.apple.com`、`testflight.apple.com`、`apple.com`）外，**不向任何第三方发送用户数据**；三方渠道仅为跳转链接，不携带任何参数 |
+| NFR-02a | 安全 | 用户可在设置中显式填写一个自建加速接口（`workers/storefront-api`）。默认留空；填写后放行范围仅为该单个 host，且**只发送应用 ID 与地区代码**，不得发送账号、余额、邮箱或密码。放行须逐次调用显式指定，不得做成全局白名单项 |
 | NFR-03 | 隐私 | 无任何遥测、统计、埋点 |
 | NFR-04 | 可用性 | 全部核心功能（除价格抓取与 TF 检测外）**离线可用** |
 | NFR-05 | 性能 | 首页在 50 个账号 / 500 条 Entry 规模下打开无可感卡顿 |

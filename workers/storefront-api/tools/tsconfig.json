@@ -1,0 +1,11 @@
+{
+  // The probe is a Node script, not Worker code: it needs Node's globals and
+  // Node's `--experimental-strip-types` import style, both of which would be
+  // wrong to expose to `src/`.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowImportingTsExtensions": true
+  },
+  "include": ["."]
+}

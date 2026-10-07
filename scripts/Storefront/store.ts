@@ -95,3 +95,33 @@ export function loadIapAuto(): boolean {
 export function saveIapAuto(value: boolean) {
   Storage.set(KEY_IAP_AUTO, value)
 }
+
+const KEY_API_BASE = 'apiBase'
+
+/**
+ * Origin of the user's own `workers/storefront-api` deployment, without a
+ * trailing slash; null when they have not set one.
+ *
+ * Empty is the default and the whole feature is opt-in: with no endpoint the
+ * app fetches every storefront itself, exactly as it always has. `https` only —
+ * `api/http.ts` refuses anything else anyway, and rejecting it here means the
+ * user finds out while typing rather than when a comparison quietly fails.
+ */
+export function loadApiBase(): string | null {
+  const stored = Storage.get<string>(KEY_API_BASE)?.trim() ?? ''
+  return stored === '' ? null : stored
+}
+
+export function saveApiBase(url: string | null) {
+  const trimmed = url?.trim().replace(/\/+$/, '') ?? ''
+  if (trimmed === '' || !/^https:\/\/[^/?#]+$/i.test(trimmed)) {
+    Storage.remove(KEY_API_BASE)
+    return
+  }
+  Storage.set(KEY_API_BASE, trimmed)
+}
+
+/** The host `api/http.ts` must be told to allow for this call. */
+export function apiHost(base: string): string {
+  return base.replace(/^https:\/\//i, '').replace(/[/?#].*$/, '')
+}

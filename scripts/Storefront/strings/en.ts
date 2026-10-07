@@ -152,6 +152,31 @@ export const en = {
     }
   },
 
+  // Price range across the loaded storefronts
+  priceRangeBasis: (sampled: number) =>
+    `Across ${sampled} storefront${sampled === 1 ? '' : 's'}`,
+  priceRangeRegions: (count: number) =>
+    `${count} storefront${count === 1 ? '' : 's'}`,
+  priceLowest: 'Lowest',
+  priceHighest: 'Highest',
+  iapRangeTitle: (items: number, regions: number) =>
+    `In-app price range · ${items} item${items === 1 ? '' : 's'} · ${regions} storefronts`,
+  iapRangeNote:
+    'In-app items are matched across storefronts by exact name. Storefronts carry different sets of items, so an item can cover fewer of them than the app is sold in — each one says how many. A developer who translates an item’s name per storefront splits it into groups that cannot meet.',
+
+  // Acceleration endpoint (workers/storefront-api)
+  apiSection: 'Acceleration endpoint',
+  apiUrlPrompt: 'https://…workers.dev',
+  apiTest: 'Test connection',
+  apiTesting: 'Testing…',
+  apiOk: (lookups: number, iap: number) =>
+    `Connected — ${lookups} storefronts and ${iap} product pages per round`,
+  apiFailedWith: (reason: string) => `Could not reach it: ${reason}`,
+  apiInvalid: 'Must be an https:// address',
+  apiCleared: 'Cleared — everything is fetched on this device',
+  apiNote:
+    'Optional. Comparing one app across every storefront downloads ~120MB of product pages on this device; a deployment of workers/storefront-api does that at the edge and sends back a few KB. It is sent an app id and storefront codes — never an account, balance or password — and if it fails, this device fetches everything itself as before. Leave empty to keep doing that always.',
+
   // Entries (purchases, in-app purchases, subscriptions)
   entries: 'Records',
   entriesEmpty: 'Nothing recorded on this account yet',

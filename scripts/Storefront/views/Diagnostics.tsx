@@ -11,6 +11,8 @@ import {
 import { clearPassword, hasPassword, revealPassword, setPassword } from '../credentials'
 import { clearPending, countPending, scheduleAt } from '../notifications'
 import { fetchJson, fetchText } from '../api/http'
+import { checkHealth, compareRemote } from '../api/remote'
+import { loadApiBase } from '../store'
 
 /**
  * P1 spike surface. Every capability with no precedent anywhere in this repo —
@@ -112,6 +114,42 @@ export function Diagnostics() {
     write(`non-allowlisted host -> ${r.ok ? 'LEAKED' : r.reason}`)
   }
 
+  // --- Acceleration endpoint ----------------------------------------------
+  const apiHealth = async () => {
+    const base = loadApiBase()
+    if (base == null) {
+      write('endpoint -> not configured (skipped)')
+      return
+    }
+    const r = await checkHealth(base)
+    write(
+      r.ok
+        ? `health -> protocol=${r.value.protocol} budget=${r.value.budget.lookups}/${r.value.budget.iap}`
+        : `health -> ${r.reason}`
+    )
+  }
+  const apiCompare = async () => {
+    const base = loadApiBase()
+    if (base == null) {
+      write('endpoint -> not configured (skipped)')
+      return
+    }
+    const regions = ['us', 'cn', 'tr']
+    let lines = 0
+    const started = Date.now()
+    const left = await compareRemote('1016366447', {
+      regions,
+      iap: regions,
+      onMessage: () => {
+        lines += 1
+      }
+    })
+    write(
+      `compare(us,cn,tr) -> ${lines} msg in ${Date.now() - started}ms, ` +
+        `missing ${left.regions.length}/${left.iap.length}`
+    )
+  }
+
   return (
     <NavigationStack>
       <List navigationTitle="Diagnostics" navigationBarTitleDisplayMode="inline">
@@ -154,6 +192,11 @@ export function Diagnostics() {
           <Button title="iTunes lookup (expect ok)" action={netOk} />
           <Button title="1ms timeout (expect timeout)" action={netTimeout} />
           <Button title="example.com (expect blocked)" action={netBlocked} />
+        </Section>
+
+        <Section header={<Text>Acceleration endpoint</Text>}>
+          <Button title="/v1/health" action={apiHealth} />
+          <Button title="/v1/compare us,cn,tr" action={apiCompare} />
         </Section>
 
         <Section header={<Text>Log</Text>}>

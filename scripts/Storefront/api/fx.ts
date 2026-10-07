@@ -1,22 +1,16 @@
 import { fetchJson } from './http'
 import { currencyFor } from '../regions'
 import type { Result } from './http'
+import type { Rates } from './fx_parse'
 
 /**
- * Exchange rates from Frankfurter (https://frankfurter.dev), v2 — v1 only
- * carries the ~30 ECB currencies, which misses most storefronts.
- *
- * Conversion is display-only and always approximate: the storefront's own price
- * stays the fact, the converted figure is a hint shown next to it with `≈`.
- * Nothing converted is ever stored or summed.
+ * The network half of the exchange-rate source. The `Rates` shape and `convert`
+ * live in `fx_parse.ts` and are re-exported here, so call sites keep importing
+ * `'../api/fx'` unchanged — see the note in `appstore.ts` for why the split
+ * exists. Here it is `price_range.ts` that needs the conversion without the
+ * runtime attached.
  */
-export type Rates = {
-  base: string
-  /** Newest rate date in the response, `YYYY-MM-DD`. */
-  date: string
-  /** Units of each quote currency per one unit of `base`. */
-  rates: Record<string, number>
-}
+export * from './fx_parse'
 
 type RateRow = {
   date: string
@@ -49,13 +43,6 @@ export async function fetchRates(base: string): Promise<Result<Rates>> {
   const value = { base, date, rates }
   cache.set(base, value)
   return { ok: true, value }
-}
-
-/** `amount` in `from`, expressed in `rates.base`; null when there is no rate. */
-export function convert(amount: number, from: string, rates: Rates): number | null {
-  if (from === '') return null
-  const rate = rates.rates[from.toUpperCase()]
-  return rate != null ? amount / rate : null
 }
 
 /** The device region's currency, e.g. `zh_CN` → CNY; USD when it cannot tell. */

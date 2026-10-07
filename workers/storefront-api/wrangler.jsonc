@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "storefront-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-15",
+  "observability": { "enabled": true },
+
+  // Per-invocation budget. Cloudflare caps subrequests (50 free / 1000 paid)
+  // and CPU time (10ms free / 30s paid) per request, and a full comparison is
+  // 171 lookups + 171 product pages. Whatever does not fit is reported back as
+  // a `partial` message and the client asks again — so these numbers only
+  // change how many round trips a full comparison takes, never the result.
+  //
+  // Workers Paid: raise to roughly "400" / "120" and a comparison finishes in
+  // a single request.
+  "vars": {
+    "MAX_LOOKUPS": "40",
+    "MAX_IAP": "3"
+  }
+
+  // Optional: a KV namespace gives the cache a global, cross-colo lifetime
+  // instead of the per-colo Cache API used by default. Create one with
+  // `wrangler kv namespace create STORE` and uncomment.
+  //
+  // "kv_namespaces": [{ "binding": "STORE", "id": "<id>" }]
+}

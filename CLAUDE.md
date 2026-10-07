@@ -10,6 +10,17 @@ renders React-like **TSX** to native **SwiftUI**. Each top-level folder under
 or build step in the usual sense — code is written in TS/TSX and executed by the
 Scripting app's runtime on device.
 
+`workers/` is the exception: those are **not** Scripting projects. Each is a
+Cloudflare Worker with its own `package.json`, `tsconfig.json` and `wrangler`
+build, installed and type-checked on its own (`cd workers/<name> && pnpm install
+&& pnpm run typecheck`). They are outside the root `tsconfig.json`'s `include`.
+A Worker may `import` pure modules out of `scripts/<Project>/` — that is the
+point, so a parser has one definition — but only modules that touch neither the
+`'scripting'` module nor App-side globals like `Device`. See
+`workers/storefront-api`, which bundles `scripts/Storefront`'s in-app-purchase
+parser; that is why `appstore.ts` / `itunes.ts` / `regions.ts` are thin facades
+over `*_parse.ts` / `regions_data.ts`.
+
 ## Commands
 
 ```bash

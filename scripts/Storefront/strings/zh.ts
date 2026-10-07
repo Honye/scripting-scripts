@@ -143,6 +143,27 @@ export const zh: Strings = {
     }
   },
 
+  // 已加载地区里的价格区间
+  priceRangeBasis: (sampled) => `基于 ${sampled} 个地区`,
+  priceRangeRegions: (count) => `${count} 个地区`,
+  priceLowest: '最低',
+  priceHighest: '最高',
+  iapRangeTitle: (items, regions) => `内购价区间 · ${items} 项 · ${regions} 个地区`,
+  iapRangeNote:
+    '内购项目按名称完全一致跨区配对。各区上架的项目不是同一套，所以一个项目覆盖的地区数可能少于应用本身 —— 每项都标了自己覆盖多少个区。开发者若按地区翻译了项目名，那些区就会被拆成互不相认的几组。',
+
+  // 加速接口（workers/storefront-api）
+  apiSection: '加速接口',
+  apiUrlPrompt: 'https://…workers.dev',
+  apiTest: '测试连接',
+  apiTesting: '测试中…',
+  apiOk: (lookups, iap) => `已连接 — 每轮 ${lookups} 个地区、${iap} 个商品页`,
+  apiFailedWith: (reason) => `连不上：${reason}`,
+  apiInvalid: '需要填 https:// 开头的地址',
+  apiCleared: '已清空 — 全部改由本机抓取',
+  apiNote:
+    '可选。全区比价要在本机下载约 120MB 的商品页；部署一份 workers/storefront-api 后改由边缘抓取解析，回传只有几 KB。发送的只有应用 ID 和地区代码，不含账号、余额与密码；请求失败会自动回落到本机抓取。留空则始终由本机抓取。',
+
   // 条目（已购 / 内购 / 订阅）
   entries: '记录',
   entriesEmpty: '这个账号下还没有记录',
