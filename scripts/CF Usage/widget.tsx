@@ -117,6 +117,25 @@ function meterText(meter: Meter | null): string {
   return `${compact(meter.used)}${unit} / ${compact(meter.limit)}${unit}`
 }
 
+/**
+ * The Worker glyph shown before account and Worker names.
+ *
+ * The symbol ships a Right-to-Left variant; SF Symbols picks it from the layout
+ * direction, so only the image is switched to RTL — the surrounding row keeps
+ * its normal direction.
+ */
+function WorkerIcon({ size }: { size: number }) {
+  return (
+    <Image
+      systemName="square.stack.3d.forward.dottedline"
+      font={size}
+      fontWeight="semibold"
+      foregroundStyle="systemOrange"
+      environments={{ layoutDirection: 'rightToLeft' }}
+    />
+  )
+}
+
 function Header({ title }: { title: string }) {
   return (
     <HStack spacing={4}>
@@ -193,6 +212,7 @@ function WorkerList({ view, limit }: { view: View; limit: number }) {
     <VStack alignment="leading" spacing={5}>
       {workers.map((w) => (
         <HStack key={w.script} spacing={4}>
+          <WorkerIcon size={10} />
           <Text font={12} lineLimit={1}>
             {w.script}
           </Text>
@@ -516,18 +536,7 @@ function BarRow({
     <VStack alignment="leading" spacing={4}>
       <HStack spacing={6}>
         <HStack spacing={4}>
-          {/*
-           * The symbol ships a Right-to-Left variant; SF Symbols picks it from
-           * the layout direction, so only the image is switched to RTL — the
-           * row itself keeps its normal direction.
-           */}
-          <Image
-            systemName="square.stack.3d.forward.dottedline"
-            font={font - 2}
-            fontWeight="semibold"
-            foregroundStyle="systemOrange"
-            environments={{ layoutDirection: 'rightToLeft' }}
-          />
+          <WorkerIcon size={font - 2} />
           <Text font={font} fontWeight="medium" lineLimit={1}>
             {item.title}
           </Text>
