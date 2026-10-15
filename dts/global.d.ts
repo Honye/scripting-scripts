@@ -1,6 +1,75 @@
 import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream, FunctionComponent, AppIntent, AppIntentProtocol, Cookie, MapCoordinate, MapRegion, MapPointsOfInterestSpec, MapStyleSpec } from "scripting"
 
 declare global {
+
+  /** App-only global control of Scripting's VPN. No import is required. */
+  interface VPNState {
+    status: "invalid" | "disconnected" | "connecting" | "connected" | "reasserting" | "disconnecting" | "unknown"
+    active: boolean
+    selectedConfigurationId: string | null
+    selectedConfigurationName: string | null
+    providerBundleId: string | null
+    effectiveConfigurationId: string | null
+    operation: "starting" | "stopping" | null
+    problem: string | null
+  }
+  interface VPNLocalDevState {
+    enabled: boolean
+    active: boolean
+    vpnStatus: VPNState["status"]
+    effectiveStatus: "unavailable" | "inactive" | "pending" | "active" | "error"
+    addresses: string[]
+    resolvedAddresses: string[]
+    effectiveAddresses: string[]
+    expectedState: string
+    profileId: string | null
+    problem: string | null
+  }
+  interface VPNLocalDevAPI {
+    getState(): Promise<VPNLocalDevState>
+    setEnabled(enabled: boolean, options?: {expectedState?: string}): Promise<VPNLocalDevState>
+    /** Requires LocalDevVPN permission, an active reflected IPv4 alias, and a previously obtained pairing PSK. */
+    openRSDTunnel(options: {host: string; port: number; preSharedKey: Uint8Array | ArrayBuffer; identity?: string; mtu?: number}): Promise<VPNRSDTunnel>
+  }
+  interface VPNRSDState {
+    id: string
+    state: "open" | "failed" | "closed"
+    problem: string | null
+    closedReason: string | null
+    clientAddress: string
+    serverAddress: string
+    mtu: number
+    rsdPort: number
+    connectionCount: number
+    bufferedReceiveBytes: number
+    bufferedWriteBytes: number
+  }
+  interface VPNRSDTunnel {
+    getState(): Promise<VPNRSDState>
+    /** Opens bounded TCP to the negotiated private server IPv6 address. At most four connections. */
+    connect(options: {port: number}): Promise<VPNRSDConnection>
+    /** Waits for this tunnel's cleanup; a closed old handle cannot close its replacement. */
+    close(): Promise<void>
+  }
+  interface VPNRSDConnection {
+    /** Reads 1â€“16384 bytes per call; null means peer EOF. Only one pending read. */
+    read(maximum?: number): Promise<Uint8Array | null>
+    /** Writes at most 16384 bytes per call. Only one pending write. */
+    write(bytes: Uint8Array | ArrayBuffer): Promise<void>
+    /** Sends TCP FIN while retaining the readable side. */
+    end(): Promise<void>
+    close(): Promise<void>
+  }
+  interface VPNAPI {
+    getState(): Promise<VPNState>
+    /** Completes when this App's tunnel is connected. Does not imply payload success. */
+    start(): Promise<VPNState>
+    /** Completes when this App's tunnel is disconnected; saved local-device intent remains. */
+    stop(): Promise<VPNState>
+    readonly localDevVPN: VPNLocalDevAPI
+  }
+  const VPN: VPNAPI
+
   type Without<T, U> = {
     [P in Exclude<keyof T, keyof U>]?: never
   }
@@ -2883,6 +2952,7 @@ declare global {
      * Try to get the path of a bookmarked file or folder by a given name, if the bookmark of the name is not exists, returns `null`.
      * @param name Name of a bookmark.
      */
+    /** Returns null while access is unavailable or startup restoration is pending. */
     function bookmarkedPath(name: string): string | null
     /**
      * Whether path refers to a file.
@@ -4353,7 +4423,7 @@ declare global {
    * only sees a store after they accept a share for it (CloudKit + Apple ID enforced).
    *
    * Data lives in CloudKit (the owner's private iCloud database) and syncs across
-   * participants. Requires the user to be signed in to iCloud and a Pro subscription.
+   * participants. Requires the user to be signed in to iCloud.
    * The script must declare the `cloudSharedData` permission.
    *
    * @example
@@ -5318,7 +5388,9 @@ declare global {
   class CalendarEvent {
     constructor()
     /**
-     * A unique identifier for the event.
+     * The event identifier, or an empty string when EventKit has not assigned one (for example, before saving).
+     * An empty string cannot be used to look up an event. Read this property again after saving.
+     * The identifier may change when the event moves to another calendar or is synced.
      */
     readonly identifier: string
     readonly creationDate: Date | null
@@ -6609,7 +6681,7 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
    * Streams device motion data from headphones that support spatial audio with dynamic head tracking
    * (such as AirPods Pro, AirPods Max, and AirPods 3).
    *
-   * Requires iOS 14.0+, the `NSMotionUsageDescription` key in Info.plist, and Scripting Pro.
+   * Requires iOS 14.0+, the `NSMotionUsageDescription` key in Info.plist.
    *
    * @example
    * ```ts
@@ -7614,6 +7686,23 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     }>
   }
 
+  /** Bind to a mounted AVPlayerView with renderingMode="layer". Keep the source view and player alive. */
+  class VideoPictureInPictureController {
+    constructor()
+    static isSupported(): boolean
+    readonly isPossible: boolean
+    readonly isActive: boolean
+    readonly isSuspended: boolean
+    readonly lastError: string | null
+    /** Returns whether a request was submitted, not whether PiP started. Invoke from a user action. */
+    start(): boolean
+    stop(): void
+    /** Stops and releases PiP without disposing the AVPlayer. This handle cannot be reused afterwards. */
+    dispose(): void
+    onStateChanged?: ((state: "willStart" | "didStart" | "willStop" | "didStop" | "failedToStart") => void) | null
+    onPossibleChanged?: ((possible: boolean) => void) | null
+  }
+
   /**
    * Use for playing audio or video.
    */
@@ -8400,7 +8489,7 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
   }
 
   /**
-   * Captures still photos from a session. PRO-gated when `capturePhoto()` runs.
+   * Captures still photos from a session.
    */
   class AVCapturePhotoOutput extends AVCaptureOutput {
     constructor()
@@ -8734,7 +8823,6 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
    * inputs and outputs. Construct with `new AVCaptureSession()`, attach
    * `AVCaptureDeviceInput` + outputs, then call `startRunning()`.
    *
-   * `startRunning()`, `capturePhoto()` and `startRecording()` are PRO-gated.
    */
   class AVCaptureSession {
     constructor()
@@ -8760,7 +8848,7 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     beginConfiguration(): void
     commitConfiguration(): void
 
-    /** Resolves once the session has started. PRO-gated. */
+    /** Resolves once the session has started. */
     startRunning(): Promise<void>
     stopRunning(): Promise<void>
 
@@ -10942,9 +11030,25 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
     /**
      * The provider for the Assistant API.
      */
-    type Provider = "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | {
+    type Provider = "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | "grok" | {
       custom: string
     }
+
+    type ModelSelection = {
+      provider: Provider
+      modelId: string
+    }
+
+    /**
+     * Presents configured providers and models in the current script's UI context.
+     * Returns the selected provider/model, or null when cancelled. The selection
+     * does not change global defaults. Requires a UI context.
+     * Custom providers are returned as {custom: providerId}.
+     */
+    function presentModelPicker(options?: {
+      provider?: Provider
+      modelId?: string
+    }): Promise<ModelSelection | null>
 
     /**
      * A chunk of text output from the assistant.
@@ -11125,7 +11229,7 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
       images: string[],
       schema: JSONSchemaArray | JSONSchemaObject,
       options?: {
-        provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | {
+        provider: "openai" | "gemini" | "anthropic" | "deepseek" | "openrouter" | "grok" | {
           custom: string
         }
         modelId?: string
@@ -12308,6 +12412,13 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
      * ```
      */
     class Tagger {
+      /**
+       * Schemes supported for this unit and language on the current device.
+       * Availability does not guarantee detailed tags or accurate predictions.
+       *
+       */
+      static availableTagSchemes(unit: TokenUnit, language: Language): TagScheme[]
+
       constructor(tagSchemes: TagScheme[])
 
       /** Attach the text to analyze. All subsequent queries operate on this string. */
@@ -12316,6 +12427,7 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
       /**
        * Override the language hint for the whole text or a sub-range.
        * Omit `range` to apply to the entire text.
+       * Explicit invalid ranges throw TypeError or RangeError without changing the hint.
        */
       setLanguage(language: Language, range?: StringRange): void
 
@@ -12332,11 +12444,16 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
        * Look up the tag covering a single UTF-16 offset.
        * Returns `null` if `at` is out of range; the inner `tag` may still be `null`
        * when no tag of the requested scheme exists at that position.
+       * Positions must be numbers and finite safe integers (TypeError / RangeError).
+       * `at === text.length` and any position in empty text return null.
        */
       tag(at: number, unit: TokenUnit, scheme: TagScheme): TagResult | null
 
       /**
        * Enumerate all tags in a range. Pass `null` to scan the whole text.
+       * Explicit ranges require nonnegative safe integer location/length within
+       * the text's UTF-16 bounds; invalid input throws TypeError or RangeError.
+       * Valid zero-length ranges return an empty array.
        */
       tags(
         range: StringRange | null,
@@ -12346,7 +12463,10 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
       ): TagResult[]
 
       /**
-       * Top-K candidate tags at a position, sorted by confidence (descending).
+       * Up to maximumCount candidate tags at a position. Key order is unspecified.
+       * at must be a finite safe integer; maximumCount must be a positive safe integer.
+       * Invalid numeric inputs throw TypeError or RangeError. Out-of-text integer
+       * positions return empty hypotheses with a zero range.
        */
       tagHypotheses(
         at: number,
@@ -12359,6 +12479,7 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
        * Convenience over `tags(..., "word", "nameType", ...)`: returns
        * person / place / organization mentions only, with `joinNames` enabled
        * so multi-token names appear as a single entity.
+       * Explicit ranges follow the same validation rules as tags().
        */
       enumerateNamedEntities(
         range?: StringRange,
@@ -12369,6 +12490,10 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
        * Sentiment score in the range `[-1.0, 1.0]` (negative â†’ positive),
        * scored at paragraph granularity starting from `range.location`.
        * Returns `null` when no sentiment can be computed.
+       * The range length does not limit scoring to a substring or aggregate paragraphs.
+       * A valid zero-length range queries its start paragraph; at text end returns null.
+       * Invalid explicit ranges throw TypeError or RangeError.
+       * Scores are model predictions, not confidence, and may misclassify text.
        *
        * Requires the tagger to have been constructed with `"sentimentScore"`
        * in its scheme list.
@@ -14888,6 +15013,22 @@ If the eventâ€™s calendar does not support availability settings, this propertyâ
       source?: string
       target?: string
     }): Promise<string[]>
+
+    /**
+     * Translates using already-installed languages without a translationHost or download UI.
+     * Requires iOS/macOS 26+ and an explicit source language.
+     * Rejects if the languages are unsupported or not installed. No automatic source detection.
+     * If target is omitted, the system chooses it according to preferred languages and source.
+     */
+    translateInstalled(options: { text: string; source: string; target?: string }): Promise<string>
+
+    /**
+     * No-UI batch translation using already-installed languages. iOS/macOS 26+.
+     * Results preserve input order, including duplicate texts. An empty batch returns [].
+     * Requires source; rejects for unsupported/uninstalled languages. Does not request downloads.
+     */
+    translateInstalledBatch(options: { texts: string[]; source: string; target?: string }): Promise<string[]>
+
   }
 
   /**
@@ -16747,6 +16888,42 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     password?: string
   }
 
+  interface ZipCreateOptions {
+    /** File or directory to add to the archive. */
+    sourcePath: string
+    /** Path of the new ZIP file. The destination must not already exist. */
+    destinationPath: string
+    /** A 1-128 UTF-8 byte password creates a WinZip AES-256 encrypted archive. NUL is not allowed. */
+    password?: string
+    /** Includes the source directory name as the archive root. Defaults to false. */
+    shouldKeepParent?: boolean
+    /** Compression method. Defaults to "deflate". */
+    compressionMethod?: "deflate" | "none"
+  }
+
+  interface ZipExtractOptions {
+    /** Path of the source ZIP file. */
+    sourcePath: string
+    /** Path of a new destination directory. */
+    destinationPath: string
+    /** Password for an encrypted ZIP file. Must be 1-128 UTF-8 bytes without NUL. */
+    password?: string
+    /** Existing destinations are rejected. */
+    overwrite?: "error"
+    maxEntries?: number
+    maxEntryUncompressedBytes?: number
+    maxUncompressedBytes?: number
+    maxExpansionRatio?: number
+  }
+
+  interface ZipArchiveResult {
+    readonly destinationPath: string
+    readonly entryCount: number
+    /** Present for createZip results. */
+    readonly inputBytes?: number
+    readonly outputBytes: number
+  }
+
   class Archive {
     private constructor()
     /**
@@ -16774,6 +16951,15 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
 
     /** Lists the entries in a 7z archive. */
     static list7z(options: SevenZipListOptions): Promise<ArchiveEntry[]>
+
+    /**
+     * Creates a ZIP archive. Providing a password uses WinZip AES-256 encryption.
+     * ZIP file names remain visible even when entry contents are encrypted.
+     */
+    static createZip(options: ZipCreateOptions): Promise<ZipArchiveResult>
+
+    /** Extracts a regular or password-protected ZIP archive into a new directory. */
+    static extractZip(options: ZipExtractOptions): Promise<ZipArchiveResult>
 
     /**
      * The path of the archive.
@@ -17503,6 +17689,62 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     function dismissApp(): Promise<void>
   }
 
+  /**
+   * The quality of the video produced by `VideoEditor.present`.
+   */
+  type VideoEditorQuality =
+    | 'high'
+    | 'medium'
+    | 'low'
+    | '640x480'
+    | 'iFrame1280x720'
+    | 'iFrame960x540'
+
+  type VideoEditorPresentOptions = {
+    /**
+     * The file path of the video to trim.
+     */
+    filePath: string
+    /**
+     * The maximum duration, in seconds, that the trimmed video is allowed to have.
+     * Defaults to `600`. Set it to `0` to specify no maximum duration.
+     */
+    maximumDuration?: number
+    /**
+     * The quality of the trimmed video. Defaults to `'medium'`.
+     */
+    quality?: VideoEditorQuality
+  }
+
+  /**
+   * Trim a video using the system video editing interface.
+   *
+   *
+   */
+  namespace VideoEditor {
+    /**
+     * Whether the video at the given file path can be trimmed.
+     * Resolves `false` when the file does not exist or its format is not supported.
+     * @param filePath The file path of the video to check.
+     */
+    function canEditVideo(filePath: string): Promise<boolean>
+    /**
+     * Presents the video editing interface for the given video.
+     *
+     * The trimmed video is written to a new file in the temporary directory, copy or move it
+     * if you need to keep it.
+     * @returns A promise that resolves with the file path of the trimmed video, or `null` if the
+     * user cancelled. It throws an error if the video cannot be edited, or if an editor is
+     * already presented.
+     */
+    function present(options: VideoEditorPresentOptions): Promise<string | null>
+    /**
+     * Dismisses the video editing interface that was opened using `present`.
+     * The pending `present` promise resolves with `null`, as if the user cancelled.
+     */
+    function dismiss(): Promise<void>
+  }
+
   namespace SQLite {
     type Configuration = {
       foreignKeysEnabled: boolean
@@ -17597,7 +17839,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
 
       execute(sql: string, arguments?: Arguments): Promise<void>
 
-      transaction(steps: TransactionStep, options?: {
+      transaction(steps: TransactionStep[], options?: {
         kind?: "deferred" | "immediate" | "exclusive"
       }): Promise<void>
 
@@ -17949,7 +18191,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   /**
    * Provides authenticated access to the GitHub REST API.
    *
-   * The API is gated by Scripting PRO and requires a personal access token configured in
+   * The API requires a personal access token configured in
    * Settings â†’ GitHub. Each script and shared skill maintains its own per-capability
    * authorization state â€” the first call to a capability prompts the user to allow or deny
    * it. Tokens are stored in the iCloud-synchronized Keychain and are never readable from JS.
@@ -17978,9 +18220,9 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
       | "search_code"
 
     type Availability = {
-      /** True only if PRO is active AND a token is configured. */
+      /** True when access is available and a token is configured. */
       available: boolean
-      /** True if Scripting PRO is required (i.e. not currently active). */
+      /** True when the current access requirements are not met. */
       proRequired: boolean
       /** True if a personal access token is configured in the keychain. */
       tokenConfigured: boolean
@@ -17999,7 +18241,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     }
 
     /**
-     * Synchronous availability probe. Returns true when PRO is active AND a token is configured.
+     * Synchronous availability probe. Returns true when access is available and a token is configured.
      * Does not consult per-script permission state â€” use it for capability discovery, not gating.
      */
     function isAvailable(): boolean
@@ -18009,7 +18251,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
 
     /**
      * Read-only inspection of the current scope's permission state. Does not prompt the user
-     * and does not require PRO or a configured token. Returns `"unset"` when called outside
+     * and does not require a configured token. Returns `"unset"` when called outside
      * a context that has a script/skill scope.
      */
     function getPermissionStatus(options: { permission: Permission }): Promise<"allowed" | "denied" | "unset">
@@ -18019,7 +18261,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      * once instead of letting them prompt one by one on first use.
      *
      * Behavior:
-     * - PRO check runs first. Throws `tokenNotConfigured` if no token is configured.
+     * - Throws `tokenNotConfigured` if no token is configured and other access checks pass.
      * - Permissions already `allowed` or `denied` are NOT shown in the prompt.
      * - If every requested permission is already recorded, no sheet is shown.
      * - In environments without a presenting view controller (Widget / Keyboard / Notification /
@@ -18938,32 +19180,32 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
     readonly current: SpotlightCurrent | null
 
     /**
-     * Index or update one item for the current script. Requires Scripting PRO.
+     * Index or update one item for the current script.
      */
     index(item: SpotlightItem): Promise<void>
 
     /**
-     * Index or update multiple items for the current script. Requires Scripting PRO.
+     * Index or update multiple items for the current script.
      */
     indexItems(items: SpotlightItem[]): Promise<void>
 
     /**
-     * Delete one indexed item by its script-local id. Requires Scripting PRO.
+     * Delete one indexed item by its script-local id.
      */
     delete(id: string): Promise<void>
 
     /**
-     * Delete indexed items by their script-local ids. Requires Scripting PRO.
+     * Delete indexed items by their script-local ids.
      */
     deleteItems(ids: string[]): Promise<void>
 
     /**
-     * Delete all Spotlight items registered by the current script. Requires Scripting PRO.
+     * Delete all Spotlight items registered by the current script.
      */
     deleteAll(): Promise<void>
 
     /**
-     * List Spotlight items registered by the current script. Requires Scripting PRO.
+     * List Spotlight items registered by the current script.
      */
     getItems(): Promise<SpotlightIndexedItem[]>
   }
