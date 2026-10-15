@@ -1,0 +1,31 @@
+{
+  "name" : "SGCC",
+  "icon" : "bolt.fill",
+  "iconImage" : null,
+  "color" : "rgba(0,112,107,1)",
+  "version" : "1.0.0",
+  "entry" : "index.tsx",
+  "runInApp" : false,
+  "description" : null,
+  "author" : {
+    "name" : "Jackie",
+    "email" : "Honye@github.com",
+    "homepage" : "https://t.me/iiMarkr"
+  },
+  "contributors" : [
+
+  ],
+  "remoteResource" : null,
+  "permissions" : null,
+  "localizedNames" : {
+    "en" : "SGCC",
+    "zh" : "网上国网"
+  },
+  "localizedDescriptions" : {
+    "en" : "State Grid electricity balance, usage and tier progress widget.",
+    "zh" : "网上国网小组件：电费余额、用电量与阶梯进度。"
+  },
+  "intentInputTypes" : [
+
+  ]
+}
