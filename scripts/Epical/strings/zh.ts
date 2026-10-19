@@ -55,6 +55,7 @@ export const zh: Strings = {
   addShowDailyTime: '每天更新时间',
   addShowDailyEps: '每天更新集数',
   addShowDailyHint: (time, eps) => `将在每天 ${time} 更新 ${eps} 集`,
+  addShowAiredEps: '已更新集数',
   addShowNoDays: '尚未选择',
   addShowPlayUrl: '播放地址（可选）',
   addShowPlayUrlPrompt: '粘贴播放链接，留空则不设置',
@@ -70,6 +71,7 @@ export const zh: Strings = {
   detailWatched: '已观看',
   detailTotalEps: '总集数',
   detailTotalValue: (n) => `${n} 集`,
+  detailAiredEps: '已更新',
   detailEpsUnit: '集',
   detailSave: '保存进度',
   detailDelete: '删除追剧',
@@ -94,10 +96,8 @@ export const zh: Strings = {
 
   // Components
   completedBadge: '完结',
-  episodeRange: (start, end) =>
-    start === end
-      ? `今日更新第 ${start} 集`
-      : `今日更新第 ${start}–${end} 集`,
+  episodeRange: (start, end, isToday) =>
+    `${isToday ? '今日' : ''}更新第 ${start === end ? start : `${start}–${end}`} 集`,
   componentEpsUpdate: (n) => `更新${n}集`,
 
   // Widget

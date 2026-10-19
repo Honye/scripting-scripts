@@ -12,7 +12,7 @@ import {
 import type { Show } from './types'
 import { theme } from './theme'
 import { i18n } from './i18n'
-import { showsForDay, withDayOrder } from './data'
+import { airedEpsAt, showsForDay, withDayOrder } from './data'
 import { loadShows, saveShows } from './store'
 import { HomeView } from './views/Home'
 import { AllShowsView } from './views/AllShows'
@@ -38,11 +38,21 @@ function App() {
     detailId != null ? shows.find((s) => s.id === detailId) ?? null : null
 
   const handleAdd = (show: Show) => setShows([...shows, show])
-  const handleSaveDetail = (id: number, watched: number, total: number) => {
+  const handleSaveDetail = (
+    id: number,
+    v: { watched: number; total: number; aired: number }
+  ) => {
+    const now = Date.now()
     setShows(
-      shows.map((s) =>
-        s.id === id ? { ...s, watchedEps: watched, totalEps: total } : s
-      )
+      shows.map((s) => {
+        if (s.id !== id) return s
+        const next = { ...s, watchedEps: v.watched, totalEps: v.total }
+        // Re-anchor only when the user changed the aired count, so saving
+        // progress alone never shifts which episodes air on which day.
+        return v.aired === airedEpsAt(s, now)
+          ? next
+          : { ...next, airedEps: v.aired, airedAt: now }
+      })
     )
     // The widget shows episode progress, so it has to catch up too.
     Widget.reloadAll()
@@ -65,18 +75,15 @@ function App() {
     // The widget renders today's shows in this order.
     Widget.reloadAll()
   }
-  /** Swipe-to-complete: advances the watch count and drops the show to the end of that day. */
+  /** Swipe-to-complete: advances the watch count by one and drops the show to the end of that day. */
   const handleMarkWatched = (id: number, day: number) => {
     const target = shows.find((s) => s.id === id)
     if (!target) return
-    const gained = target.schedules
-      .filter((sc) => sc.day === day)
-      .reduce((n, sc) => n + sc.episodes, 0)
-    // totalEps of 0 means the length is unknown, so leave it uncapped.
+    // One episode per swipe. totalEps of 0 means the length is unknown, so leave it uncapped.
     const watched =
       target.totalEps > 0
-        ? Math.min(target.watchedEps + gained, target.totalEps)
-        : target.watchedEps + gained
+        ? Math.min(target.watchedEps + 1, target.totalEps)
+        : target.watchedEps + 1
     const orderedIds = [
       ...showsForDay(shows, day)
         .filter((s) => s.id !== id)

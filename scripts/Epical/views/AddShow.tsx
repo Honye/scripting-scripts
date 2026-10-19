@@ -474,6 +474,8 @@ function ScheduleStep({
   setDailyTime,
   dailyEps,
   setDailyEps,
+  airedInput,
+  setAiredInput,
   playUrl,
   setPlayUrl,
   sources,
@@ -495,6 +497,8 @@ function ScheduleStep({
   setDailyTime: (s: number) => void
   dailyEps: number
   setDailyEps: (n: number) => void
+  airedInput: string
+  setAiredInput: (s: string) => void
   playUrl: string
   setPlayUrl: (s: string) => void
   sources: PlaySource[]
@@ -606,6 +610,33 @@ function ScheduleStep({
               </Text>
             </>
           )}
+          <HStack spacing={6} frame={{ maxWidth: 'infinity' }}>
+            <Text
+              font={12}
+              foregroundStyle={theme.text35}
+            >
+              {i18n.addShowAiredEps}
+            </Text>
+            <Spacer />
+            <TextField
+              title=""
+              prompt="0"
+              value={airedInput}
+              onChanged={setAiredInput}
+              keyboardType="numberPad"
+              textFieldStyle="roundedBorder"
+              multilineTextAlignment="center"
+              foregroundStyle={theme.text}
+              font={14}
+              frame={{ width: 72 }}
+            />
+            <Text
+              font={12}
+              foregroundStyle={theme.text35}
+            >
+              {i18n.detailEpsUnit}
+            </Text>
+          </HStack>
         </VStack>
       </VStack>
 
@@ -694,6 +725,7 @@ export function AddShowView({
   const [weeklyEps, setWeeklyEps] = useState(1)
   const [dailyTime, setDailyTime] = useState(() => defaultTimeAt('20:00'))
   const [dailyEps, setDailyEps] = useState(1)
+  const [airedInput, setAiredInput] = useState('')
   const [playUrl, setPlayUrl] = useState('')
   const [sources, setSources] = useState<PlaySource[]>([])
   const [sourcesLoading, setSourcesLoading] = useState(false)
@@ -795,6 +827,9 @@ export function AddShowView({
       schedules,
       totalEps: 0,
       watchedEps: 0,
+      // The entered count is what has aired as of now; later airings are derived.
+      airedEps: Math.max(0, parseInt(airedInput, 10) || 0),
+      airedAt: Date.now(),
       doubanId: selected.doubanId,
       doubanType: selected.doubanType,
       sources: sources.length > 0 ? sources : undefined,
@@ -866,6 +901,8 @@ export function AddShowView({
               setDailyTime={setDailyTime}
               dailyEps={dailyEps}
               setDailyEps={setDailyEps}
+              airedInput={airedInput}
+              setAiredInput={setAiredInput}
               playUrl={playUrl}
               setPlayUrl={setPlayUrl}
               sources={sources}

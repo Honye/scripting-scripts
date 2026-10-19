@@ -14,6 +14,7 @@ import type { PlaySource, Schedule, Show } from './types'
 import { theme, tintedBg } from './theme'
 import { i18n } from './i18n'
 import { CUSTOM_SOURCE_ID, hasPlayable, openPreferred, sourceSubtitle } from './play'
+import { episodeRangeOn } from './data'
 
 /** The slice of a Show the poster needs — AddShow renders one before a Show exists. */
 type PosterSubject = {
@@ -311,18 +312,21 @@ export function CompletedBadge() {
   )
 }
 
-/** A row in the calendar showing one scheduled airing for one show today. */
+/** A row in the calendar showing one scheduled airing for one show on `date`. */
 export function EpisodeCard({
   show,
   schedule,
+  date,
+  isToday,
   onTap
 }: {
   show: Show
   schedule: Schedule
+  date: Date
+  isToday: boolean
   onTap: () => void
 }) {
-  const nextEp = show.watchedEps + 1
-  const lastEp = nextEp + schedule.episodes - 1
+  const range = episodeRangeOn(show, schedule, date)
   const ratio = show.totalEps > 0 ? show.watchedEps / show.totalEps : 0
   return (
     <HStack
@@ -362,13 +366,15 @@ export function EpisodeCard({
         </Text>
         <HStack spacing={6}>
           <GenrePill genre={show.genre} color={show.color} />
-          <Text
-            font={12}
-            foregroundStyle={theme.textTertiary}
-            lineLimit={1}
-          >
-            {i18n.episodeRange(nextEp, lastEp)}
-          </Text>
+          {range ? (
+            <Text
+              font={12}
+              foregroundStyle={theme.textTertiary}
+              lineLimit={1}
+            >
+              {i18n.episodeRange(range.start, range.end, isToday)}
+            </Text>
+          ) : null}
         </HStack>
         <HStack spacing={8} padding={{ top: 5 }}>
           <ProgressView

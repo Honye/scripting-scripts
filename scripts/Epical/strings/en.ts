@@ -57,6 +57,7 @@ export const en = {
   addShowDailyEps: 'Episodes per day',
   addShowDailyHint: (time: string, eps: number) =>
     `Every day at ${time}, ${eps} ep${eps === 1 ? '' : 's'}`,
+  addShowAiredEps: 'Aired so far',
   addShowNoDays: 'No days selected',
   addShowPlayUrl: 'Play URL (optional)',
   addShowPlayUrlPrompt: 'Paste link, leave empty to skip',
@@ -73,6 +74,7 @@ export const en = {
   detailWatched: 'Watched',
   detailTotalEps: 'Total Episodes',
   detailTotalValue: (n: number) => `${n} eps`,
+  detailAiredEps: 'Aired',
   detailEpsUnit: 'eps',
   detailSave: 'Save Progress',
   detailDelete: 'Delete Show',
@@ -97,10 +99,8 @@ export const en = {
 
   // Components
   completedBadge: 'Completed',
-  episodeRange: (start: number, end: number) =>
-    start === end
-      ? `Today: ep ${start}`
-      : `Today: eps ${start}–${end}`,
+  episodeRange: (start: number, end: number, isToday: boolean) =>
+    `${isToday ? 'Today: ' : ''}${start === end ? `ep ${start}` : `eps ${start}–${end}`}`,
   componentEpsUpdate: (n: number) => `+${n} ep${n === 1 ? '' : 's'}`,
 
   // Widget

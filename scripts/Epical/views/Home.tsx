@@ -13,7 +13,7 @@ import {
 } from 'scripting'
 import type { Color, DynamicShapeStyle } from 'scripting'
 import type { Schedule, Show } from '../types'
-import { airsOnDay, getTodayIndex, showsForDay } from '../data'
+import { airsOnDay, dateForWeekday, getTodayIndex, showsForDay } from '../data'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
 import { EpisodeCard } from '../components'
@@ -187,6 +187,8 @@ export function HomeView({
     )
   }, [rows.value])
 
+  const selectedDate = dateForWeekday(selectedDay)
+
   const dateLabel = new Date().toLocaleDateString(i18n.dateLocale, {
     month: 'long',
     day: 'numeric'
@@ -283,6 +285,8 @@ export function HomeView({
                       key={`${item.id}-${i}`}
                       show={item.show}
                       schedule={sc}
+                      date={selectedDate}
+                      isToday={selectedDay === today}
                       onTap={() => onShowDetail(item.show)}
                     />
                   ))}

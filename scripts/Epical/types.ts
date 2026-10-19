@@ -33,6 +33,12 @@ export type Show = {
   schedules: Schedule[]
   totalEps: number
   watchedEps: number
+  /**
+   * Episodes the user confirmed had aired as of `airedAt` (epoch ms). Later airings
+   * are derived from `schedules`, so the aired count depends only on the date.
+   */
+  airedEps?: number
+  airedAt?: number
   /** Optional remote poster URL (e.g. from Douban). When absent the gradient + initials fallback is used. */
   coverUrl?: string
   /** Optional play URL entered by hand. Surfaced as the "custom link" play source. */

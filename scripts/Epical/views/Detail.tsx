@@ -16,6 +16,7 @@ import {
 import type { Color } from 'scripting'
 import type { PlaySource, Show } from '../types'
 import { theme } from '../theme'
+import { airedEpsAt } from '../data'
 import { i18n } from '../i18n'
 import { fetchPlaySources } from '../api'
 import { CUSTOM_SOURCE_ID, listSources, openSource } from '../play'
@@ -268,6 +269,8 @@ function SourcesSection({
   )
 }
 
+type Progress = { watched: number; total: number; aired: number }
+
 export function DetailView({
   show,
   onClose,
@@ -278,7 +281,7 @@ export function DetailView({
 }: {
   show: Show
   onClose: () => void
-  onSave: (id: number, watched: number, total: number) => void
+  onSave: (id: number, v: Progress) => void
   onDelete: (id: number) => void
   onToggleCompleted: (id: number) => void
   onUpdate: (id: number, patch: Partial<Show>) => void
@@ -297,6 +300,7 @@ export function DetailView({
   }
   const [watched, setWatched] = useState(show.watchedEps)
   const [total, setTotal] = useState(show.totalEps)
+  const [aired, setAired] = useState(() => airedEpsAt(show, Date.now()))
   const safeTotal = Math.max(total, watched)
   const ratio = safeTotal > 0 ? watched / safeTotal : 0
   const tintColor = `${show.color}55` as Color
@@ -305,6 +309,8 @@ export function DetailView({
   const [watchedInput, setWatchedInput] = useState('')
   const [editingTotal, setEditingTotal] = useState(false)
   const [totalInput, setTotalInput] = useState('')
+  const [editingAired, setEditingAired] = useState(false)
+  const [airedInput, setAiredInput] = useState('')
 
   /**
    * The values the user is actually looking at, folding in any text field that
@@ -322,18 +328,27 @@ export function DetailView({
       const n = parseInt(watchedInput, 10)
       if (!isNaN(n)) nextWatched = Math.max(0, Math.min(Math.max(nextTotal, nextWatched), n))
     }
-    return { watched: nextWatched, total: Math.max(nextTotal, nextWatched) }
+    let nextAired = aired
+    if (editingAired) {
+      const n = parseInt(airedInput, 10)
+      if (!isNaN(n)) nextAired = Math.max(0, n)
+    }
+    return {
+      watched: nextWatched,
+      total: Math.max(nextTotal, nextWatched),
+      aired: nextAired
+    }
   }
 
   /** Settle the inputs into state, optionally applying a change on top. */
-  const commit = (
-    change?: (v: { watched: number; total: number }) => { watched: number; total: number }
-  ) => {
+  const commit = (change?: (v: Progress) => Progress) => {
     const next = change ? change(pending()) : pending()
     setEditingWatched(false)
     setEditingTotal(false)
+    setEditingAired(false)
     setWatched(next.watched)
     setTotal(next.total)
+    setAired(next.aired)
     return next
   }
 
@@ -494,13 +509,67 @@ export function DetailView({
           </HStack>
         </VStack>
 
+        <VStack spacing={10} frame={{ maxWidth: 'infinity', alignment: 'leading' }}>
+          <HStack>
+            <SectionLabel>{i18n.detailAiredEps}</SectionLabel>
+            <Spacer />
+            {editingAired ? (
+              <HStack spacing={2}>
+                <TextField
+                  title=""
+                  value={airedInput}
+                  onChanged={setAiredInput}
+                  keyboardType="numberPad"
+                  textFieldStyle="plain"
+                  autofocus
+                  font={14}
+                  fontWeight="semibold"
+                  foregroundStyle={theme.text}
+                  fixedSize={{ horizontal: true, vertical: false }}
+                  onBlur={() => commit()}
+                  onSubmit={() => commit()}
+                />
+                <Text font={14} fontWeight="semibold" foregroundStyle={theme.text}>{i18n.detailEpsUnit}</Text>
+              </HStack>
+            ) : (
+              <Text
+                font={14}
+                fontWeight="semibold"
+                foregroundStyle={theme.text}
+                onTapGesture={() => {
+                  setAiredInput(String(aired))
+                  setEditingAired(true)
+                }}
+              >
+                {i18n.detailTotalValue(aired)}
+              </Text>
+            )}
+            <RepeatButton
+              action={() => commit((v) => ({ ...v, aired: Math.max(0, v.aired - 1) }))}
+            >
+              <Image
+                systemName="minus.circle.fill"
+                font={22}
+                foregroundStyle={theme.text50}
+              />
+            </RepeatButton>
+            <RepeatButton action={() => commit((v) => ({ ...v, aired: v.aired + 1 }))}>
+              <Image
+                systemName="plus.circle.fill"
+                font={22}
+                foregroundStyle={theme.brandEnd}
+              />
+            </RepeatButton>
+          </HStack>
+        </VStack>
+
         <SourcesSection show={show} onUpdate={onUpdate} />
 
         <PrimaryButton
           title={i18n.detailSave}
           action={() => {
             const next = commit()
-            onSave(show.id, next.watched, next.total)
+            onSave(show.id, next)
             onClose()
           }}
         />
