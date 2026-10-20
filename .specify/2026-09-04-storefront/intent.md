@@ -190,3 +190,4 @@ data[0].data.shelfMapping.information.items
 ## 10. 变更记录
 
 - 2026-09-04：首次澄清。确认 D1–D7 七项决策；实测确认内购价格可从 App Store 网页的 `serialized-server-data` JSON 提取；确认地区切换无法程序化实现；TF 状态判定待样本验证。
+- 2026-10-20：细化 D1。App Store 接受未公开的 `itms-apps://…/resetAndRedirect?dsf=<storefront ID>` 链接，可切换**浏览**的商店地区（App Store 上的商店切换类应用即用此法），但不改变登录账号。账号详情页据此新增「在 App Store 中浏览该地区」按钮，无对应 ID 或链接被拒时回落到 `itms-apps://`。切换助手第 3 步仍只打开首页，FR-SW-05 不变。

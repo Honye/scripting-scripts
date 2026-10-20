@@ -25,6 +25,7 @@ import {
   subscriptionsFor
 } from '../billing'
 import { hasPassword, revealAndCopyPassword } from '../credentials'
+import { openStorefront } from '../storefront_link'
 import { alertLevelFor } from '../billing'
 import { AccountEditor } from './AccountEditor'
 import { GiftCards } from './GiftCards'
@@ -244,7 +245,17 @@ export function AccountDetail({
       navigationTitle={account.alias}
       navigationBarTitleDisplayMode="inline"
       toolbar={{
-        topBarTrailing: [<Button title={i18n.edit} action={openEditor} />]
+        topBarTrailing: [
+          // Browse only: the storefront follows this account's region, the
+          // signed-in account does not change (see storefront_link.ts).
+          <Button
+            action={() => openStorefront(account.region)}
+            accessibilityLabel={i18n.browseRegionStore}
+          >
+            <Image systemName="bag" />
+          </Button>,
+          <Button title={i18n.edit} action={openEditor} />
+        ]
       }}
     >
       <Section>

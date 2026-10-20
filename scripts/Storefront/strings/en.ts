@@ -76,6 +76,7 @@ export const en = {
   switchStep3Hint:
     'In the App Store, tap your avatar, sign out, then sign in with the account above.',
   openAppStore: 'Open App Store',
+  browseRegionStore: "Browse this region's App Store",
   switchConfirmTitle: 'Signed in?',
   switchConfirmBody: (alias: string) => `Did you sign in to ${alias}?`,
   switchConfirmYes: 'Yes, I signed in',

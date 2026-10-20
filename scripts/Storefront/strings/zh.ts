@@ -73,6 +73,7 @@ export const zh: Strings = {
   switchStep3: '3. 打开 App Store',
   switchStep3Hint: '在 App Store 中点头像 → 退出登录 → 用上面的账号登录。',
   openAppStore: '打开 App Store',
+  browseRegionStore: '在 App Store 中浏览该地区',
   switchConfirmTitle: '已经登录了吗？',
   switchConfirmBody: (alias) => `是否已登录为 ${alias}？`,
   switchConfirmYes: '已登录',

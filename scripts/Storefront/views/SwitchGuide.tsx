@@ -104,8 +104,9 @@ export function SwitchGuide({
 
   const openAppStore = async () => {
     awaitingReturn.current = true
-    // No storefront can be targeted from a URL — the App Store always opens in
-    // whichever region the signed-in account belongs to (D1).
+    // The home page on purpose: this step is about signing in, which no URL
+    // can do (D1). `openStorefront` can switch the storefront being browsed,
+    // but that would show this region's shelves under the old account.
     await Safari.openURL('itms-apps://')
   }
 
