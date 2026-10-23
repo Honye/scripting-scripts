@@ -102,12 +102,12 @@ export function SwitchGuide({
     )
   }
 
-  const openAppStore = async () => {
+  const openSettings = async () => {
     awaitingReturn.current = true
-    // The home page on purpose: this step is about signing in, which no URL
-    // can do (D1). `openStorefront` can switch the storefront being browsed,
-    // but that would show this region's shelves under the old account.
-    await Safari.openURL('itms-apps://')
+    // The Settings root on purpose: signing in happens in Settings → Apple
+    // Account → Media & Purchases on current iOS, and no URL can jump straight
+    // to that pane. `App-Prefs://` at least saves the first tap.
+    await Safari.openURL('App-Prefs://')
   }
 
   return (
@@ -161,9 +161,9 @@ export function SwitchGuide({
               )}
             </HStack>
           </Button>
-          <Button action={openAppStore}>
+          <Button action={openSettings}>
             <HStack>
-              <Image systemName="arrow.up.forward.app" />
+              <Image systemName="gearshape" />
               <Text foregroundStyle="label">{i18n.switchStep3}</Text>
               <Spacer />
             </HStack>

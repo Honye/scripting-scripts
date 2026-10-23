@@ -67,12 +67,13 @@ export const zh: Strings = {
   switchAssistantSubtitle: '引导你手动登录到这个账号',
   switchIntroTitle: '这个功能能做什么、不能做什么',
   switchIntroBody:
-    'iOS 不允许任何第三方 App 代替你登录账号或更改 App Store 地区。Storefront 只能把资料准备好并打开 App Store，最后几步需要你自己完成。',
+    'iOS 不允许任何第三方 App 代替你登录账号或更改 App Store 地区。Storefront 只能把资料准备好并打开设置，最后几步需要你自己完成。',
   switchStep1: '1. 复制账号',
   switchStep2: '2. 复制密码',
-  switchStep3: '3. 打开 App Store',
-  switchStep3Hint: '在 App Store 中点头像 → 退出登录 → 用上面的账号登录。',
-  openAppStore: '打开 App Store',
+  switchStep3: '3. 打开设置',
+  switchStep3Hint:
+    '在设置中：设置 → 点击顶部 Apple 账号 → 媒体与购买项目，用上面的账号登录。',
+  openSettings: '打开设置',
   browseRegionStore: '在 App Store 中浏览该地区',
   switchConfirmTitle: '已经登录了吗？',
   switchConfirmBody: (alias) => `是否已登录为 ${alias}？`,

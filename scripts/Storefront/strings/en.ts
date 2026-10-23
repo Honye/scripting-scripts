@@ -69,13 +69,13 @@ export const en = {
   switchAssistantSubtitle: 'Walks you through signing in to this account',
   switchIntroTitle: 'What this can and cannot do',
   switchIntroBody:
-    'iOS does not allow any third-party app to sign in or change the App Store region for you. Storefront hands you the details and opens the App Store — the last steps are yours.',
+    'iOS does not allow any third-party app to sign in or change the App Store region for you. Storefront hands you the details and opens Settings — the last steps are yours.',
   switchStep1: '1. Copy the account',
   switchStep2: '2. Copy the password',
-  switchStep3: '3. Open the App Store',
+  switchStep3: '3. Open Settings',
   switchStep3Hint:
-    'In the App Store, tap your avatar, sign out, then sign in with the account above.',
-  openAppStore: 'Open App Store',
+    'In Settings: Settings → your Apple Account at the top → Media & Purchases, then sign in with the account above.',
+  openSettings: 'Open Settings',
   browseRegionStore: "Browse this region's App Store",
   switchConfirmTitle: 'Signed in?',
   switchConfirmBody: (alias: string) => `Did you sign in to ${alias}?`,

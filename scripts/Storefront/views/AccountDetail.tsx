@@ -254,7 +254,9 @@ export function AccountDetail({
           >
             <Image systemName="bag" />
           </Button>,
-          <Button title={i18n.edit} action={openEditor} />
+          <Button action={openEditor} accessibilityLabel={i18n.edit}>
+            <Image systemName="square.and.pencil" />
+          </Button>
         ]
       }}
     >
