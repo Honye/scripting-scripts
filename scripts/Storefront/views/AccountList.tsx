@@ -21,17 +21,20 @@ import { AccountEditor } from './AccountEditor'
 import { AccountDetail } from './AccountDetail'
 import { AppEntries } from './AppEntries'
 import { AppLookup } from './AppLookup'
+import { GiftCardWallet } from './GiftCardWallet'
 import { SettingsView } from './SettingsView'
 import { TestFlightList } from './TestFlightList'
 import { UpcomingBills } from './UpcomingBills'
 import type { EntryDraft } from './EntryEditor'
-import type { Account, AppRef, Entry, Settings, TFItem } from '../types'
+import { loadSettings } from '../store'
+import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from '../types'
 
 export function AccountList({
   accounts,
   entries,
   appRefs,
   tfItems,
+  giftCards,
   currentAccountId,
   settings,
   onUpsert,
@@ -46,12 +49,15 @@ export function AccountList({
   launchAccountId,
   onSaveTFItem,
   onDeleteTFItem,
+  onSaveGiftCard,
+  onDeleteGiftCards,
   onRestored
 }: {
   accounts: Account[]
   entries: Entry[]
   appRefs: Record<string, AppRef>
   tfItems: TFItem[]
+  giftCards: GiftCard[]
   currentAccountId: string | null
   settings: Settings
   onUpsert: (account: Account) => void
@@ -67,6 +73,8 @@ export function AccountList({
   launchAccountId: string | null
   onSaveTFItem: (item: TFItem) => void
   onDeleteTFItem: (id: string) => void
+  onSaveGiftCard: (card: GiftCard) => void
+  onDeleteGiftCards: (ids: string[]) => void
   onRestored: () => void
 }) {
   // `ForEach` reorders by rewriting this observable in place, so it has to be
@@ -104,6 +112,27 @@ export function AccountList({
     if (created != null) onUpsert(created)
   }
 
+  /**
+   * Built here because this is the level that holds every callback the wallet
+   * needs; AccountDetail gets the builder rather than the whole set of props.
+   * The wallet seeds itself from Storage, so a builder captured long ago still
+   * opens on current data. Settings are re-read for the same reason.
+   */
+  const walletFor = (focusRegion?: string) => (
+    <GiftCardWallet
+      focusRegion={focusRegion}
+      onSaveCard={onSaveGiftCard}
+      onDeleteCards={onDeleteGiftCards}
+      onUpsertAccount={onUpsert}
+      onSetCurrent={onSetCurrent}
+      onIntroSeen={() =>
+        onSettingsChange({ ...loadSettings(), switchGuideIntroSeen: true })
+      }
+    />
+  )
+
+  const availableCards = giftCards.filter((c) => c.status === 'available').length
+
   const detailFor = (account: Account) => (
     <AccountDetail
       account={account}
@@ -119,6 +148,7 @@ export function AccountList({
       onSettingsChange={onSettingsChange}
       onSaveEntry={onSaveEntry}
       onDeleteEntry={onDeleteEntry}
+      walletFor={walletFor}
     />
   )
 
@@ -195,6 +225,16 @@ export function AccountList({
             <Spacer />
             <Text font="caption" foregroundStyle="secondaryLabel">
               {tfItems.length > 0 ? String(tfItems.length) : ''}
+            </Text>
+          </HStack>
+        </NavigationLink>
+        <NavigationLink destination={walletFor()}>
+          <HStack>
+            <Image systemName="giftcard" />
+            <Text foregroundStyle="label">{i18n.walletTitle}</Text>
+            <Spacer />
+            <Text font="caption" foregroundStyle="secondaryLabel">
+              {availableCards > 0 ? String(availableCards) : ''}
             </Text>
           </HStack>
         </NavigationLink>

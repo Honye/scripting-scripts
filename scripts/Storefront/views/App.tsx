@@ -11,22 +11,24 @@ import { AccountList } from './AccountList'
 import {
   loadAccounts,
   loadEntries,
+  loadGiftCards,
   loadSettings,
   loadTFItems,
   getCurrentAccountId,
   saveAccounts,
   saveEntries,
+  saveGiftCards,
   saveSettings,
   saveTFItems,
   setCurrentAccountId
 } from '../store'
-import { clearPassword } from '../credentials'
+import { clearGiftCode, clearPassword } from '../credentials'
 import { advanceEntry, isBillable } from '../billing'
 import { rescheduleAll } from '../notifications'
 import { renderReminder } from '../notify_text'
 import { loadAppRefs, saveAppRefs } from '../store'
 import type { EntryDraft } from './EntryEditor'
-import type { Account, AppRef, Entry, Settings, TFItem } from '../types'
+import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from '../types'
 
 /**
  * Owns all persisted state. Following the repo convention, state lives in one
@@ -46,6 +48,7 @@ export function App() {
   )
   const [appRefs, setAppRefs] = useState<Record<string, AppRef>>(() => loadAppRefs())
   const [tfItems, setTFItems] = useState<TFItem[]>(() => loadTFItems())
+  const [giftCards, setGiftCards] = useState<GiftCard[]>(() => loadGiftCards())
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
   const [currentId, setCurrentId] = useState<string | null>(() =>
     getCurrentAccountId()
@@ -70,6 +73,10 @@ export function App() {
   useEffect(() => {
     saveTFItems(tfItems)
   }, [tfItems])
+
+  useEffect(() => {
+    saveGiftCards(giftCards)
+  }, [giftCards])
 
   useEffect(() => {
     saveSettings(settings)
@@ -164,7 +171,8 @@ export function App() {
   /**
    * Entries are deleted with their account: an entry records which account paid
    * for something, so it is meaningless once that account is gone. TestFlight
-   * items only reference an account optionally, so they are unlinked instead.
+   * items only reference an account optionally, so they are unlinked instead,
+   * and so are gift cards that were redeemed into it — the card is still spent.
    */
   const deleteAccount = (accountId: string) => {
     clearPassword(accountId)
@@ -172,6 +180,11 @@ export function App() {
     setEntries((prev) => prev.filter((e) => e.accountId !== accountId))
     setTFItems((prev) =>
       prev.map((t) => (t.accountId === accountId ? { ...t, accountId: undefined } : t))
+    )
+    setGiftCards((prev) =>
+      prev.map((c) =>
+        c.redeemedAccountId === accountId ? { ...c, redeemedAccountId: undefined } : c
+      )
     )
     setCurrentId((prev) => (prev === accountId ? null : prev))
   }
@@ -201,6 +214,7 @@ export function App() {
     setEntries(loadEntries().map((entry) => advanceEntry(entry)))
     setAppRefs(loadAppRefs())
     setTFItems(loadTFItems())
+    setGiftCards(loadGiftCards())
     setSettings(loadSettings())
     setCurrentId(getCurrentAccountId())
   }
@@ -217,6 +231,23 @@ export function App() {
 
   const deleteTFItem = (id: string) => {
     setTFItems((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  const saveGiftCard = (card: GiftCard) => {
+    setGiftCards((prev) => {
+      const index = prev.findIndex((c) => c.id === card.id)
+      if (index < 0) return [...prev, card]
+      const next = [...prev]
+      next[index] = card
+      return next
+    })
+  }
+
+  /** The code goes with the card: an orphaned Keychain entry is still money. */
+  const deleteGiftCards = (ids: string[]) => {
+    for (const id of ids) clearGiftCode(id)
+    const gone = new Set(ids)
+    setGiftCards((prev) => prev.filter((c) => !gone.has(c.id)))
   }
 
   const reorderAccounts = (ids: string[]) => {
@@ -245,6 +276,7 @@ export function App() {
         entries={entries}
         appRefs={appRefs}
         tfItems={tfItems}
+        giftCards={giftCards}
         currentAccountId={currentId}
         settings={settings}
         onUpsert={upsertAccount}
@@ -259,6 +291,8 @@ export function App() {
         launchAccountId={launchAccountId}
         onSaveTFItem={saveTFItem}
         onDeleteTFItem={deleteTFItem}
+        onSaveGiftCard={saveGiftCard}
+        onDeleteGiftCards={deleteGiftCards}
         onRestored={reloadFromStorage}
       />
     </NavigationStack>

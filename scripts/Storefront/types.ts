@@ -100,3 +100,32 @@ export const defaultSettings: Settings = {
   switchGuideIntroSeen: false,
   tfNoticeSeen: false
 }
+
+export type GiftCardStatus = 'available' | 'redeemed'
+
+/**
+ * An Apple Gift Card the user holds. Like `Account`, the secret is not here:
+ * the full code lives in the Keychain, keyed by `GiftCard.id`, and is reached
+ * only through `credentials.ts`.
+ */
+export type GiftCard = {
+  id: string
+  /** Storefront the card was issued for — Apple only redeems it there. */
+  region: string
+  /** ISO 4217, derived from `region` but overridable. */
+  currency: string
+  /** Face value, in `currency`. */
+  amount: number
+  /**
+   * HMAC of the normalized code under a key that never leaves this device's
+   * Keychain. Lets the editor reject a duplicate without reading any stored
+   * code, and is useless to anyone holding only a backup.
+   */
+  codeHash: string
+  status: GiftCardStatus
+  redeemedAt?: number
+  /** Which account it went into; cleared if that account is deleted. */
+  redeemedAccountId?: string
+  note: string
+  createdAt: number
+}

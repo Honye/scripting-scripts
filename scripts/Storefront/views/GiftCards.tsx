@@ -3,14 +3,19 @@ import {
   HStack,
   Image,
   List,
+  NavigationLink,
   Section,
   Spacer,
   Text,
   VStack
 } from 'scripting'
+import type { VirtualNode } from 'scripting'
 import { i18n } from '../i18n'
 import { regionFor, regionName } from '../regions'
-import { channelsFor, officialGiftCardUrl, redeemUrl } from '../giftcards'
+import { channelsFor, officialGiftCardUrl } from '../giftcards'
+import { formatMoney } from '../format'
+import { availableIn, redeemUrl, summarizeByRegion } from '../gift_wallet'
+import { loadGiftCards } from '../store'
 import type { Account } from '../types'
 
 /**
@@ -25,14 +30,25 @@ import type { Account } from '../types'
  */
 export function GiftCards({
   account,
-  onUpdateBalance
+  onUpdateBalance,
+  wallet
 }: {
   account: Account
   onUpdateBalance: () => void
+  /** The wallet narrowed to this account's region. */
+  wallet: VirtualNode
 }) {
   const region = regionFor(account.region)
   const official = officialGiftCardUrl(account.region)
   const channels = channelsFor(account.region)
+  // Cards already in hand come before buying one: the cheapest top-up is the
+  // card in the drawer. Read from Storage, since this sheet's props are a
+  // snapshot of whenever the account screen was opened.
+  const held = availableIn(loadGiftCards(), account.region)
+  // One total per currency, never added together (FR-SUB-04).
+  const heldTotal = summarizeByRegion(held)
+    .map((row) => formatMoney(row.availableTotal, row.currency))
+    .join(' / ')
 
   return (
     <List
@@ -50,6 +66,20 @@ export function GiftCards({
           </VStack>
           <Spacer />
         </HStack>
+      </Section>
+
+      <Section>
+        <NavigationLink destination={wallet}>
+          <HStack>
+            <Image systemName="wallet.pass" />
+            <Text foregroundStyle="label">
+              {held.length === 0
+                ? i18n.walletInRegionNone
+                : i18n.walletInRegion(held.length, heldTotal)}
+            </Text>
+            <Spacer />
+          </HStack>
+        </NavigationLink>
       </Section>
 
       <Section

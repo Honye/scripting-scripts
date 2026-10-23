@@ -15,6 +15,7 @@ import {
   useObservable,
   useState
 } from 'scripting'
+import type { VirtualNode } from 'scripting'
 import { i18n } from '../i18n'
 import { daysSince, formatMoney, isBalanceStale } from '../format'
 import { regionFor, regionName } from '../regions'
@@ -26,6 +27,7 @@ import {
 } from '../billing'
 import { hasPassword, revealAndCopyPassword } from '../credentials'
 import { openStorefront } from '../storefront_link'
+import { getCurrentAccountId, loadAccounts } from '../store'
 import { alertLevelFor } from '../billing'
 import { AccountEditor } from './AccountEditor'
 import { GiftCards } from './GiftCards'
@@ -56,7 +58,8 @@ export function AccountDetail({
   onSetCurrent,
   onSettingsChange,
   onSaveEntry,
-  onDeleteEntry
+  onDeleteEntry,
+  walletFor
 }: {
   account: Account
   accounts: Account[]
@@ -71,6 +74,8 @@ export function AccountDetail({
   onSettingsChange: (settings: Settings) => void
   onSaveEntry: (draft: EntryDraft) => void
   onDeleteEntry: (entryId: string) => void
+  /** Builds the gift card wallet, optionally narrowed to one region. */
+  walletFor: (focusRegion?: string) => VirtualNode
 }) {
   const dismiss = Navigation.useDismiss()
   const [account, setAccount] = useState<Account>(initialAccount)
@@ -145,15 +150,26 @@ export function AccountDetail({
    * shown, not buried in a menu. The balance editor is offered on the way back
    * because a top-up Storefront cannot observe is a balance the user must
    * correct by hand (FR-SUB-06).
+   *
+   * Redeeming a gift card from in there credits this account and may change
+   * which one is marked signed in, all reported straight to `App`. Re-reading
+   * on the way out keeps this screen from showing the balance it had before.
    */
   const openGiftCards = async () => {
     await Navigation.present({
       element: (
         <NavigationStack>
-          <GiftCards account={account} onUpdateBalance={openEditor} />
+          <GiftCards
+            account={account}
+            onUpdateBalance={openEditor}
+            wallet={walletFor(account.region)}
+          />
         </NavigationStack>
       )
     })
+    const fresh = loadAccounts().find((a) => a.id === account.id)
+    if (fresh != null) setAccount(fresh)
+    setIsCurrent(getCurrentAccountId() === account.id)
   }
 
   const markCurrent = () => {

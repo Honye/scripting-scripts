@@ -3,15 +3,17 @@ import {
   loadAccounts,
   loadAppRefs,
   loadEntries,
+  loadGiftCards,
   loadSettings,
   loadTFItems,
   saveAccounts,
   saveAppRefs,
   saveEntries,
+  saveGiftCards,
   saveSettings,
   saveTFItems
 } from './store'
-import type { Account, AppRef, Entry, Settings, TFItem } from './types'
+import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from './types'
 
 /**
  * JSON backup (FR-DATA-01..04).
@@ -23,6 +25,10 @@ import type { Account, AppRef, Entry, Settings, TFItem } from './types'
  *
  * A restore therefore leaves the Keychain untouched: passwords survive it, and
  * a backup moved to another device simply arrives with none.
+ *
+ * Gift cards follow the same rule: the backup carries region, value and status,
+ * never the code. Restored on another device, a card shows "code not on this
+ * device" until the user types it in again.
  */
 export const BACKUP_FORMAT = 1
 
@@ -33,6 +39,7 @@ export type Backup = {
   entries: Entry[]
   appRefs: Record<string, AppRef>
   tfItems: TFItem[]
+  giftCards: GiftCard[]
   settings: Settings
 }
 
@@ -44,6 +51,7 @@ export function buildBackup(now: number = Date.now()): Backup {
     entries: loadEntries(),
     appRefs: loadAppRefs(),
     tfItems: loadTFItems(),
+    giftCards: loadGiftCards(),
     settings: loadSettings()
   }
 }
@@ -90,6 +98,17 @@ export function parseBackup(text: string): ParseResult {
   if (raw.tfItems != null && !isArrayOfObjects(raw.tfItems)) {
     return { ok: false, reason: 'TestFlight items malformed' }
   }
+  if (raw.giftCards != null && !isArrayOfObjects(raw.giftCards)) {
+    return { ok: false, reason: 'gift cards malformed' }
+  }
+  for (const card of (raw.giftCards ?? []) as any[]) {
+    if (typeof card.id !== 'string' || card.id === '') {
+      return { ok: false, reason: 'a gift card has no id' }
+    }
+    if (typeof card.amount !== 'number' || !isFinite(card.amount)) {
+      return { ok: false, reason: 'a gift card has no valid value' }
+    }
+  }
 
   for (const account of raw.accounts as any[]) {
     if (typeof account.id !== 'string' || account.id === '') {
@@ -123,6 +142,7 @@ export function parseBackup(text: string): ParseResult {
       appRefs:
         raw.appRefs != null && typeof raw.appRefs === 'object' ? raw.appRefs : {},
       tfItems: raw.tfItems ?? [],
+      giftCards: raw.giftCards ?? [],
       settings: { ...defaultSettings, ...(raw.settings ?? {}) }
     }
   }
@@ -134,5 +154,6 @@ export function applyBackup(backup: Backup) {
   saveEntries(backup.entries)
   saveAppRefs(backup.appRefs)
   saveTFItems(backup.tfItems)
+  saveGiftCards(backup.giftCards)
   saveSettings(backup.settings)
 }

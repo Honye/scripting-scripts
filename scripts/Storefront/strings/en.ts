@@ -327,11 +327,74 @@ export const en = {
   giftCardAfterTopUp: 'After you top up, update the balance here so alerts stay accurate.',
   updateBalance: 'Update balance',
 
+  // Gift card wallet
+  walletTitle: 'Gift cards',
+  walletRegionTitle: (flag: string) => `Gift cards ${flag}`,
+  walletSummary: 'By region',
+  walletAvailable: 'Not redeemed',
+  walletRedeemed: 'Redeemed',
+  walletShow: 'Show',
+  walletHide: 'Hide',
+  walletEmpty: 'No gift cards yet. Tap + to add one.',
+  walletAvailableLine: (count: number, total: string) => `${count} available · ${total}`,
+  walletRedeemedLine: (count: number, total: string) => `${count} redeemed · ${total}`,
+  walletFooter:
+    'Redeem opens the App Store redeem page with the code filled in and on the clipboard; you confirm it there. "Signed in" is the account you marked — Storefront cannot see which account is actually signed in.',
+  walletInRegion: (count: number, total: string) => `Gift cards for this region: ${count} · ${total}`,
+  walletInRegionNone: 'No unredeemed gift cards for this region',
+  giftCardNew: 'New gift card',
+  giftCardEdit: 'Edit gift card',
+  giftCardAmount: 'Value',
+  giftCardCode: 'Code',
+  giftCardCodePrompt: 'XXXX XXXX XXXX XXXX',
+  giftCardCodeStored: 'Stored in Keychain',
+  giftCardCodeMissing: 'Code not on this device',
+  giftCardCodeHint:
+    'The code is kept in the iOS Keychain only and never goes into a backup. Leave it blank to keep the stored one.',
+  giftCardCodeShape:
+    'This does not look like an Apple Gift Card code (16 characters starting with X). Check it before saving.',
+  giftCardDuplicate: 'This code is already in your wallet.',
+  giftCardRegionHint: 'Apple only redeems a card on an account from the region it was issued for.',
+  giftCardAuthReason: 'Authenticate to use a gift card code',
+  giftCardRedeemAction: 'Redeem',
+  giftCardRedeemTitle: 'Redeem this card?',
+  giftCardRedeemBody: (amount: string, alias: string, flag: string) =>
+    `${amount} to ${flag} ${alias}. The App Store will open its redeem page with the code filled in; tap Redeem there to finish.`,
+  giftCardRedeemOpen: 'Open App Store',
+  giftCardNoCurrentTitle: 'No signed-in account marked',
+  giftCardNoCurrentBody: (region: string) =>
+    `Mark which account is signed in first. This card can only be redeemed on a ${region} account.`,
+  giftCardMismatchTitle: 'Region does not match',
+  giftCardMismatchBody: (current: string, region: string) =>
+    `Signed in: ${current}. This card is for ${region}, and Apple only redeems it on an account from that region.`,
+  giftCardSwitchTo: (region: string) => `Switch to a ${region} account`,
+  giftCardNoAccountInRegion: (region: string) =>
+    `There is no ${region} account in Storefront yet. Add one, sign in to it, then redeem.`,
+  giftCardDidRedeemTitle: 'Did the redemption go through?',
+  giftCardDidRedeemBody: (amount: string, alias: string) =>
+    `The card will be marked as redeemed to ${alias}, and ${amount} added to its balance.`,
+  giftCardDidRedeemBodyNoCredit: (alias: string, currency: string) =>
+    `The card will be marked as redeemed to ${alias}. That account keeps its balance in ${currency}, so update the balance by hand.`,
+  giftCardDidRedeemYes: 'Redeemed',
+  giftCardMarkRedeemed: 'Mark redeemed',
+  giftCardMarkAvailable: 'Not redeemed',
+  giftCardRedeemedOn: (date: string, alias: string) => `${date} · ${alias}`,
+  giftCardDeletedAccount: 'deleted account',
+  giftCardCopied: 'Code copied',
+  giftCardAuthDenied: 'Authentication failed. The code was not used.',
+  giftCardOpenFailed:
+    'The App Store did not open. The code is on the clipboard — paste it on the redeem page.',
+  giftCardDeleteTitle: 'Delete gift card?',
+  giftCardDeleteBody: (count: number) =>
+    count === 1
+      ? 'Its code is removed from the Keychain too. This cannot be undone.'
+      : `${count} cards and their codes will be removed from the Keychain. This cannot be undone.`,
+
   // Data
   data: 'Data',
   exportData: 'Export a backup',
   exportDataNote:
-    'Exports accounts, records and TestFlight items as JSON. Passwords are never included — they stay in the Keychain.',
+    'Exports accounts, records, TestFlight items and gift cards as JSON. Passwords and gift card codes are never included — they stay in the Keychain.',
   exportFailed: 'Export failed',
   importData: 'Restore from a backup',
   importDataNote: 'Replaces everything currently stored.',

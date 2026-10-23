@@ -58,14 +58,6 @@ export function officialGiftCardUrl(region: string): string | null {
   return OFFICIAL[region] ?? null
 }
 
-/**
- * Apple's redeem page. Distinct from buying: this is where an already-purchased
- * code gets applied. Available in every storefront.
- */
-export function redeemUrl(): string {
-  return 'https://apps.apple.com/redeem'
-}
-
 export type Channel = {
   id: string
   /** Region codes this channel serves; empty means "any". */

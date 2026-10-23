@@ -6,12 +6,13 @@
  * and intent.tsx belong to one script and share its private domain.
  */
 import { defaultSettings } from './types'
-import type { Account, AppRef, Entry, Settings, TFItem } from './types'
+import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from './types'
 
 const KEY_ACCOUNTS = 'accounts'
 const KEY_APP_REFS = 'appRefs'
 const KEY_ENTRIES = 'entries'
 const KEY_TF_ITEMS = 'tfItems'
+const KEY_GIFT_CARDS = 'giftCards'
 const KEY_CURRENT_ACCOUNT = 'currentAccountId'
 const KEY_SETTINGS = 'settings'
 
@@ -47,6 +48,17 @@ export function loadTFItems(): TFItem[] {
 
 export function saveTFItems(items: TFItem[]) {
   Storage.set(KEY_TF_ITEMS, items)
+}
+
+export function loadGiftCards(): GiftCard[] {
+  const cards = Storage.get<GiftCard[]>(KEY_GIFT_CARDS) ?? []
+  // Early builds kept the code's last four characters in the clear as
+  // `codeTail`; no part of a code belongs outside the Keychain.
+  return cards.map(({ codeTail, ...card }: GiftCard & { codeTail?: string }) => card)
+}
+
+export function saveGiftCards(cards: GiftCard[]) {
+  Storage.set(KEY_GIFT_CARDS, cards)
 }
 
 export function getCurrentAccountId(): string | null {

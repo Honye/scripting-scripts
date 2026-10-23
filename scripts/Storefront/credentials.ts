@@ -1,5 +1,5 @@
 /**
- * Password storage and the biometric gate in front of it.
+ * Password and gift card code storage, and the biometric gate in front of it.
  *
  * Design rules (spec NFR-01, FR-ACC-06/07):
  *  - **Every path to plaintext goes through `LocalAuth` first.** There is no
@@ -98,4 +98,73 @@ export async function copyPassword(
   if (!result.ok) return { ok: false, reason: result.reason }
   await Pasteboard.setString(result.password)
   return { ok: true }
+}
+
+/**
+ * Gift card codes. A code is a bearer instrument — whoever types it in first
+ * gets the money — so it gets exactly the treatment a password does: Keychain
+ * only, and every path to plaintext behind `authenticate`.
+ */
+function giftKeyOf(cardId: string): string {
+  return `giftcard_code_${cardId}`
+}
+
+const GIFT_HMAC_KEY = 'giftcard_hmac_key'
+
+export function hasGiftCode(cardId: string): boolean {
+  return Keychain.contains(giftKeyOf(cardId))
+}
+
+export function setGiftCode(cardId: string, code: string): boolean {
+  return Keychain.set(giftKeyOf(cardId), code, { accessibility: ACCESSIBILITY })
+}
+
+/** Must also be called when a card is deleted, or the code is orphaned. */
+export function clearGiftCode(cardId: string) {
+  Keychain.remove(giftKeyOf(cardId))
+}
+
+/**
+ * Fingerprint for duplicate detection. Keyed rather than a bare SHA-256 so the
+ * fingerprint in a backup cannot be used to test guesses at the code. The key
+ * is created on first use and stays in this device's Keychain, so a
+ * fingerprint means nothing anywhere else.
+ */
+export function giftCodeFingerprint(code: string): string {
+  let secret = Keychain.get(GIFT_HMAC_KEY)
+  if (secret == null) {
+    secret = UUID.string() + UUID.string()
+    Keychain.set(GIFT_HMAC_KEY, secret, { accessibility: ACCESSIBILITY })
+  }
+  const data = Data.fromRawString(code)
+  const key = Data.fromRawString(secret)
+  if (data == null || key == null) return ''
+  return Crypto.hmacSHA256(data, key).toHexString()
+}
+
+export async function revealGiftCode(
+  cardId: string,
+  reason: string
+): Promise<RevealResult> {
+  if (!LocalAuth.isAvailable) return { ok: false, reason: 'unavailable' }
+  if (!hasGiftCode(cardId)) return { ok: false, reason: 'missing' }
+  if (!(await authenticate(reason))) return { ok: false, reason: 'denied' }
+
+  const code = Keychain.get(giftKeyOf(cardId))
+  if (code == null) return { ok: false, reason: 'missing' }
+  return { ok: true, password: code }
+}
+
+/**
+ * Authenticates once, puts the code on the pasteboard and hands it back — the
+ * redeem flow needs it both there and in the App Store URL.
+ */
+export async function revealAndCopyGiftCode(
+  cardId: string,
+  reason: string
+): Promise<RevealResult> {
+  const result = await revealGiftCode(cardId, reason)
+  if (!result.ok) return result
+  await Pasteboard.setString(result.password)
+  return result
 }
