@@ -5,11 +5,13 @@ import {
   Image,
   Navigation,
   NavigationStack,
+  Rectangle,
   SecureField,
   Section,
   Spacer,
   Text,
   TextField,
+  VStack,
   useState
 } from 'scripting'
 import { i18n } from '../i18n'
@@ -21,8 +23,18 @@ import {
   revealGiftCode,
   setGiftCode
 } from '../credentials'
-import { looksLikeAppleCode, normalizeCode } from '../gift_wallet'
+import {
+  GIFT_CARD_DESIGNS,
+  designFor,
+  looksLikeAppleCode,
+  normalizeCode
+} from '../gift_wallet'
 import { AmountField } from '../components/AmountField'
+import {
+  CARD_ROW_INSETS,
+  GiftCardThumb,
+  GiftCardView
+} from '../components/GiftCardView'
 import { CurrencyPicker } from '../components/CurrencyPicker'
 import { RegionPicker } from '../components/RegionPicker'
 import type { Region } from '../regions'
@@ -54,6 +66,9 @@ export function GiftCardEditor({
   const initialRegion = existing?.region ?? defaultRegion ?? DEFAULT_REGION
 
   const [id] = useState(existing?.id ?? UUID.string())
+  const [design, setDesign] = useState(() =>
+    designFor({ id, design: existing?.design })
+  )
   const [region, setRegion] = useState(initialRegion)
   const [currency, setCurrency] = useState(
     existing?.currency ?? currencyFor(initialRegion)
@@ -111,6 +126,7 @@ export function GiftCardEditor({
       currency,
       amount: parsedAmount ?? 0,
       codeHash,
+      design,
       status: existing?.status ?? 'available',
       redeemedAt: existing?.redeemedAt,
       redeemedAccountId: existing?.redeemedAccountId,
@@ -162,6 +178,35 @@ export function GiftCardEditor({
           ]
         }}
       >
+        {/* A live preview, so the choice of artwork is made on the card it
+            will be printed on. */}
+        <Section>
+          <VStack
+            listRowInsets={CARD_ROW_INSETS}
+            listRowBackground={<Rectangle fill="clear" />}
+          >
+            <GiftCardView
+              design={design}
+              region={region}
+              amount={parsedAmount ?? 0}
+              currency={currency}
+            />
+          </VStack>
+        </Section>
+
+        <Section header={<Text>{i18n.giftCardDesign}</Text>}>
+          <HStack>
+            {GIFT_CARD_DESIGNS.map((d) => (
+              <GiftCardThumb
+                key={d}
+                design={d}
+                selected={d === design}
+                onSelect={() => setDesign(d)}
+              />
+            ))}
+          </HStack>
+        </Section>
+
         <Section footer={<Text>{i18n.giftCardRegionHint}</Text>}>
           <Button action={pickRegion}>
             <HStack>

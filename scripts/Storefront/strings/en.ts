@@ -342,6 +342,7 @@ export const en = {
     'Redeem opens the App Store redeem page with the code filled in and on the clipboard; you confirm it there. "Signed in" is the account you marked — Storefront cannot see which account is actually signed in.',
   walletInRegion: (count: number, total: string) => `Gift cards for this region: ${count} · ${total}`,
   walletInRegionNone: 'No unredeemed gift cards for this region',
+  giftCardDesign: 'Design',
   giftCardNew: 'New gift card',
   giftCardEdit: 'Edit gift card',
   giftCardAmount: 'Value',
@@ -378,8 +379,6 @@ export const en = {
   giftCardDidRedeemYes: 'Redeemed',
   giftCardMarkRedeemed: 'Mark redeemed',
   giftCardMarkAvailable: 'Not redeemed',
-  giftCardRedeemedOn: (date: string, alias: string) => `${date} · ${alias}`,
-  giftCardDeletedAccount: 'deleted account',
   giftCardCopied: 'Code copied',
   giftCardAuthDenied: 'Authentication failed. The code was not used.',
   giftCardOpenFailed:

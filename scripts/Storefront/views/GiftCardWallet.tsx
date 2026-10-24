@@ -1,28 +1,30 @@
 import {
   AppEvents,
   Button,
-  ForEach,
+  Group,
   HStack,
   Image,
-  List,
+  LazyVGrid,
+  Divider,
   Navigation,
-  Section,
+  ScrollView,
   Spacer,
   Text,
   VStack,
   useEffect,
-  useObservable,
   useRef,
   useState
 } from 'scripting'
+import type { VirtualNode } from 'scripting'
 import { i18n } from '../i18n'
-import { formatDate, formatMoney } from '../format'
+import { formatMoney } from '../format'
 import { regionFor, regionName } from '../regions'
-import { hasGiftCode, revealAndCopyGiftCode } from '../credentials'
+import { revealAndCopyGiftCode } from '../credentials'
 import {
   checkRedeemable,
   creditAccount,
   markRedeemed,
+  designFor,
   redeemUrl,
   summarizeByRegion
 } from '../gift_wallet'
@@ -32,6 +34,7 @@ import {
   loadGiftCards,
   loadSettings
 } from '../store'
+import { GiftCardView } from '../components/GiftCardView'
 import { GiftCardEditor } from './GiftCardEditor'
 import { SwitchGuide } from './SwitchGuide'
 import type { Account, GiftCard } from '../types'
@@ -104,55 +107,18 @@ export function GiftCardWallet({
     .sort((a, b) => (b.redeemedAt ?? 0) - (a.redeemedAt ?? 0))
   const summary = summarizeByRegion(visible)
 
-  // Both lists go through `ForEach` for the same reason AccountDetail's records
-  // do: a swipe-delete against a plain `map()` crashes UIKit.
-  const availableRows = useObservable<GiftCard[]>(() => available)
-  const redeemedRows = useObservable<GiftCard[]>(() => redeemed)
-  const orderKey = (list: GiftCard[]) => list.map((c) => c.id).join(',')
-
-  useEffect(() => {
-    availableRows.setValue(available)
-    redeemedRows.setValue(redeemed)
-  }, [cards])
-
-  /**
-   * A swipe has already taken the row out of `rows` by the time this runs.
-   * Deleting a card also deletes its code, which nothing can bring back, so it
-   * is confirmed first and the row is put back on cancel.
-   */
-  const handleRowsChanged = async (
-    rows: Observable<GiftCard[]>,
-    shown: GiftCard[]
-  ) => {
-    if (orderKey(rows.value) === orderKey(shown)) return
-    const remaining = new Set(rows.value.map((c) => c.id))
-    const removed = shown.filter((c) => !remaining.has(c.id)).map((c) => c.id)
-    if (removed.length === 0) {
-      rows.setValue(shown)
-      return
-    }
+  /** Deleting a card also deletes its code, which nothing can bring back. */
+  const deleteCard = async (card: GiftCard) => {
     const ok = await Dialog.confirm({
       title: i18n.giftCardDeleteTitle,
-      message: i18n.giftCardDeleteBody(removed.length),
+      message: i18n.giftCardDeleteBody(1),
       cancelLabel: i18n.cancel,
       confirmLabel: i18n.delete
     })
-    if (!ok) {
-      rows.setValue(shown)
-      return
-    }
-    const gone = new Set(removed)
-    setCards((prev) => prev.filter((c) => !gone.has(c.id)))
-    onDeleteCards(removed)
+    if (!ok) return
+    setCards((prev) => prev.filter((c) => c.id !== card.id))
+    onDeleteCards([card.id])
   }
-
-  useEffect(() => {
-    handleRowsChanged(availableRows, available)
-  }, [availableRows.value])
-
-  useEffect(() => {
-    handleRowsChanged(redeemedRows, redeemed)
-  }, [redeemedRows.value])
 
   const replaceCard = (card: GiftCard) => {
     setCards((prev) => {
@@ -370,11 +336,109 @@ export function GiftCardWallet({
     })
   }
 
-  const accountAlias = (id?: string) =>
-    accounts.find((a) => a.id === id)?.alias ?? i18n.giftCardDeletedAccount
+  /**
+   * Just the card face. Everything a card can do — Redeem included — is in
+   * its long-press menu; a tap opens the editor.
+   */
+  const cell = (card: GiftCard) => {
+    const spent = card.status === 'redeemed'
+    return (
+      <Button key={card.id} action={() => edit(card)} buttonStyle="plain">
+        <GiftCardView
+          design={designFor(card)}
+          region={card.region}
+          amount={card.amount}
+          currency={card.currency}
+          redeemed={spent}
+          menu={
+            <Group>
+              {spent ? null : (
+                <Button
+                  title={i18n.giftCardRedeemAction}
+                  systemImage="giftcard"
+                  action={() => redeem(card)}
+                />
+              )}
+              {spent ? (
+                <Button
+                  title={i18n.giftCardMarkAvailable}
+                  systemImage="arrow.uturn.backward"
+                  action={() => markAvailable(card)}
+                />
+              ) : (
+                <Button
+                  title={i18n.giftCardMarkRedeemed}
+                  systemImage="checkmark.circle"
+                  action={() => markManually(card)}
+                />
+              )}
+              <Button
+                title={i18n.edit}
+                systemImage="square.and.pencil"
+                action={() => edit(card)}
+              />
+              <Button
+                title={i18n.delete}
+                systemImage="trash"
+                role="destructive"
+                action={() => deleteCard(card)}
+              />
+            </Group>
+          }
+        />
+      </Button>
+    )
+  }
 
+  /**
+   * Adaptive columns: as many as fit at the minimum width, so the count follows
+   * the screen and its rotation — two on any phone held upright, more on its
+   * side and on iPad, where the minimum is raised to keep cards full-size.
+   */
+  const grid = (list: GiftCard[]) => (
+    <LazyVGrid
+      columns={[
+        {
+          size: { type: 'adaptive', min: Device.isiPad ? 260 : 150 },
+          spacing: 12
+        }
+      ]}
+      spacing={12}
+    >
+      {list.map(cell)}
+    </LazyVGrid>
+  )
+
+  const header = (title: string, trailing?: VirtualNode) => (
+    <HStack padding={{ horizontal: 16, top: 8 }}>
+      <Text
+        font="subheadline"
+        fontWeight="semibold"
+        foregroundStyle="secondaryLabel"
+      >
+        {title}
+      </Text>
+      <Spacer />
+      {trailing ?? null}
+    </HStack>
+  )
+
+  const groupBox = {
+    padding: { horizontal: 16, vertical: 4 },
+    background: {
+      style: 'secondarySystemGroupedBackground',
+      shape: { type: 'rect', cornerRadius: 24, style: 'continuous' }
+    }
+  } as const
+
+  /**
+   * A ScrollView, not a List: inside a List the long-press menu lifts the
+   * whole cell, and with the grid in one cell that was every card at once.
+   * Here each card is its own view, so the menu lifts just the one pressed.
+   * The grouped look is kept by hand.
+   */
   return (
-    <List
+    <ScrollView
       navigationTitle={
         focusRegion == null
           ? i18n.walletTitle
@@ -388,166 +452,90 @@ export function GiftCardWallet({
           </Button>
         ]
       }}
+      background="systemGroupedBackground"
     >
-      {summary.length === 0 ? (
-        <Section>
-          <Text foregroundStyle="secondaryLabel">{i18n.walletEmpty}</Text>
-        </Section>
-      ) : (
-        <Section header={<Text>{i18n.walletSummary}</Text>}>
-          {summary.map((row) => (
-            <HStack key={`${row.region}|${row.currency}`}>
-              <Text font={22}>{regionFor(row.region).flag}</Text>
-              <VStack alignment="leading" spacing={2}>
-                <Text>{regionName(regionFor(row.region))}</Text>
-                {row.redeemedCount > 0 ? (
-                  <Text font="caption" foregroundStyle="secondaryLabel">
-                    {i18n.walletRedeemedLine(
-                      row.redeemedCount,
-                      formatMoney(row.redeemedTotal, row.currency)
-                    )}
-                  </Text>
-                ) : null}
-              </VStack>
-              <Spacer />
-              <Text
-                fontWeight="semibold"
-                foregroundStyle={
-                  row.availableCount > 0 ? 'label' : 'secondaryLabel'
-                }
-              >
-                {i18n.walletAvailableLine(
-                  row.availableCount,
-                  formatMoney(row.availableTotal, row.currency)
-                )}
-              </Text>
-            </HStack>
-          ))}
-        </Section>
-      )}
-
-      {/* Rendered even when empty: its footer is where redeem status lands. */}
-      <Section
-        header={
-          available.length > 0 ? <Text>{i18n.walletAvailable}</Text> : undefined
-        }
-        footer={
-          <Text foregroundStyle="secondaryLabel">
-            {status !== '' ? status : i18n.walletFooter}
-          </Text>
-        }
+      <VStack
+        alignment="leading"
+        spacing={10}
+        padding={{ horizontal: 20, vertical: 12 }}
       >
-        <ForEach
-          data={availableRows}
-          editActions="delete"
-          builder={(card) => (
-            <Button
-              key={card.id}
-              action={() => edit(card)}
-              leadingSwipeActions={{
-                allowsFullSwipe: false,
-                actions: [
-                  <Button
-                    title={i18n.giftCardMarkRedeemed}
-                    action={() => markManually(card)}
-                    tint="systemGreen"
-                  />
-                ]
-              }}
-            >
-              <HStack>
-                <Text font={22}>{regionFor(card.region).flag}</Text>
-                <VStack alignment="leading" spacing={2}>
-                  <Text fontWeight="semibold" foregroundStyle="label">
-                    {formatMoney(card.amount, card.currency)}
-                  </Text>
-                  {/* No part of the code is shown here, not even a masked
-                      tail; the only thing worth saying is when it is absent,
-                      because then Redeem cannot work. */}
-                  {hasGiftCode(card.id) ? null : (
-                    <Text font="caption" foregroundStyle="systemOrange">
-                      {i18n.giftCardCodeMissing}
-                    </Text>
-                  )}
-                  {card.note.trim() === '' ? null : (
+        {summary.length === 0 ? (
+          <VStack
+            frame={{ maxWidth: 'infinity', alignment: 'leading' }}
+            {...groupBox}
+          >
+            <Text foregroundStyle="secondaryLabel" padding={{ vertical: 12 }}>
+              {i18n.walletEmpty}
+            </Text>
+          </VStack>
+        ) : (
+          <VStack alignment="leading" spacing={10}>
+            {header(i18n.walletSummary)}
+            <VStack spacing={0} {...groupBox}>
+              {summary.map((row, index) => (
+                <VStack key={`${row.region}|${row.currency}`} spacing={0}>
+                  {index === 0 ? null : <Divider />}
+                  <HStack padding={{ vertical: 12 }}>
+                    <Text font={22}>{regionFor(row.region).flag}</Text>
+                    <VStack alignment="leading" spacing={2}>
+                      <Text>{regionName(regionFor(row.region))}</Text>
+                      {row.redeemedCount > 0 ? (
+                        <Text font="caption" foregroundStyle="secondaryLabel">
+                          {i18n.walletRedeemedLine(
+                            row.redeemedCount,
+                            formatMoney(row.redeemedTotal, row.currency)
+                          )}
+                        </Text>
+                      ) : null}
+                    </VStack>
+                    <Spacer />
                     <Text
-                      font="caption2"
-                      foregroundStyle="tertiaryLabel"
-                      lineLimit={1}
+                      fontWeight="semibold"
+                      foregroundStyle={
+                        row.availableCount > 0 ? 'label' : 'secondaryLabel'
+                      }
                     >
-                      {card.note}
+                      {i18n.walletAvailableLine(
+                        row.availableCount,
+                        formatMoney(row.availableTotal, row.currency)
+                      )}
                     </Text>
-                  )}
+                  </HStack>
                 </VStack>
-                <Spacer />
-                <Button
-                  title={i18n.giftCardRedeemAction}
-                  action={() => redeem(card)}
-                  buttonStyle="borderedProminent"
-                  controlSize="small"
-                />
-              </HStack>
-            </Button>
-          )}
-        />
-      </Section>
+              ))}
+            </VStack>
+          </VStack>
+        )}
 
-      {redeemed.length === 0 ? null : (
-        <Section
-          header={
-            <HStack>
-              <Text>{i18n.walletRedeemed}</Text>
-              <Spacer />
+        {available.length === 0 ? null : (
+          <VStack alignment="leading" spacing={10} padding={{ top: 14 }}>
+            {header(i18n.walletAvailable)}
+            {grid(available)}
+          </VStack>
+        )}
+
+        {/* Always shown: it is where redeem status lands. */}
+        <Text
+          font="footnote"
+          foregroundStyle="secondaryLabel"
+          padding={{ horizontal: 16 }}
+        >
+          {status !== '' ? status : i18n.walletFooter}
+        </Text>
+
+        {redeemed.length === 0 ? null : (
+          <VStack alignment="leading" spacing={10} padding={{ top: 14 }}>
+            {header(
+              i18n.walletRedeemed,
               <Button
                 title={showRedeemed ? i18n.walletHide : i18n.walletShow}
                 action={() => setShowRedeemed(!showRedeemed)}
               />
-            </HStack>
-          }
-        >
-          {showRedeemed ? (
-            <ForEach
-              data={redeemedRows}
-              editActions="delete"
-              builder={(card) => (
-                <HStack
-                  key={card.id}
-                  leadingSwipeActions={{
-                    allowsFullSwipe: false,
-                    actions: [
-                      <Button
-                        title={i18n.giftCardMarkAvailable}
-                        action={() => markAvailable(card)}
-                        tint="systemOrange"
-                      />
-                    ]
-                  }}
-                >
-                  <Text font={22}>{regionFor(card.region).flag}</Text>
-                  <VStack alignment="leading" spacing={2}>
-                    <Text foregroundStyle="secondaryLabel">
-                      {formatMoney(card.amount, card.currency)}
-                    </Text>
-                    <Text
-                      font="caption"
-                      foregroundStyle="tertiaryLabel"
-                      lineLimit={1}
-                    >
-                      {i18n.giftCardRedeemedOn(
-                        card.redeemedAt != null
-                          ? formatDate(card.redeemedAt, i18n.dateLocale)
-                          : '',
-                        accountAlias(card.redeemedAccountId)
-                      )}
-                    </Text>
-                  </VStack>
-                  <Spacer />
-                </HStack>
-              )}
-            />
-          ) : null}
-        </Section>
-      )}
-    </List>
+            )}
+            {showRedeemed ? grid(redeemed) : null}
+          </VStack>
+        )}
+      </VStack>
+    </ScrollView>
   )
 }

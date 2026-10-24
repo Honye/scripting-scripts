@@ -103,6 +103,9 @@ export const defaultSettings: Settings = {
 
 export type GiftCardStatus = 'available' | 'redeemed'
 
+/** Apple's own gift card artwork, by the name in its image URL. */
+export type GiftCardDesign = 'geode' | 'fogcamo' | 'lofi' | 'convo' | 'melted'
+
 /**
  * An Apple Gift Card the user holds. Like `Account`, the secret is not here:
  * the full code lives in the Keychain, keyed by `GiftCard.id`, and is reached
@@ -122,6 +125,8 @@ export type GiftCard = {
    * code, and is useless to anyone holding only a backup.
    */
   codeHash: string
+  /** Which artwork the card shows; unset picks one from `id` (see `designFor`). */
+  design?: GiftCardDesign
   status: GiftCardStatus
   redeemedAt?: number
   /** Which account it went into; cleared if that account is deleted. */

@@ -5,7 +5,38 @@
  * Kept apart from `giftcards.ts`, which is about where to *buy* a card; this
  * module is about the cards the user already holds.
  */
-import type { Account, GiftCard } from './types'
+import type { Account, GiftCard, GiftCardDesign } from './types'
+
+export const GIFT_CARD_DESIGNS: GiftCardDesign[] = [
+  'geode',
+  'fogcamo',
+  'lofi',
+  'convo',
+  'melted'
+]
+
+/**
+ * The card's chosen artwork, or a stable one derived from its id — so cards
+ * saved before there was a choice still look the same every time.
+ */
+export function designFor(
+  card: Pick<GiftCard, 'id' | 'design'>
+): GiftCardDesign {
+  if (card.design != null && GIFT_CARD_DESIGNS.includes(card.design)) {
+    return card.design
+  }
+  let sum = 0
+  for (let i = 0; i < card.id.length; i++) sum += card.id.charCodeAt(i)
+  return GIFT_CARD_DESIGNS[sum % GIFT_CARD_DESIGNS.length]
+}
+
+/** Apple's artwork for the design: the logo alone, on a transparent square. */
+export function designImageUrl(design: GiftCardDesign): string {
+  return (
+    'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/' +
+    `giftcard-email-${design}-select-2021?wid=600&hei=600&fmt=png-alpha`
+  )
+}
 
 /** Apple prints codes in groups and people paste them with spaces or dashes. */
 export function normalizeCode(raw: string): string {
