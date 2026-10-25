@@ -346,6 +346,8 @@ export const zh: Strings = {
   giftCardMarkRedeemed: '标记已兑换',
   giftCardMarkAvailable: '标记未兑换',
   giftCardCopied: '卡密已复制',
+  giftCardShare: '分享',
+  giftCardShareFailed: '生成分享图片失败。',
   giftCardAuthDenied: '验证失败，卡密未被使用。',
   giftCardOpenFailed: '没能打开 App Store。卡密已在剪贴板，到兑换页粘贴即可。',
   giftCardDeleteTitle: '删除礼品卡？',

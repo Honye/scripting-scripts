@@ -52,6 +52,11 @@ export function looksLikeAppleCode(code: string): boolean {
   return /^X[A-Z0-9]{15}$/.test(code)
 }
 
+/** A code as printed on a card: groups of four, `XABC 1234 5678 9DEF`. */
+export function formatCode(code: string): string {
+  return (code.replace(/\s/g, '').match(/.{1,4}/g) ?? []).join(' ')
+}
+
 export type RegionSummary = {
   region: string
   currency: string

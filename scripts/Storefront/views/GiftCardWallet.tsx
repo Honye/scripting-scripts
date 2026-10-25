@@ -4,6 +4,7 @@ import {
   Group,
   HStack,
   Image,
+  ImageRenderer,
   LazyVGrid,
   Divider,
   Navigation,
@@ -20,19 +21,30 @@ import type { VirtualNode } from 'scripting'
 import { i18n } from '../i18n'
 import { formatMoney } from '../format'
 import { regionFor, regionName } from '../regions'
-import { revealAndCopyGiftCode } from '../credentials'
+import { revealAndCopyGiftCode, revealGiftCode } from '../credentials'
+import type { CredentialFailure } from '../credentials'
 import {
   checkRedeemable,
   creditAccount,
   markRedeemed,
   designFor,
+  designImageUrl,
   redeemUrl,
   summarizeByRegion
 } from '../gift_wallet'
-import { GiftCardView } from '../components/GiftCardView'
+import { GiftCardShareImage, GiftCardView } from '../components/GiftCardView'
 import { GiftCardEditor } from './GiftCardEditor'
 import { SwitchGuide } from './SwitchGuide'
 import type { Account, GiftCard } from '../types'
+
+/** Why a code could not be read, as status text. */
+function codeFailure(reason: CredentialFailure): string {
+  return reason === 'unavailable'
+    ? i18n.authUnavailable
+    : reason === 'missing'
+      ? i18n.giftCardCodeMissing
+      : i18n.giftCardAuthDenied
+}
 
 /** Flag plus the localized name, e.g. "🇯🇵 Japan". */
 function regionLabel(code: string): string {
@@ -243,13 +255,7 @@ export function GiftCardWallet({
 
     const result = await revealAndCopyGiftCode(card.id, i18n.giftCardAuthReason)
     if (!result.ok) {
-      setStatus(
-        result.reason === 'unavailable'
-          ? i18n.authUnavailable
-          : result.reason === 'missing'
-            ? i18n.giftCardCodeMissing
-            : i18n.giftCardAuthDenied
-      )
+      setStatus(codeFailure(result.reason))
       return
     }
 
@@ -309,6 +315,43 @@ export function GiftCardWallet({
   }, [])
 
   /**
+   * A picture of the card with its code printed on it, handed to the share
+   * sheet — for giving the card to someone. The code is read only now, behind
+   * authentication, and the image lives in memory only: nothing is written to
+   * disk or kept once the sheet closes.
+   */
+  const share = async (card: GiftCard) => {
+    setStatus('')
+    const result = await revealGiftCode(card.id, i18n.giftCardAuthReason)
+    if (!result.ok) {
+      setStatus(codeFailure(result.reason))
+      return
+    }
+    try {
+      const design = designFor(card)
+      // The renderer snapshots once and will not wait for a network image.
+      const artwork = await UIImage.fromURL(designImageUrl(design)).catch(
+        () => null
+      )
+      const image = await ImageRenderer.toUIImage(
+        <GiftCardShareImage
+          design={design}
+          region={card.region}
+          amount={card.amount}
+          currency={card.currency}
+          code={result.password}
+          artwork={artwork}
+        />,
+        // Square-cornered, so there is no transparency to keep.
+        { scale: 2, opaque: true }
+      )
+      await ShareSheet.present([image])
+    } catch {
+      setStatus(i18n.giftCardShareFailed)
+    }
+  }
+
+  /**
    * The path that always works — the return prompt is best effort, and a card
    * may have been redeemed some other way. Asks which account took it, from
    * the accounts that could have.
@@ -365,6 +408,14 @@ export function GiftCardWallet({
                   title={i18n.giftCardRedeemAction}
                   systemImage="giftcard"
                   action={() => redeem(card)}
+                />
+              )}
+              {/* A spent code is worth nothing to whoever receives it. */}
+              {spent ? null : (
+                <Button
+                  title={i18n.giftCardShare}
+                  systemImage="square.and.arrow.up"
+                  action={() => share(card)}
                 />
               )}
               {spent ? (

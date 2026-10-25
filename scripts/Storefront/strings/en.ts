@@ -382,6 +382,8 @@ export const en = {
   giftCardMarkRedeemed: 'Mark redeemed',
   giftCardMarkAvailable: 'Not redeemed',
   giftCardCopied: 'Code copied',
+  giftCardShare: 'Share',
+  giftCardShareFailed: 'Could not create the image.',
   giftCardAuthDenied: 'Authentication failed. The code was not used.',
   giftCardOpenFailed:
     'The App Store did not open. The code is on the clipboard — paste it on the redeem page.',

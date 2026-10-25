@@ -9,7 +9,7 @@ import {
 } from 'scripting'
 import type { Color, VirtualNode } from 'scripting'
 import { regionFor, regionName } from '../regions'
-import { designImageUrl } from '../gift_wallet'
+import { designImageUrl, formatCode } from '../gift_wallet'
 import type { GiftCardDesign } from '../types'
 
 /**
@@ -250,11 +250,31 @@ export function GiftCardView({
   )
 }
 
+/**
+ * Where the code goes when it is printed (share images only): the region-name
+ * line, which the pill makes redundant. Sized to stay clear of the artwork,
+ * and of the amount on the centred layout, which shares its baseline.
+ */
+const CODE_SLOT: Record<
+  Layout['kind'],
+  { dy: number; size: number; maxWidth: number }
+> = {
+  amountLeft: { dy: 8, size: 26, maxWidth: 320 },
+  valueRight: { dy: 0, size: 24, maxWidth: 300 },
+  centered: { dy: 0, size: 26, maxWidth: 330 }
+}
+
+/** The centred layout's amount, narrowed to leave room for a printed code. */
+const CENTERED_AMOUNT_WITH_CODE = 300
+
 function CardFace({
   scale: s,
   compact,
   menu,
   redeemed,
+  code,
+  artwork,
+  square,
   design,
   region,
   amount,
@@ -264,6 +284,12 @@ function CardFace({
   compact: boolean
   menu?: VirtualNode
   redeemed?: boolean
+  /** Printed in place of the region name. Share images only. */
+  code?: string
+  /** Artwork already in memory, for off-screen rendering. */
+  artwork?: UIImage | null
+  /** No rounded corners: the share image is a plain rectangle. */
+  square?: boolean
   design: GiftCardDesign
   region: string
   amount: number
@@ -274,7 +300,11 @@ function CardFace({
   const info = regionFor(region)
   const money = cardAmount(amount, currency)
   const maxWidth = MAX_WIDTH[spec.layout.kind]
-  const radius = compact ? Math.max(RADIUS * s, COMPACT.minRadius) : RADIUS * s
+  const radius = square
+    ? 0
+    : compact
+      ? Math.max(RADIUS * s, COMPACT.minRadius)
+      : RADIUS * s
 
   /** A slot grown to at least `size` when compact; untouched otherwise. */
   const grow = (slot: Slot, size: number): Slot =>
@@ -307,6 +337,9 @@ function CardFace({
       weight?: 'medium' | 'semibold'
       fit?: boolean
       trailing?: boolean
+      mono?: boolean
+      /** Overrides the layout's amount width when fitting. */
+      maxWidth?: number
     } = {}
   ) =>
     pin(
@@ -315,6 +348,7 @@ function CardFace({
       <Text
         font={slot.size * s}
         fontWeight={options.weight ?? 'medium'}
+        fontDesign={options.mono ? 'monospaced' : undefined}
         kerning={(slot.kerning ?? 0) * s}
         foregroundStyle={color as Color}
         lineLimit={1}
@@ -322,7 +356,7 @@ function CardFace({
         frame={
           options.fit
             ? {
-                maxWidth: maxWidth * s,
+                maxWidth: (options.maxWidth ?? maxWidth) * s,
                 alignment: options.trailing ? 'trailing' : 'leading'
               }
             : undefined
@@ -334,25 +368,46 @@ function CardFace({
     )
 
   const layout = spec.layout
+
+  /** The region-name line: the code when one is printed, else the name. */
+  const regionLine = () => {
+    if (code != null) {
+      const slot = CODE_SLOT[layout.kind]
+      return place(
+        {
+          x: layout.region.x,
+          y: layout.region.y + slot.dy,
+          size: slot.size,
+          kerning: 1.5
+        },
+        formatCode(code),
+        ink,
+        { weight: 'semibold', mono: true, fit: true, maxWidth: slot.maxWidth }
+      )
+    }
+    return compact ? null : place(layout.region, regionName(info), ink)
+  }
+
   let body: (VirtualNode | null)[]
   if (layout.kind === 'amountLeft') {
     body = [
       place(grow(layout.code, COMPACT.code), money.code, mute),
       place(layout.figure, money.figure, ink, { fit: true }),
-      compact ? null : place(layout.region, regionName(info), ink)
+      regionLine()
     ]
   } else if (layout.kind === 'valueRight') {
     body = [
       place(grow(layout.code, COMPACT.code), money.code, mute),
       place(layout.amount, money.figure, ink, { fit: true }),
-      compact ? null : place(layout.region, regionName(info), ink)
+      regionLine()
     ]
   } else {
     body = [
-      compact ? null : place(layout.region, regionName(info), ink),
+      regionLine(),
       place(grow(layout.amount, COMPACT.centeredAmount), money.joined, ink, {
         fit: true,
-        trailing: true
+        trailing: true,
+        maxWidth: code != null ? CENTERED_AMOUNT_WITH_CODE : undefined
       })
     ]
   }
@@ -382,19 +437,28 @@ function CardFace({
       {pin(
         spec.art.x,
         spec.art.y,
-        <Image
-          imageUrl={designImageUrl(design)}
-          resizable
-          scaleToFit
-          frame={{ width: spec.art.size * s, height: spec.art.size * s }}
-          placeholder={
-            <Image
-              systemName="apple.logo"
-              font={spec.art.size * s * 0.6}
-              foregroundStyle={alpha(ink, 0.12)}
-            />
-          }
-        />
+        artwork != null ? (
+          <Image
+            image={artwork}
+            resizable
+            scaleToFit
+            frame={{ width: spec.art.size * s, height: spec.art.size * s }}
+          />
+        ) : (
+          <Image
+            imageUrl={designImageUrl(design)}
+            resizable
+            scaleToFit
+            frame={{ width: spec.art.size * s, height: spec.art.size * s }}
+            placeholder={
+              <Image
+                systemName="apple.logo"
+                font={spec.art.size * s * 0.6}
+                foregroundStyle={alpha(ink, 0.12)}
+              />
+            }
+          />
+        )
       )}
 
       {place(
@@ -433,6 +497,43 @@ function CardFace({
 
       {body}
     </ZStack>
+  )
+}
+
+/**
+ * The card as a share image, with its code printed on it. Drawn at the
+ * artboard's own size rather than through `GeometryReader`: off-screen there is
+ * no parent to propose a width. The artwork must be loaded beforehand — the
+ * renderer takes one snapshot and does not wait for a network image.
+ */
+export function GiftCardShareImage({
+  design,
+  region,
+  amount,
+  currency,
+  code,
+  artwork
+}: {
+  design: GiftCardDesign
+  region: string
+  amount: number
+  currency: string
+  code: string
+  /** Null when it could not be fetched: the logo placeholder is drawn instead. */
+  artwork: UIImage | null
+}) {
+  return (
+    <CardFace
+      scale={1}
+      square
+      compact={false}
+      code={code}
+      artwork={artwork}
+      design={design}
+      region={region}
+      amount={amount}
+      currency={currency}
+    />
   )
 }
 
