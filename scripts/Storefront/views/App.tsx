@@ -2,12 +2,16 @@ import {
   AppEvents,
   NavigationStack,
   Notification,
+  Tab,
+  TabView,
   Widget,
   useEffect,
   useRef,
   useState
 } from 'scripting'
+import { i18n } from '../i18n'
 import { AccountList } from './AccountList'
+import { GiftCardWallet } from './GiftCardWallet'
 import {
   loadAccounts,
   loadEntries,
@@ -270,31 +274,54 @@ export function App() {
   }
 
   return (
-    <NavigationStack>
-      <AccountList
-        accounts={accounts}
-        entries={entries}
-        appRefs={appRefs}
-        tfItems={tfItems}
-        giftCards={giftCards}
-        currentAccountId={currentId}
-        settings={settings}
-        onUpsert={upsertAccount}
-        onDelete={deleteAccount}
-        onReorder={reorderAccounts}
-        onSetCurrent={(id) => setCurrentId(id)}
-        onSettingsChange={setSettings}
-        onSaveEntry={saveEntry}
-        onDeleteEntry={deleteEntry}
-        onReschedule={runReschedule}
-        hasUpcoming={entries.some(isBillable)}
-        launchAccountId={launchAccountId}
-        onSaveTFItem={saveTFItem}
-        onDeleteTFItem={deleteTFItem}
-        onSaveGiftCard={saveGiftCard}
-        onDeleteGiftCards={deleteGiftCards}
-        onRestored={reloadFromStorage}
-      />
-    </NavigationStack>
+    <TabView>
+      <Tab title={i18n.accountsTitle} systemImage="person.crop.circle">
+        <NavigationStack>
+          <AccountList
+            accounts={accounts}
+            entries={entries}
+            appRefs={appRefs}
+            tfItems={tfItems}
+            currentAccountId={currentId}
+            settings={settings}
+            onUpsert={upsertAccount}
+            onDelete={deleteAccount}
+            onReorder={reorderAccounts}
+            onSetCurrent={(id) => setCurrentId(id)}
+            onSettingsChange={setSettings}
+            onSaveEntry={saveEntry}
+            onDeleteEntry={deleteEntry}
+            onReschedule={runReschedule}
+            hasUpcoming={entries.some(isBillable)}
+            launchAccountId={launchAccountId}
+            onSaveTFItem={saveTFItem}
+            onDeleteTFItem={deleteTFItem}
+            onSaveGiftCard={saveGiftCard}
+            onDeleteGiftCards={deleteGiftCards}
+            onRestored={reloadFromStorage}
+          />
+        </NavigationStack>
+      </Tab>
+
+      {/* Its own tab, fed straight from this state, so it is current whichever
+          tab the last edit came from. */}
+      <Tab title={i18n.walletTab} systemImage="giftcard">
+        <NavigationStack>
+          <GiftCardWallet
+            cards={giftCards}
+            accounts={accounts}
+            currentId={currentId}
+            introSeen={settings.switchGuideIntroSeen}
+            onSaveCard={saveGiftCard}
+            onDeleteCards={deleteGiftCards}
+            onUpsertAccount={upsertAccount}
+            onSetCurrent={(id) => setCurrentId(id)}
+            onIntroSeen={() =>
+              setSettings((prev) => ({ ...prev, switchGuideIntroSeen: true }))
+            }
+          />
+        </NavigationStack>
+      </Tab>
+    </TabView>
   )
 }

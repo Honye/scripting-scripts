@@ -26,7 +26,12 @@ import { SettingsView } from './SettingsView'
 import { TestFlightList } from './TestFlightList'
 import { UpcomingBills } from './UpcomingBills'
 import type { EntryDraft } from './EntryEditor'
-import { loadSettings } from '../store'
+import {
+  getCurrentAccountId,
+  loadAccounts,
+  loadGiftCards,
+  loadSettings
+} from '../store'
 import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from '../types'
 
 export function AccountList({
@@ -34,7 +39,6 @@ export function AccountList({
   entries,
   appRefs,
   tfItems,
-  giftCards,
   currentAccountId,
   settings,
   onUpsert,
@@ -57,7 +61,6 @@ export function AccountList({
   entries: Entry[]
   appRefs: Record<string, AppRef>
   tfItems: TFItem[]
-  giftCards: GiftCard[]
   currentAccountId: string | null
   settings: Settings
   onUpsert: (account: Account) => void
@@ -113,13 +116,21 @@ export function AccountList({
   }
 
   /**
-   * Built here because this is the level that holds every callback the wallet
-   * needs; AccountDetail gets the builder rather than the whole set of props.
-   * The wallet seeds itself from Storage, so a builder captured long ago still
-   * opens on current data. Settings are re-read for the same reason.
+   * The region-narrowed wallet behind an account's top-up sheet; the full one
+   * is its own tab in `App`. Built here because this is the level that holds
+   * every callback it needs, and AccountDetail gets the builder rather than the
+   * whole set of props.
+   *
+   * The builder may have been captured long before it runs, but it only runs
+   * when the user taps through, so its data is read from Storage — which `App`
+   * keeps current — at that moment rather than taken from these props.
    */
   const walletFor = (focusRegion?: string) => (
     <GiftCardWallet
+      cards={loadGiftCards()}
+      accounts={loadAccounts()}
+      currentId={getCurrentAccountId()}
+      introSeen={loadSettings().switchGuideIntroSeen}
       focusRegion={focusRegion}
       onSaveCard={onSaveGiftCard}
       onDeleteCards={onDeleteGiftCards}
@@ -130,8 +141,6 @@ export function AccountList({
       }
     />
   )
-
-  const availableCards = giftCards.filter((c) => c.status === 'available').length
 
   const detailFor = (account: Account) => (
     <AccountDetail
@@ -225,16 +234,6 @@ export function AccountList({
             <Spacer />
             <Text font="caption" foregroundStyle="secondaryLabel">
               {tfItems.length > 0 ? String(tfItems.length) : ''}
-            </Text>
-          </HStack>
-        </NavigationLink>
-        <NavigationLink destination={walletFor()}>
-          <HStack>
-            <Image systemName="giftcard" />
-            <Text foregroundStyle="label">{i18n.walletTitle}</Text>
-            <Spacer />
-            <Text font="caption" foregroundStyle="secondaryLabel">
-              {availableCards > 0 ? String(availableCards) : ''}
             </Text>
           </HStack>
         </NavigationLink>

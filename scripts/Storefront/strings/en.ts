@@ -329,6 +329,8 @@ export const en = {
 
   // Gift card wallet
   walletTitle: 'Gift cards',
+  /** Tab bar label: room is short there. */
+  walletTab: 'Cards',
   walletRegionTitle: (flag: string) => `Gift cards ${flag}`,
   walletSummary: 'By region',
   walletAvailable: 'Not redeemed',

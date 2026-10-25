@@ -299,6 +299,7 @@ export const zh: Strings = {
 
   // 礼品卡钱包
   walletTitle: '礼品卡',
+  walletTab: '礼品卡',
   walletRegionTitle: (flag) => `礼品卡 ${flag}`,
   walletSummary: '按地区汇总',
   walletAvailable: '未兑换',

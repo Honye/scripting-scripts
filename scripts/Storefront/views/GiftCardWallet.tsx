@@ -7,6 +7,7 @@ import {
   LazyVGrid,
   Divider,
   Navigation,
+  Rectangle,
   ScrollView,
   Spacer,
   Text,
@@ -28,12 +29,6 @@ import {
   redeemUrl,
   summarizeByRegion
 } from '../gift_wallet'
-import {
-  getCurrentAccountId,
-  loadAccounts,
-  loadGiftCards,
-  loadSettings
-} from '../store'
 import { GiftCardView } from '../components/GiftCardView'
 import { GiftCardEditor } from './GiftCardEditor'
 import { SwitchGuide } from './SwitchGuide'
@@ -48,11 +43,12 @@ function regionLabel(code: string): string {
 /**
  * The gift card wallet: what the user holds, per region, and the redeem flow.
  *
- * Pushed, and reachable from two places — the account list and an account's
- * top-up sheet — so whatever props it was built with may already be old by the
- * time it opens. It therefore seeds itself from `Storage`, which `App` keeps
- * current on every change, and reports each edit upward; the parent stays the
- * persistence owner.
+ * Mounted two ways: as its own tab, where it lives as long as the app and
+ * `App` re-renders it with every change, and pushed from an account's top-up
+ * sheet, narrowed to that region, where its props are whatever they were when
+ * it was built. Either way it keeps local copies of what it edits, reports each
+ * edit upward — the parent stays the persistence owner — and takes new props
+ * whenever they arrive.
  *
  * Redeeming cannot be done for the user: iOS lets no app apply a code. What one
  * tap does here is gate on region, copy the code, and open the App Store's
@@ -60,6 +56,10 @@ function regionLabel(code: string): string {
  * the App Store tells us nothing.
  */
 export function GiftCardWallet({
+  cards: cardsProp,
+  accounts: accountsProp,
+  currentId: currentIdProp,
+  introSeen: introSeenProp,
   focusRegion,
   onSaveCard,
   onDeleteCards,
@@ -67,6 +67,11 @@ export function GiftCardWallet({
   onSetCurrent,
   onIntroSeen
 }: {
+  cards: GiftCard[]
+  accounts: Account[]
+  currentId: string | null
+  /** `Settings.switchGuideIntroSeen`, for the switch guide redeem may open. */
+  introSeen: boolean
   /** Only this region's cards, when opened from an account's top-up sheet. */
   focusRegion?: string
   onSaveCard: (card: GiftCard) => void
@@ -75,14 +80,17 @@ export function GiftCardWallet({
   onSetCurrent: (accountId: string) => void
   onIntroSeen: () => void
 }) {
-  const [cards, setCards] = useState<GiftCard[]>(() => loadGiftCards())
-  const [accounts, setAccounts] = useState<Account[]>(() => loadAccounts())
-  const [currentId, setCurrentId] = useState<string | null>(() =>
-    getCurrentAccountId()
-  )
-  const [introSeen, setIntroSeen] = useState(
-    () => loadSettings().switchGuideIntroSeen
-  )
+  const [cards, setCards] = useState<GiftCard[]>(cardsProp)
+  const [accounts, setAccounts] = useState<Account[]>(accountsProp)
+  const [currentId, setCurrentId] = useState<string | null>(currentIdProp)
+  const [introSeen, setIntroSeen] = useState(introSeenProp)
+
+  // As a tab this view outlives any one edit: an account added on the other
+  // tab, or a different one marked signed in, has to reach the redeem gate.
+  useEffect(() => setCards(cardsProp), [cardsProp])
+  useEffect(() => setAccounts(accountsProp), [accountsProp])
+  useEffect(() => setCurrentId(currentIdProp), [currentIdProp])
+  useEffect(() => setIntroSeen(introSeenProp), [introSeenProp])
   const [showRedeemed, setShowRedeemed] = useState(false)
   const [status, setStatus] = useState('')
 
@@ -452,7 +460,10 @@ export function GiftCardWallet({
           </Button>
         ]
       }}
-      background="systemGroupedBackground"
+      // A view that ignores the safe area, not a bare colour: the colour stopped
+      // at the safe area, so the strip behind the tab bar showed the default
+      // background and the bar looked detached from the page.
+      background={<Rectangle fill="systemGroupedBackground" ignoresSafeArea />}
     >
       <VStack
         alignment="leading"
