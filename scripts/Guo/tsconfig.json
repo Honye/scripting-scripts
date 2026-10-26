@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [],
+    "allowJs": false
+  },
+  "include": ["../../dts/global.d.ts", "../../dts/node.d.ts", "../../dts/web-fetch.d.ts", "./**/*.ts", "./**/*.tsx"],
+  "exclude": ["./tests"]
+}

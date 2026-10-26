@@ -1,0 +1,16 @@
+{
+  "name": "Guo",
+  "version": "1.1.0",
+  "icon": "play.rectangle.fill",
+  "color": "#e54b4b",
+  "runInApp": true,
+  "intentInputTypes": [],
+  "localizedNames": {
+    "zh": "红果鉴",
+    "en": "Guo Theater"
+  },
+  "localizedDescriptions": {
+    "zh": "红果短剧浏览、搜索、选集、追剧与续播",
+    "en": "Browse, search and follow Hongguo dramas."
+  }
+}
