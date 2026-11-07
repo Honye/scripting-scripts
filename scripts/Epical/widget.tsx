@@ -1,4 +1,5 @@
 import {
+  EnvironmentValuesReader,
   HStack,
   Image,
   Link,
@@ -28,19 +29,31 @@ import { rpt } from './utils'
 
 function EpsBadge({ show, now }: { show: Show; now: number }) {
   return (
-    <Text
-      font={rpt(8)}
-      fontWeight="bold"
-      foregroundStyle="white"
-      lineLimit={1}
-      padding={{ horizontal: rpt(5), vertical: rpt(1) }}
-      background={{
-        style: theme.brandEnd,
-        shape: { type: 'rect', cornerRadius: rpt(4) }
+    <EnvironmentValuesReader keys={['widgetRenderingMode']}>
+      {({ widgetRenderingMode }) => {
+        // Clear / tinted Home Screens keep only each layer's alpha, so an opaque
+        // fill under opaque text flattens into a solid white pill. There the
+        // fill has to be translucent for the text to read.
+        const tinted = widgetRenderingMode !== 'fullColor'
+        return (
+          <Text
+            font={rpt(8)}
+            fontWeight="bold"
+            foregroundStyle="white"
+            lineLimit={1}
+            padding={{ horizontal: rpt(5), vertical: rpt(1) }}
+            background={{
+              style: tinted
+                ? ('rgba(255,255,255,0.25)' as Color)
+                : theme.brandEnd,
+              shape: { type: 'rect', cornerRadius: rpt(4) }
+            }}
+          >
+            {i18n.widgetEpsBadge(unwatchedEps(show, now))}
+          </Text>
+        )
       }}
-    >
-      {i18n.widgetEpsBadge(unwatchedEps(show, now))}
-    </Text>
+    </EnvironmentValuesReader>
   )
 }
 
