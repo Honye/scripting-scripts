@@ -108,6 +108,52 @@ export function airedEpsAt(show: Show, t: number): number {
   return show.totalEps > 0 ? Math.min(aired, show.totalEps) : aired
 }
 
+/** Aired episodes the user has not watched yet, as of `t`. */
+export function unwatchedEps(show: Show, t: number): number {
+  return Math.max(0, airedEpsAt(show, t) - show.watchedEps)
+}
+
+/** Every schedule slot on the 8 calendar days ending at (or starting at) `t`'s day. */
+function slotsAround(show: Show, t: number, direction: 1 | -1): number[] {
+  const slots: number[] = []
+  const d = new Date(startOfDay(t))
+  for (let i = 0; i <= 7; i++) {
+    const dayStart = d.getTime()
+    for (const sc of show.schedules) {
+      if (sc.day === d.getDay()) slots.push(slotTime(dayStart, sc.time))
+    }
+    // Step by calendar day rather than a fixed 24h so DST shifts don't skip a day.
+    d.setDate(d.getDate() + direction)
+  }
+  return slots
+}
+
+/** The most recent airing at or before `t` within the past week, or 0 when there is none. */
+export function lastAiringAt(show: Show, t: number): number {
+  return Math.max(0, ...slotsAround(show, t, -1).filter((s) => s <= t))
+}
+
+/** The earliest airing after `t` within the next week across unfinished shows. */
+export function nextAiringAt(shows: Show[], t: number): number | undefined {
+  let next: number | undefined
+  for (const show of shows) {
+    if (show.completed) continue
+    for (const slot of slotsAround(show, t, 1)) {
+      if (slot > t && (next == null || slot < next)) next = slot
+    }
+  }
+  return next
+}
+
+/** Unfinished shows with aired-but-unwatched episodes, most recently updated first. */
+export function showsWithUnwatched(shows: Show[], t: number): Show[] {
+  return shows
+    .filter((s) => !s.completed && unwatchedEps(s, t) > 0)
+    .map((s) => ({ s, last: lastAiringAt(s, t), left: unwatchedEps(s, t) }))
+    .sort((a, b) => b.last - a.last || b.left - a.left)
+    .map(({ s }) => s)
+}
+
 /** Episode numbers released by `schedule`'s airing on `date`, or null once the show has fully aired. */
 export function episodeRangeOn(
   show: Show,

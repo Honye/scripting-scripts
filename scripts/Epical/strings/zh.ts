@@ -104,5 +104,12 @@ export const zh: Strings = {
   widgetNoUpdates: '今日没有更新',
   widgetTitle: '剧历',
   widgetNewCount: '部上新',
-  widgetMediumHeader: (count) => `今日更新 · ${count} 部`
+  widgetMediumHeader: (count) => `今日更新 · ${count} 部`,
+  widgetModeTitle: '小组件显示',
+  widgetModeToday: '今日更新',
+  widgetModeUnwatched: '已更新未看',
+  widgetUnwatchedCount: '部待看',
+  widgetUnwatchedHeader: (count) => `待看 · ${count} 部`,
+  widgetEpsBadge: (n) => `${n}集`,
+  widgetAllCaughtUp: '都看完啦'
 }

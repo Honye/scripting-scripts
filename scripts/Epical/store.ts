@@ -20,3 +20,18 @@ export function loadShows(): Show[] {
 export function saveShows(shows: Show[]) {
   Storage.set(KEY, shows)
 }
+
+/** What every Epical widget lists: today's airings, or aired episodes not yet watched. */
+export type WidgetMode = 'today' | 'unwatched'
+
+const WIDGET_MODE_KEY = 'widgetMode'
+
+export function loadWidgetMode(): WidgetMode {
+  return Storage.get<string>(WIDGET_MODE_KEY) === 'unwatched'
+    ? 'unwatched'
+    : 'today'
+}
+
+export function saveWidgetMode(mode: WidgetMode) {
+  Storage.set(WIDGET_MODE_KEY, mode)
+}

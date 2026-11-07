@@ -11,15 +11,37 @@ import {
 } from 'scripting'
 import type { Color } from 'scripting'
 import type { Show } from './types'
-import { getTodayIndex, showsForDay } from './data'
-import { loadShows } from './store'
+import {
+  getTodayIndex,
+  nextAiringAt,
+  showsForDay,
+  showsWithUnwatched,
+  startOfDay,
+  unwatchedEps
+} from './data'
+import { loadShows, loadWidgetMode } from './store'
+import type { WidgetMode } from './store'
 import { theme } from './theme'
 import { i18n } from './i18n'
 import { widgetPlayUrl } from './play'
 import { rpt } from './utils'
 
-function loadTodaysShows(): Show[] {
-  return showsForDay(loadShows(), getTodayIndex())
+function EpsBadge({ show, now }: { show: Show; now: number }) {
+  return (
+    <Text
+      font={rpt(8)}
+      fontWeight="bold"
+      foregroundStyle="white"
+      lineLimit={1}
+      padding={{ horizontal: rpt(5), vertical: rpt(1) }}
+      background={{
+        style: theme.brandEnd,
+        shape: { type: 'rect', cornerRadius: rpt(4) }
+      }}
+    >
+      {i18n.widgetEpsBadge(unwatchedEps(show, now))}
+    </Text>
+  )
 }
 
 function PosterImage({ show, w, h }: { show: Show; w: number; h: number }) {
@@ -88,7 +110,7 @@ function PlayBadge({ size }: { size: number }) {
   )
 }
 
-function EmptyView() {
+function EmptyView({ mode }: { mode: WidgetMode }) {
   return (
     <VStack
       frame={Widget.displaySize}
@@ -97,7 +119,7 @@ function EmptyView() {
     >
       <Spacer />
       <Image
-        systemName="moon.zzz"
+        systemName={mode === 'unwatched' ? 'checkmark.circle' : 'moon.zzz'}
         font={rpt(28)}
         foregroundStyle={theme.text35}
       />
@@ -106,14 +128,21 @@ function EmptyView() {
         foregroundStyle={theme.textTertiary}
         multilineTextAlignment="center"
       >
-        {i18n.widgetNoUpdates}
+        {mode === 'unwatched' ? i18n.widgetAllCaughtUp : i18n.widgetNoUpdates}
       </Text>
       <Spacer />
     </VStack>
   )
 }
 
-function SmallView({ shows, count }: { shows: Show[]; count: number }) {
+type ViewProps = {
+  shows: Show[]
+  count: number
+  mode: WidgetMode
+  now: number
+}
+
+function SmallView({ shows, count, mode, now }: ViewProps) {
   const stack = shows.slice(0, 3)
   const front = stack[0]
   const pSize = rpt(52)
@@ -180,7 +209,9 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
           fontWeight="semibold"
           foregroundStyle={theme.textTertiary}
         >
-          {i18n.widgetNewCount}
+          {mode === 'unwatched'
+            ? i18n.widgetUnwatchedCount
+            : i18n.widgetNewCount}
         </Text>
       </HStack>
 
@@ -234,20 +265,24 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
           spacing={rpt(3)}
           frame={{ maxWidth: 'infinity', alignment: 'bottomTrailing' }}
         >
-          <Text
-            font={rpt(8)}
-            fontWeight="bold"
-            foregroundStyle={theme.textTertiary}
-            kerning={0.4}
-            lineLimit={1}
-            padding={{ horizontal: rpt(5), vertical: rpt(1) }}
-            background={{
-              style: theme.surfaceAlt,
-              shape: { type: 'rect', cornerRadius: rpt(4) }
-            }}
-          >
-            {front.genre}
-          </Text>
+          {mode === 'unwatched' ? (
+            <EpsBadge show={front} now={now} />
+          ) : (
+            <Text
+              font={rpt(8)}
+              fontWeight="bold"
+              foregroundStyle={theme.textTertiary}
+              kerning={0.4}
+              lineLimit={1}
+              padding={{ horizontal: rpt(5), vertical: rpt(1) }}
+              background={{
+                style: theme.surfaceAlt,
+                shape: { type: 'rect', cornerRadius: rpt(4) }
+              }}
+            >
+              {front.genre}
+            </Text>
+          )}
           <Text
             font={rpt(10)}
             fontWeight="bold"
@@ -263,7 +298,7 @@ function SmallView({ shows, count }: { shows: Show[]; count: number }) {
   )
 }
 
-function MediumView({ shows, count }: { shows: Show[]; count: number }) {
+function MediumView({ shows, count, mode, now }: ViewProps) {
   const padH = rpt(14)
   const colSpacing = rpt(8)
   const w = Math.floor(
@@ -292,7 +327,9 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
           fontWeight="semibold"
           foregroundStyle={theme.brandEnd}
         >
-          {i18n.widgetMediumHeader(count)}
+          {mode === 'unwatched'
+            ? i18n.widgetUnwatchedHeader(count)
+            : i18n.widgetMediumHeader(count)}
         </Text>
         <Spacer />
         <Text
@@ -325,6 +362,14 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
                   <PlayBadge size={playBadge} />
                 </ZStack>
               ) : null}
+              {mode === 'unwatched' ? (
+                <ZStack
+                  frame={{ width: w, height: h, alignment: 'topTrailing' }}
+                  padding={rpt(4)}
+                >
+                  <EpsBadge show={s} now={now} />
+                </ZStack>
+              ) : null}
             </ZStack>
           )
           return (
@@ -350,16 +395,48 @@ function MediumView({ shows, count }: { shows: Show[]; count: number }) {
   )
 }
 
-function WidgetView() {
-  const todaysShows = loadTodaysShows()
-  if (todaysShows.length === 0) {
-    return <EmptyView />
+function WidgetView({
+  allShows,
+  mode,
+  now
+}: {
+  allShows: Show[]
+  mode: WidgetMode
+  now: number
+}) {
+  const shows =
+    mode === 'unwatched'
+      ? showsWithUnwatched(allShows, now)
+      : showsForDay(allShows, getTodayIndex())
+  if (shows.length === 0) {
+    return <EmptyView mode={mode} />
   }
-  const count = todaysShows.length
+  const count = shows.length
   if (Widget.family === 'systemSmall') {
-    return <SmallView shows={todaysShows.slice(0, 3)} count={count} />
+    return (
+      <SmallView shows={shows.slice(0, 3)} count={count} mode={mode} now={now} />
+    )
   }
-  return <MediumView shows={todaysShows.slice(0, 4)} count={count} />
+  return (
+    <MediumView shows={shows.slice(0, 4)} count={count} mode={mode} now={now} />
+  )
 }
 
-Widget.present(<WidgetView />)
+function main() {
+  const allShows = loadShows()
+  const mode = loadWidgetMode()
+  const now = Date.now()
+  const view = <WidgetView allShows={allShows} mode={mode} now={now} />
+  if (mode !== 'unwatched') {
+    Widget.present(view)
+    return
+  }
+  // The unwatched list grows whenever an episode airs, so ask for a new
+  // timeline right then. Midnight is the fallback when nothing airs this week.
+  const tomorrow = new Date(startOfDay(now))
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const next = nextAiringAt(allShows, now) ?? tomorrow.getTime()
+  Widget.present(view, { policy: 'after', date: new Date(next) })
+}
+
+main()

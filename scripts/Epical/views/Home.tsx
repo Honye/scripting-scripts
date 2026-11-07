@@ -4,9 +4,12 @@ import {
   HStack,
   Image,
   List,
+  Menu,
+  Picker,
   Rectangle,
   Text,
   VStack,
+  Widget,
   useEffect,
   useObservable,
   useState
@@ -14,6 +17,8 @@ import {
 import type { Color, DynamicShapeStyle } from 'scripting'
 import type { Schedule, Show } from '../types'
 import { airsOnDay, dateForWeekday, getTodayIndex, showsForDay } from '../data'
+import { loadWidgetMode, saveWidgetMode } from '../store'
+import type { WidgetMode } from '../store'
 import { theme } from '../theme'
 import { i18n } from '../i18n'
 import { EpisodeCard } from '../components'
@@ -157,6 +162,13 @@ export function HomeView({
 }) {
   const today = getTodayIndex()
   const [selectedDay, setSelectedDay] = useState(today)
+  const [widgetMode, setWidgetMode] = useState<WidgetMode>(loadWidgetMode)
+
+  const changeWidgetMode = (mode: WidgetMode) => {
+    setWidgetMode(mode)
+    saveWidgetMode(mode)
+    Widget.reloadAll()
+  }
 
   const countPerDay = WEEK_DAYS.map(
     (d) => shows.filter((s) => airsOnDay(s, d)).length
@@ -222,6 +234,18 @@ export function HomeView({
         navigationTitle={i18n.homeTitle}
         navigationSubtitle={`${dateLabel} · ${i18n.daysFull[today]}`}
         toolbar={{
+          topBarLeading: (
+            <Menu label={<Image systemName="square.grid.2x2" />}>
+              <Picker
+                title={i18n.widgetModeTitle}
+                value={widgetMode}
+                onChanged={(v: string) => changeWidgetMode(v as WidgetMode)}
+              >
+                <Text tag="today">{i18n.widgetModeToday}</Text>
+                <Text tag="unwatched">{i18n.widgetModeUnwatched}</Text>
+              </Picker>
+            </Menu>
+          ),
           topBarTrailing: (
             <Button action={onAddPress}>
               <Image systemName="plus" />

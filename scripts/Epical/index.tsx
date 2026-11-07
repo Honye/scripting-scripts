@@ -37,7 +37,11 @@ function App() {
   const detailShow =
     detailId != null ? shows.find((s) => s.id === detailId) ?? null : null
 
-  const handleAdd = (show: Show) => setShows([...shows, show])
+  const handleAdd = (show: Show) => {
+    setShows([...shows, show])
+    // A new show may air today or already have unwatched episodes.
+    Widget.reloadAll()
+  }
   const handleSaveDetail = (
     id: number,
     v: { watched: number; total: number; aired: number }
@@ -101,6 +105,8 @@ function App() {
     setShows(
       shows.map((s) => (s.id === id ? { ...s, completed: !s.completed } : s))
     )
+    // Finished shows are hidden from the widget in either mode.
+    Widget.reloadAll()
   }
 
   return (

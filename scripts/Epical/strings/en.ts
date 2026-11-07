@@ -108,7 +108,15 @@ export const en = {
   widgetTitle: 'Epical',
   widgetNewCount: 'new',
   widgetMediumHeader: (count: number) =>
-    `Today · ${count} update${count === 1 ? '' : 's'}`
+    `Today · ${count} update${count === 1 ? '' : 's'}`,
+  widgetModeTitle: 'Widget shows',
+  widgetModeToday: "Today's updates",
+  widgetModeUnwatched: 'Aired, unwatched',
+  widgetUnwatchedCount: 'to watch',
+  widgetUnwatchedHeader: (count: number) =>
+    `Unwatched · ${count} show${count === 1 ? '' : 's'}`,
+  widgetEpsBadge: (n: number) => `${n} ep${n === 1 ? '' : 's'}`,
+  widgetAllCaughtUp: 'All caught up'
 }
 
 export type Strings = typeof en
