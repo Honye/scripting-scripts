@@ -1,6 +1,1106 @@
 import { Color, ColorScheme, Size, VirtualNode, KeyboardType, Edge, Point, KeywordPoint, Visibility, ReadableStream, FunctionComponent, AppIntent, AppIntentProtocol, Cookie, MapCoordinate, MapRegion, MapPointsOfInterestSpec, MapStyleSpec } from "scripting"
 
 declare global {
+
+  type VideoPlaybackState = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'buffering' | 'seeking' | 'ended' | 'failed' | 'disposed'
+  interface VideoPlaybackTrack {
+    readonly id: string
+    readonly kind: 'video' | 'audio' | 'subtitle' | 'other'
+    readonly codec?: string
+    readonly name?: string
+    readonly language?: string | null
+    readonly selected?: boolean
+    readonly width?: number
+    readonly height?: number
+    readonly channels?: number
+    readonly sampleRate?: number
+    readonly bitRate?: number
+    readonly frameRate?: number | null
+    readonly bitDepth?: number | null
+    readonly profile?: number
+    readonly colorPrimaries?: number
+    readonly transferFunction?: number
+    readonly startTime?: number
+    readonly endTime?: number
+    readonly dolbyVision?: { profile: number; level: number; rpuPresent: boolean; enhancementLayerPresent: boolean; baseLayerPresent: boolean }
+    readonly spatialFormat?: 'eac3JOC' | 'trueHDAtmos' | 'dtsX'
+  }
+  interface VideoPlaybackSnapshot {
+    readonly videoSuspended?: boolean
+    readonly state: VideoPlaybackState
+    readonly position: number
+    readonly duration: number | null
+    readonly bufferedUntil: number
+    readonly rate: number
+    readonly volume: number
+    readonly muted: boolean
+    readonly cached?: boolean
+    readonly cacheKey?: string
+    readonly backend: 'native' | 'system' | 'remux'
+    readonly error: string | null
+  }
+  type VideoToneMappingOptions = { mode: 'system' } | { mode: 'reinhard'; exposureEV?: number; whitePoint?: number }
+  interface VideoPlaybackInfo {
+    readonly videoSuspended?: boolean
+    /** True after supported TrueHD objects have been decoded and rendered into the PCM output bed. */
+    readonly objectAudioDecoded?: boolean
+    /** True after a supported DTS:X standard presentation has emitted actual decoded height channels. */
+    readonly heightAudioDecoded?: boolean
+    readonly outputSpatialLayout?: '7.1.4'
+    readonly cached?: boolean
+    readonly cacheKey?: string
+    readonly backend: 'native' | 'system' | 'remux'
+    readonly duration?: number | null
+    readonly tracks: readonly VideoPlaybackTrack[]
+    /** Actual PCM channel count; source channels remain available on tracks. */
+    readonly decodedAudioChannels?: number | null
+    /** Remux may convert an incompatible source audio track; tracks still describe the source. */
+    readonly audioTranscoded?: boolean
+    readonly preservesCompressedAudio?: boolean
+    readonly outputAudioCodec?: string | null
+    readonly outputAudioChannels?: number
+    readonly outputAudioSampleRate?: number
+    readonly toneMappingMode?: 'system' | 'reinhard'
+    readonly toneMappingApplied?: boolean
+    readonly toneMappingExposureEV?: number
+    readonly toneMappingWhitePoint?: number
+    readonly hdrOutput?: 'sdr' | 'pq' | 'hlg' | 'linearBT2020'
+    readonly dolbyVisionDualLayer?: boolean
+    readonly dolbyVisionReconstructed?: boolean
+    readonly dolbyVisionProfile?: number
+    readonly dolbyVisionLayers?: 'combined' | 'separate'
+    readonly dolbyVisionEnhancement?: 'mel' | 'fel'
+    readonly preservesDolbyVisionBitstream?: boolean
+    readonly baseLayerHardwareAccelerated?: boolean
+    readonly enhancementLayerHardwareAccelerated?: boolean
+    /** Reports forwarded dynamic metadata, not display certification. */
+    readonly hdr10PlusMetadata?: boolean
+    readonly spatialAudio?: boolean | null
+    readonly videoDecoder?: string
+    readonly audioDecoder?: string
+    readonly hardwareAccelerated?: boolean
+    readonly container?: string
+    readonly chapters?: readonly { index: number; start: number; end: number; title: string }[]
+    readonly metadata?: Readonly<Record<string, string>>
+  }
+  interface VideoPictureInPictureState {
+    readonly supported: boolean
+    readonly possible: boolean
+    readonly active: boolean
+  }
+  interface VideoPlaybackEvents {
+    backgroundAudio: { enabled: boolean; videoSuspended: boolean }
+    backgroundAudioError: { message: string }
+    pictureInPicture: VideoPictureInPictureState
+    pictureInPictureError: { message: string }
+    pictureInPictureRestoreRequested: Record<string, never>
+    ready: VideoPlaybackSnapshot
+    state: VideoPlaybackSnapshot
+    progress: VideoPlaybackSnapshot
+    ended: VideoPlaybackSnapshot
+    seeked: VideoPlaybackSnapshot
+    error: Partial<VideoPlaybackSnapshot> & { message: string }
+    tracks: { tracks: readonly VideoPlaybackTrack[] }
+    overlayError: { message: string }
+    interaction: { kind: 'zoom' | 'brightness' | 'error'; value?: number; message?: string }
+  }
+  interface VideoPlaybackCapabilities {
+    readonly native: { readonly available: boolean; readonly reason: string; readonly release: string; readonly dualLayerDolbyAvailable?: boolean }
+    readonly system: boolean
+    readonly nativeForegroundOnly: boolean
+    readonly nativeAudioOutput: 'stereoOrMultichannelPCM'
+    readonly nativeToneMapping?: readonly ('system' | 'reinhard')[]
+    readonly nativeObjectAudioFormats?: readonly 'trueHDAtmos'[]
+    readonly nativeHeightAudioFormats?: readonly 'dtsXStandard'[]
+    readonly nativeSpatialOutputLayouts?: readonly '7.1.4'[]
+    readonly nativeHDR: true
+    readonly nativeHDRFormats: readonly string[]
+    readonly currentFrameBackends: readonly ('native' | 'system' | 'remux')[]
+    readonly systemHDR: 'mediaAndOutputDependent'
+    readonly persistentFileCache?: boolean
+    readonly persistentHLSCache?: boolean
+    readonly persistentDASHCache?: boolean
+    readonly nativePictureInPicture: boolean
+    readonly nativeBackgroundPlayback: 'pictureInPictureOnly' | 'audioOrPictureInPicture'
+    readonly nativeBackgroundAudio?: boolean
+    readonly rawFrameCallbacks: false
+  }
+  interface VideoPlaybackOpenOptions {
+    /** Auto uses native playback for ordinary media/headers, system playback for plain HLS, and system or remux output for supported HDR media. Declared Profile7 sources use native reconstruction. */
+    backend?: 'auto' | 'native' | 'system' | 'remux'
+    /** Native video decoding preference. System/remux backends require auto. Unsupported hardware requests fail explicitly. */
+    decoder?: 'auto' | 'hardware' | 'software'
+    /** Native PCM output. Stereo is default; multichannel preserves supported layouts up to eight channels. Spatial requires explicit native playback and supported 48 kHz TrueHD Atmos objects in Matroska/MKV or DTS:X standard heights, rendered into 7.1.4 PCM, without bitstream passthrough. */
+    audioOutput?: 'stereo' | 'multichannel' | 'spatial'
+    /** Custom headers use native/remux playback. Explicit system playback rejects headers. */
+    headers?: Record<string, string>
+  }
+  /** Main App playback controller, iOS/iPadOS 17+. Dispose it when its owning page closes. */
+  class VideoPlaybackController {
+    constructor()
+    readonly state: VideoPlaybackState
+    readonly position: number
+    readonly duration: number | null
+    playbackRate: number
+    volume: number
+    muted: boolean
+    /** Default false. Configure SharedAudioSession for playback. Native suspends video in the background and restores it on return; system playback is best effort. */
+    backgroundAudioEnabled: boolean
+    readonly mediaInfo: VideoPlaybackInfo
+    open(source: string | VideoPlaybackCachedSource, options?: VideoPlaybackOpenOptions): Promise<VideoPlaybackInfo>
+    play(): Promise<void>
+    pause(): void
+    seek(seconds: number): Promise<number>
+    stop(): Promise<void>
+    dispose(): Promise<void>
+    /** Native video only. Reinhard outputs SDR; exposureEV -8..8 and whitePoint 0.25..256 default to 0/16. New sources reset to system. */
+    setToneMapping(options: VideoToneMappingOptions): Promise<void>
+    getTracks(): Promise<readonly VideoPlaybackTrack[]>
+    selectAudioTrack(id: string): Promise<void>
+    selectSubtitleTrack(id: string | null): Promise<void>
+    /** Available for native output on iOS/iPadOS 17.4+. Null until an actual frame is displayed. */
+    copyCurrentFrame(): VideoFrame | null
+    /** Independently decode the first frame covering or following this media time. */
+    extractFrame(seconds: number): Promise<VideoFrame>
+    /** Video image without subtitles, danmaku or controls. */
+    snapshot(): Promise<UIImage>
+    subtitlesEnabled: boolean
+    /** Positive delay displays cues later. Range: -86400 to 86400 seconds. */
+    subtitleDelay: number
+    /** SRT and bounded WebVTT styles/regions/positioning; ASS/SSA preserve authored styles. Unsupported CSS/markup rejects. */
+    loadSubtitles(text: string, format: 'srt' | 'vtt' | 'ass' | 'ssa'): Promise<void>
+    /** Local SRT, VTT, ASS, SSA, SUP/PGS or VobSub .idx; .idx requires its sibling .sub file. */
+    loadSubtitleFile(path: string, trackIndex?: number): Promise<void>
+    clearSubtitles(): void
+    /** Explicit font/color/position override text subtitles and ordinary ASS/SSA dialogue. Positioned ASS signs retain authored layout. assFontScale applies to ASS/SSA. */
+    setSubtitleStyle(options: { fontFamily?: string; fontSize?: number; color?: string; position?: 'top' | 'center' | 'bottom'; assFontScale?: number }): void
+    danmakuEnabled: boolean
+    danmakuOpacity: number
+    /** UTF-8 JSON comment arrays or Bilibili-compatible / dandanplay XML, up to 8 MiB. Unsupported XML modes are reported and skipped. */
+    loadDanmakuText(text: string, format: 'json' | 'xml'): Promise<VideoDanmakuImportReport>
+    /** Local UTF-8 file. Omitted format is inferred from .json or .xml. */
+    loadDanmakuFile(path: string, format?: 'json' | 'xml'): Promise<VideoDanmakuImportReport>
+    /** Open video and mount its VideoPlaybackView first. Resolves when the system activates Picture in Picture. */
+    startPictureInPicture(): Promise<void>
+    stopPictureInPicture(): void
+    getPictureInPictureState(): VideoPictureInPictureState
+    loadDanmaku(comments: readonly VideoDanmakuComment[]): Promise<void>
+    /** Load a configured danmu_api service atomically; segmented mode fetches all bounded segments first. */
+    loadDanmakuFromAPI(configuration: VideoDanmuAPIConfiguration, source: VideoDanmuAPISource, options?: { segmented?: boolean }): Promise<VideoDanmuAPIReport>
+    injectDanmaku(comments: readonly VideoDanmakuComment[]): Promise<void>
+    clearDanmaku(): void
+    setDanmakuStyle(options: { speed?: number; area?: number; blockedWords?: readonly string[]; blockedAuthors?: readonly string[] }): void
+    /** Accessible text alternative. Returns up to 64 active, unblocked comments. */
+    getActiveDanmaku(): readonly Pick<VideoDanmakuComment, 'id' | 'time' | 'text' | 'author'>[]
+    getCapabilities(): VideoPlaybackCapabilities
+    on<E extends keyof VideoPlaybackEvents>(event: E, callback: (value: VideoPlaybackEvents[E]) => void): () => void
+  }
+
+  interface VideoDanmakuImportReport {
+    readonly format: 'json' | 'bilibiliXML' | 'dandanXML'
+    readonly loaded: number
+    readonly skipped: number
+    readonly unsupportedModes: readonly string[]
+  }
+  interface VideoDanmakuKeyframe {
+    /** Seconds relative to the comment. First frame is 0; last frame is 0.1–20. */
+    readonly at: number
+    /** Normalized viewport coordinates for the text center, 0–1. */
+    readonly x: number
+    readonly y: number
+    readonly opacity?: number
+    /** Degrees, -3600–3600. */
+    readonly rotation?: number
+    /** 0.25–4. */
+    readonly scale?: number
+  }
+  interface VideoDanmakuComment {
+    id?: string
+    time: number
+    text: string
+    mode?: 'scroll' | 'reverse' | 'top' | 'bottom' | 'animated'
+    /** Required only for animated mode: 2–32 strictly ordered, linearly interpolated keyframes. */
+    animation?: readonly VideoDanmakuKeyframe[]
+    /** #RRGGBB, defaults to white. */
+    color?: string
+    fontSize?: number
+    author?: string
+  }
+  interface VideoFrame {
+    readonly width: number
+    readonly height: number
+    readonly pixelFormat: string
+    readonly planeCount: number
+    /** Null when the renderer cannot report the displayed frame's exact timestamp. */
+    readonly presentationTime: number | null
+    readonly disposed: boolean
+    copyPlane(index: number): { data: Data; width: number; height: number; bytesPerRow: number } | null
+    /** Default ordinary image; hdr preserves highlight values in a half-float extended-linear BT.2020 image. */
+    toImage(options?: { dynamicRange?: 'sdr' | 'hdr' }): UIImage | null
+    dispose(): void
+  }
+  interface VideoPlaybackCacheOptions {
+    /** Private persistent cache name within this script. Defaults to "default". */
+    identifier?: string
+    /** Default 1 GiB; range 1 MiB to 32 GiB. Limits are fixed for an identifier. */
+    maximumBytes?: number
+    /** Default min(512 MiB, maximumBytes); positive and no larger than maximumBytes. */
+    maximumEntryBytes?: number
+  }
+  interface VideoPlaybackCachedSource {
+    readonly key: string
+    readonly bytes: number
+    readonly disposed: boolean
+    /** Release this handle. An opened player retains its own lease until stop/dispose/source replacement. */
+    dispose(): Promise<void>
+  }
+  interface VideoPlaybackCacheEntry {
+    readonly key: string
+    readonly bytes: number
+    /** Unix seconds. */
+    readonly createdAt: number
+    readonly lastAccess: number
+  }
+  interface VideoDanmuAPIConfiguration {
+    /** Deployment root, including an optional deployment/token path prefix. */
+    readonly baseURL: string
+    readonly headers?: Record<string, string>
+  }
+  type VideoDanmuAPISource = { readonly episodeId: string | number; readonly url?: never } | { readonly url: string; readonly episodeId?: never }
+  interface VideoDanmuAPIReport {
+    readonly loaded: number
+    readonly skipped: number
+    readonly unsupportedModes: readonly number[]
+    readonly segments: number
+    readonly videoDuration: number | null
+  }
+  interface VideoDanmuAPIEpisode { readonly episodeId: string; readonly episodeTitle: string }
+  interface VideoDanmuAPIItem {
+    readonly animeId: string
+    readonly animeTitle: string
+    readonly imageUrl?: string
+    readonly type?: string
+    readonly typeDescription?: string
+    readonly source?: string
+    readonly episodes?: readonly VideoDanmuAPIEpisode[]
+  }
+  interface VideoDanmuAPIMatch extends VideoDanmuAPIItem, VideoDanmuAPIEpisode {}
+  interface VideoDanmuAPIBatch extends VideoDanmuAPIReport { readonly comments: readonly VideoDanmakuComment[] }
+  namespace DanmuAPI {
+    function search(configuration: VideoDanmuAPIConfiguration, keyword: string): Promise<readonly VideoDanmuAPIItem[]>
+    function match(configuration: VideoDanmuAPIConfiguration, fileName: string): Promise<readonly VideoDanmuAPIMatch[]>
+    function searchEpisodes(configuration: VideoDanmuAPIConfiguration, input: { anime: string; episode?: string }): Promise<readonly VideoDanmuAPIItem[]>
+    function getBangumi(configuration: VideoDanmuAPIConfiguration, animeId: string | number): Promise<VideoDanmuAPIItem>
+    function getComments(configuration: VideoDanmuAPIConfiguration, source: VideoDanmuAPISource, options?: { segmented?: boolean }): Promise<VideoDanmuAPIBatch>
+  }
+  interface VideoPlaybackCacheStatus {
+    readonly bytes: number
+    readonly reservedBytes: number
+    readonly pendingBytes: number
+    readonly entries: number
+    readonly activeLeases: number
+    readonly preparing: number
+    readonly maximumBytes: number
+    readonly maximumEntryBytes: number
+    /** Running HLS/DASH preparations; segment progress is aggregated across both. */
+    readonly hlsPreparing?: number
+    readonly dashPreparing?: number
+    readonly downloadedSegments?: number
+    readonly totalSegments?: number
+  }
+  interface VideoPlaybackCacheStore {
+    readonly disposed: boolean
+    /** Download a complete HTTP(S) media file. Streaming manifests are rejected. */
+    prepare(source: string, options?: { headers?: Record<string, string> }): Promise<VideoPlaybackCachedSource>
+    /** Save complete unencrypted, self-contained TS/fMP4 HLS VOD. Selects the highest eligible master variant within maximumBitRate (bits/s). */
+    prepareHLS(source: string, options?: { headers?: Record<string, string>; maximumBitRate?: number }): Promise<VideoPlaybackCachedSource>
+    /** Offline HLS lookup. URL, headers and maximumBitRate must match prepareHLS. Never downloads. */
+    resolveHLS(source: string, options?: { headers?: Record<string, string>; maximumBitRate?: number }): Promise<VideoPlaybackCachedSource | null>
+    /** Save clear single-Period static fMP4 DASH as MP4. Selects fixed video within maximumBitRate (bits/s) and optional supported audio. */
+    prepareDASH(source: string, options?: { headers?: Record<string, string>; maximumBitRate?: number }): Promise<VideoPlaybackCachedSource>
+    /** Offline DASH lookup. URL, headers and maximumBitRate must match prepareDASH. Never downloads. */
+    resolveDASH(source: string, options?: { headers?: Record<string, string>; maximumBitRate?: number }): Promise<VideoPlaybackCachedSource | null>
+    /** Offline lookup; null on a miss. Headers must match the original request. Never downloads. */
+    resolve(source: string, options?: { headers?: Record<string, string> }): Promise<VideoPlaybackCachedSource | null>
+    getStatus(): Promise<VideoPlaybackCacheStatus>
+    getEntries(): Promise<readonly VideoPlaybackCacheEntry[]>
+    /** False while a player/handle leases the entry or its preparation is active. */
+    remove(key: string): Promise<boolean>
+    /** Remove unleased completed files and return their count. */
+    clear(): Promise<number>
+    /** Cancel this manager's pending operations. */
+    cancel(): void
+    /** Cancel pending operations and release its handles, preserving complete files and opened players. */
+    dispose(): Promise<void>
+  }
+  namespace VideoPlaybackCache {
+    /** Open this saved script's private media file cache. Matching identifiers require matching limits. */
+    function open(options?: VideoPlaybackCacheOptions): Promise<VideoPlaybackCacheStore>
+  }
+
+  namespace MediaProbe {
+    /** Inspect tracks/chapters/metadata without opening playback decoders. */
+    function inspect(source: string): Promise<VideoPlaybackInfo>
+  }
+
+  /** An owned native audio/video sample. Dispose each sample after enqueue settles. */
+  interface MediaSample {
+    readonly mediaType: 'audio' | 'video'
+    readonly presentationTime: MediaTime
+    readonly decodeTime: MediaTime
+    readonly duration: MediaTime
+    readonly sampleCount: number
+    /** A drain/empty-edit marker with no media payload; timing may be nonnumeric. Preserve its position in the stream. */
+    readonly isMarker: boolean
+    readonly disposed: boolean
+    dispose(): void
+  }
+  type MediaDecoderPreference = 'auto' | 'system' | 'software'
+  interface MediaReaderInfo {
+    readonly codec: string
+    readonly decoded: boolean
+    readonly decoderBackend: 'passthrough' | 'system' | 'dav1d'
+    /** null means the selected system decoder cannot report actual hardware use. */
+    readonly hardwareAccelerated: boolean | null
+    readonly width?: number
+    readonly height?: number
+    readonly bitDepth?: number
+    readonly pixelFormat?: 'BGRA' | 'NV12' | 'P010'
+  }
+  interface MediaReaderCapabilities {
+    readonly av1: { readonly hardwareDecodeSupported: boolean; readonly softwareDecodeAvailable: boolean }
+  }
+  /** Serialized raw sample reader. Main App, iOS 17+. */
+  class MediaSampleReader {
+    private constructor()
+    /** decoded defaults to true; false preserves original compressed packets. */
+    static create(asset: AVAsset, mediaType: 'audio' | 'video', options?: { decoded?: boolean; trackIndex?: number; decoder?: MediaDecoderPreference }): Promise<MediaSampleReader>
+    /** Capability hints do not guarantee that a file is supported or plays in real time. */
+    static getCapabilities(): Promise<MediaReaderCapabilities>
+    /** Selects the backend and retains initial samples for the next read. Idempotent. */
+    prepare(): Promise<MediaReaderInfo>
+    /** null until preparation or the first read completes. */
+    readonly info: MediaReaderInfo | null
+    /** null only at successful end of stream. Only one read may be pending. */
+    copyNextSampleBuffer(): Promise<MediaSample | null>
+    dispose(): void
+  }
+  interface SampleBufferRenderer {
+    readonly id: string
+    readonly mediaType: 'audio' | 'video'
+    readonly status: 'unknown' | 'rendering' | 'failed' | 'disposed'
+    readonly error: string | null
+    /** Resolves when accepted by the native queue, not when presented. Maximum 8 pending samples, 64 MiB; 30-second timeout. */
+    enqueue(sample: MediaSample): Promise<void>
+    /** Cancels pending submissions and clears native queued data. */
+    flush(): Promise<void>
+    dispose(): void
+  }
+  /** Video rendering on a synchronizer clock; mount with SampleBufferView. */
+  class AVSampleBufferDisplayLayer implements SampleBufferRenderer {
+    constructor()
+    readonly id: string
+    readonly mediaType: 'video'
+    readonly status: SampleBufferRenderer['status']
+    readonly error: string | null
+    readonly requiresFlushToResumeDecoding: boolean
+    enqueue(sample: MediaSample): Promise<void>
+    flush(): Promise<void>
+    dispose(): void
+  }
+  /** Audio rendering on a synchronizer clock; uses the shared audio session. */
+  class AVSampleBufferAudioRenderer implements SampleBufferRenderer {
+    constructor()
+    readonly id: string
+    readonly mediaType: 'audio'
+    readonly status: SampleBufferRenderer['status']
+    readonly error: string | null
+    volume: number
+    muted: boolean
+    enqueue(sample: MediaSample): Promise<void>
+    flush(): Promise<void>
+    dispose(): void
+  }
+  /** One shared audio/video timeline. Attach renderers before enqueueing. */
+  class AVSampleBufferRenderSynchronizer {
+    constructor()
+    readonly rate: number
+    readonly currentTime: MediaTime
+    /** rate 0 pauses; finite positive rates play. Invalid media time preserves the current timeline. Optional hostTime anchors both numeric times. */
+    setRate(rate: number, time: MediaTime, hostTime?: MediaTime): void
+    addRenderer(renderer: AVSampleBufferDisplayLayer | AVSampleBufferAudioRenderer): void
+    /** Flushes before detaching. Detached renderers may be attached again. */
+    removeRenderer(renderer: AVSampleBufferDisplayLayer | AVSampleBufferAudioRenderer): Promise<void>
+    /** Stops the clock and disposes its attached renderers. */
+    dispose(): void
+  }
+
+  /** Audio graphs and native audio processing in main App scripts (iOS/iPadOS 17+). Individual options report system availability. */
+  namespace AVAudio {
+    type SampleType = 'float32' | 'float64' | 'int16' | 'int32'
+    type Samples = Float32Array | Float64Array | Int16Array | Int32Array
+    type SettingValue = string | number | boolean | Uint8Array | readonly SettingValue[] | { readonly [key: string]: SettingValue }
+    type Settings = Readonly<Record<string, SettingValue>>
+    type ErrorCode = 'invalidArgument' | 'permissionDenied' | 'ERR_PRO_REQUIRED' | 'notSupported' |
+      'wrongOwner' | 'disposed' | 'invalidated' | 'resourceBusy' | 'cancelled' | 'startFailed' |
+      'nativeError' | 'cleanupFailed' | 'queueOverflow' | 'formatMismatch' | 'needsRebuild'
+    interface Error extends globalThis.Error { code: ErrorCode; operation: string; nativeDomain?: string; nativeCode?: number; partialFilePath?: string }
+    interface Point3D { x: number; y: number; z: number }
+    interface VectorOrientation { forward: Point3D; up: Point3D }
+    interface AngularOrientation { yaw: number; pitch: number; roll: number }
+    interface ComponentDescription { type: number; subtype: number; manufacturer: number; flags?: number; flagsMask?: number }
+    interface Component extends ComponentDescription { name: string; manufacturerName: string; version: number; available: boolean; hasCustomView: boolean | null }
+    interface Parameter {
+      address: string; identifier: string; name: string; keyPath: string; minimum: number; maximum: number;
+      unit: number; unitName: string | null; flags: number; valueStrings: readonly string[] | null;
+      dependentParameters: readonly string[]
+    }
+    interface ParameterGroup { identifier: string; name: string; keyPath: string; children: readonly (ParameterGroup | Parameter)[] }
+    interface ParameterChange { address: string; value: number; hostTime: string; eventType: 'value' | 'touch' | 'release'; discontinuity: boolean }
+    interface ParameterEvent { address: string; value: number; sampleTime: number; rampDuration?: number }
+    interface EventStatistics { acceptedEvents: number; deliveredEvents: number; queuedEvents: number; droppedEvents: number; allocatedBytes: number; closed: boolean; failure: Error | null }
+  interface ParameterObserver { next(): Promise<readonly ParameterChange[] | null>; close(): Promise<void>; getStatistics(): Promise<EventStatistics> }
+    interface Preset { number: number; name: string }
+    interface Mixing {
+      volume?: number; pan?: number; position?: Point3D; renderingAlgorithm?: number; sourceMode?: number;
+      pointSourceInHeadMode?: number; obstruction?: number; occlusion?: number; reverbBlend?: number; rate?: number
+    }
+    interface MixingState extends Partial<Mixing> { supported: readonly (keyof Mixing)[] }
+    interface ConnectionPoint { node: AVAudioNode; bus: number }
+    interface StreamStatistics {
+      acceptedFrames: number; consumedFrames: number; queuedFrames: number; droppedFrames: number;
+      underflowFrames: number; insufficientRequests?: number; allocatedBytes: number; generation: number; ended: boolean; closed: boolean; failure: Error | null
+    }
+    interface ObservationOptions { maximumFrameCount?: number; slotCount?: number; overflow?: 'dropOldest' | 'latest' | 'error' }
+    interface ObservedPCM { buffer: AVAudioPCMBuffer; time: AVAudioTime | null; sequence: string; discontinuity: boolean; renderEpoch: number }
+    interface Observation { read(): Promise<ObservedPCM | null>; close(): Promise<void>; getStatistics(): Promise<StreamStatistics> }
+    interface PCMQueueOptions { format: AVAudioFormat; queueFrames?: number; maximumFrameCount?: number }
+    interface PCMQueue {
+      /** Returns accepted frames. Partial acceptance and a full queue are explicit. */
+      enqueue(buffer: AVAudioPCMBuffer): Promise<number>
+      end(): Promise<void>
+      drain(): Promise<void>
+      close(): Promise<void>
+      getStatistics(): Promise<StreamStatistics>
+    }
+    interface RenderResult { status: 'success' | 'insufficientDataFromInputNode' | 'cannotDoInCurrentContext' | 'error'; buffer: AVAudioPCMBuffer; sampleTime: number; renderEpoch: number }
+    interface ExportOptions {
+      filePath: string; settings: Settings; frameCount: number; tailFrames?: number; chunkFrames?: number;
+      overwrite?: boolean; partialFile?: 'remove' | 'keep'
+    }
+    interface ExportProgress { renderedFrames: number; totalFrames: number; writtenFrames: number }
+    interface ExportResult { filePath: string; frameCount: number; fileFormat: AVAudioFormat }
+    interface ExportTask { readonly finished: Promise<ExportResult>; getProgress(): Promise<ExportProgress>; cancel(): Promise<void> }
+    type PlaybackOutcome = { status: 'completed'; callbackType: AVAudioPlayerNode.CompletionType } |
+      { status: 'cancelled'; reason: 'stopped' | 'engineStopped' | 'reset' | 'replaced' | 'configurationChanged' | 'disposed' }
+    interface PlaybackTicket { readonly id: string; readonly finished: Promise<PlaybackOutcome>; getState(): Promise<'pending' | PlaybackOutcome> }
+    type SequencerEvent =
+      { type: 'note'; channel: number; note: number; velocity: number; duration: number } |
+      { type: 'controlChange'; channel: number; controller: number; value: number } |
+      { type: 'polyPressure'; channel: number; note: number; pressure: number } |
+      { type: 'programChange'; channel: number; program: number } |
+      { type: 'channelPressure'; channel: number; pressure: number } |
+      { type: 'pitchBend'; channel: number; value: number } |
+      { type: 'extendedNote'; note: number; velocity: number; instrumentID: number; groupID: number; duration: number } |
+      { type: 'sysex'; data: Uint8Array } |
+      { type: 'extendedTempo'; bpm: number } |
+      { type: 'meta'; metaType: number; data: Uint8Array } |
+      { type: 'parameter'; parameterID: number; scope: number; element: number; value: number } |
+      { type: 'preset'; scope: number; element: number; propertyListData: Uint8Array } |
+      { type: 'user'; data: Uint8Array }
+    interface TimedEvent { beat: number; event: SequencerEvent }
+  /** Native enumeration exposes metadata for opaque payload events. Full user data is delivered by observeUserEvents. */
+  type SequencerEventInfo = Exclude<SequencerEvent, { type: 'sysex' | 'meta' | 'user' }> |
+    { type: 'sysex'; sizeInBytes: number } | { type: 'meta'; metaType: number } | { type: 'user'; sizeInBytes: number }
+  interface EnumeratedEvent { beat: number; event: SequencerEventInfo }
+    interface TrackState {
+      lengthInBeats: number; lengthInSeconds: number; offsetTime: number; timeResolution: number;
+      muted: boolean; soloed: boolean; loopEnabled: boolean; loopStart: number; loopDuration: number; numberOfLoops: number;
+      destination: AVAudioUnit | null; usesAutomatedParameters: boolean
+    }
+  }
+
+  class AVAudioChannelLayout {
+    constructor(options: { tag: number } | { bitmap: number } | { descriptions: readonly { label: number; flags: number; coordinates: readonly [number, number, number] }[] })
+    readonly channelCount: number
+    /** A copied native AudioChannelLayout, including variable-length channel descriptions. */
+    copyData(): Uint8Array
+  }
+
+  class AVAudioFormat {
+    constructor(options: { sampleRate: number; channelCount?: number; channelLayout?: AVAudioChannelLayout; sampleType?: AVAudio.SampleType; interleaved?: boolean } | { settings: AVAudio.Settings })
+    readonly sampleRate: number
+    readonly channelCount: number
+    readonly sampleType: AVAudio.SampleType | null
+    readonly interleaved: boolean
+    readonly isStandard: boolean
+    readonly channelLayout: AVAudioChannelLayout | null
+    readonly settings: AVAudio.Settings
+    equals(other: AVAudioFormat): boolean
+    copyStreamDescription(): Uint8Array
+  }
+
+  class AVAudioTime {
+    constructor(options: { hostTime: string; sampleTime?: number; sampleRate?: number } | { sampleTime: number; sampleRate: number; hostTime?: string })
+    readonly hostTime: string | null
+    readonly sampleTime: number | null
+    readonly sampleRate: number
+    static hostTimeForSeconds(seconds: number): string
+    static secondsForHostTime(hostTime: string): number
+    extrapolate(anchor: AVAudioTime): AVAudioTime | null
+  }
+
+  class AVAudioPCMBuffer {
+    private constructor()
+    static allocate(format: AVAudioFormat, frameCapacity: number): Promise<AVAudioPCMBuffer>
+    /** Planar: one typed array per channel. Interleaved: one array of frame-major samples. */
+    static fromChannels(channels: readonly AVAudio.Samples[], format: AVAudioFormat): Promise<AVAudioPCMBuffer>
+    static fromInterleaved(samples: AVAudio.Samples, format: AVAudioFormat): Promise<AVAudioPCMBuffer>
+    readonly format: AVAudioFormat
+    readonly frameCapacity: number
+    readonly frameLength: number
+    setFrameLength(frames: number): Promise<void>
+    copyChannels(): Promise<readonly AVAudio.Samples[]>
+    copyInterleaved(): Promise<AVAudio.Samples>
+    copy(): Promise<AVAudioPCMBuffer>
+    dispose(): Promise<void>
+  }
+
+  class AVAudioCompressedBuffer {
+    private constructor()
+    static create(options: { format: AVAudioFormat; packetCapacity: number; maximumPacketSize: number; data?: Uint8Array; packetDescriptions?: readonly { startOffset: number; variableFramesInPacket: number; dataByteSize: number }[]; packetCount?: number }): Promise<AVAudioCompressedBuffer>
+    readonly format: AVAudioFormat
+    readonly packetCapacity: number
+    readonly packetCount: number
+    readonly byteCapacity: number
+    readonly byteLength: number
+    readonly maximumPacketSize: number
+    copyData(): Promise<Uint8Array>
+    getPacketDescriptions(): Promise<readonly { startOffset: number; variableFramesInPacket: number; dataByteSize: number }[]>
+    dispose(): Promise<void>
+  }
+
+  class AVAudioFile {
+    private constructor()
+    static openForReading(path: string, options?: { sampleType?: AVAudio.SampleType; interleaved?: boolean }): Promise<AVAudioFile>
+    static openForWriting(path: string, settings: AVAudio.Settings, options?: { sampleType?: AVAudio.SampleType; interleaved?: boolean; overwrite?: boolean }): Promise<AVAudioFile>
+    readonly processingFormat: AVAudioFormat
+    readonly fileFormat: AVAudioFormat
+    getState(): Promise<{ length: number; framePosition: number; mode: 'read' | 'write'; closed: boolean }>
+    read(frameCount: number): Promise<AVAudioPCMBuffer>
+    write(buffer: AVAudioPCMBuffer): Promise<void>
+    seek(framePosition: number): Promise<void>
+    close(): Promise<void>
+  }
+
+  namespace AVAudioConverter {
+    interface Configuration { bitRate?: number; bitRateStrategy?: string; sampleRateConverterQuality?: number; sampleRateConverterAlgorithm?: string; primeMethod?: 'pre' | 'normal' | 'none'; primeInfo?: { leadingFrames: number; trailingFrames: number }; magicCookie?: Uint8Array | null; audioSyncPacketFrequency?: number; contentSource?: number; dynamicRangeControlConfiguration?: number; channelMap?: readonly number[]; downmix?: boolean; dither?: boolean }
+    interface Input { buffer: AVAudioPCMBuffer | AVAudioCompressedBuffer; endOfStream?: boolean }
+    interface Result { status: 'haveData' | 'inputRanDry' | 'endOfStream' | 'error'; buffer: AVAudioPCMBuffer | AVAudioCompressedBuffer }
+  }
+  class AVAudioConverter {
+    private constructor()
+    static create(input: AVAudioFormat, output: AVAudioFormat, options?: AVAudioConverter.Configuration): Promise<AVAudioConverter>
+    readonly inputFormat: AVAudioFormat
+    readonly outputFormat: AVAudioFormat
+    getConfiguration(): Promise<AVAudioConverter.Configuration & { availableEncodeBitRates: readonly number[] | null; applicableEncodeBitRates: readonly number[] | null; availableEncodeSampleRates: readonly number[] | null; applicableEncodeSampleRates: readonly number[] | null; availableEncodeChannelLayoutTags: readonly number[] | null; maximumOutputPacketSize: number; primeInfo: { leadingFrames: number; trailingFrames: number } }>
+    configure(options: AVAudioConverter.Configuration): Promise<void>
+    /** A bounded conversion step; outputCapacity means PCM frames or compressed packets. Unrequested inputs remain queued for later calls. */
+    convert(inputs: readonly AVAudioConverter.Input[], outputCapacity: number): Promise<AVAudioConverter.Result>
+    reset(): Promise<void>
+    dispose(): Promise<void>
+  }
+
+  namespace AVAudioEngine {
+    type State = 'stopped' | 'prepared' | 'running' | 'paused' | 'interrupted' | 'needsRebuild' | 'disposed'
+    interface Snapshot { state: State; isRunning: boolean; graphRevision: number; renderEpoch: number; manualMode: 'offline' | 'realtime' | null; manualSampleTime: number | null; pendingOperations: number }
+    interface Capabilities { host: string; engine: boolean; deviceInput: boolean; deviceOutput: boolean; manualOffline: boolean; manualRealtime: boolean; audioUnitHosting: boolean; audioUnitUI: boolean; realtimeSafeNativeBlocks: boolean; limits: { channelBytes: number; channelObjects: number; pendingOperations: number; pendingTickets: number; streamBytes: number; copyBytes: number }; unavailableReasons: Readonly<Record<string, string>> }
+    interface Event { type: 'state' | 'configurationChanged' | 'interruption' | 'mediaServicesReset' | 'error'; state: Snapshot; error?: AVAudio.Error; shouldResume?: boolean }
+  }
+  class AVAudioEngine {
+    private constructor()
+    static capabilities(): Promise<AVAudioEngine.Capabilities>
+    static create(): Promise<AVAudioEngine>
+    getState(): Promise<AVAudioEngine.Snapshot>
+    getInputNode(): Promise<AVAudioInputNode>
+    getOutputNode(): Promise<AVAudioOutputNode>
+    getMainMixerNode(): Promise<AVAudioMixerNode>
+    getAttachedNodes(): Promise<readonly AVAudioNode[]>
+    attach(node: AVAudioNode): Promise<void>
+    detach(node: AVAudioNode): Promise<void>
+    connect(source: AVAudioNode, destination: AVAudioNode, options?: { fromBus?: number; toBus?: number; format?: AVAudioFormat | null }): Promise<void>
+    connectMany(source: AVAudioNode, destinations: readonly AVAudio.ConnectionPoint[], options?: { fromBus?: number; format?: AVAudioFormat | null }): Promise<void>
+    disconnectInput(node: AVAudioNode, bus?: number): Promise<void>
+    disconnectOutput(node: AVAudioNode, bus?: number): Promise<void>
+    getInputConnection(node: AVAudioNode, bus: number): Promise<AVAudio.ConnectionPoint | null>
+    getOutputConnections(node: AVAudioNode, bus: number): Promise<readonly AVAudio.ConnectionPoint[]>
+    prepare(): Promise<void>
+    start(): Promise<void>
+    pause(): Promise<void>
+    stop(): Promise<void>
+    reset(): Promise<void>
+    dispose(): Promise<void>
+    enableManualRendering(options: { mode: 'offline' | 'realtime'; format: AVAudioFormat; maximumFrameCount: number }): Promise<void>
+    disableManualRendering(): Promise<void>
+    renderOffline(frameCount: number): Promise<AVAudio.RenderResult>
+    getManualRenderer(): Promise<AVAudioManualRenderer>
+    setManualInput(options: AVAudio.PCMQueueOptions & { underflow?: 'silence' | 'insufficientData' }): Promise<AVAudioManualInput>
+    exportAudio(options: AVAudio.ExportOptions): Promise<AVAudio.ExportTask>
+    onEvent(listener: (event: AVAudioEngine.Event) => void): () => void
+    /** MIDI routes are separate from audio connections. */
+    connectMIDI(source: AVAudioNode, destinations: readonly AVAudioNode[], options?: { format?: AVAudioFormat }): Promise<void>
+    disconnectMIDI(source: AVAudioNode, destinations?: readonly AVAudioNode[]): Promise<void>
+  }
+
+  class AVAudioNode {
+    protected constructor()
+    readonly id: string
+    readonly kind: string
+    readonly builtin: boolean
+    getState(): Promise<{ attached: boolean; invalidated: boolean; inputBusCount: number; outputBusCount: number; latency: number; outputPresentationLatency: number }>
+    getInputFormat(bus: number): Promise<AVAudioFormat>
+    getOutputFormat(bus: number): Promise<AVAudioFormat>
+    getInputBusName(bus: number): Promise<string | null>
+    getOutputBusName(bus: number): Promise<string | null>
+    getLastRenderTime(): Promise<AVAudioTime | null>
+    getMixing(): Promise<AVAudio.MixingState>
+    setMixing(properties: AVAudio.Mixing): Promise<void>
+    installTap(options: AVAudio.ObservationOptions & { bus?: number; format?: AVAudioFormat }): Promise<AVAudio.Observation>
+    removeTap(bus?: number): Promise<void>
+    reset(): Promise<void>
+    dispose(): Promise<void>
+  }
+
+  namespace AVAudioPlayerNode {
+    type CompletionType = 'dataConsumed' | 'dataRendered' | 'dataPlayedBack'
+    interface ScheduleOptions { at?: AVAudioTime; completionType?: CompletionType; loops?: boolean; interrupts?: boolean; interruptsAtLoop?: boolean }
+  }
+  class AVAudioPlayerNode extends AVAudioNode {
+    static create(): Promise<AVAudioPlayerNode>
+    scheduleBuffer(buffer: AVAudioPCMBuffer, options?: AVAudioPlayerNode.ScheduleOptions): Promise<AVAudio.PlaybackTicket>
+    scheduleFile(file: AVAudioFile, options?: Pick<AVAudioPlayerNode.ScheduleOptions, 'at' | 'completionType'>): Promise<AVAudio.PlaybackTicket>
+    scheduleSegment(file: AVAudioFile, options: Pick<AVAudioPlayerNode.ScheduleOptions, 'at' | 'completionType'> & { startingFrame: number; frameCount: number }): Promise<AVAudio.PlaybackTicket>
+    prepare(frameCount: number): Promise<void>
+    play(at?: AVAudioTime): Promise<void>
+    pause(): Promise<void>
+    stop(): Promise<void>
+    isPlaying(): Promise<boolean>
+    getPlayerTime(nodeTime: AVAudioTime): Promise<AVAudioTime | null>
+    getNodeTime(playerTime: AVAudioTime): Promise<AVAudioTime | null>
+  }
+
+  class AVAudioMixerNode extends AVAudioNode { static create(): Promise<AVAudioMixerNode>; setOutputVolume(volume: number): Promise<void>; getOutputVolume(): Promise<number>; getNextAvailableInputBus(): Promise<number> }
+  namespace AVAudioInputNode {
+    interface VoiceProcessing { enabled?: boolean; bypassed?: boolean; automaticGainControl?: boolean; inputMuted?: boolean; ducking?: { advanced: boolean; level: 'default' | 'minimum' | 'medium' | 'maximum' } }
+  }
+  class AVAudioInputNode extends AVAudioNode {
+    getVoiceProcessing(): Promise<Required<AVAudioInputNode.VoiceProcessing>>
+    configureVoiceProcessing(configuration: AVAudioInputNode.VoiceProcessing): Promise<void>
+    setSpeechActivityHandler(handler: ((event: 'started' | 'ended') => void) | null): Promise<void>
+  }
+  class AVAudioOutputNode extends AVAudioNode { getVoiceProcessingEnabled(): Promise<boolean> }
+  class AVAudioSourceNode extends AVAudioNode implements AVAudio.PCMQueue {
+    static create(options: AVAudio.PCMQueueOptions): Promise<AVAudioSourceNode>
+    enqueue(buffer: AVAudioPCMBuffer): Promise<number>
+    end(): Promise<void>
+    drain(): Promise<void>
+    close(): Promise<void>
+    getStatistics(): Promise<AVAudio.StreamStatistics>
+  }
+  class AVAudioSinkNode extends AVAudioNode {
+    static create(options: AVAudio.ObservationOptions & { format: AVAudioFormat }): Promise<AVAudioSinkNode>
+    read(): Promise<AVAudio.ObservedPCM | null>
+    close(): Promise<void>
+    getStatistics(): Promise<AVAudio.StreamStatistics>
+  }
+  class AVAudioManualInput implements AVAudio.PCMQueue {
+    private constructor()
+    enqueue(buffer: AVAudioPCMBuffer): Promise<number>
+    end(): Promise<void>
+    drain(): Promise<void>
+    close(): Promise<void>
+    getStatistics(): Promise<AVAudio.StreamStatistics>
+  }
+  class AVAudioManualRenderer {
+    private constructor()
+    render(frameCount: number): Promise<AVAudio.RenderResult>
+    dispose(): Promise<void>
+  }
+
+  class AVAudioUnit extends AVAudioNode {
+    static findComponents(filter?: Partial<AVAudio.ComponentDescription>): Promise<readonly AVAudio.Component[]>
+    static instantiate(description: AVAudio.ComponentDescription, options?: { outOfProcess?: boolean }): Promise<AVAudioUnit>
+    getBypass(): Promise<boolean>
+    setBypass(bypass: boolean): Promise<void>
+    getComponent(): Promise<AVAudio.Component>
+    getParameterTree(): Promise<AVAudio.ParameterGroup | null>
+    getParameterValues(addresses?: readonly string[]): Promise<readonly { address: string; value: number }[]>
+    setParameterValues(values: readonly { address: string; value: number }[]): Promise<void>
+    getParameterString(address: string, value?: number): Promise<string>
+    getParameterValue(address: string, text: string): Promise<number>
+    scheduleParameterEvents(events: readonly AVAudio.ParameterEvent[]): Promise<void>
+    /** Collects plugin-emitted native automation value/touch/release events. Ordinary value assignment need not emit these events; read current values with getParameterValues. */
+    observeParameters(options?: { queueSize?: number }): Promise<AVAudio.ParameterObserver>
+    getFactoryPresets(): Promise<readonly AVAudio.Preset[]>
+    getUserPresets(): Promise<readonly AVAudio.Preset[]>
+    setCurrentPreset(preset: AVAudio.Preset): Promise<void>
+    getCurrentPreset(): Promise<AVAudio.Preset | null>
+    saveUserPreset(preset: AVAudio.Preset): Promise<void>
+    deleteUserPreset(number: number): Promise<void>
+    /** Binary property-list encoding preserves native Data and integer values. */
+    getStateData(options?: { forDocument?: boolean }): Promise<Uint8Array>
+    setStateData(data: Uint8Array, options?: { forDocument?: boolean }): Promise<void>
+    loadPreset(path: string): Promise<void>
+    getBusState(): Promise<{ inputs: readonly { name: string | null; format: AVAudioFormat; enabled: boolean; maximumChannelCount: number }[]; outputs: readonly { name: string | null; format: AVAudioFormat; enabled: boolean; maximumChannelCount: number }[]; latency: number; tailTime: number; renderingOffline: boolean; renderResourcesAllocated: boolean }>
+    requestView(): Promise<AVAudioUnitViewController | null>
+  }
+  class AVAudioUnitViewController { private constructor(); readonly id: string; dispose(): Promise<void> }
+
+  class AVAudioUnitEffect extends AVAudioUnit {
+    static createEffect(description: AVAudio.ComponentDescription): Promise<AVAudioUnitEffect>
+    setBypass(bypass: boolean): Promise<void>
+    getBypass(): Promise<boolean>
+  }
+  class AVAudioUnitGenerator extends AVAudioUnit {
+    static createGenerator(description: AVAudio.ComponentDescription): Promise<AVAudioUnitGenerator>
+    setBypass(bypass: boolean): Promise<void>
+    getBypass(): Promise<boolean>
+  }
+  class AVAudioUnitTimeEffect extends AVAudioUnit {
+    static createTimeEffect(description: AVAudio.ComponentDescription): Promise<AVAudioUnitTimeEffect>
+    setBypass(bypass: boolean): Promise<void>
+    getBypass(): Promise<boolean>
+  }
+
+  class AVAudioUnitEQ extends AVAudioUnitEffect {
+    static create(options?: { numberOfBands?: number }): Promise<AVAudioUnitEQ>
+    getEQ(): Promise<{ globalGain: number; bands: readonly AVAudioUnitEQ.Band[] }>
+    setGlobalGain(decibels: number): Promise<void>
+    configureBand(index: number, properties: Partial<AVAudioUnitEQ.Band>): Promise<void>
+  }
+  namespace AVAudioUnitEQ { interface Band { filterType: 'parametric' | 'lowPass' | 'highPass' | 'resonantLowPass' | 'resonantHighPass' | 'bandPass' | 'bandStop' | 'lowShelf' | 'highShelf' | 'resonantLowShelf' | 'resonantHighShelf'; frequency: number; bandwidth: number; gain: number; bypass: boolean } }
+  class AVAudioUnitReverb extends AVAudioUnitEffect { static create(): Promise<AVAudioUnitReverb>; loadFactoryPreset(preset: 'smallRoom' | 'mediumRoom' | 'largeRoom' | 'mediumHall' | 'largeHall' | 'plate' | 'mediumChamber' | 'largeChamber' | 'cathedral' | 'largeRoom2' | 'mediumHall2' | 'mediumHall3' | 'largeHall2'): Promise<void>; configure(properties: { wetDryMix?: number; bypass?: boolean }): Promise<void> }
+  class AVAudioUnitDelay extends AVAudioUnitEffect { static create(): Promise<AVAudioUnitDelay>; configure(properties: { delayTime?: number; feedback?: number; lowPassCutoff?: number; wetDryMix?: number; bypass?: boolean }): Promise<void> }
+  class AVAudioUnitDistortion extends AVAudioUnitEffect { static create(): Promise<AVAudioUnitDistortion>; loadFactoryPreset(preset: number): Promise<void>; configure(properties: { preGain?: number; wetDryMix?: number; bypass?: boolean }): Promise<void> }
+  class AVAudioUnitTimePitch extends AVAudioUnitTimeEffect { static create(): Promise<AVAudioUnitTimePitch>; configure(properties: { rate?: number; pitch?: number; overlap?: number; bypass?: boolean }): Promise<void> }
+  class AVAudioUnitVarispeed extends AVAudioUnitTimeEffect { static create(): Promise<AVAudioUnitVarispeed>; configure(properties: { rate?: number; bypass?: boolean }): Promise<void> }
+
+  class AVAudioUnitMIDIInstrument extends AVAudioUnit {
+    static create(description: AVAudio.ComponentDescription): Promise<AVAudioUnitMIDIInstrument>
+    startNote(note: number, velocity: number, channel?: number): Promise<void>
+    stopNote(note: number, channel?: number): Promise<void>
+    sendController(controller: number, value: number, channel?: number): Promise<void>
+    sendProgramChange(program: number, options?: { bankMSB?: number; bankLSB?: number; channel?: number }): Promise<void>
+    sendPitchBend(value: number, channel?: number): Promise<void>
+    sendPressure(value: number, options?: { note?: number; channel?: number }): Promise<void>
+    sendMIDIEvent(status: number, data1: number, data2?: number): Promise<void>
+    sendSysEx(data: Uint8Array): Promise<void>
+    sendUMP(words: Uint32Array): Promise<void>
+    scheduleMIDI(data: Uint8Array, options: { sampleTime: number; cable?: number }): Promise<void>
+    scheduleUMP(words: Uint32Array, options: { sampleTime: number; cable?: number }): Promise<void>
+    allNotesOff(channel?: number): Promise<void>
+  }
+  class AVAudioUnitSampler extends AVAudioUnitMIDIInstrument {
+    static create(): Promise<AVAudioUnitSampler>
+    loadSoundBank(path: string, options: { program: number; bankMSB: number; bankLSB: number }): Promise<void>
+    loadInstrument(path: string): Promise<void>
+    loadAudioFiles(paths: readonly string[]): Promise<void>
+  }
+
+  class AVAudioSequencer {
+    private constructor()
+    static create(engine?: AVAudioEngine): Promise<AVAudioSequencer>
+    load(path: string, options?: { preserveTracks?: boolean }): Promise<void>
+    loadData(data: Uint8Array, options?: { preserveTracks?: boolean }): Promise<void>
+    exportData(options?: { timeResolution?: number }): Promise<Uint8Array>
+    write(path: string, options?: { timeResolution?: number; overwrite?: boolean }): Promise<void>
+    getTracks(): Promise<readonly AVMusicTrack[]>
+    getTempoTrack(): Promise<AVMusicTrack>
+    getUserInfoData(): Promise<Uint8Array>
+    reverseEvents(): Promise<void>
+    observeUserEvents(options?: { queueSize?: number }): Promise<{ read(): Promise<readonly { track: AVMusicTrack; beat: number; data: Uint8Array; sequence: string; discontinuity: boolean }[] | null>; close(): Promise<void>; getStatistics(): Promise<AVAudio.EventStatistics> }>
+    createTrack(): Promise<AVMusicTrack>
+    removeTrack(track: AVMusicTrack): Promise<void>
+    getState(): Promise<{ isPlaying: boolean; currentPositionInBeats: number; currentPositionInSeconds: number; rate: number; hostTime: string }>
+    prepareToPlay(): Promise<void>
+    start(): Promise<void>
+    stop(): Promise<void>
+    setPosition(options: { beats: number } | { seconds: number }): Promise<void>
+    setRate(rate: number): Promise<void>
+    secondsForBeats(beats: number): Promise<number>
+    beatsForSeconds(seconds: number): Promise<number>
+    hostTimeForBeats(beats: number): Promise<string>
+    beatsForHostTime(hostTime: string): Promise<number>
+    dispose(): Promise<void>
+  }
+  class AVMusicTrack {
+    private constructor()
+    readonly id: string
+    getState(): Promise<AVAudio.TrackState>
+    configure(properties: Partial<Omit<AVAudio.TrackState, 'lengthInSeconds' | 'timeResolution'>>): Promise<void>
+    addEvents(events: readonly AVAudio.TimedEvent[]): Promise<void>
+    getEvents(range?: { startBeat: number; endBeat: number }): Promise<readonly AVAudio.EnumeratedEvent[]>
+    clear(range: { startBeat: number; endBeat: number }): Promise<void>
+    cut(range: { startBeat: number; endBeat: number }): Promise<void>
+    move(range: { startBeat: number; endBeat: number; byBeats: number }): Promise<void>
+    copyEvents(source: AVMusicTrack, options: { startBeat: number; endBeat: number; insertAtBeat: number; mode?: 'copy' | 'merge' }): Promise<void>
+  }
+
+  namespace AVAudioEnvironmentNode {
+    interface Configuration { listenerPosition?: AVAudio.Point3D; listenerVectorOrientation?: AVAudio.VectorOrientation; listenerAngularOrientation?: AVAudio.AngularOrientation; outputType?: number; outputVolume?: number; distanceAttenuation?: { model?: 'exponential' | 'inverse' | 'linear'; referenceDistance?: number; maximumDistance?: number; rolloffFactor?: number }; reverb?: { enabled?: boolean; level?: number; filter?: { frequency?: number; bandwidth?: number; gain?: number } } }
+  }
+  class AVAudioEnvironmentNode extends AVAudioNode {
+    static create(): Promise<AVAudioEnvironmentNode>
+    getConfiguration(): Promise<AVAudioEnvironmentNode.Configuration & { applicableRenderingAlgorithms: readonly number[]; nextAvailableInputBus: number }>
+    configure(properties: AVAudioEnvironmentNode.Configuration): Promise<void>
+    loadReverbPreset(preset: number): Promise<void>
+  }
+
+  /** iOS/iPadOS 27+ screen capture in a live main App script. The system picker authorizes shared content. */
+  namespace ScreenCapture {
+    const isSupported: boolean
+    const isAvailable: boolean
+    function getRecordingCapabilities(): ScreenCaptureRecordingCapabilities
+    function createSession(options?: ScreenCaptureOptions): Promise<ScreenCaptureSession>
+    function start(options?: ScreenCaptureOptions): Promise<ScreenCaptureSession>
+    function capture(options?: ScreenCaptureCaptureOptions): Promise<ScreenCaptureImageFrame>
+    function presentRecordingEditor(filePath: string): Promise<void>
+  }
+
+  type ScreenCaptureScope = "system" | "display" | "app"
+  type ScreenCaptureState = "ready" | "starting" | "running" | "stopping" | "stopped" | "failed"
+  type ScreenCaptureFrameStatus = "complete" | "idle" | "blank" | "suspended" | "started" | "stopped" | "unknown"
+
+  interface ScreenCaptureOptions {
+    scope?: ScreenCaptureScope
+    picker?: { showsMicrophoneControl?: boolean; showsCameraControl?: boolean }
+    configuration?: ScreenCaptureConfiguration
+    signal?: import("scripting").AbortSignal
+  }
+  interface ScreenCaptureConfiguration {
+    preset?: "hdrRecordingPreservedSDRHDR10"
+    width?: number
+    height?: number
+    capturesAudio?: boolean
+    sampleRate?: number
+    channelCount?: number
+    excludesCurrentProcessAudio?: boolean
+    captureDynamicRange?: "sdr" | "hdrCanonicalDisplay"
+  }
+  interface ScreenCaptureCaptureOptions extends ScreenCaptureOptions {
+    delayMs?: number
+    timeoutMs?: number
+    image?: ScreenCaptureImageOptions
+  }
+  interface ScreenCaptureReadOptions {
+    timeoutMs?: number
+    signal?: import("scripting").AbortSignal
+  }
+  interface ScreenCaptureImageOptions {
+    maxDimension?: number
+    dynamicRange?: "preserve" | "sdr"
+  }
+  interface ScreenCaptureSelection {
+    readonly requestedScope: ScreenCaptureScope
+    readonly style: "display" | "window" | "unknown"
+    readonly contentRect: ScreenCaptureRect
+    readonly pointPixelScale: number
+    readonly isMicrophoneEnabled: boolean
+    readonly isCameraEnabled: boolean
+  }
+  interface ScreenCaptureSession {
+    readonly id: string
+    readonly state: ScreenCaptureState
+    readonly isCapturing: boolean
+    readonly selection: ScreenCaptureSelection
+    readonly configuration: Readonly<ScreenCaptureConfiguration>
+    readonly timing: ScreenCaptureClockInfo
+    readonly activity: "unknown" | "active" | "inactive"
+    readonly closed: Promise<ScreenCaptureEnd>
+    onStateChanged: ((state: ScreenCaptureState) => void) | null
+    onFrameStatusChanged: ((status: ScreenCaptureFrameStatus) => void) | null
+    onActivityChanged: ((activity: "active" | "inactive") => void) | null
+    start(): Promise<void>
+    stop(): Promise<ScreenCaptureEnd>
+    nextFrame(options?: ScreenCaptureReadOptions & { image?: ScreenCaptureImageOptions }): Promise<ScreenCaptureImageFrame>
+    latestFrame(options?: { maxAgeMs?: number; image?: ScreenCaptureImageOptions }): Promise<ScreenCaptureImageFrame | null>
+    addVideoOutput(options?: ScreenCaptureVideoOutputOptions): Promise<ScreenCaptureVideoOutput>
+    addAudioOutput(options: ScreenCaptureAudioOutputOptions): Promise<ScreenCaptureAudioOutput>
+    addRecordingOutput(options: ScreenCaptureRecordingOptions): Promise<ScreenCaptureRecording>
+    addClipBufferingOutput(): Promise<ScreenCaptureClipBuffer>
+    addVideoEffectOutput(cameraDevice: AVCaptureDevice): Promise<ScreenCaptureVideoEffect>
+    getStatistics(): ScreenCaptureStatistics
+  }
+  interface ScreenCaptureVideoOutput {
+    readonly samples: AsyncIterable<ScreenCaptureVideoSample>
+    readonly closed: Promise<ScreenCaptureOutputEnd>
+    onError: ((error: ScreenCaptureError) => void) | null
+    getStatistics(): ScreenCaptureOutputStatistics
+    dispose(): Promise<void>
+  }
+  interface ScreenCaptureAudioOutput {
+    readonly source: "system" | "microphone"
+    readonly samples: AsyncIterable<ScreenCaptureAudioSample>
+    readonly closed: Promise<ScreenCaptureOutputEnd>
+    onError: ((error: ScreenCaptureError) => void) | null
+    getStatistics(): ScreenCaptureOutputStatistics
+    dispose(): Promise<void>
+  }
+  interface ScreenCaptureVideoOutputOptions {
+    maxFPS?: number
+    buffering?: ScreenCaptureBuffering
+  }
+  interface ScreenCaptureAudioOutputOptions {
+    source: "system" | "microphone"
+    buffering?: ScreenCaptureBuffering
+  }
+  interface ScreenCaptureBuffering {
+    capacity?: number
+    overflow?: "dropOldest" | "dropNewest" | "error"
+  }
+  interface ScreenCaptureRecordingCapabilities {
+    readonly videoCodecs: readonly string[]
+    readonly fileTypes: readonly string[]
+  }
+  interface ScreenCaptureRecordingOptions {
+    filePath: string
+    videoCodecType?: string
+    outputFileType?: string
+    mixesAudioWithMicrophone?: boolean
+    overwrite?: boolean
+  }
+  interface ScreenCaptureRecording {
+    readonly state: "prepared" | "recording" | "finishing" | "finished" | "failed"
+    readonly recordedDuration: number
+    readonly recordedFileSize: number
+    readonly finished: Promise<ScreenCaptureFileResult>
+    onStateChanged: ((state: ScreenCaptureRecording["state"]) => void) | null
+    stop(): Promise<ScreenCaptureFileResult>
+  }
+  interface ScreenCaptureFileResult { filePath: string; duration: number; fileSize: number }
+  interface ScreenCaptureClipBuffer {
+    readonly state: "starting" | "buffering" | "stopping" | "stopped" | "failed"
+    readonly maximumDuration: 15
+    onStateChanged: ((state: ScreenCaptureClipBuffer["state"]) => void) | null
+    onError: ((error: ScreenCaptureError) => void) | null
+    exportClip(options: { filePath: string; duration: number; overwrite?: boolean }): Promise<ScreenCaptureFileResult>
+    stop(): Promise<void>
+  }
+  interface ScreenCaptureVideoEffect {
+    readonly state: "prepared" | "starting" | "active" | "stopped" | "failed"
+    readonly cameraDevice: AVCaptureDevice
+    onStateChanged: ((state: ScreenCaptureVideoEffect["state"]) => void) | null
+    onError: ((error: ScreenCaptureError) => void) | null
+    setCameraDevice(device: AVCaptureDevice): Promise<void>
+    stop(): Promise<void>
+  }
+
+  interface ScreenCaptureRect { x: number; y: number; width: number; height: number }
+  interface ScreenCaptureTime {
+    value: bigint; timescale: number; epoch: bigint; flags: number
+    seconds: number | null
+  }
+  interface ScreenCaptureSampleTiming {
+    presentationTime: ScreenCaptureTime
+    decodeTime: ScreenCaptureTime
+    duration: ScreenCaptureTime
+    hostTimeSeconds: number | null
+  }
+  interface ScreenCaptureClockInfo {
+    readonly kind: "host" | "other" | "unavailable"
+    currentTime(): ScreenCaptureTime | null
+  }
+  interface ScreenCaptureVideoMetadata {
+    readonly status: ScreenCaptureFrameStatus
+    readonly displayTime: bigint | null
+    readonly scaleFactor: number | null
+    readonly contentScale: number | null
+    readonly contentRect: ScreenCaptureRect | null
+    readonly screenRect: ScreenCaptureRect | null
+    readonly videoOrientation: number | null
+  }
+  interface ScreenCaptureVideoFormat {
+    readonly width: number; readonly height: number
+    readonly pixelFormat: string
+    readonly pixelFormatCode: number
+    readonly planeCount: number
+    readonly bitDepth: number | null
+    readonly attachments: Readonly<Record<string, ScreenCaptureAttachmentValue>>
+  }
+  type ScreenCaptureAttachmentValue = null | boolean | number | string | bigint | Data
+    | readonly ScreenCaptureAttachmentValue[] | { readonly [key: string]: ScreenCaptureAttachmentValue }
+  interface ScreenCaptureVideoSample {
+    readonly sequence: number
+    readonly timing: ScreenCaptureSampleTiming
+    readonly metadata: ScreenCaptureVideoMetadata
+    readonly format: ScreenCaptureVideoFormat | null
+    readonly hasImage: boolean
+    readonly disposed: boolean
+    toImage(options?: ScreenCaptureImageOptions): Promise<UIImage>
+    /** Independently retains a complete native sample for timestamped playback. iOS 27+. */
+    toMediaSample(): MediaSample
+    copyPixelPlanes(): Promise<readonly ScreenCapturePixelPlane[]>
+    dispose(): void
+  }
+  interface ScreenCapturePixelPlane {
+    data: Data; width: number; height: number; bytesPerRow: number
+  }
+  interface ScreenCaptureAudioFormat {
+    sampleRate: number; formatID: string; formatFlags: number
+    bytesPerPacket: number; framesPerPacket: number; bytesPerFrame: number
+    channelsPerFrame: number; bitsPerChannel: number
+    channelLayout: Data | null
+  }
+  interface ScreenCaptureAudioSample {
+    readonly source: "system" | "microphone"
+    readonly sequence: number
+    readonly timing: ScreenCaptureSampleTiming
+    readonly format: ScreenCaptureAudioFormat
+    readonly sampleCount: number
+    readonly discontinuity: boolean | null
+    readonly disposed: boolean
+    copyAudioBuffers(): Promise<readonly { numberChannels: number; data: Data }[]>
+    dispose(): void
+  }
+  interface ScreenCaptureImageFrame {
+    readonly image: UIImage
+    readonly sequence: number
+    readonly timing: ScreenCaptureSampleTiming
+    readonly metadata: ScreenCaptureVideoMetadata
+    readonly sourceFormat: ScreenCaptureVideoFormat
+  }
+  interface ScreenCaptureEnd {
+    reason: "stopped" | "userStopped" | "systemStopped" | "aborted" | "ownerDisposed" | "failed"
+    error: ScreenCaptureError | null
+    recordings: readonly ScreenCaptureRecordingCompletion[]
+  }
+  interface ScreenCaptureRecordingCompletion {
+    result: ScreenCaptureFileResult | null
+    error: ScreenCaptureError | null
+  }
+  interface ScreenCaptureOutputEnd { reason: "disposed" | "sessionEnded" | "failed"; error: ScreenCaptureError | null }
+  interface ScreenCaptureError extends Error {
+    code: ScreenCaptureErrorCode
+    nativeDomain?: string; nativeCode?: number
+    cleanupError?: ScreenCaptureError
+  }
+  type ScreenCaptureErrorCode = "unsupportedOS" | "unsupportedContext" | "notForeground"
+    | "systemUnavailable" | "pickerBusy" | "invalidArgument" | "userCancelled" | "aborted"
+    | "scopeMismatch" | "notSupported" | "permissionDenied" | "invalidState"
+    | "consumerBusy" | "timeout" | "sessionEnded" | "startFailed" | "captureFailed"
+    | "stopFailed" | "outputFailed" | "bufferOverflow" | "fileExists" | "fileIO"
+    | "conversionUnsupported" | "resourceBusy" | "accessDenied"
+    | "ERR_PRO_REQUIRED" | "SCRIPT_API_ACCESS_DENIED" | "SCRIPT_PERMISSION_PERSISTENCE_FAILED" | "EACCES"
+  interface ScreenCaptureOutputStatistics {
+    receivedSamples: number; deliveredSamples: number; droppedSamples: number
+    queuedSamples: number; retainedSamples: number; retainedBytes: number | null
+  }
+  interface ScreenCaptureStatistics {
+    videoSamples: number; systemAudioSamples: number; microphoneSamples: number
+    outputs: readonly ScreenCaptureOutputStatistics[]
+    lastFrameStatus: ScreenCaptureFrameStatus | null
+  }
+
   /** Internal native asset transform. Usage and lifecycle: dedicated AssetCrypto spec. */
   namespace __AssetCrypto__ {
     interface OpenOptions {
@@ -203,16 +1303,19 @@ declare global {
   /** Public main-App script services and same-script entry/extension requests. Global; no import required. */
   namespace ScriptSession {
     type Value = null | boolean | number | string | Value[] | { [key: string]: Value }
-    interface ServiceRequest {
+    interface RequestInfo {
       readonly id: string
+      /** Immediate caller. Empty env means an older extension did not supply it. Not an authorization token. */
       readonly caller: { readonly name: string; readonly env: string }
+      readonly source: "scriptSessionCall" | "scriptSessionRequest"
     }
+    interface ServiceRequest extends RequestInfo {}
     /** One public serial handler per script. Duplicate registration throws; replies keep the script alive. */
     function serve(handler: (message: Value, request: ServiceRequest) => Value | void | Promise<Value | void>): string
     /** Main-App JS only. Reuses a server or starts index.tsx once, waiting up to 10 seconds for serve. Total timeout defaults to 30000 ms, range 100...300000. */
     function call<T extends Value = Value>(options: { name: string; message: Value; timeout?: number }): Promise<T>
-    /** Registers only from the main App index/home_screen. Returns a fresh ID; persist it for other entries. */
-    function register(handler: (message: Value) => Value | void | Promise<Value | void>): string
+    /** Registers only from the main App index/home_screen/camera_control. Returns a fresh ID; persist it for other entries. */
+    function register(handler: (message: Value, request: RequestInfo) => Value | void | Promise<Value | void>): string
     /** No autolaunch, wake or keep-alive. 64 KiB JSON; timeout defaults to 10000 ms, range 100...30000, including sleep. */
     function request<T extends Value = Value>(sessionID: string, message: Value, options?: { timeout?: number }): Promise<T>
     /** Only the registering context can unregister. Script exit also closes the session. */
@@ -521,8 +1624,9 @@ declare global {
     resetBytes(startIndex: number, endIndex: number): void
     /**
      * Creates a new data buffer by removing the specified number of bytes from the beginning of the original buffer.
-     * @param amount The number of bytes to strip from the input data buffer. The value must be less than the original data buffer's length.
+     * @param amount The number of bytes to strip from the input data buffer. The value must be nonnegative and less than the original data buffer's length.
      * @returns Returns a new data buffer created by removing the given number of bytes from the front of the original buffer.
+     * @throws an error if amount is negative or is at least the buffer length.
      */
     advanced(amount: number): Data
     /**
@@ -549,6 +1653,8 @@ declare global {
     decompressed(algorithm: CompressionAlgorithm): Data
     /**
      * Get a sub-data from the data.
+     * Indices follow JavaScript slice semantics: negative offsets count from the end,
+     * out-of-range offsets are clamped, and an end before the start returns empty Data.
      * @param start The start index of the sub-data, defaults to 0.
      * @param end The end index of the sub-data, defaults to the end of the data.
      * @returns Returns a new Data instance containing the bytes from start to end, or a new Data instance if no parameters are provided.
@@ -4655,6 +5761,143 @@ declare global {
     }
   }
 
+  /** Browser options fixed when the controller is created. Omitted values use WebKit defaults. */
+  interface WebViewConfigurationOptions {
+    ephemeral?: boolean
+    /** Inline playback also requires the video's playsinline attribute on iPhone. */
+    allowsInlineMediaPlayback?: boolean
+    mediaTypesRequiringUserActionForPlayback?: "none" | "audio" | "video" | "all"
+    allowsAirPlayForMediaPlayback?: boolean
+    allowsPictureInPictureMediaPlayback?: boolean
+    /** Controls scripts supplied by web content, independently of host evaluateJavaScript calls. */
+    allowsContentJavaScript?: boolean
+    preferredContentMode?: "recommended" | "mobile" | "desktop"
+    /** Allowing window.open does not itself provide a new-window host. */
+    javaScriptCanOpenWindowsAutomatically?: boolean
+    applicationNameForUserAgent?: string | null
+    suppressesIncrementalRendering?: boolean
+    ignoresViewportScaleLimits?: boolean
+    dataDetectorTypes?: Array<"none" | "all" | "phoneNumber" | "link" | "address" | "calendarEvent" | "trackingNumber" | "flightNumber" | "lookupSuggestion">
+    selectionGranularity?: "dynamic" | "character"
+  }
+  /** Settings that can change without recreating the webpage. */
+  interface WebViewSettings {
+    /** iOS 17+. Offscreen task scheduling. Omitted values use the current platform default. */
+    inactiveSchedulingPolicy: "suspend" | "throttle" | "none"
+    customUserAgent: string | null
+    allowsBackForwardNavigationGestures: boolean
+    allowsLinkPreview: boolean
+    isScrollEnabled: boolean
+    bounces: boolean
+    showsHorizontalScrollIndicator: boolean
+    showsVerticalScrollIndicator: boolean
+    /** Finite positive scale; 1 is the normal page size. */
+    pageZoom: number
+    isOpaque: boolean
+    isInspectable: boolean
+    isFindInteractionEnabled: boolean
+    /** Supported SDK color string, or null to restore the system background. Readback uses rgba(r,g,b,a). */
+    backgroundColor: string | null
+    underPageBackgroundColor: string | null
+  }
+  interface WebViewControllerOptions extends WebViewConfigurationOptions {
+    settings?: Partial<WebViewSettings>
+  }
+  interface WebViewState {
+    url: string | null
+    title: string | null
+    isLoading: boolean
+    estimatedProgress: number
+    canNavigateBack: boolean
+    canNavigateForward: boolean
+    hasOnlySecureContent: boolean
+    isDisposed: boolean
+    isAttached: boolean
+    isPresented: boolean
+  }
+  type WebViewContentWorld = "page" | { name: string }
+  type WebViewNavigationPolicy = "allow" | "cancel" | "download"
+  type WebViewJSONValue = null | boolean | number | string | WebViewJSONValue[] | { [key: string]: WebViewJSONValue }
+  interface WebViewFrameInfo {
+    /** Instance/document scoped token; expires on navigation/commit, process termination, disposal, or after 256 newer frame tokens. */
+    id: string
+    isMainFrame: boolean
+    url: string | null
+    securityOrigin: { protocol: string; host: string; port: number }
+  }
+  interface WebViewNavigationAction {
+    navigationId: string | null
+    url: string | null
+    method: string
+    headers: Record<string, string>
+    body: Data | null
+    timeoutInterval: number
+    navigationType: "linkActivated" | "reload" | "backForward" | "formResubmitted" | "formSubmitted" | "other"
+    sourceFrame: WebViewFrameInfo
+    targetFrame: WebViewFrameInfo | null
+    isMainFrame: boolean | null
+    /** The public iOS API does not expose a reliable user-gesture flag. */
+    isUserInitiated: null
+    shouldPerformDownload: boolean
+  }
+  interface WebViewNavigationResponse {
+    navigationId: string | null
+    url: string | null
+    mimeType: string | null
+    expectedContentLength: number
+    statusCode: number | null
+    headers: Record<string, string>
+    isForMainFrame: boolean
+    canShowMIMEType: boolean
+  }
+  interface WebViewRequest {
+    url: string
+    method?: string
+    headers?: Record<string, string>
+    body?: Data
+    /** Positive seconds; default 60. Headers and body apply to this request, not every subresource. */
+    timeoutInterval?: number
+    cachePolicy?: "useProtocolCachePolicy" | "reloadIgnoringLocalCacheData" | "returnCacheDataElseLoad" | "returnCacheDataDontLoad" | "reloadRevalidatingCacheData" | "reloadIgnoringLocalAndRemoteCacheData"
+  }
+  interface WebViewWaitOptions {
+    /** Positive seconds; omitted means no waiter timeout. Rejects with code timeout. */
+    timeout?: number
+    nextNavigation?: boolean
+    /** Default false. A waiter timeout normally leaves navigation running. */
+    cancelOnTimeout?: boolean
+  }
+  interface WebViewHistoryItem { id: string; url: string; initialURL: string; title: string | null }
+  interface WebViewHistory { backList: WebViewHistoryItem[]; currentItem: WebViewHistoryItem | null; forwardList: WebViewHistoryItem[] }
+  type WebViewEventType = "loadStart" | "redirect" | "commit" | "loadFinish" | "loadError" | "stateChange" | "webContentProcessTerminated" | "present" | "dismiss"
+  interface WebViewEvent {
+    type: WebViewEventType
+    navigationId: string | null
+    /** Main-document lifecycle events use true; unsupported subframe download errors use false. */
+    isMainFrame: boolean
+    state: WebViewState
+    error?: { code: string; message: string }
+  }
+  interface WebViewUserScriptOptions {
+    source: string
+    /** Default documentStart. Applies to future documents. */
+    injectionTime?: "documentStart" | "documentEnd"
+    /** Default true. */
+    forMainFrameOnly?: boolean
+    contentWorld?: WebViewContentWorld
+  }
+  interface WebViewJavaScriptOptions { contentWorld?: WebViewContentWorld; frameId?: string }
+  interface WebViewMessageOptions { contentWorld?: WebViewContentWorld; includeFrameInfo?: boolean }
+  interface WebViewMessageInfo { frame: WebViewFrameInfo; contentWorld: WebViewContentWorld }
+  interface WebViewCapabilities {
+    navigationPolicies: Array<"allow" | "cancel">
+    /** Download management is not available yet. A download decision cancels and emits an unsupported loadError. */
+    downloadPolicy: false
+    contentWorlds: boolean
+    frameTargeting: boolean
+    configurationOptions: Array<keyof WebViewConfigurationOptions>
+    runtimeSettings: Array<keyof WebViewSettings>
+  }
+
   /**
    * An object that displays interactive web content, such as for an in-app browser.
    */
@@ -4663,10 +5906,52 @@ declare global {
      * Create a new WebViewController.
      * @param options.ephemeral When true, the WebView uses a non-persistent data store so cookies and website data are isolated from the default container and discarded when the controller is released. Useful for sandboxed login flows or clean-slate scraping.
      */
-    constructor(options?: { ephemeral?: boolean })
+    constructor(options?: WebViewControllerOptions)
+    /** Explicit creation options; omitted fields retain platform defaults. Mutating this copy has no effect. */
+    readonly configuration: Readonly<WebViewConfigurationOptions>
+    /** State snapshots do not create a web view. Use getState for a consistent asynchronous read. */
+    readonly url: string | null
+    readonly title: string | null
+    readonly isLoading: boolean
+    readonly estimatedProgress: number
+    readonly canNavigateBack: boolean
+    readonly canNavigateForward: boolean
+    readonly hasOnlySecureContent: boolean
+    readonly isDisposed: boolean
+    readonly isAttached: boolean
+    /** Returns actual settings, creating the underlying web view if needed. */
+    getSettings(): Promise<WebViewSettings>
+    /** Validates the entire patch before applying it. Invalid values reject with code invalidArgument. */
+    setSettings(patch: Partial<WebViewSettings>): Promise<void>
+    getState(): Promise<WebViewState>
+    /** Supported option names; does not imply that hardware or system permissions are available. */
+    getCapabilities(): Promise<WebViewCapabilities>
     /**
-     * When the web view performs a request to load a resource, the function can determine whether or not to allow the request.
+     * Decides whether to allow a navigation. This callback does not intercept every subresource request.
      */
+    /** Takes precedence over shouldAllowRequest. Exceptions, invalid values and a 60-second timeout cancel. */
+    onNavigationAction?: (action: WebViewNavigationAction) => WebViewNavigationPolicy | Promise<WebViewNavigationPolicy>
+    /** Default: allow displayable MIME types, cancel others. Download currently reports unsupported. */
+    onNavigationResponse?: (response: WebViewNavigationResponse) => WebViewNavigationPolicy | Promise<WebViewNavigationPolicy>
+    loadRequest(request: WebViewRequest): Promise<boolean>
+    stopLoading(): Promise<void>
+    /** Revalidates the current page with the origin; does not promise to bypass every cache. */
+    reloadFromOrigin(): Promise<boolean>
+    getBackForwardList(): Promise<WebViewHistory>
+    goToHistoryItem(id: string): Promise<boolean>
+    addEventListener(type: WebViewEventType, listener: (event: WebViewEvent) => void): Promise<void>
+    removeEventListener(type: WebViewEventType, listener: (event: WebViewEvent) => void): Promise<void>
+    addUserScript(options: WebViewUserScriptOptions): Promise<string>
+    /** Removes future injection; cannot undo code already executed. Internal scripts are retained. */
+    removeUserScript(id: string): Promise<void>
+    removeAllUserScripts(): Promise<void>
+    /** Async function body with named JSON arguments. Defaults to the main frame in the page world. */
+    callAsyncJavaScript<T = any>(body: string, args?: Record<string, WebViewJSONValue>, options?: WebViewJavaScriptOptions): Promise<T>
+    removeScriptMessageHandler(name: string, options?: Pick<WebViewMessageOptions, "contentWorld">): Promise<void>
+    /** Compiles WebKit content-blocker JSON and installs it on this instance. Same id replaces atomically on success. */
+    addContentRuleList(options: { id: string; rules: string | Array<Record<string, any>> }): Promise<void>
+    removeContentRuleList(id: string): Promise<void>
+    removeAllContentRuleLists(): Promise<void>
     shouldAllowRequest?: (request: {
       /**
        * The URL of the request.
@@ -4720,9 +6005,9 @@ declare global {
      */
     loadData(data: Data, mimeType: string, encoding: string, baseURL: string): Promise<boolean>
     /**
-     * Wait for the WebView load completed, returns a Promise that resolves a boolean value indicates that whether it is successful.
+     * Waits for the first or current navigation. Resolves false on failure, replacement, process termination or disposal. A known terminal result is returned immediately.
      */
-    waitForLoad(): Promise<boolean>
+    waitForLoad(options?: WebViewWaitOptions): Promise<boolean>
     /**
      * Get current HTML content of the webpage, you must call this method after the website is loaded completed.
      */
@@ -4761,7 +6046,7 @@ declare global {
      * console.log(result) // "Hello!"
      * ```
      */
-    addScriptMessageHandler<P = any, R = any>(name: string, handler: (params?: P) => R): Promise<void>
+    addScriptMessageHandler<P = any, R = any>(name: string, handler: (params: P, info?: WebViewMessageInfo) => R | Promise<R>, options?: WebViewMessageOptions): Promise<void>
     /**
      * Present the WebView, returns a Promise that is resolved after the WebView is dismissed. If this WebViewController is used for the WebView view, this operation will be failure. And if this controller is presented, it can no longer use for WebView view.
      * @param fullscreen Whether present the WebView in fullscreen. Defaults to false.
@@ -4776,9 +6061,9 @@ declare global {
      */
     getCustomUserAgent(): string | null
     /**
-     * Set the custom user agent string of the WebView, returns a Promise that resolves with a boolean value indicates whether the operation is successful.
+     * Sets the custom user agent. Returns whether the change was accepted; a background caller applies it on the main queue. Await setSettings for application completion.
      * @param userAgent The custom user agent string, or `null` to reset to the default user agent.
-     * @returns A Promise that resolves with a boolean value indicates whether the operation is successful.
+     * @returns Whether the change was accepted.
      * @example
      * ```ts
      * const webView = new WebViewController()
@@ -5692,7 +6977,79 @@ If the event’s calendar does not support availability settings, this property�
    * The shared audio session instance.
    * An audio session acts as an intermediary between your app and the operating system — and, in turn, the underlying audio hardware.
    */
+  /** Media routing in the foreground main App; globals are provided by the native host. */
+  type ExternalDisplayState = "waiting" | "presenting" | "suspended" | "disposed"
+  namespace ExternalDisplay {
+    /** Registers external-display content for a visible UI owned by this main App script.
+     * Resolves without waiting for a display. A competing owner rejects. User connects AirPlay
+     * mirroring or a physical display through the system; this does not select receivers.
+     */
+    function createPresentation(): Promise<ExternalDisplayPresentation>
+  }
+  interface ExternalDisplayPresentation {
+    readonly state: ExternalDisplayState
+    /** Actual connected scene geometry in points; null while disconnected. */
+    readonly displayInfo: { width: number, height: number, scale: number } | null
+    /** Changes only; subscribe before reading state for the initial value. */
+    onStateChanged: ((state: ExternalDisplayState) => void) | null
+    /** Single-frame images only, at most 4096 by 4096 pixels. Does not prove receiver output. */
+    setImage(image: UIImage, options?: { contentMode?: "fit" | "fill", backgroundColor?: string }): Promise<void>
+    /** Replaces content with black; retains the presentation and ownership. */
+    clear(): Promise<void>
+    /** Terminal and idempotent. Releases the registration, image/window and callbacks. */
+    dispose(): void
+  }
+
+  namespace AirPlay {
+    /** Shows a panel containing the native AirPlay button. Tap it to open the system menu.
+     * Resolves when the panel closes, not when routing or playback succeeds.
+     * Rejects in unsupported environments, without a foreground host, or while another panel is open.
+     * Does not change the shared audio configuration or start playback.
+     */
+    function presentRoutePicker(options?: { prioritizesVideoDevices?: boolean }): Promise<void>
+  }
+
+  /** Reports additional playback routes, not a list of AirPlay devices. Main App only. */
+  class AVRouteDetector {
+    constructor()
+    /** Defaults to false. Detection consumes power; disable it when no longer needed.
+     * Enabling requires a foreground App script. Stops when the App leaves the foreground.
+     */
+    isRouteDetectionEnabled: boolean
+    /** False while disabled; does not prove that no receiver is nearby. */
+    readonly multipleRoutesDetected: boolean
+    /** Changes only; read the property after installing the callback for the initial state. */
+    onMultipleRoutesDetectedChanged: ((detected: boolean) => void) | null
+    /** Stops detection and releases observers and callbacks. Idempotent; the handle cannot be reused. */
+    dispose(): void
+  }
+
+  type AudioSessionRouteSharingPolicy = "default" | "longFormAudio" | "longFormVideo" | "independent" | "unknown"
+
   namespace SharedAudioSession {
+    /** Current process-wide policy. independent is system-managed. Main App only. */
+    const routeSharingPolicy: Promise<AudioSessionRouteSharingPolicy>
+    /** Sets category, mode, policy and options together without activating the session.
+     * Defaults: mode=default, routeSharingPolicy=default, options=[]. Affects all scripts in this process.
+     * Long-form policies require playback and default/moviePlayback/spokenAudio, with no options.
+     * Explicit allowAirPlay requires playAndRecord; playback enables it implicitly.
+     * Main App script context only. Invalid values reject with TypeError.
+     */
+    function configure(options: {
+      category: AudioSessionCategory
+      mode?: AudioSessionMode
+      routeSharingPolicy?: "default" | "longFormAudio" | "longFormVideo"
+      options?: AudioSessionCategoryOptions[]
+    }): Promise<void>
+    /** Prepares long-form video routing. The system may prompt when longFormVideo is configured.
+     * Requires a foreground main App script. This does not guarantee media delivery.
+     */
+    function prepareRouteSelectionForPlayback(): Promise<{
+      shouldStartPlayback: boolean
+      routeSelection: "none" | "local" | "external" | "unknown"
+    }>
+
+
 
     type AudioSessionSetActiveOptions = "notifyOthersOnDeactivation"
 
@@ -6033,9 +7390,11 @@ If the event’s calendar does not support availability settings, this property�
      * Mutually exclusive with `isMarkdown` — passing both as `true` will reject the promise.
      * If the SSML cannot be parsed, the promise rejects with `"Failed to parse SSML representation."`.
      *
-     * Inline SSML tags (e.g. `<prosody>`, `<voice>`, `<break>`) take precedence; the utterance-level
-     * `voice` / `rate` / `pitch` / `volume` options still apply as fallbacks for any text that is not
-     * overridden by inline tags.
+     * Per-call `rate`, `pitch`, and `volume` override the corresponding global Speech settings
+     * and provide default SSML prosody. Explicit inline prosody attributes take precedence.
+     * Rate uses an approximate mapping; the same value may sound different in plain text and
+     * SSML depending on the voice and system version. Voice options are fallbacks for inline
+     * voice selection. Custom XML entity declarations are not supported.
      *
      * See: https://developer.apple.com/documentation/avfaudio/avspeechutterance/init(ssmlrepresentation:)
      */
@@ -7108,14 +8467,14 @@ If the event’s calendar does not support availability settings, this property�
 
     convertScale(newTimescale: number, method: MediaTimeRoundingMethod): MediaTime
     getSeconds(): number
-    minus(other: MediaItem): MediaItem
-    plus(other: MediaItem): MediaItem
-    lt(other: MediaItem): boolean
-    gt(other: MediaItem): boolean
-    lte(other: MediaItem): boolean
-    gte(other: MediaItem): boolean
-    eq(other: MediaItem): boolean
-    neq(other: MediaItem): boolean
+    minus(other: MediaTime): MediaTime
+    plus(other: MediaTime): MediaTime
+    lt(other: MediaTime): boolean
+    gt(other: MediaTime): boolean
+    lte(other: MediaTime): boolean
+    gte(other: MediaTime): boolean
+    eq(other: MediaTime): boolean
+    neq(other: MediaTime): boolean
 
     /**
      * Makes a media time.
@@ -7846,6 +9205,20 @@ If the event’s calendar does not support availability settings, this property�
    * Use for playing audio or video.
    */
   class AVPlayer {
+    /** Allows external video playback; defaults to true. Does not disconnect AirPlay audio.
+     * May be set before setSource. External-playback controls require the main App script context.
+     */
+    allowsExternalPlayback: boolean
+    /** Whether this player is in external video playback mode, independently of the audio route. */
+    readonly isExternalPlaybackActive: boolean
+    /** Automatically use external video playback while an external screen is active. Defaults to false. */
+    usesExternalPlaybackWhileExternalScreenIsActive: boolean
+    /** External-video scaling. Defaults to resizeAspect. Settings persist across source changes. */
+    externalPlaybackVideoGravity: "resize" | "resizeAspect" | "resizeAspectFill"
+    /** Changes only; no initial callback. Cleared by dispose. */
+    onExternalPlaybackActiveChanged: ((active: boolean) => void) | null
+
+
     constructor()
     /**
      * Controls the volume of the AVPlayer.
@@ -15082,8 +16455,10 @@ If the event’s calendar does not support availability settings, this property�
     /**
      * Queries the medications a person is tracking in the Health app.
      *
-     * Medications use per-object authorization: the first time you call this, the system asks the
-     * person to choose which medications your script may access. Authorization is requested automatically.
+     * Automatically asks the person to choose which medications Scripting may read. Access also
+     * covers their dose events. Later queries may show medication selection again. Empty results
+     * do not indicate whether read access was granted. Closing selection may return an empty result;
+     * request failures reject the promise.
      *
      * Requires iOS 26.0 or later.
      * @param options Optional parameters for the query, including:
@@ -15103,6 +16478,11 @@ If the event’s calendar does not support availability settings, this property�
 
     /**
      * Queries logged medication dose events (each time a medication was taken, skipped, snoozed, etc.).
+     *
+     * Automatically requests access to the selected medications, including their dose events.
+     * Can be called without first querying medications. The system may show medication selection
+     * again on later queries. Closing selection may return an empty result; request failures reject
+     * the promise.
      *
      * Requires iOS 26.0 or later.
      * @param options Optional parameters for the query, including:
@@ -16244,7 +17624,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
   /**
    * Controls background keep-alive behavior for the Scripting App.
    * 
-   * Available in the main Scripting App: `Script.env === "index"` or `Script.env === "home_screen"`.
+   * Available in the main Scripting App: `Script.env === "index"`, `"home_screen"`, or `"camera_control"`.
    *
    * Request `keepAlive()` while foregrounded, before starting background work.
    * Release it with `stopKeepAlive()` when the work finishes.
@@ -19495,7 +20875,7 @@ If the length of the value parameter exceeds the length of the `maximumUpdateVal
      */
     getItems(): Promise<SpotlightIndexedItem[]>
   }
-  /** Persistent HTTP(S) download queues. Available in main-app scripts (index and home_screen). */
+  /** Persistent HTTP(S) download queues. Available in main-app scripts (index, home_screen, and camera_control). */
   namespace DownloadManager {
     type Mode = 'background' | 'foreground'
     type State = 'waiting' | 'running' | 'retrying' | 'suspended' | 'verifying' | 'publishing' | 'canceled' | 'completed' | 'failed' | 'removed'
