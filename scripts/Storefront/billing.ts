@@ -187,3 +187,16 @@ export function rankAccounts(
       return a.account.sortIndex - b.account.sortIndex
     })
 }
+
+/**
+ * Money spent per currency, in first-seen order. Never one number: summing
+ * across currencies would need a rate this module deliberately does not have
+ * (FR-SUB-04).
+ */
+export function totalsByCurrency(entries: Entry[]): [string, number][] {
+  const totals = new Map<string, number>()
+  for (const entry of entries) {
+    totals.set(entry.currency, (totals.get(entry.currency) ?? 0) + entry.price)
+  }
+  return Array.from(totals.entries())
+}

@@ -6,13 +6,22 @@
  * and intent.tsx belong to one script and share its private domain.
  */
 import { defaultSettings } from './types'
-import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from './types'
+import type {
+  Account,
+  AppRef,
+  Entry,
+  Favorite,
+  GiftCard,
+  Settings,
+  TFItem
+} from './types'
 
 const KEY_ACCOUNTS = 'accounts'
 const KEY_APP_REFS = 'appRefs'
 const KEY_ENTRIES = 'entries'
 const KEY_TF_ITEMS = 'tfItems'
 const KEY_GIFT_CARDS = 'giftCards'
+const KEY_FAVORITES = 'favorites'
 const KEY_CURRENT_ACCOUNT = 'currentAccountId'
 const KEY_SETTINGS = 'settings'
 
@@ -59,6 +68,14 @@ export function loadGiftCards(): GiftCard[] {
 
 export function saveGiftCards(cards: GiftCard[]) {
   Storage.set(KEY_GIFT_CARDS, cards)
+}
+
+export function loadFavorites(): Favorite[] {
+  return Storage.get<Favorite[]>(KEY_FAVORITES) ?? []
+}
+
+export function saveFavorites(favorites: Favorite[]) {
+  Storage.set(KEY_FAVORITES, favorites)
 }
 
 export function getCurrentAccountId(): string | null {

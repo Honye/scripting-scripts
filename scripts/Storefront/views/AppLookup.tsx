@@ -21,6 +21,7 @@ import { RegionPicker } from '../components/RegionPicker'
 import { AppDetail } from './AppDetail'
 import type { AppInfo } from '../api/itunes'
 import type { Region } from '../regions'
+import type { AppRef } from '../types'
 
 type Results =
   | { state: 'idle' }
@@ -42,7 +43,9 @@ type Results =
  */
 export function AppLookup({
   accountRegions,
-  mode = 'browse'
+  mode = 'browse',
+  isFavorite,
+  onToggleFavorite
 }: {
   accountRegions: string[]
   /**
@@ -51,6 +54,9 @@ export function AppLookup({
    * instead of growing a second, worse app picker.
    */
   mode?: 'browse' | 'select'
+  /** Read when a comparison opens, so the star starts in the right state. */
+  isFavorite?: (appId: string) => boolean
+  onToggleFavorite?: (favorite: boolean, ref: AppRef) => void
 }) {
   const dismiss = Navigation.useDismiss()
   const [input, setInput] = useState('')
@@ -76,7 +82,13 @@ export function AppLookup({
     )
     await Navigation.present({
       element: (
-        <AppDetail appId={id} pinnedRegions={pinned} accountRegions={accountRegions} />
+        <AppDetail
+          appId={id}
+          pinnedRegions={pinned}
+          accountRegions={accountRegions}
+          favorited={isFavorite?.(id) ?? false}
+          onToggleFavorite={onToggleFavorite}
+        />
       )
     })
   }

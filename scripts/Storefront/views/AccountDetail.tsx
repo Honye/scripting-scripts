@@ -5,6 +5,7 @@ import {
   Image,
   List,
   Navigation,
+  NavigationLink,
   NavigationStack,
   ProgressView,
   Section,
@@ -27,7 +28,7 @@ import {
 } from '../billing'
 import { hasPassword, revealAndCopyPassword } from '../credentials'
 import { openStorefront } from '../storefront_link'
-import { getCurrentAccountId, loadAccounts } from '../store'
+import { getCurrentAccountId, loadAccounts, loadFavorites } from '../store'
 import { alertLevelFor } from '../billing'
 import { AccountEditor } from './AccountEditor'
 import { GiftCards } from './GiftCards'
@@ -59,7 +60,8 @@ export function AccountDetail({
   onSettingsChange,
   onSaveEntry,
   onDeleteEntry,
-  walletFor
+  walletFor,
+  favoritesFor
 }: {
   account: Account
   accounts: Account[]
@@ -76,6 +78,8 @@ export function AccountDetail({
   onDeleteEntry: (entryId: string) => void
   /** Builds the gift card wallet, optionally narrowed to one region. */
   walletFor: (focusRegion?: string) => VirtualNode
+  /** Builds the favorites list narrowed to one account. */
+  favoritesFor: (accountId: string) => VirtualNode
 }) {
   const dismiss = Navigation.useDismiss()
   const [account, setAccount] = useState<Account>(initialAccount)
@@ -89,6 +93,9 @@ export function AccountDetail({
     entries.filter((e) => e.accountId === initialAccount.id)
   )
   const [revealed, setRevealed] = useState<string | null>(null)
+  const [favoriteCount] = useState(
+    () => loadFavorites().filter((f) => f.accountIds.includes(initialAccount.id)).length
+  )
   const [status, setStatus] = useState('')
 
   const region = regionFor(account.region)
@@ -501,6 +508,19 @@ export function AccountDetail({
             }}
           />
         )}
+      </Section>
+
+      <Section>
+        <NavigationLink destination={favoritesFor(account.id)}>
+          <HStack>
+            <Image systemName="star" />
+            <Text foregroundStyle="label">{i18n.favoriteApps}</Text>
+            <Spacer />
+            <Text font="caption" foregroundStyle="secondaryLabel">
+              {favoriteCount > 0 ? String(favoriteCount) : ''}
+            </Text>
+          </HStack>
+        </NavigationLink>
       </Section>
 
       <Section footer={<Text>{i18n.switchAssistantSubtitle}</Text>}>

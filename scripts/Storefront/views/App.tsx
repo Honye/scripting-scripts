@@ -12,15 +12,18 @@ import {
 import { i18n } from '../i18n'
 import { AccountList } from './AccountList'
 import { GiftCardWallet } from './GiftCardWallet'
+import { FavoriteList } from './FavoriteList'
 import {
   loadAccounts,
   loadEntries,
+  loadFavorites,
   loadGiftCards,
   loadSettings,
   loadTFItems,
   getCurrentAccountId,
   saveAccounts,
   saveEntries,
+  saveFavorites,
   saveGiftCards,
   saveSettings,
   saveTFItems,
@@ -30,9 +33,18 @@ import { clearGiftCode, clearPassword } from '../credentials'
 import { advanceEntry, isBillable } from '../billing'
 import { rescheduleAll } from '../notifications'
 import { renderReminder } from '../notify_text'
+import { newFavorite, unlinkAccount, unlinkEntry } from '../favorites'
 import { loadAppRefs, saveAppRefs } from '../store'
 import type { EntryDraft } from './EntryEditor'
-import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from '../types'
+import type {
+  Account,
+  AppRef,
+  Entry,
+  Favorite,
+  GiftCard,
+  Settings,
+  TFItem
+} from '../types'
 
 /**
  * Owns all persisted state. Following the repo convention, state lives in one
@@ -53,6 +65,7 @@ export function App() {
   const [appRefs, setAppRefs] = useState<Record<string, AppRef>>(() => loadAppRefs())
   const [tfItems, setTFItems] = useState<TFItem[]>(() => loadTFItems())
   const [giftCards, setGiftCards] = useState<GiftCard[]>(() => loadGiftCards())
+  const [favorites, setFavorites] = useState<Favorite[]>(() => loadFavorites())
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
   const [currentId, setCurrentId] = useState<string | null>(() =>
     getCurrentAccountId()
@@ -81,6 +94,10 @@ export function App() {
   useEffect(() => {
     saveGiftCards(giftCards)
   }, [giftCards])
+
+  useEffect(() => {
+    saveFavorites(favorites)
+  }, [favorites])
 
   useEffect(() => {
     saveSettings(settings)
@@ -190,6 +207,7 @@ export function App() {
         c.redeemedAccountId === accountId ? { ...c, redeemedAccountId: undefined } : c
       )
     )
+    setFavorites((prev) => unlinkAccount(prev, accountId))
     setCurrentId((prev) => (prev === accountId ? null : prev))
   }
 
@@ -210,6 +228,39 @@ export function App() {
 
   const deleteEntry = (entryId: string) => {
     setEntries((prev) => prev.filter((e) => e.id !== entryId))
+    setFavorites((prev) => unlinkEntry(prev, entryId))
+  }
+
+  /** The app ref rides along so the favorite has a name and icon to show. */
+  const saveFavorite = (favorite: Favorite, appRef?: AppRef) => {
+    setFavorites((prev) => {
+      const index = prev.findIndex((f) => f.appId === favorite.appId)
+      if (index < 0) return [...prev, favorite]
+      const next = [...prev]
+      next[index] = favorite
+      return next
+    })
+    if (appRef != null) {
+      setAppRefs((prev) => ({ ...prev, [appRef.appId]: appRef }))
+    }
+  }
+
+  const deleteFavorite = (appId: string) => {
+    setFavorites((prev) => prev.filter((f) => f.appId !== appId))
+  }
+
+  /** The star on the price comparison: add with defaults, or remove. */
+  const toggleFavorite = (on: boolean, appRef: AppRef) => {
+    if (!on) {
+      deleteFavorite(appRef.appId)
+      return
+    }
+    setFavorites((prev) =>
+      prev.some((f) => f.appId === appRef.appId)
+        ? prev
+        : [...prev, newFavorite(appRef.appId)]
+    )
+    setAppRefs((prev) => ({ ...prev, [appRef.appId]: appRef }))
   }
 
   /** After a restore, Storage is the truth and every in-memory copy is stale. */
@@ -219,6 +270,7 @@ export function App() {
     setAppRefs(loadAppRefs())
     setTFItems(loadTFItems())
     setGiftCards(loadGiftCards())
+    setFavorites(loadFavorites())
     setSettings(loadSettings())
     setCurrentId(getCurrentAccountId())
   }
@@ -299,6 +351,23 @@ export function App() {
             onSaveGiftCard={saveGiftCard}
             onDeleteGiftCards={deleteGiftCards}
             onRestored={reloadFromStorage}
+            onSaveFavorite={saveFavorite}
+            onDeleteFavorite={deleteFavorite}
+            onToggleFavorite={toggleFavorite}
+          />
+        </NavigationStack>
+      </Tab>
+
+      <Tab title={i18n.favoritesTab} systemImage="star">
+        <NavigationStack>
+          <FavoriteList
+            favorites={favorites}
+            accounts={accounts}
+            entries={entries}
+            appRefs={appRefs}
+            onSave={saveFavorite}
+            onRemove={deleteFavorite}
+            onSaveEntry={saveEntry}
           />
         </NavigationStack>
       </Tab>

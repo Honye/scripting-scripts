@@ -3,17 +3,28 @@ import {
   loadAccounts,
   loadAppRefs,
   loadEntries,
+  loadFavorites,
   loadGiftCards,
   loadSettings,
   loadTFItems,
   saveAccounts,
   saveAppRefs,
   saveEntries,
+  saveFavorites,
   saveGiftCards,
   saveSettings,
   saveTFItems
 } from './store'
-import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from './types'
+import { sanitizeFavorites } from './favorites'
+import type {
+  Account,
+  AppRef,
+  Entry,
+  Favorite,
+  GiftCard,
+  Settings,
+  TFItem
+} from './types'
 
 /**
  * JSON backup (FR-DATA-01..04).
@@ -40,6 +51,8 @@ export type Backup = {
   appRefs: Record<string, AppRef>
   tfItems: TFItem[]
   giftCards: GiftCard[]
+  /** Absent from backups made before favorites existed; read as none. */
+  favorites: Favorite[]
   settings: Settings
 }
 
@@ -52,6 +65,7 @@ export function buildBackup(now: number = Date.now()): Backup {
     appRefs: loadAppRefs(),
     tfItems: loadTFItems(),
     giftCards: loadGiftCards(),
+    favorites: loadFavorites(),
     settings: loadSettings()
   }
 }
@@ -132,6 +146,17 @@ export function parseBackup(text: string): ParseResult {
     }
   }
 
+  // Links to accounts or records missing from this backup are dropped, not
+  // fatal: a favorite is still worth restoring without them.
+  const favorites = sanitizeFavorites(
+    raw.favorites,
+    ids,
+    new Set((raw.entries as any[]).map((e) => e.id))
+  )
+  if (favorites == null) {
+    return { ok: false, reason: 'favorites malformed' }
+  }
+
   return {
     ok: true,
     value: {
@@ -143,6 +168,7 @@ export function parseBackup(text: string): ParseResult {
         raw.appRefs != null && typeof raw.appRefs === 'object' ? raw.appRefs : {},
       tfItems: raw.tfItems ?? [],
       giftCards: raw.giftCards ?? [],
+      favorites,
       settings: { ...defaultSettings, ...(raw.settings ?? {}) }
     }
   }
@@ -155,5 +181,6 @@ export function applyBackup(backup: Backup) {
   saveAppRefs(backup.appRefs)
   saveTFItems(backup.tfItems)
   saveGiftCards(backup.giftCards)
+  saveFavorites(backup.favorites)
   saveSettings(backup.settings)
 }

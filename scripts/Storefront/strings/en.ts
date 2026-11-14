@@ -393,11 +393,50 @@ export const en = {
       ? 'Its code is removed from the Keychain too. This cannot be undone.'
       : `${count} cards and their codes will be removed from the Keychain. This cannot be undone.`,
 
+  // Favorites
+  favoritesTab: 'Favorites',
+  favoritesEmpty: 'No favorite apps yet',
+  favoritesEmptyHint:
+    'Tap + to add an app, or tap the star on an app\'s price comparison.',
+  favoritesNoMatch: 'No favorites match these filters',
+  favoriteAdd: 'Add to favorites',
+  favoriteRemove: 'Remove from favorites',
+  favoriteRemoveConfirm: (name: string) =>
+    `Remove ${name} from favorites? Its records are kept.`,
+  favoriteNote: 'Note',
+  favoriteApps: 'Favorite apps',
+  tags: 'Tags',
+  tagAll: 'All',
+  tagUntagged: 'Untagged',
+  tagsEmpty: 'No tags',
+  editTags: 'Edit tags',
+  tagNewPrompt: 'New tag',
+  tagExisting: 'All tags',
+  tagEditorHint: 'Tags are shared by all favorites. Matching ignores case.',
+  clearFilters: 'Clear',
+  filterAllAccounts: 'All accounts',
+  linkedAccounts: 'Linked accounts',
+  linkedAccountsEmpty: 'Not linked to any account',
+  linkedAccountsHint: 'Accounts that own or have downloaded this app.',
+  chooseAccounts: 'Choose accounts',
+  suggestedAccounts: 'Has records here, not linked',
+  linkedEntries: 'In-app purchases & records',
+  linkedEntriesEmpty: 'No records for this app yet',
+  linkedEntriesHint:
+    'Records of this app are linked automatically. Records entered without an app can be linked by hand.',
+  newIapEntry: 'New in-app purchase',
+  linkExistingEntries: 'Link existing records',
+  linkEntriesEmpty: 'No other records to link',
+  unlink: 'Unlink',
+  manualLink: 'Linked by hand',
+  favoriteCompare: 'Compare storefront prices',
+  needAccountFirst: 'Add an account first',
+
   // Data
   data: 'Data',
   exportData: 'Export a backup',
   exportDataNote:
-    'Exports accounts, records, TestFlight items and gift cards as JSON. Passwords and gift card codes are never included — they stay in the Keychain.',
+    'Exports accounts, records, favorites, TestFlight items and gift cards as JSON. Passwords and gift card codes are never included — they stay in the Keychain.',
   exportFailed: 'Export failed',
   importData: 'Restore from a backup',
   importDataNote: 'Replaces everything currently stored.',

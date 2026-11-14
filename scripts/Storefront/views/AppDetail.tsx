@@ -26,6 +26,7 @@ import { iapRanges, storeRange } from '../price_range'
 import { loadApiBase, loadFxBase, loadIapAuto, saveFxBase, saveIapAuto } from '../store'
 import { CurrencyPicker } from '../components/CurrencyPicker'
 import type { AppInfo } from '../api/itunes'
+import type { AppRef } from '../types'
 import type { Result } from '../api/http'
 import type { IAPItem } from '../api/appstore'
 import type { Rates } from '../api/fx'
@@ -88,13 +89,22 @@ function toLoading<T>(result: Result<T>): Loading<T> {
 export function AppDetail({
   appId,
   pinnedRegions,
-  accountRegions
+  accountRegions,
+  favorited: initiallyFavorited,
+  onToggleFavorite
 }: {
   appId: string
   /** Shown first, in this order: the search storefront and account storefronts. */
   pinnedRegions: string[]
   /** Marked in the header so the user can tell where they can actually buy. */
   accountRegions: string[]
+  /** Whether the app is in favorites when this screen opens. */
+  favorited?: boolean
+  /**
+   * Adds (`true`) or removes (`false`) the app from favorites. Omitted, the
+   * star is not shown — e.g. when this screen is opened from the favorite itself.
+   */
+  onToggleFavorite?: (favorite: boolean, ref: AppRef) => void
 }) {
   const [rows, setRows] = useState<RegionState[]>(() => {
     const known = new Set(REGIONS.map((r) => r.code))
@@ -109,6 +119,8 @@ export function AppDetail({
   const [rates, setRates] = useState<Loading<Rates>>({ state: 'loading' })
   const baseRef = useRef(base)
   const [autoIAP, setAutoIAP] = useState(() => loadIapAuto())
+  // Presented with props captured at open time, so the star keeps its own state.
+  const [favorited, setFavorited] = useState(initiallyFavorited ?? false)
   const aliveRef = useRef(true)
   /** Regions waiting for an IAP fetch, and every region ever put in that line. */
   const iapQueue = useRef<string[]>([])
@@ -296,6 +308,22 @@ export function AppDetail({
     }
   }
 
+  const toggleFavorite = () => {
+    const known = rows.find((row) => row.info.state === 'ok')
+    if (onToggleFavorite == null || known?.info.state !== 'ok') return
+    const info = known.info.value
+    const next = !favorited
+    setFavorited(next)
+    onToggleFavorite(next, {
+      appId: info.appId,
+      name: info.name,
+      iconUrl: info.iconUrl,
+      bundleId: info.bundleId,
+      fetchedRegion: info.region,
+      fetchedAt: Date.now()
+    })
+  }
+
   const approxOf = (row: RegionState): number | null =>
     row.info.state === 'ok' && row.info.value.price > 0 && rates.state === 'ok'
       ? convert(row.info.value.price, row.info.value.currency, rates.value)
@@ -416,6 +444,20 @@ export function AppDetail({
             <Spacer />
           </HStack>
         </Button>
+        {onToggleFavorite != null && app != null ? (
+          <Button action={toggleFavorite}>
+            <HStack>
+              <Image
+                systemName={favorited ? 'star.fill' : 'star'}
+                foregroundStyle="systemYellow"
+              />
+              <Text foregroundStyle="label">
+                {favorited ? i18n.favoriteRemove : i18n.favoriteAdd}
+              </Text>
+              <Spacer />
+            </HStack>
+          </Button>
+        ) : null}
         <Button action={pickBase}>
           <HStack>
             <Image systemName="dollarsign.arrow.circlepath" />

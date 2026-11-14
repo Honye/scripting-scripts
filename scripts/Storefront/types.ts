@@ -134,3 +134,25 @@ export type GiftCard = {
   note: string
   createdAt: number
 }
+
+/**
+ * An app the user keeps an eye on, whether or not anything was ever bought.
+ * Name and icon are not here: they come from the shared `appRefs` cache, keyed
+ * by the same `appId`.
+ */
+export type Favorite = {
+  /** Numeric App Store id, primary key — one favorite per app. */
+  appId: string
+  /** Free-form labels, compared case-insensitively. */
+  tags: string[]
+  /** Accounts that own or have downloaded the app; any number of them. */
+  accountIds: string[]
+  /**
+   * Records linked by hand. Records whose `appId` equals this favorite's are
+   * linked automatically and are not listed here; this is for the ones typed in
+   * without an app, which have no other way to find their way back.
+   */
+  entryIds: string[]
+  note: string
+  createdAt: number
+}

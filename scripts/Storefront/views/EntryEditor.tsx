@@ -50,13 +50,16 @@ export function EntryEditor({
   accounts,
   appRefs,
   defaultAccountId,
-  defaultKind
+  defaultKind,
+  defaultApp
 }: {
   existing?: Entry
   accounts: Account[]
   appRefs: Record<string, AppRef>
   defaultAccountId?: string
   defaultKind?: EntryKind
+  /** Pre-selects the app for a new record, e.g. from a favorite. */
+  defaultApp?: AppRef
 }) {
   const dismiss = Navigation.useDismiss()
   const editing = existing != null
@@ -65,9 +68,9 @@ export function EntryEditor({
   const [kind, setKind] = useState<EntryKind>(
     existing?.kind ?? defaultKind ?? 'subscription'
   )
-  const [appId, setAppId] = useState(existing?.appId ?? '')
+  const [appId, setAppId] = useState(existing?.appId ?? defaultApp?.appId ?? '')
   const [appRef, setAppRef] = useState<AppRef | undefined>(
-    existing != null ? appRefs[existing.appId] : undefined
+    existing != null ? appRefs[existing.appId] : defaultApp
   )
   const [accountId, setAccountId] = useState(
     existing?.accountId ?? defaultAccountId ?? accounts[0]?.id ?? ''

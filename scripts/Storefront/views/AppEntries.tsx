@@ -10,6 +10,7 @@ import {
 } from 'scripting'
 import { i18n } from '../i18n'
 import { formatMoney } from '../format'
+import { totalsByCurrency } from '../billing'
 import { regionFor } from '../regions'
 import { kindLabel } from './EntryEditor'
 import type { Account, AppRef, Entry } from '../types'
@@ -59,10 +60,7 @@ export function AppEntries({
         const ref = appRefs[group[0].appId]
         const name = ref?.name ?? group[0].title
 
-        const totals = new Map<string, number>()
-        for (const entry of group) {
-          totals.set(entry.currency, (totals.get(entry.currency) ?? 0) + entry.price)
-        }
+        const totals = totalsByCurrency(group)
 
         return (
           <Section
@@ -90,7 +88,7 @@ export function AppEntries({
                 <Text>{i18n.totalSpent}</Text>
                 <Spacer />
                 <Text>
-                  {Array.from(totals.entries())
+                  {totals
                     .map(([currency, sum]) => formatMoney(sum, currency))
                     .join('  ·  ')}
                 </Text>

@@ -22,6 +22,7 @@ import { AccountDetail } from './AccountDetail'
 import { AppEntries } from './AppEntries'
 import { AppLookup } from './AppLookup'
 import { GiftCardWallet } from './GiftCardWallet'
+import { FavoriteList } from './FavoriteList'
 import { SettingsView } from './SettingsView'
 import { TestFlightList } from './TestFlightList'
 import { UpcomingBills } from './UpcomingBills'
@@ -29,10 +30,21 @@ import type { EntryDraft } from './EntryEditor'
 import {
   getCurrentAccountId,
   loadAccounts,
+  loadAppRefs,
+  loadEntries,
+  loadFavorites,
   loadGiftCards,
   loadSettings
 } from '../store'
-import type { Account, AppRef, Entry, GiftCard, Settings, TFItem } from '../types'
+import type {
+  Account,
+  AppRef,
+  Entry,
+  Favorite,
+  GiftCard,
+  Settings,
+  TFItem
+} from '../types'
 
 export function AccountList({
   accounts,
@@ -55,7 +67,10 @@ export function AccountList({
   onDeleteTFItem,
   onSaveGiftCard,
   onDeleteGiftCards,
-  onRestored
+  onRestored,
+  onSaveFavorite,
+  onDeleteFavorite,
+  onToggleFavorite
 }: {
   accounts: Account[]
   entries: Entry[]
@@ -79,6 +94,9 @@ export function AccountList({
   onSaveGiftCard: (card: GiftCard) => void
   onDeleteGiftCards: (ids: string[]) => void
   onRestored: () => void
+  onSaveFavorite: (favorite: Favorite, appRef?: AppRef) => void
+  onDeleteFavorite: (appId: string) => void
+  onToggleFavorite: (favorite: boolean, ref: AppRef) => void
 }) {
   // `ForEach` reorders by rewriting this observable in place, so it has to be
   // re-seeded whenever the accounts themselves change.
@@ -142,6 +160,23 @@ export function AccountList({
     />
   )
 
+  /**
+   * An account's favorite apps, behind a row on its detail screen. Read from
+   * Storage at tap time for the same reason as `walletFor`.
+   */
+  const favoritesFor = (accountId: string) => (
+    <FavoriteList
+      favorites={loadFavorites()}
+      accounts={loadAccounts()}
+      entries={loadEntries()}
+      appRefs={loadAppRefs()}
+      fixedAccountId={accountId}
+      onSave={onSaveFavorite}
+      onRemove={onDeleteFavorite}
+      onSaveEntry={onSaveEntry}
+    />
+  )
+
   const detailFor = (account: Account) => (
     <AccountDetail
       account={account}
@@ -158,6 +193,7 @@ export function AccountList({
       onSaveEntry={onSaveEntry}
       onDeleteEntry={onDeleteEntry}
       walletFor={walletFor}
+      favoritesFor={favoritesFor}
     />
   )
 
@@ -241,6 +277,8 @@ export function AccountList({
           destination={
             <AppLookup
               accountRegions={Array.from(new Set(accounts.map((a) => a.region)))}
+              isFavorite={(appId) => loadFavorites().some((f) => f.appId === appId)}
+              onToggleFavorite={onToggleFavorite}
             />
           }
         >
