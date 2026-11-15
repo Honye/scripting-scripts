@@ -218,6 +218,21 @@ export const zh: Strings = {
   dueIn: (days) =>
     days < 0 ? '已逾期' : days === 0 ? '今天' : days === 1 ? '明天' : `${days} 天后`,
 
+  // 订阅日历
+  subscriptionCalendar: '订阅日历',
+  calendarToday: '今天',
+  calendarPrevMonth: '上个月',
+  calendarNextMonth: '下个月',
+  weekdaysShort: ['日', '一', '二', '三', '四', '五', '六'],
+  weekStartsMonday: true,
+  calendarMonthEmpty: '本月没有扣费',
+  calendarDayEmpty: '当天没有扣费',
+  calendarMonthSummary: (count) => `本月共 ${count} 笔扣费`,
+  calendarProjectedNote: '日期按每个订阅的下次扣费日与周期推算，只显示生效中的订阅。',
+  subscriptionDetail: '订阅详情',
+  chargeOn: '当日扣费',
+  everyNDays: (days) => `每 ${days} 天`,
+
   // 预警与通知
   notifications: '扣费提醒',
   notificationLead: '提醒时机',

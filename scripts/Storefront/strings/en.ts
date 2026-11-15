@@ -236,6 +236,24 @@ export const en = {
           ? 'Tomorrow'
           : `In ${days} days`,
 
+  // Subscription calendar
+  subscriptionCalendar: 'Subscription calendar',
+  calendarToday: 'Today',
+  calendarPrevMonth: 'Previous month',
+  calendarNextMonth: 'Next month',
+  /** Sunday first, as `Date.getDay()` numbers them. */
+  weekdaysShort: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  weekStartsMonday: false,
+  calendarMonthEmpty: 'No charges this month',
+  calendarDayEmpty: 'No charges on this day',
+  calendarMonthSummary: (count: number) =>
+    `${count} charge${count === 1 ? '' : 's'} this month`,
+  calendarProjectedNote:
+    'Dates are projected from each subscription’s next charge and cycle. Only active subscriptions are shown.',
+  subscriptionDetail: 'Subscription',
+  chargeOn: 'Charge on this day',
+  everyNDays: (days: number) => `Every ${days} days`,
+
   // Alerts and notifications
   notifications: 'Reminders',
   notificationLead: 'Remind me',

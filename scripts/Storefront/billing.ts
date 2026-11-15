@@ -200,3 +200,86 @@ export function totalsByCurrency(entries: Entry[]): [string, number][] {
   }
   return Array.from(totals.entries())
 }
+
+const CYCLE_MONTHS: Partial<Record<BillingCycle, number>> = {
+  monthly: 1,
+  quarterly: 3,
+  yearly: 12
+}
+
+/**
+ * The `k`-th charge before `anchor`. Anchored on the one known date rather than
+ * stepped back one cycle at a time, so a subscription billed on the 31st does
+ * not drift to the 28th after passing through February.
+ */
+function retreat(
+  anchor: number,
+  k: number,
+  cycle: BillingCycle | undefined,
+  customCycleDays?: number
+): number {
+  if (cycle === 'custom') {
+    return anchor - k * Math.max(1, customCycleDays ?? 30) * DAY_MS
+  }
+  return addMonths(anchor, -k * (CYCLE_MONTHS[cycle ?? 'monthly'] ?? 1))
+}
+
+/**
+ * Every charge of an active subscription that falls in one calendar month,
+ * keyed by day of month (1-31). `month` is 0-based, as in `Date`.
+ *
+ * `nextBillingAt` has already been rolled past today (FR-SUB-05), so charges
+ * taken earlier in the month are projected backwards from it; they stop at
+ * `purchasedAt` when one was recorded. Months further out are projected
+ * forwards with the same `advanceOnce` the reminders use, so the calendar and
+ * the notifications never disagree about a date.
+ *
+ * Within a day, records are ordered by app and then title, so several
+ * subscriptions of one app sit next to each other.
+ */
+export function chargesInMonth(
+  entries: Entry[],
+  year: number,
+  month: number
+): Map<number, Entry[]> {
+  const start = new Date(year, month, 1).getTime()
+  const end = new Date(year, month + 1, 1).getTime()
+  const days = new Map<number, Entry[]>()
+
+  const add = (entry: Entry, at: number) => {
+    const day = new Date(at).getDate()
+    const list = days.get(day) ?? []
+    // A custom cycle shorter than a day cannot exist (min 1), but two charges
+    // of the same record on one day would still be one icon too many.
+    if (!list.includes(entry)) list.push(entry)
+    days.set(day, list)
+  }
+
+  for (const entry of entries) {
+    if (!isBillable(entry)) continue
+    const anchor = entry.nextBillingAt!
+    const floor = entry.purchasedAt ?? Number.NEGATIVE_INFINITY
+
+    let at = anchor
+    for (let i = 0; at < end && i < 500; i++) {
+      if (at >= start) add(entry, at)
+      at = advanceOnce(at, entry.cycle, entry.customCycleDays)
+    }
+
+    for (let k = 1; k <= 500; k++) {
+      const back = retreat(anchor, k, entry.cycle, entry.customCycleDays)
+      if (back < start || back < floor) break
+      if (back < end) add(entry, back)
+    }
+  }
+
+  for (const list of days.values()) {
+    list.sort(
+      (a, b) =>
+        a.appId.localeCompare(b.appId) ||
+        a.title.localeCompare(b.title) ||
+        a.id.localeCompare(b.id)
+    )
+  }
+  return days
+}

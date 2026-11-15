@@ -26,6 +26,7 @@ import { FavoriteList } from './FavoriteList'
 import { SettingsView } from './SettingsView'
 import { TestFlightList } from './TestFlightList'
 import { UpcomingBills } from './UpcomingBills'
+import { SubscriptionCalendar } from './SubscriptionCalendar'
 import type { EntryDraft } from './EntryEditor'
 import {
   getCurrentAccountId,
@@ -236,8 +237,24 @@ export function AccountList({
           destination={<UpcomingBills accounts={accounts} entries={entries} />}
         >
           <HStack>
-            <Image systemName="calendar" />
+            <Image systemName="list.bullet.rectangle" />
             <Text foregroundStyle="label">{i18n.upcomingBills}</Text>
+            <Spacer />
+          </HStack>
+        </NavigationLink>
+        <NavigationLink
+          destination={
+            <SubscriptionCalendar
+              accounts={accounts}
+              entries={entries}
+              appRefs={appRefs}
+              onSaveEntry={onSaveEntry}
+            />
+          }
+        >
+          <HStack>
+            <Image systemName="calendar" />
+            <Text foregroundStyle="label">{i18n.subscriptionCalendar}</Text>
             <Spacer />
           </HStack>
         </NavigationLink>
