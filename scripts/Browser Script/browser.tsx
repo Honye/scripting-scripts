@@ -13,8 +13,11 @@
 /// <reference lib="dom" />
 
 /**
- * Safari Browser Script (single self-contained file — no imports, so the build
- * never needs to resolve/bundle a sibling module).
+ * Safari Browser Script. Must stay a single self-contained file with no
+ * import/export: the Scripting build compiles it alone as CommonJS, and an
+ * import turns into `exports`/`require`, which throws in Safari ("Can't find
+ * variable: exports"). The QR code (qr.ts) and the settings normalisation
+ * (settings.ts) are therefore copied in below — keep them in sync.
  *
  * Injects a small floating button on every page. Tapping it opens an overlay
  * with a QR code of the current URL plus an editable field so the user can
@@ -26,9 +29,17 @@
  * text selection" below). Both features are switched on/off, and the combo
  * chosen, in the Scripting app (index.tsx → settings.json).
  *
- * The QR matrix is produced in-page by the vendored encoder below (the native
- * `QRCode` API returns a UIImage that cannot be rendered in a web page).
+ * The QR code is encoded in-page and drawn as SVG by qr.ts, in the style picked
+ * in the app (the native `QRCode` API returns a UIImage that cannot be
+ * rendered in a web page).
  */
+
+// ############################################################################
+// BEGIN copy of qr.ts — browser.tsx must stay import-free (the Scripting build
+// compiles it on its own, so any import/export becomes CommonJS `exports` /
+// `require`, which don't exist in Safari). Keep identical to qr.ts minus the
+// `export` keywords.
+// ############################################################################
 
 // ============================================================================
 // Vendored QR encoder (byte mode, UTF-8) — qrcode-generator algorithm by
@@ -623,6 +634,260 @@ function encodeQR(text: string, ecLevel: ECLevel = 'M'): boolean[][] {
 }
 
 // ============================================================================
+// Styled SVG rendering
+// ============================================================================
+
+/** 方块 / 圆点 / 圆角连接 / 菱形 */
+type DotShape = 'square' | 'dot' | 'rounded' | 'diamond'
+/** 方形 / 圆角 / 圆形 — the three finder patterns. */
+type EyeShape = 'square' | 'rounded' | 'circle'
+
+interface QRStyle {
+  dot: DotShape
+  eye: EyeShape
+  /** Foreground colour (hex or rgba()). */
+  fg: string
+  /** Gradient end colour; null for a solid foreground. */
+  fg2: string | null
+  /** Background colour. */
+  bg: string
+}
+
+const DEFAULT_STYLE: QRStyle = {
+  dot: 'square',
+  eye: 'square',
+  fg: '#000000',
+  fg2: null,
+  bg: '#FFFFFF'
+}
+
+// Quiet zone in modules. The spec recommends 4, but for an on-screen code that
+// is scanned by a phone camera 2 is reliably enough and avoids a thick border.
+const QUIET_ZONE = 2
+
+const num = (v: number): string => String(Math.round(v * 1000) / 1000)
+
+function escapeAttr(v: string): string {
+  return v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+/** Rounded-rectangle subpath (clockwise). */
+function roundRect(x: number, y: number, w: number, h: number, r: number): string {
+  if (r <= 0) return `M${num(x)} ${num(y)}h${num(w)}v${num(h)}h${num(-w)}Z`
+  return (
+    `M${num(x + r)} ${num(y)}H${num(x + w - r)}` +
+    `A${num(r)} ${num(r)} 0 0 1 ${num(x + w)} ${num(y + r)}V${num(y + h - r)}` +
+    `A${num(r)} ${num(r)} 0 0 1 ${num(x + w - r)} ${num(y + h)}H${num(x + r)}` +
+    `A${num(r)} ${num(r)} 0 0 1 ${num(x)} ${num(y + h - r)}V${num(y + r)}` +
+    `A${num(r)} ${num(r)} 0 0 1 ${num(x + r)} ${num(y)}Z`
+  )
+}
+
+/** Circle subpath centred at (cx, cy). */
+function circle(cx: number, cy: number, r: number): string {
+  return (
+    `M${num(cx - r)} ${num(cy)}` +
+    `a${num(r)} ${num(r)} 0 1 0 ${num(2 * r)} 0` +
+    `a${num(r)} ${num(r)} 0 1 0 ${num(-2 * r)} 0Z`
+  )
+}
+
+/** One finder pattern (7×7 ring + 3×3 centre); drawn with fill-rule evenodd. */
+function eyePath(x: number, y: number, shape: EyeShape): string {
+  switch (shape) {
+    case 'circle':
+      return circle(x + 3.5, y + 3.5, 3.5) + circle(x + 3.5, y + 3.5, 2.5) + circle(x + 3.5, y + 3.5, 1.5)
+    case 'rounded':
+      return roundRect(x, y, 7, 7, 2.2) + roundRect(x + 1, y + 1, 5, 5, 1.4) + roundRect(x + 2, y + 2, 3, 3, 1)
+    default:
+      return roundRect(x, y, 7, 7, 0) + roundRect(x + 1, y + 1, 5, 5, 0) + roundRect(x + 2, y + 2, 3, 3, 0)
+  }
+}
+
+/** One alignment pattern (5×5 ring + centre) at top-left (x, y), evenodd. */
+function alignPath(x: number, y: number, shape: EyeShape): string {
+  switch (shape) {
+    case 'circle':
+      return circle(x + 2.5, y + 2.5, 2.5) + circle(x + 2.5, y + 2.5, 1.5) + circle(x + 2.5, y + 2.5, 0.5)
+    case 'rounded':
+      return roundRect(x, y, 5, 5, 1.6) + roundRect(x + 1, y + 1, 3, 3, 0.8) + roundRect(x + 2, y + 2, 1, 1, 0.35)
+    default:
+      return roundRect(x, y, 5, 5, 0) + roundRect(x + 1, y + 1, 3, 3, 0) + roundRect(x + 2, y + 2, 1, 1, 0)
+  }
+}
+
+/** Data module with each corner rounded only where both neighbours on it are empty. */
+function roundedModule(x: number, y: number, up: boolean, right: boolean, down: boolean, left: boolean): string {
+  const r = 0.5
+  const tl = !up && !left ? r : 0
+  const tr = !up && !right ? r : 0
+  const br = !down && !right ? r : 0
+  const bl = !down && !left ? r : 0
+  const arc = (rad: number, ex: number, ey: number) =>
+    rad > 0 ? `A${num(rad)} ${num(rad)} 0 0 1 ${num(ex)} ${num(ey)}` : `L${num(ex)} ${num(ey)}`
+  return (
+    `M${num(x + tl)} ${num(y)}H${num(x + 1 - tr)}` +
+    arc(tr, x + 1, y + tr) +
+    `V${num(y + 1 - br)}` +
+    arc(br, x + 1 - br, y + 1) +
+    `H${num(x + bl)}` +
+    arc(bl, x, y + 1 - bl) +
+    `V${num(y + tl)}` +
+    arc(tl, x + tl, y) +
+    'Z'
+  )
+}
+
+/** `#rrggbbff` / `#rgbf` → `#rrggbb` / `#rgb`, for SVG renderers without CSS Color 4. */
+function svgColor(v: string): string {
+  const s = v.trim()
+  if (/^#[0-9a-f]{8}$/i.test(s) && /ff$/i.test(s)) return s.slice(0, 7)
+  if (/^#[0-9a-f]{4}$/i.test(s) && /f$/i.test(s)) return s.slice(0, 4)
+  return s
+}
+
+/**
+ * Encode `text` and return a standalone SVG. Throws if the content is too long
+ * for a QR code. Without `px` the SVG has only a viewBox (size it with CSS);
+ * pass `px` when it is rasterised (the Scripting `SVG` view renders a bitmap
+ * at the SVG's own size).
+ */
+function qrSvg(text: string, style: QRStyle, opts: { px?: number } = {}): string {
+  const matrix = encodeQR(text, 'M')
+  const n = matrix.length
+  const q = QUIET_ZONE
+  const size = n + q * 2
+
+  const inFinder = (r: number, c: number): boolean =>
+    (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7)
+
+  // Alignment-pattern centres (the ones overlapping a finder are not drawn).
+  // Shaped dots break them up so badly that decoders can't lock on, so they
+  // are drawn whole, in the eye shape, like the finders.
+  const alignCenters: [number, number][] = []
+  const pos = PATTERN_POSITION_TABLE[(n - 17) / 4 - 1] || []
+  for (const ar of pos) {
+    for (const ac of pos) {
+      if (inFinder(ar, ac)) continue
+      alignCenters.push([ar, ac])
+    }
+  }
+  const inAlign = (r: number, c: number): boolean =>
+    alignCenters.some(([ar, ac]) => Math.abs(r - ar) <= 2 && Math.abs(c - ac) <= 2)
+
+  const special = (r: number, c: number): boolean =>
+    inFinder(r, c) || (style.dot !== 'square' && inAlign(r, c))
+  const dark = (r: number, c: number): boolean =>
+    r >= 0 && c >= 0 && r < n && c < n && matrix[r][c] && !special(r, c)
+
+  let modules = ''
+  for (let r = 0; r < n; r++) {
+    if (style.dot === 'square') {
+      // Merge horizontal runs so adjacent squares leave no seams.
+      let c = 0
+      while (c < n) {
+        if (!dark(r, c)) {
+          c++
+          continue
+        }
+        let end = c
+        while (end < n && dark(r, end)) end++
+        modules += `M${c + q} ${r + q}h${end - c}v1h${c - end}Z`
+        c = end
+      }
+      continue
+    }
+    for (let c = 0; c < n; c++) {
+      if (!dark(r, c)) continue
+      const x = c + q
+      const y = r + q
+      if (style.dot === 'dot') {
+        modules += circle(x + 0.5, y + 0.5, 0.5)
+      } else if (style.dot === 'diamond') {
+        modules += `M${num(x + 0.5)} ${num(y - 0.05)}L${num(x + 1.05)} ${num(y + 0.5)}L${num(x + 0.5)} ${num(y + 1.05)}L${num(x - 0.05)} ${num(y + 0.5)}Z`
+      } else {
+        modules += roundedModule(x, y, dark(r - 1, c), dark(r, c + 1), dark(r + 1, c), dark(r, c - 1))
+      }
+    }
+  }
+
+  let eyes =
+    eyePath(q, q, style.eye) +
+    eyePath(q + n - 7, q, style.eye) +
+    eyePath(q, q + n - 7, style.eye)
+  if (style.dot !== 'square') {
+    for (const [ar, ac] of alignCenters) eyes += alignPath(ac - 2 + q, ar - 2 + q, style.eye)
+  }
+
+  const fg = escapeAttr(svgColor(style.fg))
+  const fill = style.fg2 ? 'url(#qrg)' : fg
+  const defs = style.fg2
+    ? `<defs><linearGradient id="qrg" gradientUnits="userSpaceOnUse" x1="${q}" y1="${q}" x2="${q + n}" y2="${q + n}">` +
+      `<stop offset="0" stop-color="${fg}"/><stop offset="1" stop-color="${escapeAttr(svgColor(style.fg2))}"/>` +
+      `</linearGradient></defs>`
+    : ''
+  const crisp = style.dot === 'square' ? ' shape-rendering="crispEdges"' : ''
+  const px = opts.px ? ` width="${Math.round(opts.px)}" height="${Math.round(opts.px)}"` : ''
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"${px}>` +
+    defs +
+    `<rect width="${size}" height="${size}" fill="${escapeAttr(svgColor(style.bg))}"/>` +
+    `<path d="${modules}" fill="${fill}"${crisp}/>` +
+    `<path d="${eyes}" fill="${fill}" fill-rule="evenodd"${style.eye === 'square' ? ' shape-rendering="crispEdges"' : ''}/>` +
+    `</svg>`
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Colour helpers
+// ---------------------------------------------------------------------------
+
+const HEX_RE = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i
+const RGBA_RE = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/i
+
+/** Colour strings we accept from settings: hex or rgb()/rgba(). */
+function isColorString(v: unknown): v is string {
+  return typeof v === 'string' && (HEX_RE.test(v.trim()) || RGBA_RE.test(v.trim()))
+}
+
+function parseColor(v: string): [number, number, number] | null {
+  const s = v.trim().toLowerCase()
+  if (s === 'black') return [0, 0, 0]
+  if (s === 'white') return [255, 255, 255]
+  if (HEX_RE.test(s)) {
+    let h = s.slice(1)
+    if (h.length <= 4) h = h.split('').map((ch) => ch + ch).join('')
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number]
+  }
+  const m = RGBA_RE.exec(s)
+  if (m) return [Number(m[1]), Number(m[2]), Number(m[3])]
+  return null
+}
+
+function luminance([r, g, b]: [number, number, number]): number {
+  const ch = (v: number) => {
+    const s = v / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  }
+  return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
+}
+
+/** WCAG contrast ratio (1–21), or null when a colour can't be parsed. */
+function contrastRatio(a: string, b: string): number | null {
+  const ca = parseColor(a)
+  const cb = parseColor(b)
+  if (!ca || !cb) return null
+  const la = luminance(ca)
+  const lb = luminance(cb)
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+}
+
+// ############################################################################
+// END copy of qr.ts
+// ############################################################################
+
+// ============================================================================
 // In-page UI
 // ============================================================================
 
@@ -644,7 +909,7 @@ function log(...args: unknown[]): void {
   }
 }
 
-function mount(): void {
+function mount(style: QRStyle): void {
   // Top frame only, and never inject twice.
   if (window.top !== window.self) return
   const w = window as unknown as Record<string, boolean>
@@ -660,7 +925,7 @@ function mount(): void {
   root.appendChild(createStyle())
 
   const { button } = createLauncher()
-  const panel = createPanel()
+  const panel = createPanel(style)
   root.appendChild(button)
   root.appendChild(panel.backdrop)
 
@@ -668,12 +933,12 @@ function mount(): void {
   log('floating button mounted')
 }
 
-function mountWhenReady(): void {
+function mountWhenReady(style: QRStyle): void {
   // @run-at document-start runs before <body> exists, so normally the button
   // mounts on DOMContentLoaded; mount right away if the body is already there.
   const run = () => {
     try {
-      mount()
+      mount(style)
     } catch (e) {
       log('mount failed', e)
     }
@@ -695,7 +960,7 @@ function main(): void {
   loadSettings().then((settings) => {
     try {
       if (forceSelect) forceSelect.configure(settings.textSelect)
-      if (settings.qrcode.enabled) mountWhenReady()
+      if (settings.qrcode.enabled) mountWhenReady(settings.qrcode.style)
     } catch (e) {
       log('init failed', e)
     }
@@ -703,9 +968,8 @@ function main(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Settings — written by the Scripting app (index.tsx). This is a copy of the
-// path / defaults / normalisation in settings.ts (this file must stay
-// import-free); keep the two in sync.
+// Settings — written by the Scripting app (index.tsx). Copy of the types and
+// normalisation in settings.ts (this file can't import it); keep in sync.
 // ---------------------------------------------------------------------------
 
 type HoldKey = 'AltLeft' | 'AltRight' | 'MetaLeft' | 'MetaRight' | 'Control' | 'Shift'
@@ -716,11 +980,24 @@ interface TextSelectSettings {
 }
 
 interface Settings {
-  qrcode: { enabled: boolean }
+  qrcode: { enabled: boolean; style: QRStyle }
   textSelect: TextSelectSettings
 }
 
 const HOLD_KEY_IDS: HoldKey[] = ['AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'Control', 'Shift']
+const DOT_SHAPE_IDS: DotShape[] = ['square', 'dot', 'rounded', 'diamond']
+const EYE_SHAPE_IDS: EyeShape[] = ['square', 'rounded', 'circle']
+
+function normalizeStyle(raw: unknown): QRStyle {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, any>
+  return {
+    dot: DOT_SHAPE_IDS.includes(r.dot) ? r.dot : DEFAULT_STYLE.dot,
+    eye: EYE_SHAPE_IDS.includes(r.eye) ? r.eye : DEFAULT_STYLE.eye,
+    fg: isColorString(r.fg) ? r.fg : DEFAULT_STYLE.fg,
+    fg2: isColorString(r.fg2) ? r.fg2 : null,
+    bg: isColorString(r.bg) ? r.bg : DEFAULT_STYLE.bg
+  }
+}
 
 function normalizeSettings(raw: unknown): Settings {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, any>
@@ -729,7 +1006,8 @@ function normalizeSettings(raw: unknown): Settings {
     : []
   return {
     qrcode: {
-      enabled: typeof r.qrcode?.enabled === 'boolean' ? r.qrcode.enabled : true
+      enabled: typeof r.qrcode?.enabled === 'boolean' ? r.qrcode.enabled : true,
+      style: normalizeStyle(r.qrcode?.style)
     },
     textSelect: {
       enabled: typeof r.textSelect?.enabled === 'boolean' ? r.textSelect.enabled : true,
@@ -844,7 +1122,8 @@ function createStyle(): HTMLStyleElement {
       background: #fff; border-radius: 12px;
       border: .5px solid rgba(0,0,0,.06); margin-bottom: 12px; padding: 6px;
     }
-    .qr-wrap canvas { image-rendering: pixelated; max-width: 100%; height: auto; }
+    .qr-svg { width: 260px; max-width: 100%; aspect-ratio: 1; }
+    .qr-svg svg { display: block; width: 100%; height: 100%; }
     .error { color: #c0392b; font-size: 13px; text-align: center; padding: 0 8px; }
 
     textarea {
@@ -873,7 +1152,7 @@ function createStyle(): HTMLStyleElement {
       }
       .close { background: rgba(120,120,128,.32); color: #d1d1d6; }
       .close:active { background: rgba(120,120,128,.45); }
-      .qr-wrap { background: #fff; border-color: rgba(255,255,255,.1); }
+      .qr-wrap { border-color: rgba(255,255,255,.1); }
       textarea { background: rgba(0,0,0,.25); color: #f2f2f7; border-color: rgba(255,255,255,.12); }
       .btn.secondary { background: rgba(120,120,128,.32); color: #f2f2f7; }
       .btn.secondary:active { background: rgba(120,120,128,.45); }
@@ -1086,42 +1365,6 @@ function setupLauncherDrag(
 }
 
 // ---------------------------------------------------------------------------
-// QR rendering
-// ---------------------------------------------------------------------------
-
-// Quiet zone in modules. The spec recommends 4, but for an on-screen code that
-// is scanned by a phone camera 2 is reliably enough and avoids a thick border.
-const QUIET_ZONE = 2
-const TARGET_PX = 260
-
-function renderQR(canvas: HTMLCanvasElement, text: string): void {
-  const matrix = encodeQR(text, 'M')
-  const count = matrix.length
-  const total = count + QUIET_ZONE * 2
-  const scale = Math.max(2, Math.floor(TARGET_PX / total))
-  const size = total * scale
-
-  canvas.width = size
-  canvas.height = size
-  canvas.style.width = size + 'px'
-  canvas.style.height = size + 'px'
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas is not supported')
-
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, size, size)
-  ctx.fillStyle = '#000000'
-  for (let r = 0; r < count; r++) {
-    for (let c = 0; c < count; c++) {
-      if (matrix[r][c]) {
-        ctx.fillRect((c + QUIET_ZONE) * scale, (r + QUIET_ZONE) * scale, scale, scale)
-      }
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Overlay panel
 // ---------------------------------------------------------------------------
 
@@ -1130,7 +1373,7 @@ interface Panel {
   open: (text: string) => void
 }
 
-function createPanel(): Panel {
+function createPanel(style: QRStyle): Panel {
   const backdrop = document.createElement('div')
   backdrop.className = 'backdrop'
 
@@ -1152,13 +1395,15 @@ function createPanel(): Panel {
   header.appendChild(close)
   card.appendChild(header)
 
-  // QR canvas / error area
+  // QR / error area; the wrap takes the code's background colour.
   const qrWrap = document.createElement('div')
   qrWrap.className = 'qr-wrap'
-  const canvas = document.createElement('canvas')
+  qrWrap.style.background = style.bg
+  const svgBox = document.createElement('div')
+  svgBox.className = 'qr-svg'
   const error = document.createElement('div')
   error.className = 'error'
-  qrWrap.appendChild(canvas)
+  qrWrap.appendChild(svgBox)
   qrWrap.appendChild(error)
   card.appendChild(qrWrap)
 
@@ -1184,11 +1429,14 @@ function createPanel(): Panel {
 
   function draw(text: string): void {
     try {
-      renderQR(canvas, text)
-      canvas.style.display = ''
+      // qrSvg escapes the colours it embeds; the text itself never reaches the
+      // markup (only its encoded matrix does).
+      svgBox.innerHTML = qrSvg(text, style)
+      svgBox.style.display = ''
       error.textContent = ''
     } catch (e) {
-      canvas.style.display = 'none'
+      svgBox.innerHTML = ''
+      svgBox.style.display = 'none'
       error.textContent =
         e instanceof Error ? e.message : 'Could not generate QR code.'
     }
