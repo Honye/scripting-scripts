@@ -42,7 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
 }
 
 function settingsDir(): string {
-  return `${FileManager.safariBrowserDirectory}/browser-qrcode`
+  return `${FileManager.safariBrowserDirectory}/browser-script`
 }
 
 function settingsPath(): string {
@@ -82,7 +82,7 @@ export async function loadSettings(): Promise<Settings> {
     if (!(await FileManager.exists(path))) return normalizeSettings(null)
     return normalizeSettings(JSON.parse(await FileManager.readAsString(path)))
   } catch (e) {
-    console.error('[Browser QRCode] load settings failed', e)
+    console.error('[Browser Script] load settings failed', e)
     return normalizeSettings(null)
   }
 }

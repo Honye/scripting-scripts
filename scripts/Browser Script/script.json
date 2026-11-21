@@ -8,7 +8,7 @@
   },
   "version" : "0.1.0",
   "localizedNames" : {
-    "en" : "Page QR & Text Select",
+    "en" : "",
     "pt" : "",
     "it" : "",
     "fr" : "",
@@ -16,13 +16,13 @@
     "de" : "",
     "es" : "",
     "ru" : "",
-    "zh" : "网页二维码与文字选择"
+    "zh" : ""
   },
   "intentInputTypes" : [
 
   ],
   "remoteResource" : null,
-  "name" : "Browser QRCode",
+  "name" : "Browser Script",
   "contributors" : [
 
   ],

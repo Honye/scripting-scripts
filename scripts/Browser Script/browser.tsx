@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        Page QR Code
+// @name        Browser Script
 // @description Show a QR code of the current page URL; edit the content to regenerate. Hold a key combo (default left ⌥, set in the Scripting app) to select any text on the page.
 // @match       *://*/*
 // @run-at      document-start
@@ -636,7 +636,7 @@ function log(...args: unknown[]): void {
     // GM.log may be ungranted; ignore.
   }
   try {
-    console.log('[Page QR Code]', ...args)
+    console.log('[Browser Script]', ...args)
   } catch {
     // no console; ignore.
   }
@@ -742,7 +742,7 @@ async function loadSettings(): Promise<Settings> {
       return normalizeSettings(null)
     }
     const fm = Scripting.FileManager
-    const path = `${fm.safariBrowserDirectory}/browser-qrcode/settings.json`
+    const path = `${fm.safariBrowserDirectory}/browser-script/settings.json`
     if (!(await fm.exists(path))) return normalizeSettings(null)
     return normalizeSettings(JSON.parse(await fm.readAsString(path)))
   } catch (e) {
