@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name        Page QR Code
-// @description Show a QR code of the current page URL; edit the content to regenerate.
+// @description Show a QR code of the current page URL; edit the content to regenerate. Hold a key combo (default left ⌥, set in the Scripting app) to select any text on the page.
 // @match       *://*/*
-// @run-at      document-idle
+// @run-at      document-start
 // @noframes
 // @grant       GM.setClipboard
 // @grant       GM.log
+// @grant       Scripting.FileManager
 // ==/UserScript==
 /// <reference lib="dom" />
 
@@ -16,6 +17,12 @@
  * Injects a small floating button on every page. Tapping it opens an overlay
  * with a QR code of the current URL plus an editable field so the user can
  * change the content and regenerate the QR offline.
+ *
+ * Also: while the configured key combo (default left ⌥) is held, any text on
+ * the page becomes selectable — `user-select: none` is overridden and the
+ * page's selectstart / copy / contextmenu blockers are bypassed (see "Force
+ * text selection" below). Both features are switched on/off, and the combo
+ * chosen, in the Scripting app (index.tsx → settings.json).
  *
  * The QR matrix is produced in-page by the vendored encoder below (the native
  * `QRCode` API returns a UIImage that cannot be rendered in a web page).
@@ -617,10 +624,8 @@ function encodeQR(text: string, ecLevel: ECLevel = 'M'): boolean[][] {
 // In-page UI
 // ============================================================================
 
-declare const GM: {
-  setClipboard?: (text: string) => void | Promise<void>
-  log?: (...args: unknown[]) => void
-}
+// `GM` and `Scripting` are the userscript runtime's globals, typed in
+// dts/safari-ext.d.ts.
 
 const INJECT_FLAG = '__pageQrCodeInjected'
 
@@ -661,23 +666,88 @@ function mount(): void {
   log('floating button mounted')
 }
 
-function main(): void {
-  try {
-    // @run-at document-idle means body normally exists; guard anyway in case the
-    // script is run earlier (e.g. document-start) so the button still mounts.
-    if (document.body) {
+function mountWhenReady(): void {
+  // @run-at document-start runs before <body> exists, so normally the button
+  // mounts on DOMContentLoaded; mount right away if the body is already there.
+  const run = () => {
+    try {
       mount()
-    } else {
-      document.addEventListener('DOMContentLoaded', () => {
-        try {
-          mount()
-        } catch (e) {
-          log('mount failed', e)
-        }
-      })
+    } catch (e) {
+      log('mount failed', e)
     }
+  }
+  if (document.body) run()
+  else document.addEventListener('DOMContentLoaded', run)
+}
+
+function main(): void {
+  // Register the force-select listeners synchronously, at document-start, so
+  // they run before the page's own; they stay inert until configured.
+  let forceSelect: ForceSelect | null = null
+  try {
+    forceSelect = setupForceSelect()
   } catch (e) {
-    log('init failed', e)
+    log('force select setup failed', e)
+  }
+
+  loadSettings().then((settings) => {
+    try {
+      if (forceSelect) forceSelect.configure(settings.textSelect)
+      if (settings.qrcode.enabled) mountWhenReady()
+    } catch (e) {
+      log('init failed', e)
+    }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Settings — written by the Scripting app (index.tsx). This is a copy of the
+// path / defaults / normalisation in settings.ts (this file must stay
+// import-free); keep the two in sync.
+// ---------------------------------------------------------------------------
+
+type HoldKey = 'AltLeft' | 'AltRight' | 'MetaLeft' | 'MetaRight' | 'Control' | 'Shift'
+
+interface TextSelectSettings {
+  enabled: boolean
+  keys: HoldKey[]
+}
+
+interface Settings {
+  qrcode: { enabled: boolean }
+  textSelect: TextSelectSettings
+}
+
+const HOLD_KEY_IDS: HoldKey[] = ['AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'Control', 'Shift']
+
+function normalizeSettings(raw: unknown): Settings {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, any>
+  const keys = Array.isArray(r.textSelect?.keys)
+    ? HOLD_KEY_IDS.filter((k) => r.textSelect.keys.includes(k))
+    : []
+  return {
+    qrcode: {
+      enabled: typeof r.qrcode?.enabled === 'boolean' ? r.qrcode.enabled : true
+    },
+    textSelect: {
+      enabled: typeof r.textSelect?.enabled === 'boolean' ? r.textSelect.enabled : true,
+      keys: keys.length > 0 ? keys : ['AltLeft']
+    }
+  }
+}
+
+async function loadSettings(): Promise<Settings> {
+  try {
+    if (typeof Scripting === 'undefined' || !Scripting.FileManager) {
+      return normalizeSettings(null)
+    }
+    const fm = Scripting.FileManager
+    const path = `${fm.safariBrowserDirectory}/browser-qrcode/settings.json`
+    if (!(await fm.exists(path))) return normalizeSettings(null)
+    return normalizeSettings(JSON.parse(await fm.readAsString(path)))
+  } catch (e) {
+    log('load settings failed', e)
+    return normalizeSettings(null)
   }
 }
 
@@ -931,6 +1001,219 @@ function copyText(text: string, btn: HTMLButtonElement): void {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(flash, () => {})
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Force text selection (hold the configured key combo, default left ⌥)
+// ---------------------------------------------------------------------------
+
+const FORCE_SELECT_FLAG = '__pageQrForceSelect'
+const FORCE_SELECT_CLASS = '__pqr-force-select'
+const QR_HOST_ID = 'page-qr-code-host'
+
+type ModifierFlag = 'altKey' | 'metaKey' | 'ctrlKey' | 'shiftKey'
+
+const MODIFIER_FLAG: Record<HoldKey, ModifierFlag> = {
+  AltLeft: 'altKey',
+  AltRight: 'altKey',
+  MetaLeft: 'metaKey',
+  MetaRight: 'metaKey',
+  Control: 'ctrlKey',
+  Shift: 'shiftKey'
+}
+
+interface ForceSelect {
+  /** Until this is called the listeners stay inert. */
+  configure: (settings: TextSelectSettings) => void
+}
+
+/**
+ * Which hold key a key event is about. ⌥ / ⌘ keep their side; ⌃ / ⇧ don't.
+ * `code` carries the physical side; when it is empty, fall back to
+ * `key` + `location` (1 = left, 2 = right).
+ */
+function holdKeyOf(e: KeyboardEvent): HoldKey | null {
+  switch (e.code) {
+    case 'AltLeft':
+    case 'AltRight':
+    case 'MetaLeft':
+    case 'MetaRight':
+      return e.code
+    case 'OSLeft':
+      return 'MetaLeft'
+    case 'OSRight':
+      return 'MetaRight'
+    case 'ControlLeft':
+    case 'ControlRight':
+      return 'Control'
+    case 'ShiftLeft':
+    case 'ShiftRight':
+      return 'Shift'
+  }
+  const right = e.location === 2
+  switch (e.key) {
+    case 'Alt':
+      return right ? 'AltRight' : 'AltLeft'
+    case 'Meta':
+    case 'OS':
+      return right ? 'MetaRight' : 'MetaLeft'
+    case 'Control':
+      return 'Control'
+    case 'Shift':
+      return 'Shift'
+  }
+  return null
+}
+
+function selectionCollapsed(): boolean {
+  const sel = window.getSelection()
+  return !sel || sel.isCollapsed
+}
+
+/**
+ * While every key of the combo is held, every element gets
+ * `user-select: text` and the page's own selection blockers never see the
+ * events. Listeners sit on `window` in the capture phase and are registered
+ * at document-start, so they run before the page's handlers;
+ * `stopImmediatePropagation()` (without `preventDefault()`) lets the
+ * browser's native selection go ahead untouched.
+ *
+ * After the combo is released the mode stays on while a selection exists, so
+ * ⌘C still works; it turns off once the selection collapses.
+ */
+function setupForceSelect(): ForceSelect | null {
+  const w = window as unknown as Record<string, boolean>
+  if (w[FORCE_SELECT_FLAG]) return null
+  w[FORCE_SELECT_FLAG] = true
+
+  let config: TextSelectSettings | null = null
+  const pressed = new Set<HoldKey>()
+  let held = false
+  let active = false
+  let style: HTMLStyleElement | null = null
+
+  function injectStyle(): void {
+    if (style && style.isConnected) return
+    style = document.createElement('style')
+    style.textContent = `
+      html.${FORCE_SELECT_CLASS}, html.${FORCE_SELECT_CLASS} * {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+        -webkit-touch-callout: default !important;
+      }
+      html.${FORCE_SELECT_CLASS} *::selection {
+        background-color: Highlight !important;
+        color: HighlightText !important;
+      }
+    `
+    ;(document.head || document.documentElement).appendChild(style)
+  }
+
+  function activate(): void {
+    injectStyle()
+    document.documentElement.classList.add(FORCE_SELECT_CLASS)
+    active = true
+  }
+
+  function deactivate(): void {
+    document.documentElement.classList.remove(FORCE_SELECT_CLASS)
+    active = false
+  }
+
+  function comboHeld(): boolean {
+    return !!config && config.enabled && config.keys.every((k) => pressed.has(k))
+  }
+
+  // Re-evaluate the combo; on release keep the mode while a selection exists.
+  function update(): void {
+    const now = comboHeld()
+    if (now === held) return
+    held = now
+    if (held) activate()
+    else if (active && selectionCollapsed()) deactivate()
+  }
+
+  // Forget keys whose modifier flag says they are up (a keyup can be missed,
+  // e.g. when focus leaves the page while a key is held).
+  function syncFlags(e: KeyboardEvent | MouseEvent): void {
+    for (const k of Array.from(pressed)) {
+      if (!e[MODIFIER_FLAG[k]]) pressed.delete(k)
+    }
+  }
+
+  // Our own QR overlay must keep working even with the combo held.
+  function isOwnUI(e: Event): boolean {
+    const t = e.target as Element | null
+    return !!t && t.id === QR_HOST_ID
+  }
+
+  const capture = { capture: true }
+
+  window.addEventListener('keydown', (e) => {
+    syncFlags(e)
+    const key = holdKeyOf(e)
+    if (key) {
+      pressed.add(key)
+      update()
+      return
+    }
+    update()
+    // Keep pages from swallowing ⌘C on the forced selection.
+    if (active && e.metaKey && (e.key === 'c' || e.key === 'C')) {
+      e.stopImmediatePropagation()
+    }
+  }, capture)
+
+  window.addEventListener('keyup', (e) => {
+    syncFlags(e)
+    const key = holdKeyOf(e)
+    if (key) pressed.delete(key)
+    update()
+  }, capture)
+
+  window.addEventListener('blur', () => {
+    pressed.clear()
+    update()
+  })
+
+  document.addEventListener('selectionchange', () => {
+    if (active && !held && selectionCollapsed()) deactivate()
+  })
+
+  const shield = (e: Event) => {
+    if (isOwnUI(e)) return
+    if (e instanceof MouseEvent) {
+      syncFlags(e)
+      update()
+    }
+    if (held) e.stopImmediatePropagation()
+  }
+  for (const type of ['selectstart', 'mousedown', 'pointerdown', 'dragstart', 'contextmenu']) {
+    window.addEventListener(type, shield, capture)
+  }
+
+  // A combo-drag inside a link ends in a click; don't follow (or download) it.
+  window.addEventListener('click', (e) => {
+    if (isOwnUI(e)) return
+    syncFlags(e)
+    update()
+    if (held && !selectionCollapsed()) {
+      e.preventDefault()
+      e.stopImmediatePropagation()
+    }
+  }, capture)
+
+  // Keep `oncopy` handlers from cancelling or rewriting the copied text.
+  window.addEventListener('copy', (e) => {
+    if (active && !isOwnUI(e)) e.stopImmediatePropagation()
+  }, capture)
+
+  return {
+    configure(settings) {
+      config = settings
+      update()
+    }
   }
 }
 

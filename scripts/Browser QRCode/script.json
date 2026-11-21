@@ -8,7 +8,7 @@
   },
   "version" : "0.1.0",
   "localizedNames" : {
-    "en" : "",
+    "en" : "Page QR & Text Select",
     "pt" : "",
     "it" : "",
     "fr" : "",
@@ -16,7 +16,7 @@
     "de" : "",
     "es" : "",
     "ru" : "",
-    "zh" : ""
+    "zh" : "网页二维码与文字选择"
   },
   "intentInputTypes" : [
 
@@ -28,7 +28,7 @@
   ],
   "permissions" : null,
   "localizedDescriptions" : {
-    "en" : "",
+    "en" : "Safari: QR code of the current page, and hold a key combo to select any text.",
     "pt" : "",
     "it" : "",
     "fr" : "",
@@ -36,7 +36,7 @@
     "de" : "",
     "es" : "",
     "ru" : "",
-    "zh" : ""
+    "zh" : "Safari：生成当前网页二维码；按住快捷键选择任意文字。"
   },
   "entry" : "index.tsx",
   "description" : null,
