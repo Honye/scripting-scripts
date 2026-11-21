@@ -6,6 +6,8 @@
 // @noframes
 // @grant       GM.setClipboard
 // @grant       GM.log
+// @grant       GM.getValue
+// @grant       GM.setValue
 // @grant       Scripting.FileManager
 // ==/UserScript==
 /// <reference lib="dom" />
@@ -662,7 +664,7 @@ function mount(): void {
   root.appendChild(button)
   root.appendChild(panel.backdrop)
 
-  button.addEventListener('click', () => panel.open(location.href))
+  setupLauncherDrag(button, root, () => panel.open(location.href))
   log('floating button mounted')
 }
 
@@ -761,48 +763,94 @@ function createStyle(): HTMLStyleElement {
     :host { all: initial; }
     * { box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
 
+    /* Liquid-glass launcher: translucent, blurs + saturates what is behind it,
+       with a specular rim and highlight. Positioned by JS (left/top). */
     .launcher {
-      position: fixed; right: 16px; bottom: 16px;
-      width: 44px; height: 44px; border-radius: 22px; border: none;
-      background: #1c8cff; color: #fff; cursor: pointer;
+      position: fixed; left: 0; top: 0;
+      width: 48px; height: 48px; border-radius: 24px; padding: 0;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 14px rgba(0,0,0,.25);
-      z-index: 2147483647; padding: 0;
+      color: rgba(0,0,0,.72); cursor: pointer;
+      background: linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,.10));
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      backdrop-filter: blur(16px) saturate(180%);
+      border: .5px solid rgba(255,255,255,.55);
+      box-shadow:
+        0 8px 24px rgba(0,0,0,.16),
+        0 1px 3px rgba(0,0,0,.10),
+        inset 0 1px 1px rgba(255,255,255,.75),
+        inset 0 -1px 2px rgba(0,0,0,.06);
+      z-index: 2147483647; overflow: hidden;
+      touch-action: none; user-select: none; -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+      visibility: hidden;
+      transition:
+        left .35s cubic-bezier(.2,.9,.3,1.15),
+        top .35s cubic-bezier(.2,.9,.3,1.15),
+        transform .18s ease, box-shadow .18s ease;
+    }
+    .launcher.placed { visibility: visible; }
+    .launcher.instant { transition: none; }
+    /* Specular highlight across the top-left of the glass. */
+    .launcher::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: radial-gradient(120% 80% at 30% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%);
+      pointer-events: none;
     }
     .launcher:active { transform: scale(.94); }
-    .launcher svg { width: 22px; height: 22px; display: block; }
+    .launcher.dragging {
+      transition: transform .18s ease, box-shadow .18s ease;
+      transform: scale(1.08);
+      box-shadow: 0 14px 32px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.12),
+        inset 0 1px 1px rgba(255,255,255,.75), inset 0 -1px 2px rgba(0,0,0,.06);
+    }
+    .launcher svg {
+      position: relative; width: 22px; height: 22px; display: block;
+      filter: drop-shadow(0 .5px .5px rgba(255,255,255,.6));
+    }
+    .safe-probe {
+      position: fixed; left: 0; top: 0; width: 0; height: 0; visibility: hidden;
+      pointer-events: none;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+        env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
 
     .backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      position: fixed; inset: 0; background: rgba(0,0,0,.18);
       display: none; align-items: center; justify-content: center;
       z-index: 2147483647; padding: 20px;
     }
     .backdrop.show { display: flex; }
 
+    /* Frosted glass: translucent, Gaussian-blurs the page behind it. */
     .card {
-      width: 320px; max-width: 100%; background: #fff; color: #1d1d1f;
-      border-radius: 16px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.3);
+      width: 320px; max-width: 100%; color: #1d1d1f;
+      background: rgba(255,255,255,.62);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      backdrop-filter: blur(28px) saturate(180%);
+      border: .5px solid rgba(255,255,255,.6);
+      border-radius: 20px; padding: 18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.22), inset 0 1px 1px rgba(255,255,255,.7);
     }
     .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .title { font-size: 16px; font-weight: 600; }
     .close {
       width: 28px; height: 28px; border: none; border-radius: 14px; cursor: pointer;
-      background: #f0f0f3; color: #555; font-size: 16px; line-height: 1;
+      background: rgba(120,120,128,.16); color: #3c3c43; font-size: 16px; line-height: 1;
     }
-    .close:active { background: #e2e2e7; }
+    .close:active { background: rgba(120,120,128,.28); }
 
     .qr-wrap {
       display: flex; align-items: center; justify-content: center;
-      background: #fff; border-radius: 10px;
-      border: 1px solid #ececef; margin-bottom: 12px; padding: 6px;
+      background: #fff; border-radius: 12px;
+      border: .5px solid rgba(0,0,0,.06); margin-bottom: 12px; padding: 6px;
     }
     .qr-wrap canvas { image-rendering: pixelated; max-width: 100%; height: auto; }
     .error { color: #c0392b; font-size: 13px; text-align: center; padding: 0 8px; }
 
     textarea {
       width: 100%; min-height: 64px; resize: vertical; border-radius: 10px;
-      border: 1px solid #d7d7dc; padding: 8px 10px; font-size: 13px;
-      color: #1d1d1f; background: #fafafa; outline: none;
+      border: .5px solid rgba(0,0,0,.10); padding: 8px 10px; font-size: 13px;
+      color: #1d1d1f; background: rgba(255,255,255,.55); outline: none;
     }
     textarea:focus { border-color: #1c8cff; }
 
@@ -813,15 +861,36 @@ function createStyle(): HTMLStyleElement {
     }
     .btn.primary { background: #1c8cff; color: #fff; }
     .btn.primary:active { background: #1577dd; }
-    .btn.secondary { background: #f0f0f3; color: #1d1d1f; }
-    .btn.secondary:active { background: #e2e2e7; }
+    .btn.secondary { background: rgba(120,120,128,.16); color: #1d1d1f; }
+    .btn.secondary:active { background: rgba(120,120,128,.28); }
 
     @media (prefers-color-scheme: dark) {
-      .card { background: #1c1c1e; color: #f2f2f7; }
-      .close { background: #2c2c2e; color: #c7c7cc; }
-      .qr-wrap { background: #fff; border-color: #2c2c2e; }
-      textarea { background: #2c2c2e; color: #f2f2f7; border-color: #3a3a3c; }
-      .btn.secondary { background: #2c2c2e; color: #f2f2f7; }
+      .backdrop { background: rgba(0,0,0,.3); }
+      .card {
+        color: #f2f2f7; background: rgba(30,30,32,.58);
+        border-color: rgba(255,255,255,.14);
+        box-shadow: 0 18px 50px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.12);
+      }
+      .close { background: rgba(120,120,128,.32); color: #d1d1d6; }
+      .close:active { background: rgba(120,120,128,.45); }
+      .qr-wrap { background: #fff; border-color: rgba(255,255,255,.1); }
+      textarea { background: rgba(0,0,0,.25); color: #f2f2f7; border-color: rgba(255,255,255,.12); }
+      .btn.secondary { background: rgba(120,120,128,.32); color: #f2f2f7; }
+      .btn.secondary:active { background: rgba(120,120,128,.45); }
+      .launcher {
+        color: rgba(255,255,255,.92);
+        background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.04));
+        border-color: rgba(255,255,255,.22);
+        box-shadow:
+          0 8px 24px rgba(0,0,0,.35),
+          0 1px 3px rgba(0,0,0,.25),
+          inset 0 1px 1px rgba(255,255,255,.28),
+          inset 0 -1px 2px rgba(0,0,0,.2);
+      }
+      .launcher::before {
+        background: radial-gradient(120% 80% at 30% 0%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%);
+      }
+      .launcher svg { filter: drop-shadow(0 .5px 1px rgba(0,0,0,.5)); }
     }
   `
   return style
@@ -843,6 +912,177 @@ function createLauncher(): { button: HTMLButtonElement } {
     '<path d="M13 13h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/>' +
     '</svg>'
   return { button }
+}
+
+// ---------------------------------------------------------------------------
+// Launcher dragging + edge snapping
+// ---------------------------------------------------------------------------
+
+const LAUNCHER_SIZE = 48
+const EDGE_MARGIN = 10
+const DRAG_THRESHOLD = 6
+const POSITION_KEY = 'launcherPosition'
+
+interface LauncherPosition {
+  side: 'left' | 'right'
+  /** Vertical centre as a fraction of the viewport height, so it survives rotation. */
+  y: number
+}
+
+const DEFAULT_POSITION: LauncherPosition = { side: 'right', y: 0.82 }
+
+/** Saved in GM storage, so the spot is shared by every site. */
+async function loadLauncherPosition(): Promise<LauncherPosition> {
+  try {
+    if (typeof GM === 'undefined') return { ...DEFAULT_POSITION }
+    const v = await GM.getValue<GMValue>(POSITION_KEY, null)
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const side = v.side === 'left' || v.side === 'right' ? v.side : null
+      const y = typeof v.y === 'number' && isFinite(v.y) ? v.y : null
+      if (side && y != null) return { side, y: Math.min(1, Math.max(0, y)) }
+    }
+  } catch (e) {
+    log('load launcher position failed', e)
+  }
+  return { ...DEFAULT_POSITION }
+}
+
+function saveLauncherPosition(pos: LauncherPosition): void {
+  try {
+    if (typeof GM === 'undefined') return
+    GM.setValue(POSITION_KEY, { side: pos.side, y: pos.y }).catch((e) =>
+      log('save launcher position failed', e)
+    )
+  } catch (e) {
+    log('save launcher position failed', e)
+  }
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.min(Math.max(v, lo), Math.max(lo, hi))
+}
+
+/**
+ * Drag the launcher anywhere; on release it springs to the nearer left/right
+ * edge (inside the safe area) and the spot is remembered. A press that moves
+ * less than DRAG_THRESHOLD is a tap and calls `onTap`.
+ */
+function setupLauncherDrag(
+  button: HTMLButtonElement,
+  root: ShadowRoot,
+  onTap: () => void
+): void {
+  // env(safe-area-inset-*) is only readable through computed style.
+  const probe = document.createElement('div')
+  probe.className = 'safe-probe'
+  root.appendChild(probe)
+
+  let pos: LauncherPosition = { ...DEFAULT_POSITION }
+
+  function bounds() {
+    const cs = getComputedStyle(probe)
+    const inset = (v: string) => parseFloat(v) || 0
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    return {
+      vw,
+      vh,
+      minX: inset(cs.paddingLeft) + EDGE_MARGIN,
+      maxX: vw - inset(cs.paddingRight) - EDGE_MARGIN - LAUNCHER_SIZE,
+      minY: inset(cs.paddingTop) + EDGE_MARGIN,
+      maxY: vh - inset(cs.paddingBottom) - EDGE_MARGIN - LAUNCHER_SIZE
+    }
+  }
+
+  const current = () => ({
+    left: parseFloat(button.style.left) || 0,
+    top: parseFloat(button.style.top) || 0
+  })
+
+  function place(p: LauncherPosition): void {
+    const b = bounds()
+    const left = p.side === 'left' ? b.minX : clamp(b.maxX, b.minX, b.maxX)
+    const top = clamp(p.y * b.vh - LAUNCHER_SIZE / 2, b.minY, b.maxY)
+    button.style.left = left + 'px'
+    button.style.top = top + 'px'
+  }
+
+  function placeInstantly(p: LauncherPosition): void {
+    button.classList.add('instant')
+    place(p)
+    void button.offsetWidth // flush, so removing `instant` doesn't animate
+    button.classList.remove('instant')
+  }
+
+  let drag: { id: number; x: number; y: number; left: number; top: number } | null = null
+  let moved = false
+  let justDragged = false
+
+  button.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    const { left, top } = current()
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, left, top }
+    moved = false
+    justDragged = false
+    try {
+      button.setPointerCapture(e.pointerId)
+    } catch {
+      // capture is best-effort
+    }
+  })
+
+  button.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return
+    const dx = e.clientX - drag.x
+    const dy = e.clientY - drag.y
+    if (!moved) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+      moved = true
+      button.classList.add('dragging')
+    }
+    e.preventDefault()
+    const b = bounds()
+    button.style.left = clamp(drag.left + dx, 0, b.vw - LAUNCHER_SIZE) + 'px'
+    button.style.top = clamp(drag.top + dy, b.minY, b.maxY) + 'px'
+  })
+
+  const end = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return
+    drag = null
+    if (!moved) return // a tap; the click handler opens the panel
+    moved = false
+    justDragged = true
+    button.classList.remove('dragging')
+    const b = bounds()
+    const { left, top } = current()
+    pos = {
+      side: left + LAUNCHER_SIZE / 2 < b.vw / 2 ? 'left' : 'right',
+      y: (clamp(top, b.minY, b.maxY) + LAUNCHER_SIZE / 2) / b.vh
+    }
+    place(pos) // animated snap to the edge
+    saveLauncherPosition(pos)
+  }
+  button.addEventListener('pointerup', end)
+  button.addEventListener('pointercancel', end)
+
+  button.addEventListener('click', (e) => {
+    // The click that ends a drag must not open the panel.
+    if (justDragged) {
+      justDragged = false
+      e.preventDefault()
+      return
+    }
+    onTap()
+  })
+
+  window.addEventListener('resize', () => placeInstantly(pos))
+
+  placeInstantly(pos)
+  loadLauncherPosition().then((saved) => {
+    pos = saved
+    placeInstantly(pos)
+    button.classList.add('placed')
+  })
 }
 
 // ---------------------------------------------------------------------------
